@@ -170,7 +170,479 @@ export interface InventoryItem {
   essence: number;
 }
 
+export type GameMode = "survival" | "creative" | "exploration";
+
+export type HeadwearType =
+  | "none"
+  | "void-crown"
+  | "chrono-visor"
+  | "crystal-horns"
+  | "biome-antennae"
+  | "elder-halo"
+  | "cyber-mask"
+  | "seraph-crest"
+  | "shadow-hood"
+  | "ocular-scanner";
+
+export type OutfitType =
+  | "none"
+  | "exo-carapace"
+  | "astral-robe"
+  | "cyber-harness"
+  | "nomad-mantle"
+  | "quantum-shroud"
+  | "runic-plate"
+  | "abyssal-chitin"
+  | "celestial-gilded";
+
+export type BackWingsType =
+  | "none"
+  | "photonic-wings"
+  | "solar-tendrils"
+  | "jet-thrusters"
+  | "energy-spikes"
+  | "void-cape"
+  | "orbiting-sigils"
+  | "crystal-fins";
+
+export type AccessoryType =
+  | "none"
+  | "core-relic"
+  | "biome-lantern"
+  | "shimmering-aura"
+  | "shield-orbs"
+  | "plasma-wisp"
+  | "data-halo";
+
+export type EyeType = "two" | "cyclops" | "spider-four" | "hex-six" | "seraph-ring" | "blind-sonar";
+export type SurfaceFinish = "organic" | "crystal" | "metallic" | "void" | "magma" | "holographic";
+export type SkinPattern = "plain" | "biolum-veins" | "hex-mesh" | "nebula" | "tiger-striae" | "runic" | "cyber-traces";
+
+export interface CustomCreatureConfig {
+  name: string;
+  bodyPlan: BodyPlan;
+  hue: number;
+  accentHue: number;
+  saturation: number;
+  lightness: number;
+  emissiveIntensity: number;
+  emissiveHue: number;
+  finish: SurfaceFinish;
+  pattern: SkinPattern;
+  headwear: HeadwearType;
+  outfit: OutfitType;
+  backWings: BackWingsType;
+  accessory: AccessoryType;
+  eyeType: EyeType;
+  eyeColor: string;
+  scale: number;
+  limbs: number;
+  segments: number;
+  spineArch: number;
+  tailLength: number;
+  auraIntensity: number;
+  schematicId?: string;
+}
+
+export interface PlacedStructure {
+  id: string;
+  type: "spire" | "dome" | "pylon" | "turret" | "gate" | "bridge" | "beacon" | "tree";
+  position: [number, number, number];
+  rotation: [number, number, number];
+  createdAt: number;
+}
+
+export interface FoodItem {
+  id: string;
+  name: string;
+  hungerRestore: number;
+  healthRestore: number;
+  staminaRestore: number;
+  description: string;
+  color: string;
+  iconType: "berry" | "spore" | "kelp" | "meat" | "google";
+}
+
+export const foodsCatalog: Record<string, FoodItem> = {
+  "lumen-berry": {
+    id: "lumen-berry",
+    name: "Lumen Berry",
+    hungerRestore: 25,
+    healthRestore: 12,
+    staminaRestore: 15,
+    description: "Sweet bio-phosphorescent fruit harvested from glowing flora.",
+    color: "#4ade80",
+    iconType: "berry",
+  },
+  "spore-fruit": {
+    id: "spore-fruit",
+    name: "Spore Fruit",
+    hungerRestore: 35,
+    healthRestore: 20,
+    staminaRestore: 25,
+    description: "Rich nutrient pod dense in compressed atmospheric enzymes.",
+    color: "#a855f7",
+    iconType: "spore",
+  },
+  "hydro-kelp": {
+    id: "hydro-kelp",
+    name: "Hydro Kelp",
+    hungerRestore: 20,
+    healthRestore: 15,
+    staminaRestore: 30,
+    description: "Electrolytic membrane frond that rapidly restores hydration.",
+    color: "#38bdf8",
+    iconType: "kelp",
+  },
+  "organ-marrow": {
+    id: "organ-marrow",
+    name: "Chitin Meat Fragment",
+    hungerRestore: 55,
+    healthRestore: 35,
+    staminaRestore: 10,
+    description: "High-protein biomass harvested from deep fauna carapaces.",
+    color: "#f87171",
+    iconType: "meat",
+  },
+  "google-core": {
+    id: "google-core",
+    name: "Google Algorithm Relic",
+    hungerRestore: 45,
+    healthRestore: 30,
+    staminaRestore: 50,
+    description: "An overclocked surveillance core. Yields hyper-energy when absorbed.",
+    color: "#facc15",
+    iconType: "google",
+  },
+};
+
+export interface StructureBlueprint {
+  type: PlacedStructure["type"];
+  name: string;
+  description: string;
+  icon: string;
+  costDesc: string;
+}
+
+export const structureBlueprints: StructureBlueprint[] = [
+  { type: "spire", name: "Luminous Beacon Spire", description: "Projects a high-intensity atmospheric beacon into the heavens.", icon: "Tower", costDesc: "Creative / Instant" },
+  { type: "dome", name: "Bio-Dome Haven", description: "Spherical crystal greenhouse providing sanctuary from harsh elements.", icon: "Sphere", costDesc: "Creative / Instant" },
+  { type: "pylon", name: "Resonant Energy Pylon", description: "Channels planetary magnetic lines and emits protective harmonic rings.", icon: "Zap", costDesc: "Creative / Instant" },
+  { type: "turret", name: "Plasma Defense Node", description: "Autonomous defense turret that targets airborne Google Watchers.", icon: "Shield", costDesc: "Creative / Instant" },
+  { type: "gate", name: "Architect Warp Gate", description: "Monumental portal arch inscribed with old quantum coordinates.", icon: "Door", costDesc: "Creative / Instant" },
+  { type: "bridge", name: "Aether Sky-Way", description: "Suspended translucent path to bridge across chasms and cliffs.", icon: "Compass", costDesc: "Creative / Instant" },
+  { type: "beacon", name: "Holographic Monolith", description: "Floating ancient obelisk broadcasting planetary lore.", icon: "Radio", costDesc: "Creative / Instant" },
+  { type: "tree", name: "Solar Bio-Tree", description: "Synthetic crystalline arbor that bathes the clearing in gold photons.", icon: "Tree", costDesc: "Creative / Instant" },
+];
+
+export interface CreatureSchematicPreset {
+  id: string;
+  title: string;
+  tagline: string;
+  config: Partial<CustomCreatureConfig>;
+}
+
+export const creatureBlueprints: CreatureSchematicPreset[] = [
+  {
+    id: "apex-void",
+    title: "Apex Void Stalker",
+    tagline: "Dimensional hunter veiled in quantum shadow",
+    config: {
+      name: "Void Stalker",
+      bodyPlan: "bilateral",
+      hue: 275,
+      accentHue: 190,
+      saturation: 85,
+      lightness: 45,
+      emissiveIntensity: 1.4,
+      finish: "void",
+      pattern: "runic",
+      headwear: "void-crown",
+      outfit: "quantum-shroud",
+      backWings: "photonic-wings",
+      accessory: "core-relic",
+      eyeType: "hex-six",
+      eyeColor: "#c084fc",
+      limbs: 6,
+      segments: 5,
+      scale: 1.15,
+    },
+  },
+  {
+    id: "solar-seraph",
+    title: "Solar Seraph",
+    tagline: "Celestial beacon forged from stellar furnace light",
+    config: {
+      name: "Solar Seraph",
+      bodyPlan: "radial",
+      hue: 45,
+      accentHue: 15,
+      saturation: 95,
+      lightness: 65,
+      emissiveIntensity: 1.8,
+      finish: "crystal",
+      pattern: "biolum-veins",
+      headwear: "elder-halo",
+      outfit: "celestial-gilded",
+      backWings: "solar-tendrils",
+      accessory: "shimmering-aura",
+      eyeType: "seraph-ring",
+      eyeColor: "#fef08a",
+      limbs: 8,
+      segments: 4,
+      scale: 1.25,
+    },
+  },
+  {
+    id: "cyber-golem",
+    title: "Cybernetic Golem",
+    tagline: "Heavy armored war-construct powered by data conduits",
+    config: {
+      name: "G-01 Colossus",
+      bodyPlan: "crystalline",
+      hue: 205,
+      accentHue: 350,
+      saturation: 70,
+      lightness: 40,
+      emissiveIntensity: 1.2,
+      finish: "metallic",
+      pattern: "cyber-traces",
+      headwear: "cyber-mask",
+      outfit: "exo-carapace",
+      backWings: "jet-thrusters",
+      accessory: "shield-orbs",
+      eyeType: "cyclops",
+      eyeColor: "#ef4444",
+      limbs: 4,
+      segments: 6,
+      scale: 1.4,
+    },
+  },
+  {
+    id: "abyssal-leviathan",
+    title: "Abyssal Cephalopod",
+    tagline: "Deep sea predator with bioluminescent sensor clusters",
+    config: {
+      name: "Nacre Leviathan",
+      bodyPlan: "colonial",
+      hue: 168,
+      accentHue: 220,
+      saturation: 80,
+      lightness: 50,
+      emissiveIntensity: 1.6,
+      finish: "organic",
+      pattern: "biolum-veins",
+      headwear: "biome-antennae",
+      outfit: "abyssal-chitin",
+      backWings: "orbiting-sigils",
+      accessory: "biome-lantern",
+      eyeType: "spider-four",
+      eyeColor: "#22d3ee",
+      limbs: 10,
+      segments: 5,
+      scale: 1.1,
+    },
+  },
+  {
+    id: "chrono-nomad",
+    title: "Chrono Wanderer",
+    tagline: "Desert pilgrim traversing temporal dust storms",
+    config: {
+      name: "Aethel Nomad",
+      bodyPlan: "fractal",
+      hue: 35,
+      accentHue: 280,
+      saturation: 65,
+      lightness: 58,
+      emissiveIntensity: 0.9,
+      finish: "magma",
+      pattern: "tiger-striae",
+      headwear: "chrono-visor",
+      outfit: "nomad-mantle",
+      backWings: "crystal-fins",
+      accessory: "plasma-wisp",
+      eyeType: "two",
+      eyeColor: "#fbbf24",
+      limbs: 6,
+      segments: 4,
+      scale: 1.0,
+    },
+  },
+  {
+    id: "holographic-lotus",
+    title: "Holographic Lotus",
+    tagline: "Glitching sentient flower that refracts pure starlight",
+    config: {
+      name: "Vesper Lotus",
+      bodyPlan: "plasma",
+      hue: 320,
+      accentHue: 180,
+      saturation: 90,
+      lightness: 60,
+      emissiveIntensity: 2.2,
+      finish: "holographic",
+      pattern: "hex-mesh",
+      headwear: "seraph-crest",
+      outfit: "astral-robe",
+      backWings: "energy-spikes",
+      accessory: "data-halo",
+      eyeType: "seraph-ring",
+      eyeColor: "#f472b6",
+      limbs: 8,
+      segments: 3,
+      scale: 0.95,
+    },
+  },
+];
+
+export function createDefaultCustomCreature(creature: CreatureDefinition, characterName?: string): CustomCreatureConfig {
+  return {
+    name: characterName?.trim() || creature.genus,
+    bodyPlan: creature.bodyPlan,
+    hue: creature.hue,
+    accentHue: (creature.hue + 140) % 360,
+    saturation: 75,
+    lightness: 55,
+    emissiveIntensity: 0.75,
+    emissiveHue: (creature.hue + 35) % 360,
+    finish: creature.bodyPlan === "crystalline" ? "crystal" : creature.bodyPlan === "plasma" ? "holographic" : "organic",
+    pattern: "biolum-veins",
+    headwear: "none",
+    outfit: "none",
+    backWings: "none",
+    accessory: "none",
+    eyeType: "two",
+    eyeColor: "#6ee7b7",
+    scale: creature.scale || 1.0,
+    limbs: Math.min(creature.limbs || 4, 10),
+    segments: Math.min(creature.segments || 3, 6),
+    spineArch: 0,
+    tailLength: 1.0,
+    auraIntensity: 0.6,
+  };
+}
+
+export interface WorldSave {
+  id: string;
+  name: string;
+  seed: string;
+  gameMode: GameMode;
+  creatureId: number;
+  creatureName: string;
+  customCreature: CustomCreatureConfig;
+  health: number;
+  maxHealth: number;
+  hunger: number;
+  stamina: number;
+  evolution: number;
+  cycle: number;
+  structures: number;
+  structuresList: PlacedStructure[];
+  foodsInventory: Record<string, number>;
+  inventory: InventoryItem[];
+  discoveries: Discovery[];
+  traits: string[];
+  scenario?: ExpeditionId;
+  layer: WorldLayer;
+  lifeStage?: LifeStageId;
+  position: [number, number, number];
+  playtimeSeconds: number;
+  createdAt: number;
+  lastPlayed: number;
+  hasSeenCutscene: boolean;
+}
+
+const WORLDS_STORAGE_KEY = "lumital.worlds.v2";
+
+export function getWorldSaves(): WorldSave[] {
+  try {
+    const raw = localStorage.getItem(WORLDS_STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as WorldSave[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveWorld(world: WorldSave) {
+  try {
+    const list = getWorldSaves();
+    const index = list.findIndex((w) => w.id === world.id);
+    if (index >= 0) {
+      list[index] = { ...world, lastPlayed: Date.now() };
+    } else {
+      list.unshift({ ...world, lastPlayed: Date.now() });
+    }
+    localStorage.setItem(WORLDS_STORAGE_KEY, JSON.stringify(list));
+  } catch (err) {
+    console.error("Failed to save world", err);
+  }
+}
+
+export function deleteWorld(id: string) {
+  try {
+    const list = getWorldSaves().filter((w) => w.id !== id);
+    localStorage.setItem(WORLDS_STORAGE_KEY, JSON.stringify(list));
+  } catch (err) {
+    console.error("Failed to delete world", err);
+  }
+}
+
+export function createNewWorld(
+  name: string,
+  seed: string,
+  gameMode: GameMode,
+  creature: CreatureDefinition,
+  customCreature?: CustomCreatureConfig,
+  scenario: ExpeditionId = "frontier"
+): WorldSave {
+  const custom = customCreature || createDefaultCustomCreature(creature, name);
+  const now = Date.now();
+  const exp = expeditionFor(scenario);
+  const newWorld: WorldSave = {
+    id: `world-${now}-${Math.random().toString(36).slice(2, 7)}`,
+    name: name.trim() || `Genesis ${seed.slice(0, 8)}`,
+    seed,
+    gameMode,
+    creatureId: creature.id,
+    creatureName: custom.name || creature.genus,
+    customCreature: custom,
+    health: 100,
+    maxHealth: 100,
+    hunger: 100,
+    stamina: 100,
+    evolution: gameMode === "creative" ? 999 : 24,
+    cycle: 1,
+    structures: 0,
+    structuresList: [],
+    foodsInventory: {
+      "lumen-berry": gameMode === "creative" ? 99 : 6,
+      "spore-fruit": gameMode === "creative" ? 99 : 3,
+      "hydro-kelp": gameMode === "creative" ? 99 : 4,
+      "organ-marrow": gameMode === "creative" ? 99 : 1,
+    },
+    inventory: [
+      { id: "lumen-shard", name: "Lumen Shard", kind: "shard", count: 4, essence: 6 },
+      { id: "signal-thread", name: "Signal Thread", kind: "signal", count: 2, essence: 16 },
+    ],
+    discoveries: [],
+    traits: [],
+    scenario,
+    layer: exp.startLayer,
+    lifeStage: "modern",
+    position: [0, 2.5, 12],
+    playtimeSeconds: 0,
+    createdAt: now,
+    lastPlayed: now,
+    hasSeenCutscene: false,
+  };
+  saveWorld(newWorld);
+  return newWorld;
+}
+
 export interface SaveState {
+  id?: string;
+  name?: string;
   seed: string;
   creatureId: number;
   layer: string;
@@ -179,6 +651,7 @@ export interface SaveState {
   traits: string[];
   discoveries: Discovery[];
   structures: number;
+  structuresList?: PlacedStructure[];
   bookmarked: boolean;
   lastPlayed: number;
   inventory?: InventoryItem[];
@@ -189,6 +662,16 @@ export interface SaveState {
   crafted?: string[];
   characterName?: string;
   lifeStage?: LifeStageId;
+  // Survival & game modes
+  gameMode?: GameMode;
+  hunger?: number;
+  health?: number;
+  maxHealth?: number;
+  stamina?: number;
+  foodsInventory?: Record<string, number>;
+  customCreature?: CustomCreatureConfig;
+  playerPos?: [number, number, number];
+  hasSeenCutscene?: boolean;
 }
 
 export type DistrictType = "crystal" | "falls" | "ash" | "reef" | "spire" | "jungle" | "ruins" | "hive-city" | "floating-islets" | "graveyard" | "geode-cave" | "spores";

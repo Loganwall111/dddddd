@@ -2,19 +2,34 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { GameExperience } from "./components/GameExperience";
 import { MainMenu, defaultSettings, type AppSettings } from "./components/MainMenu";
+import { CreatureCustomizer } from "./components/CreatureCustomizer";
+import { WorldSaveModal } from "./components/WorldSaveModal";
+import { CinematicIntroCutscene } from "./components/CinematicIntroCutscene";
 import { cinematicAudio } from "./audio/CinematicAudio";
-import { creatures, expeditionFor, generateSeed, type ExpeditionId, type SaveState } from "./game/procedural";
+import {
+  creatures,
+  expeditionFor,
+  generateSeed,
+  type ExpeditionId,
+  type SaveState,
+  type WorldSave,
+  type GameMode,
+  type CustomCreatureConfig,
+  createDefaultCustomCreature,
+  saveWorld,
+} from "./game/procedural";
 import { UniverseScene } from "./scenes/UniverseScene";
 
 const SAVE_KEY = "lumital.reality.v1";
 const SETTINGS_KEY = "lumital.settings.v1";
 const FORM_KEY = "lumital.form.v1";
 const CHARACTER_KEY = "lumital.character.v1";
+const CUSTOM_KEY = "lumital.customCreature.v1";
 
 function readJson<T>(key: string): T | null {
   try {
     const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) as T : null;
+    return value ? (JSON.parse(value) as T) : null;
   } catch {
     return null;
   }
@@ -88,16 +103,28 @@ function LoadingSequence({ save, creatureName }: { save: SaveState; creatureName
 }
 
 export default function App() {
-  const [phase, setPhase] = useState<"boot" | "menu" | "creation" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
+  const [phase, setPhase] = useState<"boot" | "menu" | "intro" | "creation" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
   const [sandbox, setSandbox] = useState(false);
   const [seed, setSeed] = useState(() => readJson<SaveState>(SAVE_KEY)?.seed ?? generateSeed());
   const [selectedCreature, setSelectedCreature] = useState(() => {
     const id = Number(localStorage.getItem(FORM_KEY) ?? 42);
     return creatures.find((creature) => creature.id === id) ?? creatures[42];
   });
-  const [characterName, setCharacterName] = useState(() => localStorage.getItem(CHARACTER_KEY) ?? readJson<SaveState>(SAVE_KEY)?.characterName ?? "");
+  const [characterName, setCharacterName] = useState(() => localStorage.getItem(CHARACTER_KEY) ?? readJson<SaveState>(SAVE_KEY)?.characterName ?? "Luminary Proto");
+
+  const [customCreature, setCustomCreature] = useState<CustomCreatureConfig>(() => {
+    const stored = readJson<CustomCreatureConfig>(CUSTOM_KEY);
+    if (stored) return stored;
+    return createDefaultCustomCreature(selectedCreature);
+  });
+
   const [save, setSave] = useState<SaveState | null>(() => readJson<SaveState>(SAVE_KEY));
   const [activeSave, setActiveSave] = useState<SaveState | null>(null);
+  const [activeWorldSave, setActiveWorldSave] = useState<WorldSave | null>(null);
+
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [isWorldSaveModalOpen, setIsWorldSaveModalOpen] = useState(false);
+
   const [settings, setSettings] = useState<AppSettings>(() => ({
     ...defaultSettings,
     ...(readJson<Partial<AppSettings>>(SETTINGS_KEY) ?? {}),
@@ -106,10 +133,13 @@ export default function App() {
   useEffect(() => { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }, [settings]);
   useEffect(() => { localStorage.setItem(FORM_KEY, String(selectedCreature.id)); }, [selectedCreature]);
   useEffect(() => { localStorage.setItem(CHARACTER_KEY, characterName.trim()); }, [characterName]);
+  useEffect(() => { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customCreature)); }, [customCreature]);
+
   useEffect(() => {
     const audioScene = phase === "game" ? activeSave?.layer ?? "menu" : phase;
     cinematicAudio.setScene(audioScene, settings.audio);
   }, [activeSave, phase, settings.audio]);
+
   useEffect(() => {
     const unlock = () => { void cinematicAudio.unlock(); };
     const hover = (event: PointerEvent) => {
@@ -129,6 +159,7 @@ export default function App() {
       window.removeEventListener("click", select);
     };
   }, []);
+
   useEffect(() => {
     if (phase !== "boot") return;
     const timer = window.setTimeout(() => {
@@ -137,19 +168,22 @@ export default function App() {
     }, settings.reducedMotion ? 500 : 2600);
     return () => window.clearTimeout(timer);
   }, [phase, settings.reducedMotion]);
+
   useEffect(() => {
     if (phase !== "creation") return;
-    const timer = window.setTimeout(() => setPhase("loading"), settings.reducedMotion ? 240 : 1850);
+    const timer = window.setTimeout(() => setPhase("intro"), settings.reducedMotion ? 240 : 1200);
     return () => window.clearTimeout(timer);
   }, [phase, settings.reducedMotion]);
+
   useEffect(() => {
     if (phase !== "loading") return;
     const timer = window.setTimeout(() => setPhase("game"), settings.reducedMotion ? 500 : 2600);
     return () => window.clearTimeout(timer);
   }, [phase, settings.reducedMotion]);
 
-  const start = useCallback((mode: "journey" | "sandbox" = "journey", expeditionId: ExpeditionId = "frontier") => {
+  const start = useCallback((mode: "journey" | "sandbox" = "journey", expeditionId: ExpeditionId = "frontier", explicitGameMode?: GameMode) => {
     const expedition = expeditionFor(expeditionId);
+    const resolvedMode: GameMode = explicitGameMode ?? (mode === "sandbox" ? "creative" : "survival");
     const next: SaveState = {
       seed,
       creatureId: selectedCreature.id,
@@ -161,35 +195,119 @@ export default function App() {
       discoveries: [],
       structures: 0,
       bookmarked: true,
-      characterName: characterName.trim() || selectedCreature.genus,
+      characterName: characterName.trim() || customCreature.name || selectedCreature.genus,
+      customCreature: customCreature,
+      gameMode: resolvedMode,
       lifeStage: "modern",
       lastPlayed: Date.now(),
     };
-    setSandbox(mode === "sandbox");
+    setSandbox(resolvedMode === "creative");
     setActiveSave(next);
     setSave(next);
     localStorage.setItem(SAVE_KEY, JSON.stringify(next));
     cinematicAudio.cinematicHit(1);
     setPhase("creation");
-  }, [characterName, seed, selectedCreature.id]);
+  }, [characterName, customCreature, seed, selectedCreature.id]);
 
   const continueJourney = useCallback(() => {
     if (!save) return;
     const form = creatures.find((creature) => creature.id === save.creatureId);
     if (form) setSelectedCreature(form);
     setCharacterName(save.characterName ?? form?.genus ?? characterName);
+    if (save.customCreature) setCustomCreature(save.customCreature);
     setSeed(save.seed);
-    setSandbox(false);
+    setSandbox(save.gameMode === "creative");
     setActiveSave(save);
     cinematicAudio.cinematicHit(1);
     setPhase("loading");
   }, [characterName, save]);
 
+  const handleSelectWorld = useCallback((world: WorldSave) => {
+    setIsWorldSaveModalOpen(false);
+    setActiveWorldSave(world);
+    setSeed(world.seed);
+    const foundCreature = creatures.find((c) => c.id === world.creatureId) ?? selectedCreature;
+    setSelectedCreature(foundCreature);
+    setCharacterName(world.creatureName);
+    setCustomCreature(world.customCreature);
+    setSandbox(world.gameMode === "creative");
+
+    const stateToLoad: SaveState = {
+      seed: world.seed,
+      creatureId: world.creatureId,
+      layer: world.layer,
+      scenario: world.scenario,
+      evolution: world.evolution,
+      cycle: world.cycle,
+      traits: world.traits,
+      discoveries: world.discoveries,
+      structures: world.structures,
+      bookmarked: true,
+      characterName: world.creatureName,
+      customCreature: world.customCreature,
+      gameMode: world.gameMode,
+      lifeStage: world.lifeStage,
+      lastPlayed: Date.now(),
+    };
+
+    setActiveSave(stateToLoad);
+    setSave(stateToLoad);
+    localStorage.setItem(SAVE_KEY, JSON.stringify(stateToLoad));
+    cinematicAudio.cinematicHit(1);
+
+    if (!world.hasSeenCutscene) {
+      setPhase("intro");
+    } else {
+      setPhase("loading");
+    }
+  }, [selectedCreature]);
+
+  const handleCustomizerSave = useCallback((updated: CustomCreatureConfig) => {
+    setCustomCreature(updated);
+    setCharacterName(updated.name);
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(updated));
+    localStorage.setItem(CHARACTER_KEY, updated.name);
+    setIsCustomizerOpen(false);
+    cinematicAudio.discovery();
+  }, []);
+
   const persistSave = useCallback((next: SaveState) => {
     setSave(next);
     setActiveSave(next);
     localStorage.setItem(SAVE_KEY, JSON.stringify(next));
-  }, []);
+
+    if (activeWorldSave) {
+      const updatedWorld: WorldSave = {
+        ...activeWorldSave,
+        seed: next.seed,
+        layer: (next.layer as any) || "quantum",
+        evolution: next.evolution,
+        cycle: next.cycle,
+        traits: next.traits ?? [],
+        discoveries: next.discoveries ?? [],
+        structures: next.structures ?? 0,
+        scenario: next.scenario,
+        lifeStage: next.lifeStage,
+        lastPlayed: Date.now(),
+      };
+      saveWorld(updatedWorld);
+      setActiveWorldSave(updatedWorld);
+    }
+  }, [activeWorldSave]);
+
+  const handleIntroComplete = useCallback(() => {
+    if (activeWorldSave) {
+      const updated = { ...activeWorldSave, hasSeenCutscene: true };
+      saveWorld(updated);
+      setActiveWorldSave(updated);
+    }
+    cinematicAudio.cinematicHit(1);
+    if (!activeSave) {
+      start("journey", "frontier", "survival");
+    } else {
+      setPhase("game");
+    }
+  }, [activeSave, activeWorldSave, start]);
 
   const exitToMenu = useCallback(() => {
     if (document.pointerLockElement) document.exitPointerLock();
@@ -217,10 +335,20 @@ export default function App() {
               onSettingsChange={setSettings}
               onStart={start}
               onContinue={continueJourney}
+              onOpenCustomizer={() => setIsCustomizerOpen(true)}
+              onOpenWorldSaves={() => setIsWorldSaveModalOpen(true)}
+              onPlayIntro={() => setPhase("intro")}
             />
           </motion.div>
         ) : phase === "creation" && activeSave ? (
           <CreationSequence save={activeSave} creatureName={activeSave.characterName ?? (characterName.trim() || selectedCreature.genus)} formLabel={selectedCreature.genus} />
+        ) : phase === "intro" ? (
+          <CinematicIntroCutscene
+            key="intro"
+            creature={selectedCreature}
+            custom={customCreature}
+            onComplete={handleIntroComplete}
+          />
         ) : phase === "loading" && activeSave ? (
           <LoadingSequence save={activeSave} creatureName={activeSave.characterName ?? (characterName.trim() || selectedCreature.genus)} />
         ) : activeSave ? (
@@ -228,6 +356,30 @@ export default function App() {
             <GameExperience initialSave={activeSave} creature={selectedCreature} settings={settings} sandbox={sandbox} onSave={persistSave} onExit={exitToMenu} />
           </motion.div>
         ) : null}
+      </AnimatePresence>
+
+      {/* Creature Character Customizer Modal */}
+      <AnimatePresence>
+        {isCustomizerOpen && (
+          <CreatureCustomizer
+            creature={selectedCreature}
+            initialCustom={customCreature}
+            onSave={handleCustomizerSave}
+            onClose={() => setIsCustomizerOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Multi-World Save Manager Modal */}
+      <AnimatePresence>
+        {isWorldSaveModalOpen && (
+          <WorldSaveModal
+            creature={selectedCreature}
+            customCreature={customCreature}
+            onSelectWorld={handleSelectWorld}
+            onClose={() => setIsWorldSaveModalOpen(false)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  Activity, Atom, BookOpen, Box, Brain, ChevronRight, CircleDot, Compass,
-  Crosshair, Dna, Eye, Flame, Gauge, Hammer, Home, LandPlot, Map, Moon,
-  MousePointer2, Orbit, Pause, Play, Radio, ScanLine, Shield, Sparkles,
-  Thermometer, TrendingUp, Users, Video, Waves, Wind, Zap, X,
+  Atom, BookOpen, Brain, Compass,
+  Dna, Eye, Flame, Moon,
+  Orbit, Pause, Play, Radio, Shield, ShieldAlert, Sparkles,
+  TrendingUp, Wind, Zap, X, Utensils, Heart, Camera,
 } from "lucide-react";
 import { GameWorld } from "../scenes/GameWorld";
 import {
-  expeditions, expeditionFor, getRealm, hashString, lifeStageFor, lifeStages, nearestDistrict,
-  realmAtIndex, realmDiscoveries, realmIndexOf, realmList, realmPhysics, realmReadings,
-  realmSceneAudio, settlementProfile,
-  type CreatureDefinition, type Discovery, type District, type EcosystemState, type ExpeditionId, type InventoryItem, type LifeStageId,
-  type Realm, type SaveState, type WorldLayer,
+  expeditionFor, getRealm, realmIndexOf, nearestDistrict,
+  structureBlueprints, foodsCatalog, saveWorld,
+  type CreatureDefinition, type Discovery, type District,
+  type GameMode, type InventoryItem,
+  type PlacedStructure, type SaveState, type StructureBlueprint,
+  type WorldLayer,
 } from "../game/procedural";
 import type { AppSettings } from "./MainMenu";
 import { cinematicAudio } from "../audio/CinematicAudio";
@@ -37,22 +38,6 @@ const inventoryCatalog: Record<string, Omit<InventoryItem, "count">> = {
   "aether-mote": { id: "aether-mote", name: "Aether Mote", kind: "mote", essence: 4 },
 };
 
-interface CraftRecipe {
-  id: string;
-  name: string;
-  station: string;
-  description: string;
-  costs: Record<string, number>;
-  result: { id: string; count: number };
-}
-
-const craftingRecipes: CraftRecipe[] = [
-  { id: "membrane-shelter", name: "Membrane Shelter", station: "cellular / soft tissue", description: "A temporary refuge from acid tides, predators and hostile pressure.", costs: { "lumen-shard": 2, "vestige-organ": 1 }, result: { id: "district-essence", count: 1 } },
-  { id: "tide-skiff", name: "Tide Skiff", station: "sewer / coastal", description: "A buoyant signal frame that lets you ride currents instead of fighting them.", costs: { "signal-thread": 1, "aether-mote": 2 }, result: { id: "lumen-shard", count: 3 } },
-  { id: "chorus-spire", name: "Chorus Spire", station: "planetary / communal", description: "A beacon that turns a discovered district into a persistent village seed.", costs: { "district-essence": 2, "signal-thread": 1 }, result: { id: "signal-thread", count: 2 } },
-  { id: "acid-buffer", name: "Acid Buffer", station: "digestive / emergency", description: "A living coat that buys one more minute inside the gastric sea.", costs: { "vestige-organ": 2, "lumen-shard": 1 }, result: { id: "aether-mote", count: 4 } },
-];
-
 const traitOptions = [
   { id: "Pressure lattice", icon: Shield, cost: 24, copy: "A mineral collagen matrix protects against pressure and collision." },
   { id: "Polarized sight", icon: Eye, cost: 28, copy: "Detect magnetic paths, hidden organisms and radiation gradients." },
@@ -66,42 +51,41 @@ const traitOptions = [
   { id: "Reality anchor", icon: Moon, cost: 80, copy: "Your broadcast lingers in the void. Survive dimensional transitions with less stress." },
 ];
 
-const eraNames = [
-  "Proto-signal Clan", "Stone Mirror Clan", "Village of Smoke-Dancers", "Town of Seven Spires", "The Distant Coast",
-  "Signal Hegemony", "Multi-Continental Choir",
-];
-
-interface FocusLink {
-  from: WorldLayer; to: WorldLayer; text: string;
-}
-
-const depthLinks: FocusLink[] = [
-  { from: "planet", to: "micro", text: "You slip beneath the skin of the world. The ocean becomes a body." },
-  { from: "micro", to: "atomic", text: "You pass through a membrane of folded proteins into light-deficit territory." },
-  { from: "atomic", to: "quantum", text: "Bonds dissolve into probability. Geometry becomes optional." },
-  { from: "cosmos", to: "planet", text: "You fall through an accretion perimeter into a world that remembers you." },
-  { from: "galaxy", to: "cosmos", text: "The spiral unfolds. You pick a filament at random and become local." },
-  { from: "void", to: "galaxy", text: "The universe takes a breath. You are pulled along." },
-];
-
 function CombatImpactFlash({ signal }: { signal: number }) {
   const [opacity, setOpacity] = useState(0);
   const lastSignal = useRef(0);
   useEffect(() => {
     if (signal === 0 || signal === lastSignal.current) return;
     lastSignal.current = signal;
-    setOpacity(0.45);
+    setOpacity(0.55);
     const start = performance.now();
     const fade = () => {
       const elapsed = performance.now() - start;
       const t = Math.min(1, elapsed / 320);
-      const value = 0.45 * (1 - t * t);
+      const value = 0.55 * (1 - t * t);
       setOpacity(value);
       if (t < 1) requestAnimationFrame(fade);
     };
     requestAnimationFrame(fade);
   }, [signal]);
-  return <div className="combat-impact-flash" style={{ opacity }} />;
+  return <div className="combat-impact-flash pointer-events-none fixed inset-0 z-30 bg-red-600/30 transition-opacity" style={{ opacity }} />;
+}
+
+function StarvationOverlay({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <div className="pointer-events-none fixed inset-0 z-20 flex flex-col items-center justify-start pt-16">
+      <div className="absolute inset-0 bg-radial from-transparent via-red-950/20 to-red-900/50 animate-pulse" />
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="relative z-10 px-5 py-2 rounded-xl bg-red-950/90 border border-red-500/80 text-red-200 font-bold text-xs uppercase tracking-widest shadow-2xl flex items-center gap-2 animate-bounce"
+      >
+        <ShieldAlert className="text-red-400" size={16} />
+        Critical Starvation — Consume Foraged Nutrients (Press E)
+      </motion.div>
+    </div>
+  );
 }
 
 function GameBrand() {
@@ -113,217 +97,32 @@ function GameBrand() {
   );
 }
 
-function ScaleNavigator({ realmId, onChange, disabled }: { realmId: string; onChange: (realmId: string) => void; disabled: boolean }) {
-  const index = Math.max(0, realmIndexOf(realmId));
+function JournalPanel({ state, onClose }: { state: SaveState; onClose: () => void }) {
   return (
-    <div className="scale-navigator">
-      <span className="hud-label">REALITY SCALE / {index + 1} OF {realmList.length}</span>
-      <div className="scale-track scale-track--scroll">
-        {realmList.map((realm, realmIndex) => (
-          <button key={realm.id} className={realmId === realm.id ? "is-active" : realm.kind === "authored" ? "is-authored" : ""} onClick={() => onChange(realm.id)} disabled={disabled}>
-            <i style={{ borderColor: realm.color, backgroundColor: realmId === realm.id ? realm.color : "transparent" }} />
-            <span>{realm.short}<small>10{realm.exponent >= 0 ? "+" : ""}{realm.exponent} m</small></span>
-            <em>{realmIndex + 1}</em>
-          </button>
-        ))}
-      </div>
-      <div className="scale-keys"><kbd>Z</kbd> EXPAND <kbd>X</kbd> FOCUS <span className="scale-jump">66 REALMS</span></div>
-    </div>
-  );
-}
-
-function BodyTelemetry({ creature, state, onEvolution }: { creature: CreatureDefinition; state: SaveState; onEvolution: () => void }) {
-  const energy = Math.max(0, Math.min(100, Math.round(state.energy ?? 76)));
-  const integrity = Math.min(99, 84 + state.traits.length * 3);
-  const hunts = state.hunts ?? 0;
-  const starving = energy < 15;
-  return (
-    <div className="body-telemetry">
-      <span className="hud-label">CURRENT FORM / {String(creature.id + 1).padStart(3, "0")}</span>
-      <div className="body-name"><Activity size={17} /><span><strong>{state.characterName ?? creature.genus}</strong><small>{creature.genus} / {creature.bodyPlan} organism</small></span></div>
-      <div className={`vital ${starving ? "is-critical" : ""}`}><span>ENERGY</span><i><i style={{ width: `${energy}%` }} /></i><b>{energy}%</b></div>
-      <div className="vital"><span>INTEGRITY</span><i><i style={{ width: `${integrity}%` }} /></i><b>{integrity}%</b></div>
-      <div className="vital"><span>HUNTS</span><i><i style={{ width: `${Math.min(100, hunts * 4)}%` }} /></i><b>{hunts}</b></div>
-      <div className="adaptation-points"><Dna size={16} /><span>ADAPTATION POTENTIAL<strong>{state.evolution}</strong></span><button aria-label="Open evolution" onClick={onEvolution}>V</button></div>
-      {starving && <div className="hunger-warning"><Zap size={11} /> FEED OR HUNT — ENERGY LOW</div>}
-    </div>
-  );
-}
-
-function ContextScanner({ realm, scanning, latest }: { realm: Realm; scanning: boolean; latest: Discovery | null }) {
-  return (
-    <div className="context-scanner">
-      <div className="scanner-heading"><Radio size={14} /><span>{scanning ? "RESOLVING SIGNAL" : "PASSIVE SPECTROMETRY"}</span><i className={scanning ? "is-live" : ""} /></div>
-      {latest ? (
-        <div className="scanner-result">
-          <small>{latest.category.toUpperCase()} / RECORDED</small><strong>{latest.name}</strong><p>{latest.note}</p>
-        </div>
-      ) : (
-        <div className="scanner-idle"><ScanLine size={31} strokeWidth={1} /><span>Unknown signatures nearby.<br />Press <kbd>E</kbd> to observe.</span></div>
-      )}
-      <div className="environment-readings">
-        {realmReadings(realm).map(([name, value]) => <span key={name}><small>{name}</small>{value}</span>)}
-      </div>
-      <p className="world-description">{realm.description}</p>
-    </div>
-  );
-}
-
-function EcosystemPanel({ eco, realm }: { eco: EcosystemState; realm: Realm }) {
-  return (
-    <div className="ecosystem-panel">
-      <div className="eco-heading"><Users size={13} /><span>ECOSYSTEM / {realm.short.toUpperCase()}</span></div>
-      <div className="eco-bar"><span>BIOMASS</span><i><i style={{ width: `${Math.min(100, eco.biomass)}%` }} /></i><b>{Math.round(eco.biomass)}</b></div>
-      <div className="eco-bar"><span>PREDATOR PRESSURE</span><i><i style={{ width: `${Math.min(100, eco.predator)}%` }} /></i><b>{Math.round(eco.predator)}</b></div>
-      <div className="eco-bar"><span>GRAZER STRESS</span><i><i style={{ width: `${Math.min(100, eco.grazer)}%` }} /></i><b>{Math.round(eco.grazer)}</b></div>
-      {eco.stress > 55 && <div className="eco-alert"><Zap size={12} /> Ecosystem shock imminent</div>}
-    </div>
-  );
-}
-
-function PhysicsPeek({ realm, seed }: { realm: Realm; seed: string }) {
-  const phys = realmPhysics(seed, realm);
-  return (
-    <div className="physics-peek">
-      <div className="phys-heading"><Gauge size={12} /><span>PHYSICS / {phys.label.toUpperCase()}</span></div>
-      <div className="phys-row"><Wind size={11} /><small>WIND</small><span>[{phys.wind[0].toFixed(3)}, {phys.wind[1].toFixed(3)}, {phys.wind[2].toFixed(3)}]</span></div>
-      <div className="phys-row"><Thermometer size={11} /><small>GRAVITY</small><span>{phys.gravity.toFixed(4)} g</span></div>
-    </div>
-  );
-}
-
-function CivilizationPanel({ state, seed, onClose, onBuild }: { state: SaveState; seed: string; onClose: () => void; onBuild: () => void }) {
-  const settlements = useMemo(() => Array.from({ length: Math.max(0, state.structures) }, (_, i) => settlementProfile(seed, i)), [seed, state.structures]);
-  const totalPop = settlements.reduce((sum, s) => sum + s.pop, 0);
-  const era = eraNames[Math.min(eraNames.length - 1, Math.max(0, state.structures - 1))];
-  return (
-    <motion.section className="game-panel civilization-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
-      <header>
-        <div><span className="hud-label">EMERGENT CIVILIZATION</span><h2>{state.structures ? `Civilization of ${civilizationName(seed)}` : "The Silence Before"}</h2></div>
-        <span className="era-badge">{era}</span>
-        <button onClick={onClose}><X size={20} /></button>
-      </header>
-      <div className="civ-summary">
-        <span><b>{state.structures}</b> {state.structures === 1 ? "signal site" : "signal sites"}</span>
-        <span><b>{totalPop}</b> estimated population</span>
-        <span><b>{era}</b> current era</span>
-      </div>
-      <div className="civ-list">
-        {settlements.map((s, i) => (
-          <article key={i}>
-            <span className="civ-orb" style={{ background: s.color }}><LandPlot size={13} /></span>
-            <div><h3>{s.name}</h3><p>{s.era}</p></div>
-            <b>{s.pop.toLocaleString()}</b>
-          </article>
-        ))}
-      </div>
-      <div className="panel-actions">
-        <button className="primary-action" onClick={onBuild}><Box size={16} /> Construct signal site (B)</button>
-      </div>
-    </motion.section>
-  );
-}
-
-function civilizationName(seed: string) {
-  const h = hashString(seed);
-  const names = ["The Vesper Accord", "Signal-Born Choir", "The Nacre Assembly", "The Seven Signals"];
-  return names[h % names.length];
-}
-
-function PhysicsPanel({ realm, seed, onClose }: { realm: Realm; seed: string; onClose: () => void }) {
-  const phys = realmPhysics(seed, realm);
-  const up = universeProfileText(seed);
-  return (
-    <motion.section className="game-panel physics-panel" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}>
-      <header>
-        <div><span className="hud-label">ACTIVE LOCAL LAWS</span><h2>Physics profile</h2></div>
-        <span className="phys-layer-badge" style={{ color: phys.color, borderColor: phys.color }}>{phys.label}</span>
-        <button onClick={onClose}><X size={20} /></button>
-      </header>
-      <div className="physics-grid">
-        <div className="phys-card">
-          <Wind size={15} /><span className="phys-label">AMBIENT WIND</span>
-          <strong>[{phys.wind[0].toFixed(4)}, {phys.wind[1].toFixed(4)}, {phys.wind[2].toFixed(4)}]</strong>
-          <small>Directional force applied every frame</small>
-        </div>
-        <div className="phys-card">
-          <TrendingUp size={15} /><span className="phys-label">GRAVITY</span>
-          <strong>{phys.gravity.toFixed(4)} g</strong>
-          <small>{phys.gravity < 0 ? "REVERSED — reality pushes upward" : phys.gravity < 0.01 ? "Near-zero — buoyancy dominates" : phys.gravity < 0.5 ? "Low — Orbit possible" : "Planetary"}</small>
-        </div>
-        <div className="phys-card">
-          <Orbit size={15} /><span className="phys-label">TOPOLOGY</span>
-          <strong>{up.topology}</strong>
-          <small>{up.age} GY / {up.dimensions} dimensional / {up.spectral} spectrum</small>
-        </div>
-        <div className="phys-card">
-          <Gauge size={15} /><span className="phys-label">ENTROPY SLOPE</span>
-          <strong>{up.entropy}</strong>
-          <small>{parseFloat(up.entropy) > 1.6 ? "System runs cold. Collapse slow." : "System balanced."}</small>
-        </div>
-      </div>
-    </motion.section>
-  );
-}
-
-function universeProfileText(seed: string) {
-  return { age: (3.5 + (hashString(seed) % 1700) / 17.25).toFixed(2), gravity: ((0.25 + (hashString(seed + "g") % 280) / 100)).toFixed(2), entropy: ((0.6 + (hashString(seed + "e") % 180) / 100)).toFixed(3), dimensions: 3 + (hashString(seed + "d") % 5), spectral: ["amber", "pearl", "violet", "iron", "ultraviolet"][hashString(seed + "s") % 5], topology: ["open", "recursive", "braided", "closed", "locally infinite"][hashString(seed + "t") % 5] };
-}
-
-function InventoryPanel({ state, onConsume, onClose }: { state: SaveState; onClose: () => void; onConsume: (id: string) => void }) {
-  const inventory = state.inventory ?? [];
-  const kindLabels: Record<InventoryItem["kind"], string> = { shard: "HARVESTED MATTER", organ: "BIOLOGICAL TISSUE", signal: "COSMIC SIGNAL", mote: "ENERGY RESIDUE", essence: "PLACE-BORN ESSENCE" };
-  return (
-    <motion.section className="game-panel inventory-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
-      <header>
-        <div><span className="hud-label">BIOLOGICAL CARRIER</span><h2>Inventory</h2></div>
-        <span className="era-badge">{inventory.reduce((n, item) => n + item.count, 0)} ITEMS</span>
-        <button onClick={onClose}><X size={20} /></button>
-      </header>
-      <div className="inventory-energy">
-        <span>ENERGY RESERVE</span><div className="inv-energy-bar"><i style={{ width: `${Math.round(state.energy ?? 76)}%` }} /></div><b>{Math.round(state.energy ?? 76)}%</b>
-      </div>
-      <div className="inventory-list">
-        {inventory.length === 0 && <div className="empty-journal"><Atom size={36} strokeWidth={0.8} /><span>Your body carries nothing yet.</span><small>Attack (Q) or grab (G) procedural life to harvest matter.</small></div>}
-        {inventory.map((item) => (
-          <article key={item.id} className={`inventory-item kind-${item.kind}`}>
-            <span className="inv-icon"><i /></span>
-            <div className="inv-info">
-              <small>{kindLabels[item.kind]}</small>
-              <h3>{item.name}</h3>
-              <p>Consuming yields +{item.essence} adaptation potential.</p>
-            </div>
-            <div className="inv-actions">
-              <b>×{item.count}</b>
-              <button disabled={item.count <= 0} onClick={() => onConsume(item.id)}>Consume</button>
-            </div>
-          </article>
+    <motion.section className="game-panel journal-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
+      <header><div><span className="hud-label">DISCOVERIES</span><h2>Field Journal</h2></div><button onClick={onClose}><X size={20} /></button></header>
+      <div className="journal-list">
+        {state.discoveries.map((d) => (
+          <article key={d.id}><div><h3>{d.name}</h3><p>{d.note}</p></div></article>
         ))}
       </div>
     </motion.section>
   );
 }
 
-function CraftingPanel({ state, onCraft, onClose }: { state: SaveState; onCraft: (recipe: CraftRecipe) => void; onClose: () => void }) {
-  const inventory = state.inventory ?? [];
-  const amount = (id: string) => inventory.find((item) => item.id === id)?.count ?? 0;
-  const itemName = (id: string) => inventoryCatalog[id]?.name ?? id;
+function EvolutionPanel({ state, onUnlock, onClose }: { state: SaveState; onUnlock: (id: string, cost: number) => void; onClose: () => void }) {
   return (
-    <motion.section className="game-panel crafting-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
-      <header>
-        <div><span className="hud-label">RESOURCE FABRICATION</span><h2>Craft &amp; build</h2></div>
-        <span className="era-badge">{(state.crafted ?? []).length} BLUEPRINTS</span>
-        <button onClick={onClose}><X size={20} /></button>
-      </header>
-      <div className="crafting-intro"><Hammer size={18} /><p>Gathered matter stays persistent across scales. Combine it into shelters, tide tools and signal structures.</p><span><b>{(state.inventory ?? []).reduce((n, item) => n + item.count, 0)}</b> raw items carried</span></div>
-      <div className="recipe-list">
-        {craftingRecipes.map((recipe) => {
-          const ready = Object.entries(recipe.costs).every(([id, needed]) => amount(id) >= needed);
+    <motion.section className="game-panel evolution-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
+      <header><div><span className="hud-label">GENE RECOMBINATION</span><h2>Evolution</h2></div><button onClick={onClose}><X size={20} /></button></header>
+      <div className="trait-list">
+        {traitOptions.map((t) => {
+          const unlocked = (state.traits ?? []).includes(t.id);
           return (
-            <article className={`recipe-card ${ready ? "is-ready" : ""}`} key={recipe.id}>
-              <span className="recipe-icon"><Hammer size={17} strokeWidth={1.2} /></span>
-              <div className="recipe-copy"><small>{recipe.station}</small><h3>{recipe.name}</h3><p>{recipe.description}</p><div className="recipe-costs">{Object.entries(recipe.costs).map(([id, needed]) => <span key={id} className={amount(id) >= needed ? "has-enough" : "needs-more"}><b>{amount(id)}/{needed}</b> {itemName(id)}</span>)}</div></div>
-              <button disabled={!ready} onClick={() => onCraft(recipe)}>{ready ? "Fabricate" : "Missing"}<small>+{recipe.result.count} {itemName(recipe.result.id)}</small></button>
+            <article key={t.id} className={unlocked ? "is-unlocked" : ""}>
+              <div><h3>{t.id}</h3><p>{t.copy}</p></div>
+              <button disabled={unlocked || state.evolution < t.cost} onClick={() => onUnlock(t.id, t.cost)}>
+                {unlocked ? "Integrated" : `${t.cost} EV`}
+              </button>
             </article>
           );
         })}
@@ -332,407 +131,304 @@ function CraftingPanel({ state, onCraft, onClose }: { state: SaveState; onCraft:
   );
 }
 
-function AtlasPanel({ scenario, onTravel, onClose }: { scenario: ExpeditionId; onTravel: (id: ExpeditionId) => void; onClose: () => void }) {
-  const active = expeditionFor(scenario);
-  const [selectedId, setSelectedId] = useState<ExpeditionId>(active.id);
-  const selected = expeditionFor(selectedId);
+function InventoryPanel({ state, onConsume, onClose }: { state: SaveState; onConsume: (id?: string) => void; onClose: () => void }) {
   return (
-    <motion.section className="game-panel atlas-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
-      <header>
-        <div><span className="hud-label">CROSS-SCALE NAVIGATION</span><h2>Living atlas</h2></div>
-        <span className="era-badge">{active.scale}</span>
-        <button onClick={onClose}><X size={20} /></button>
-      </header>
-      <div className="atlas-current-route" style={{ "--route-color": active.color } as React.CSSProperties}><span className="atlas-current-route__signal"><Map size={17} /></span><div><small>ACTIVE ENTRY POINT / {active.host}</small><strong>{active.label}</strong><p>{active.destination} · {active.danger}</p></div></div>
-      <div className="in-game-route-list">
-        {expeditions.map((expedition) => (
-          <button key={expedition.id} className={selected.id === expedition.id ? "is-selected" : ""} onClick={() => setSelectedId(expedition.id)}><span style={{ color: expedition.color }}>{String(expeditions.findIndex((item) => item.id === expedition.id) + 1).padStart(2, "0")}</span><b>{expedition.label}</b><small>{expedition.subtitle}</small><ChevronRight size={15} /></button>
+    <motion.section className="game-panel inventory-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
+      <header><div><span className="hud-label">MATTER &amp; RATIONS</span><h2>Inventory</h2></div><button onClick={onClose}><X size={20} /></button></header>
+      <div className="inventory-list">
+        {(state.inventory ?? []).map((item) => (
+          <article key={item.id} className="inventory-item flex items-center justify-between p-3 border-b border-slate-800">
+            <div><h3 className="font-bold text-sm text-cyan-200">{item.name}</h3><small className="text-slate-400">ESSENCE: +{item.essence}</small></div>
+            <div className="inv-actions flex items-center gap-2"><b className="font-mono text-cyan-400">×{item.count}</b><button className="px-2.5 py-1 bg-cyan-900 rounded text-xs" onClick={() => onConsume(item.id)}>Absorb</button></div>
+          </article>
         ))}
       </div>
-      <div className="atlas-route-detail"><span className="hud-label">SELECTED ROUTE / {selected.scale}</span><h3>{selected.label}</h3><p>{selected.description}</p><div>{selected.landmarks.slice(0, 3).map((landmark) => <span key={landmark}>{landmark}</span>)}</div></div>
-      <div className="panel-actions"><button className="primary-action" onClick={() => onTravel(selected.id)} disabled={selected.id === active.id}><Map size={16} /> {selected.id === active.id ? "Current entry point" : `Travel to ${selected.label}`}</button></div>
     </motion.section>
   );
 }
-
-function LifeStagePanel({ stageId, onTravel, onClose }: { stageId: LifeStageId; onTravel: (id: LifeStageId) => void; onClose: () => void }) {
-  const active = lifeStageFor(stageId);
-  const [selectedId, setSelectedId] = useState<LifeStageId>(active.id);
-  const selected = lifeStageFor(selectedId);
-  return (
-    <motion.section className="game-panel stages-panel" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}>
-      <header>
-        <div><span className="hud-label">TIME / FORM / ECOLOGY</span><h2>Life stages</h2></div>
-        <span className="era-badge">{active.era}</span>
-        <button onClick={onClose}><X size={20} /></button>
-      </header>
-      <div className="stage-current" style={{ "--stage-color": active.color } as React.CSSProperties}><span><CircleDot size={18} /></span><div><small>ACTIVE ERA / {active.scale}</small><strong>{active.name}</strong><p>{active.description}</p></div></div>
-      <div className="stage-timeline" role="listbox" aria-label="Life stages timeline">
-        {lifeStages.map((stage, index) => <button key={stage.id} className={selected.id === stage.id ? "is-selected" : ""} onClick={() => setSelectedId(stage.id)}><i style={{ background: stage.color }} /><span><b>{String(index + 1).padStart(2, "0")}</b><strong>{stage.name}</strong><small>{stage.era}</small></span></button>)}
-      </div>
-      <div className="stage-detail"><span className="hud-label">SELECTED STAGE / {selected.scale}</span><h3>{selected.name}</h3><p>{selected.description}</p><div>{selected.landmarks.map((landmark) => <span key={landmark}>{landmark}</span>)}</div></div>
-      <div className="panel-actions"><button className="primary-action" onClick={() => onTravel(selected.id)} disabled={selected.id === active.id}><Orbit size={16} /> {selected.id === active.id ? "Current stage" : `Enter ${selected.name}`}</button></div>
-    </motion.section>
-  );
-}
-
-function JournalPanel({ state, onClose }: { state: SaveState; onClose: () => void }) {
-  const categories = new Set(state.discoveries.map((item) => item.category)).size;
-  return (
-    <motion.section className="game-panel journal-panel" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
-      <header><div><span className="hud-label">PERSISTENT MEMORY</span><h2>Field journal</h2></div><button onClick={onClose}><X size={20} /></button></header>
-      <div className="journal-summary">
-        <span><b>{state.discoveries.length}</b> observations</span>
-        <span><b>{categories}</b> classifications</span>
-        <span><b>{state.cycle}</b> cycles elapsed</span>
-      </div>
-      <div className="journal-list">
-        {state.discoveries.length ? state.discoveries.slice().reverse().map((discovery, index) => (
-          <article key={discovery.id}>
-            <span className="journal-index">{String(state.discoveries.length - index).padStart(2, "0")}</span>
-            <div><small>{discovery.category} / {getRealm(discovery.layer).place}</small><h3>{discovery.name}</h3><p>{discovery.note}</p></div>
-            <CircleDot size={16} style={{ color: getRealm(discovery.layer).color }} />
-          </article>
-        )) : (
-          <div className="empty-journal"><BookOpen size={38} strokeWidth={0.8} /><span>Your senses have not classified this reality yet.</span><small>Close the journal and press E near an unknown signal.</small></div>
-        )}
-      </div>
-    </motion.section>
-  );
-}
-
-function EvolutionPanel({ state, creature, onUnlock, onClose }: { state: SaveState; creature: CreatureDefinition; onUnlock: (id: string, cost: number) => void; onClose: () => void }) {
-  return (
-    <motion.section className="game-panel evolution-panel" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}>
-      <header>
-        <div><span className="hud-label">SIMULATION-DRIVEN MORPHOGENESIS</span><h2>Evolutionary form</h2></div>
-        <span className="evolution-balance"><Dna size={17} /> {state.evolution} potential</span>
-        <button onClick={onClose}><X size={20} /></button>
-      </header>
-      <div className="evolution-layout">
-        <div className="genome-origin">
-          <span className="genome-symbol"><i /><i /><i /></span>
-          <small>ANCESTRAL FORM</small><strong>{creature.genus}</strong><p>{creature.metabolism} / {creature.tolerance}</p>
-          <div>{state.traits.map((trait) => <span key={trait}><CheckIcon />{trait}</span>)}</div>
-        </div>
-        <div className="trait-options">
-          {traitOptions.map((trait) => {
-            const unlocked = state.traits.includes(trait.id);
-            const Icon = trait.icon;
-            return (
-              <button key={trait.id} className={unlocked ? "is-unlocked" : ""} disabled={unlocked || state.evolution < trait.cost} onClick={() => onUnlock(trait.id, trait.cost)}>
-                <Icon size={21} strokeWidth={1.3} /><span><strong>{trait.id}</strong><small>{trait.copy}</small></span><b>{unlocked ? "EXPRESSED" : `${trait.cost} AP`}</b>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </motion.section>
-  );
-}
-
-function CheckIcon() { return <svg viewBox="0 0 16 16"><path d="m3 8 3 3 7-7" fill="none" stroke="currentColor" /></svg>; }
 
 function PausePanel({ onResume, onExit }: { onResume: () => void; onExit: () => void }) {
   return (
-    <motion.div className="pause-screen" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <div><span className="hud-label">SIMULATION SUSPENDED</span><h2>Reality is waiting.</h2><p>Your ecosystem and current evolutionary state have been preserved.</p>
-        <button className="game-menu-action" onClick={onResume}><Play size={17} /> Resume reality</button>
-        <button className="game-menu-action" onClick={onExit}><Home size={17} /> Return to main menu</button>
+    <motion.section className="game-panel pause-panel" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+      <h2>SIMULATION PAUSED</h2>
+      <div className="panel-actions">
+        <button className="primary-action" onClick={onResume}><Play size={16} /> Resume</button>
+        <button onClick={onExit}>Exit to Genesis Main Menu</button>
       </div>
-    </motion.div>
-  );
-}
-
-function ScaleTransition({ from, to }: { from: string; to: string }) {
-  const fromRealm = getRealm(from);
-  const toRealm = getRealm(to);
-  const inward = realmIndexOf(to) > realmIndexOf(from);
-  const link = depthLinks.find((l) => l.to === to);
-  return (
-    <motion.div className={`scale-transition ${inward ? "is-inward" : "is-outward"}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <div className="transition-rings"><i /><i /><i /><i /></div>
-      {link && (
-        <motion.div className="depth-link" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-          <span>DISCOVERY</span>
-          <p>{link.text}</p>
-        </motion.div>
-      )}
-      <motion.div initial={{ opacity: 0, scale: inward ? 1.3 : 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25 }}>
-        <span>{inward ? "FOCUSING THROUGH" : "EXPANDING BEYOND"}</span>
-        <strong>{fromRealm.label} / {toRealm.label}</strong>
-        <small>10{toRealm.exponent >= 0 ? "+" : ""}{toRealm.exponent} METERS</small>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-export function LifeStageTransition({ from, to }: { from: LifeStageId; to: LifeStageId }) {
-  const fromStage = lifeStageFor(from);
-  const toStage = lifeStageFor(to);
-  const forward = lifeStages.findIndex((stage) => stage.id === to) > lifeStages.findIndex((stage) => stage.id === from);
-  return (
-    <motion.div className="life-stage-transition" style={{ "--stage-color": toStage.color } as React.CSSProperties} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <div className="stage-transition-rings"><i /><i /><i /></div>
-      <div><span>{forward ? "MOVING THROUGH TIME" : "RETURNING THROUGH TIME"}</span><strong>{fromStage.name} <em>→</em> {toStage.name}</strong><small>{toStage.era} / {toStage.atmosphere}</small></div>
-    </motion.div>
+    </motion.section>
   );
 }
 
 export function GameExperience({ initialSave, creature, settings, sandbox = false, onSave, onExit }: GameExperienceProps) {
+  // Game Mode: "survival" | "creative" | "exploration"
+  const gameMode = (initialSave.gameMode ?? (sandbox ? "creative" : "survival")) as GameMode;
+
   const [state, setState] = useState<SaveState>(() => {
     const base: SaveState = sandbox ? { ...initialSave, evolution: Math.max(140, initialSave.evolution), layer: "quantum" } : initialSave;
     return {
       ...base,
-      energy: base.energy ?? 76,
+      gameMode,
+      energy: base.energy ?? 80,
       hunts: base.hunts ?? 0,
       inventory: base.inventory ?? [{ ...inventoryCatalog["lumen-shard"], count: 2 }],
       districtClaims: base.districtClaims ?? [],
       scenario: base.scenario ?? (sandbox ? undefined : expeditionFor(base.scenario).id),
       crafted: base.crafted ?? [],
-      characterName: base.characterName ?? creature.genus,
+      characterName: base.characterName ?? initialSave.customCreature?.name ?? creature.genus,
       lifeStage: base.lifeStage ?? "modern",
+      structuresList: base.structuresList ?? [],
+      foodsInventory: base.foodsInventory ?? {
+        "lumen-berry": gameMode === "creative" ? 99 : 6,
+        "spore-fruit": gameMode === "creative" ? 99 : 3,
+        "hydro-kelp": gameMode === "creative" ? 99 : 4,
+        "organ-marrow": gameMode === "creative" ? 99 : 1,
+      },
+      health: base.health ?? 100,
+      hunger: base.hunger ?? (gameMode === "creative" ? 100 : 92),
+      stamina: base.stamina ?? 100,
     };
   });
+
+  // Vitals
+  const [health, setHealth] = useState(state.health ?? 100);
+  const [hunger, setHunger] = useState(state.hunger ?? (gameMode === "creative" ? 100 : 92));
+  const [stamina, setStamina] = useState(state.stamina ?? 100);
+  const [foods, setFoods] = useState<Record<string, number>>(() => state.foodsInventory ?? {});
+  const [eatFeedback, setEatFeedback] = useState<{ text: string; id: number } | null>(null);
+
+  // Creative Mode features
+  const [isFlying, setIsFlying] = useState(false);
+  const [activeBlueprint, setActiveBlueprint] = useState<StructureBlueprint["type"] | null>(null);
+  const [placedStructures, setPlacedStructures] = useState<PlacedStructure[]>(() => state.structuresList ?? []);
+
+  // First Arrival Message
+  const [firstMessageVisible, setFirstMessageVisible] = useState(true);
+
+  // Exploration Mode features
+  const [photoMode, setPhotoMode] = useState(false);
+
+  // Save toast feedback
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
+  // Realm & Navigation
   const [realmId, setRealmId] = useState<string>(() => sandbox ? "quantum" : initialSave.layer);
   const realm = useMemo(() => getRealm(realmId), [realmId]);
   const expedition = useMemo(() => expeditionFor(state.scenario), [state.scenario]);
-  const lifeStage = useMemo(() => lifeStageFor(state.lifeStage), [state.lifeStage]);
   const [panel, setPanel] = useState<PanelKind>(null);
   const [transition, setTransition] = useState<{ from: string; to: string } | null>(null);
-  const [stageTransition, setStageTransition] = useState<{ from: LifeStageId; to: LifeStageId } | null>(null);
-  const [locked, setLocked] = useState(false);
-  const [intro, setIntro] = useState(true);
-  const [scanning, setScanning] = useState(false);
-  const [latest, setLatest] = useState<Discovery | null>(() => initialSave.discoveries.at(-1) ?? null);
   const [position, setPosition] = useState<[number, number, number]>([0, 0, 0]);
   const [speed, setSpeed] = useState(0);
   const [cameraMode, setCameraMode] = useState<CameraMode>("third");
   const [district, setDistrict] = useState<District | null>(null);
   const [attackSignal, setAttackSignal] = useState(0);
-  const [grabSignal, setGrabSignal] = useState(0);
   const [impactFlash, setImpactFlash] = useState(0);
-  const [eco, setEco] = useState<EcosystemState>(() => ({ biomass: 50 + (hashString(initialSave.seed + "b") % 40), predator: 20 + (hashString(initialSave.seed + "p") % 30), grazer: 100, stress: 10, bloom: 0, tension: 0 }));
-  const attackCooldown = useRef(0);
-  const grabCooldown = useRef(0);
-  const lastPositionUpdate = useRef(0);
-  const scanLock = useRef(false);
 
-  useEffect(() => { cinematicAudio.setScene(realm.id, settings.audio, realmSceneAudio(realm)); }, [realm, settings.audio]);
-  useEffect(() => { onSave(state); }, [state, onSave]);
+  // Auto-dismiss the first message after 7 seconds
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setState((current) => {
-        const next: SaveState = { ...current, cycle: current.cycle + 1, evolution: current.evolution + 1, lastPlayed: Date.now() };
-        const energy = Math.max(0, (current.energy ?? 76) - 1);
-        next.energy = energy;
-        if (energy < 15 && Math.random() > 0.72) next.evolution = Math.max(0, next.evolution - 0);
-        return next;
-      });
-      setEco((current) => {
-        const pressure = current.predator * 0.9 + current.stress * 0.4;
-        const newGrazer = Math.max(0, current.grazer - pressure * 0.003 + current.biomass * 0.012);
-        const newBiomass = Math.max(0, current.biomass - current.predator * 0.05 + newGrazer * 0.018 + current.bloom * 0.02);
-        const newStress = Math.max(0, Math.min(120, current.stress + pressure * 0.008 - newGrazer * 0.005));
-        const newBloom = Math.max(0, current.bloom * 0.97 + (newBiomass > 60 ? 0.3 : 0));
-        const newPred = Math.max(0, Math.min(99, current.predator + newStress * 0.004 - 0.03));
-        return { biomass: newBiomass, predator: newPred, grazer: newGrazer, stress: newStress, bloom: newBloom, tension: pressure };
-      });
-    }, 10500);
-    return () => window.clearInterval(timer);
+    const timer = setTimeout(() => {
+      setFirstMessageVisible(false);
+    }, 7500);
+    return () => clearTimeout(timer);
   }, []);
 
-  const updatePosition = useCallback((next: [number, number, number], nextSpeed: number) => {
-    const now = performance.now();
-    if (now - lastPositionUpdate.current < 180) return;
-    lastPositionUpdate.current = now;
-    setPosition(next.map((value) => Math.round(value * 10) / 10) as [number, number, number]);
-    setSpeed(Math.round(nextSpeed * 10) / 10);
-    const found = nearestDistrict(state.seed, next[0], next[2]);
-    setDistrict((current) => (found?.id ?? null) !== (current?.id ?? null) ? found : current);
-  }, [state.seed]);
+  // Hunger & Starvation Tick (Survival Mode)
+  const isStarving = gameMode === "survival" && hunger <= 0;
 
-  const changeLayer = useCallback((targetId: string, force = false) => {
-    if (targetId === realmId || transition || (!force && panel)) return;
-    if (document.pointerLockElement) document.exitPointerLock();
-    cinematicAudio.transition(realmIndexOf(targetId) > realmIndexOf(realmId));
-    cinematicAudio.whoosh(0.6 + Math.random() * 0.4);
-    cinematicAudio.cinematicHit(0.9);
-    setTransition({ from: realmId, to: targetId });
-    window.setTimeout(() => {
-      setRealmId(targetId);
-      setState((current) => ({ ...current, layer: targetId, lastPlayed: Date.now() }));
-      setLatest(null);
-    }, settings.reducedMotion ? 130 : 780);
-    window.setTimeout(() => setTransition(null), settings.reducedMotion ? 320 : 1700);
-  }, [panel, realmId, settings.reducedMotion, transition]);
+  useEffect(() => {
+    if (gameMode !== "survival") return;
+    const interval = setInterval(() => {
+      setHunger((prev) => Math.max(0, prev - 1));
+    }, 3800);
+    return () => clearInterval(interval);
+  }, [gameMode]);
 
-  const travelExpedition = useCallback((id: ExpeditionId) => {
-    if (transition || intro) return;
-    const nextExpedition = expeditionFor(id);
-    setState((current) => ({ ...current, scenario: nextExpedition.id, lastPlayed: Date.now() }));
-    setLatest(null);
-    setPanel(null);
-    cinematicAudio.transition(realmIndexOf(nextExpedition.startLayer) > realmIndexOf(realmId));
-    if (nextExpedition.startLayer !== realmId) changeLayer(nextExpedition.startLayer, true);
-  }, [changeLayer, intro, realmId, transition]);
-
-  const travelLifeStage = useCallback((id: LifeStageId) => {
-    if (stageTransition || transition || intro) return;
-    if (id === lifeStage.id) return;
-    setStageTransition({ from: lifeStage.id, to: id });
-    setState((current) => ({ ...current, lifeStage: id, lastPlayed: Date.now() }));
-    setLatest(null);
-    setPanel(null);
-    cinematicAudio.transition(lifeStages.findIndex((stage) => stage.id === id) > lifeStages.findIndex((stage) => stage.id === lifeStage.id));
-    window.setTimeout(() => setStageTransition(null), settings.reducedMotion ? 280 : 1450);
-  }, [intro, lifeStage.id, settings.reducedMotion, stageTransition, transition]);
-
-  const shiftLayer = useCallback((direction: number) => {
-    const index = THREEClamp(realmIndexOf(realmId) + direction, 0, realmList.length - 1);
-    changeLayer(realmAtIndex(index).id);
-  }, [changeLayer, realmId]);
-
-  const scan = useCallback(() => {
-    if (scanLock.current || panel || transition || intro) return;
-    scanLock.current = true;
-    setScanning(true);
-    window.setTimeout(() => {
-      setState((current) => {
-        const pool = realmDiscoveries(current.seed, getRealm(current.layer));
-        const available = pool.filter((candidate) => !current.discoveries.some((item) => item.name === candidate.name));
-        const candidate = available[0] ?? pool[current.cycle % Math.max(1, pool.length)];
-        const alreadyKnown = current.discoveries.some((item) => item.name === candidate.name);
-        const discovery: Discovery = { ...candidate, id: `${current.layer}-${candidate.name}-${Date.now()}`, layer: current.layer, time: Date.now() };
-        setLatest(discovery);
-        if (!alreadyKnown) cinematicAudio.discovery();
-        let next: SaveState = alreadyKnown ? current : { ...current, discoveries: [...current.discoveries, discovery], evolution: current.evolution + 14, lastPlayed: Date.now() };
-        if (district && !(current.districtClaims ?? []).includes(district.id)) {
-          const inv = [...(next.inventory ?? [])];
-          const idx = inv.findIndex((item) => item.id === "district-essence");
-          if (idx >= 0) inv[idx] = { ...inv[idx], count: inv[idx].count + 1 };
-          else inv.push({ ...inventoryCatalog["district-essence"], count: 1 });
-          next = { ...next, inventory: inv, districtClaims: [...(current.districtClaims ?? []), district.id], evolution: next.evolution + 12 };
-          cinematicAudio.discovery();
+  // Starvation Health Drain
+  useEffect(() => {
+    if (!isStarving) return;
+    cinematicAudio.starvationWarning();
+    const interval = setInterval(() => {
+      cinematicAudio.starvationWarning();
+      setHealth((h) => {
+        const next = Math.max(0, h - 4);
+        if (next === 0) {
+          cinematicAudio.cinematicHit(1.6);
         }
         return next;
       });
-      setScanning(false);
-      window.setTimeout(() => { scanLock.current = false; }, 850);
-    }, settings.reducedMotion ? 240 : 980);
-  }, [district, intro, panel, settings.reducedMotion, transition]);
+      setImpactFlash(Date.now());
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [isStarving]);
 
-  const build = useCallback(() => {
-    if (realmId !== "planet" || panel || transition || intro) return;
-    cinematicAudio.cinematicHit(0.3);
-    setState((current) => ({ ...current, structures: current.structures + 1, lastPlayed: Date.now() }));
-  }, [intro, panel, realmId, transition]);
-
-  const craft = useCallback((recipe: CraftRecipe) => {
-    if (panel !== "crafting" || transition || intro) return;
-    setState((current) => {
-      const inventory = [...(current.inventory ?? [])];
-      const amount = (id: string) => inventory.find((item) => item.id === id)?.count ?? 0;
-      if (!Object.entries(recipe.costs).every(([id, needed]) => amount(id) >= needed)) return current;
-      for (const [id, needed] of Object.entries(recipe.costs)) {
-        const index = inventory.findIndex((item) => item.id === id);
-        if (index >= 0) inventory[index] = { ...inventory[index], count: inventory[index].count - needed };
-      }
-      const existing = inventory.findIndex((item) => item.id === recipe.result.id);
-      if (existing >= 0) inventory[existing] = { ...inventory[existing], count: inventory[existing].count + recipe.result.count };
-      else inventory.push({ ...inventoryCatalog[recipe.result.id], count: recipe.result.count });
-      cinematicAudio.cinematicHit(0.25);
-      return { ...current, inventory: inventory.filter((item) => item.count > 0), crafted: [...(current.crafted ?? []), recipe.id], lastPlayed: Date.now() };
-    });
-  }, [intro, panel, transition]);
-
-  const toggleCamera = useCallback(() => {
-    setCameraMode((current) => current === "first" ? "third" : current === "third" ? "orbit" : "first");
-  }, []);
-
-  const feed = useCallback(() => {
-    if (panel || transition || intro) return;
-    cinematicAudio.hover();
-    setEco((current) => ({
-      biomass: Math.min(160, current.biomass + 4),
-      predator: Math.max(0, current.predator - 0.5),
-      grazer: Math.min(200, current.grazer + 2),
-      stress: Math.max(0, current.stress - 5),
-      bloom: Math.min(100, current.bloom + 6),
-      tension: current.tension,
-    }));
-    setState((current) => current.layer === "planet" || current.layer === "micro" ? { ...current, evolution: current.evolution + 2, energy: Math.min(100, (current.energy ?? 76) + 3), lastPlayed: Date.now() } : current);
-  }, [intro, panel, transition]);
-
-  const attack = useCallback(() => {
-    if (panel || transition || intro) return;
-    const now = performance.now();
-    if (now - attackCooldown.current < 650) return;
-    attackCooldown.current = now;
-    cinematicAudio.attack();
-    cinematicAudio.whoosh(0.9 + Math.random() * 0.35);
-    setAttackSignal((s) => s + 1);
-    setImpactFlash(Date.now());
-    setState((current) => ({ ...current, energy: Math.max(0, (current.energy ?? 76) - 3), hunts: (current.hunts ?? 0) + 1, lastPlayed: Date.now() }));
-  }, [intro, panel, transition]);
-
-  const grab = useCallback(() => {
-    if (panel || transition || intro) return;
-    const now = performance.now();
-    if (now - grabCooldown.current < 1400) return;
-    grabCooldown.current = now;
-    const energy = state.energy ?? 76;
-    if (energy < 8) { cinematicAudio.hover(); return; }
-    cinematicAudio.grab();
-    cinematicAudio.thump();
-    setGrabSignal((s) => s + 1);
-    setImpactFlash(Date.now());
-    setState((current) => ({ ...current, energy: Math.max(0, (current.energy ?? 76) - 6), lastPlayed: Date.now() }));
-  }, [intro, panel, state.energy, transition]);
-
-  const onPrey = useCallback((count: number, kind: string) => {
-    if (count <= 0) return;
-    cinematicAudio.pickup();
-    setState((current) => {
-      const inv = current.inventory ? [...current.inventory] : [];
-      const itemId = kind === "grab" ? "vestige-organ" : "lumen-shard";
-      const idx = inv.findIndex((item) => item.id === itemId);
-      if (idx >= 0) inv[idx] = { ...inv[idx], count: inv[idx].count + count };
-      else inv.push({ ...inventoryCatalog[itemId], count });
-      return {
-        ...current,
-        inventory: inv,
-        hunts: (current.hunts ?? 0) + count,
-        energy: Math.min(100, (current.energy ?? 76) + count * (kind === "grab" ? 9 : 3)),
-        evolution: current.evolution + count * 2,
-        lastPlayed: Date.now(),
-      };
-    });
-  }, []);
-
-  useEffect(() => {
-    const keys = (event: KeyboardEvent) => {
-      if (event.code === "KeyE") scan();
-      if (event.code === "KeyF") feed();
-      if (event.code === "KeyQ") attack();
-      if (event.code === "KeyG") grab();
-      if (event.code === "KeyJ") setPanel((current) => current === "journal" ? null : "journal");
-      if (event.code === "KeyV") setPanel((current) => current === "evolution" ? null : "evolution");
-      if (event.code === "KeyP") setPanel((current) => current === "pause" ? null : "pause");
-      if (event.code === "KeyB") build();
-      if (event.code === "KeyZ") shiftLayer(-1);
-      if (event.code === "KeyX") shiftLayer(1);
-      if (event.code === "KeyT") toggleCamera();
-      if (event.code === "KeyK") setPanel((current) => current === "physics" ? null : "physics");
-      if (event.code === "KeyL") setPanel((current) => current === "civilization" ? null : "civilization");
-      if (event.code === "KeyI") setPanel((current) => current === "inventory" ? null : "inventory");
-      if (event.code === "KeyM") setPanel((current) => current === "atlas" ? null : "atlas");
-      if (event.code === "KeyN") setPanel((current) => current === "crafting" ? null : "crafting");
-      if (event.code === "KeyY") setPanel((current) => current === "stages" ? null : "stages");
+  // Sync state changes with local storage
+  const persistWorld = useCallback(() => {
+    const updated: SaveState = {
+      ...state,
+      health,
+      hunger,
+      stamina,
+      foodsInventory: foods,
+      structuresList: placedStructures,
+      structures: placedStructures.length,
+      playerPos: position,
+      lastPlayed: Date.now(),
     };
-    window.addEventListener("keydown", keys);
-    return () => window.removeEventListener("keydown", keys);
-  }, [attack, build, feed, grab, scan, shiftLayer, toggleCamera]);
+    setState(updated);
+    onSave(updated);
+
+    if (state.id) {
+      saveWorld({
+        id: state.id,
+        name: state.name || `World ${state.seed.slice(0, 8)}`,
+        seed: state.seed,
+        gameMode,
+        creatureId: creature.id,
+        creatureName: state.characterName || creature.genus,
+        customCreature: state.customCreature || {
+          name: state.characterName || creature.genus,
+          bodyPlan: creature.bodyPlan,
+          hue: creature.hue,
+          accentHue: (creature.hue + 140) % 360,
+          saturation: 75,
+          lightness: 55,
+          emissiveIntensity: 0.7,
+          emissiveHue: (creature.hue + 35) % 360,
+          finish: "organic",
+          pattern: "biolum-veins",
+          headwear: "none",
+          outfit: "none",
+          backWings: "none",
+          accessory: "none",
+          eyeType: "two",
+          eyeColor: "#6ee7b7",
+          scale: creature.scale || 1.0,
+          limbs: creature.limbs || 4,
+          segments: creature.segments || 3,
+          spineArch: 0,
+          tailLength: 1.0,
+          auraIntensity: 0.6,
+        },
+        health,
+        maxHealth: 100,
+        hunger,
+        stamina,
+        evolution: state.evolution,
+        cycle: state.cycle,
+        structures: placedStructures.length,
+        structuresList: placedStructures,
+        foodsInventory: foods,
+        inventory: state.inventory || [],
+        discoveries: state.discoveries,
+        traits: state.traits,
+        scenario: state.scenario,
+        layer: (realm.key || realmId) as WorldLayer,
+        position,
+        playtimeSeconds: 0,
+        createdAt: Date.now(),
+        lastPlayed: Date.now(),
+        hasSeenCutscene: true,
+      });
+    }
+
+    setSaveToast("CONTINUUM SAVED // PERSISTENCE SYNCHRONIZED");
+    setTimeout(() => setSaveToast(null), 2500);
+    cinematicAudio.select();
+  }, [creature.bodyPlan, creature.genus, creature.hue, creature.id, creature.limbs, creature.scale, creature.segments, foods, gameMode, health, hunger, onSave, placedStructures, position, realm.key, realmId, stamina, state]);
+
+  // Eating Action
+  const handleEat = useCallback((foodId?: string) => {
+    let targetFood = foodId;
+    if (!targetFood) {
+      const keys = Object.keys(foods);
+      targetFood = keys.find((k) => (foods[k] ?? 0) > 0);
+    }
+    if (!targetFood || (foods[targetFood] ?? 0) <= 0) return;
+
+    const meta = foodsCatalog[targetFood] ?? foodsCatalog["lumen-berry"];
+    cinematicAudio.eat();
+
+    setFoods((prev) => ({
+      ...prev,
+      [targetFood!]: Math.max(0, (prev[targetFood!] ?? 0) - 1),
+    }));
+
+    setHunger((prev) => Math.min(100, prev + meta.hungerRestore));
+    setHealth((prev) => Math.min(100, prev + meta.healthRestore));
+    setStamina((prev) => Math.min(100, prev + meta.staminaRestore));
+
+    setEatFeedback({
+      text: `+${meta.hungerRestore} HUNGER / +${meta.healthRestore} HP [${meta.name}]`,
+      id: Date.now(),
+    });
+    setTimeout(() => setEatFeedback(null), 2200);
+  }, [foods]);
+
+  // Foraged Food Event
+  const handleFoodHarvested = useCallback((foodId: string, count: number) => {
+    cinematicAudio.pickup();
+    setFoods((prev) => ({
+      ...prev,
+      [foodId]: (prev[foodId] ?? 0) + count,
+    }));
+    const meta = foodsCatalog[foodId];
+    setEatFeedback({
+      text: `+${count} ${meta?.name ?? foodId} HARVESTED`,
+      id: Date.now(),
+    });
+    setTimeout(() => setEatFeedback(null), 2000);
+  }, []);
+
+  // Google Watcher Damage Event
+  const handlePlayerDamage = useCallback((damage: number) => {
+    if (gameMode === "creative" || gameMode === "exploration") return;
+    setHealth((h) => Math.max(0, h - damage));
+    setImpactFlash(Date.now());
+    cinematicAudio.googleLaser();
+  }, [gameMode]);
+
+  // Google Watcher Defeated Event
+  const handleGoogleDefeated = useCallback(() => {
+    cinematicAudio.cinematicHit(1.5);
+    handleFoodHarvested("google-core", 1);
+    const discovery: Discovery = {
+      id: `google-watcher-${Date.now()}`,
+      name: "G.O.O.G.L.E. Watcher Neutralized",
+      category: "Machine Entity",
+      layer: realmId,
+      time: Date.now(),
+      note: "An ancient autonomous surveillance drone was dismantled. Its algorithm core yields immense bio-energy.",
+    };
+    setState((prev) => ({
+      ...prev,
+      discoveries: [discovery, ...prev.discoveries],
+      evolution: prev.evolution + 40,
+    }));
+  }, [handleFoodHarvested, realmId]);
+
+  // Structure Placement Event
+  const handleStructurePlaced = useCallback((structure: PlacedStructure) => {
+    setPlacedStructures((prev) => [...prev, structure]);
+    cinematicAudio.structurePlace();
+    setActiveBlueprint(null);
+  }, []);
+
+  // Radar Scan (Exploration Mode)
+  const triggerRadarScan = useCallback(() => {
+    cinematicAudio.scanSonar();
+    setEatFeedback({
+      text: "SONIC RADAR: SCANNING 4 NEAREST ANCIENT DISTRICTS",
+      id: Date.now(),
+    });
+    setTimeout(() => setEatFeedback(null), 2500);
+  }, []);
+
+  // Respawn after death
+  const handleRespawn = () => {
+    setHealth(100);
+    setHunger(80);
+    setStamina(100);
+    cinematicAudio.cinematicHit(1.2);
+  };
 
   const unlockTrait = (id: string, cost: number) => {
     cinematicAudio.select();
@@ -741,68 +437,85 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
       : current);
   };
 
-  const consumeItem = (id: string) => {
-    cinematicAudio.pickup();
-    setState((current) => {
-      const inv = [...(current.inventory ?? [])];
-      const idx = inv.findIndex((item) => item.id === id);
-      if (idx < 0 || inv[idx].count <= 0) return current;
-      const item = inv[idx];
-      inv[idx] = { ...item, count: item.count - 1 };
-      return {
-        ...current,
-        inventory: inv.filter((i) => i.count > 0 || i.id === id),
-        evolution: current.evolution + item.essence,
-        energy: Math.min(100, (current.energy ?? 76) + item.essence * 0.5),
-        lastPlayed: Date.now(),
-      };
-    });
-  };
-
-  const paused = Boolean(panel || transition || stageTransition || intro);
-  const coordinates = useMemo(() => position.map((value) => `${value >= 0 ? "+" : ""}${value.toFixed(1)}`).join(" / "), [position]);
-
-  // Footsteps - trigger when moving
+  // Keyboard Shortcuts
   useEffect(() => {
-    if (paused) return;
-    const interval = window.setInterval(() => {
-      if (speed > 0.8) cinematicAudio.footstep(speed * 0.25);
-    }, 200);
-    return () => window.clearInterval(interval);
-  }, [paused, speed]);
-  const captionsByArchetype: Record<string, string> = {
-    void: "[A sibling universe exhales through the membrane.]",
-    galaxy: "[The spiral sings at roughly 40 million Herz frequencies.]",
-    cosmos: "[A deep gravitational pulse passes through the dust.]",
-    planet: "[Choirgrass resonates beneath the current.]",
-    micro: "[A nearby membrane contracts.]",
-    atomic: "[Bonds hum at rest frequency.]",
-    quantum: "[Geometry folds with a sound like distant glass.]",
-    foam: "[A trillion bubbles remember the shape of your passage.]",
-    vascular: "[The walls pulse in four-time with your heart.]",
-    "crystal-grove": "[Light bends into chords as the grove turns.]",
-    storm: "[The field armatures crackle under your attention.]",
-    helix: "[Instructions wash over you like a tide.]",
-    "plasma-sea": "[The sea folds light into standing waves.]",
-    "forest-depth": "[Conscious roots retreat from your footsteps.]",
-    circuit: "[The lattice recalculates around your weight.]",
-    marrow: "[The great body flexes; your presence is felt.]",
-    hive: "[Ten thousand hexes rehearse a single thought.]",
-    "nebula-hollow": "[Starlight is born somewhere underfoot.]",
-    "mirror-field": "[Your reflection moves first.]",
-    titan: "[The ground blinks.]",
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "KeyE") {
+        handleEat();
+      }
+      if (e.code === "KeyG") {
+        if (gameMode === "creative") {
+          setIsFlying((f) => !f);
+          cinematicAudio.select();
+        }
+      }
+      if (e.code === "KeyB") {
+        if (gameMode === "creative") {
+          setActiveBlueprint((curr) => curr ? null : "spire");
+          cinematicAudio.hover();
+        }
+      }
+      if (e.code === "KeyV") {
+        if (gameMode === "exploration") {
+          triggerRadarScan();
+        }
+      }
+      if (e.code === "KeyP") {
+        if (gameMode === "exploration") {
+          setPhotoMode((p) => !p);
+          cinematicAudio.select();
+        }
+      }
+      if (e.code === "KeyQ") {
+        attack();
+      }
+      if (e.code === "KeyT") {
+        toggleCamera();
+      }
+      if (e.code === "KeyJ") setPanel((curr) => curr === "journal" ? null : "journal");
+      if (e.code === "KeyI") setPanel((curr) => curr === "inventory" ? null : "inventory");
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [gameMode, handleEat, triggerRadarScan]);
+
+  const updatePosition = useCallback((next: [number, number, number], nextSpeed: number) => {
+    setPosition([next[0], next[1], next[2]]);
+    setSpeed(nextSpeed);
+    const found = nearestDistrict(state.seed, next[0], next[2]);
+    setDistrict((current) => (found?.id ?? null) !== (current?.id ?? null) ? found : current);
+  }, [state.seed]);
+
+  const changeLayer = useCallback((targetId: string) => {
+    if (targetId === realmId || transition) return;
+    cinematicAudio.transition(realmIndexOf(targetId) > realmIndexOf(realmId));
+    setTransition({ from: realmId, to: targetId });
+    setTimeout(() => {
+      setRealmId(targetId);
+      setState((curr) => ({ ...curr, layer: targetId }));
+      setTransition(null);
+    }, 800);
+  }, [realmId, transition]);
+
+  const toggleCamera = () => {
+    setCameraMode((curr) => curr === "first" ? "third" : curr === "third" ? "orbit" : "first");
+    cinematicAudio.hover();
   };
-  const expeditionCaption: Record<ExpeditionId, string> = {
-    leaf: "[A caterpillar foot presses a shadow into the leaf vein.]",
-    digestion: "[Acid turns in the gastric sea; the next contraction is close.]",
-    sewer: "[A city tide enters the grate and carries a thousand small histories.]",
-    colossus: "[The bull steps. A mountain route appears in the tremor.]",
-    frontier: "[A village signal is waking somewhere beyond the next ridge.]",
+
+  const attack = () => {
+    cinematicAudio.attack();
+    setAttackSignal((s) => s + 1);
+  };
+
+  const onPrey = (count: number) => {
+    cinematicAudio.pickup();
+    handleFoodHarvested("organ-marrow", count);
   };
 
   return (
-    <main className={`game-experience realm-${realm.archetype} ${settings.highContrast ? "high-contrast" : ""}`}>
-      <div className="world-canvas">
+    <main className={`game-experience relative w-full h-full select-none overflow-hidden ${photoMode ? "photo-mode" : ""}`}>
+      {/* 3D World Canvas */}
+      <div className="world-canvas absolute inset-0 z-0">
         <GameWorld
           seed={state.seed}
           layer={(realm.key ?? realmId) as WorldLayer}
@@ -822,89 +535,360 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
           fov={settings.fov}
           viewDistance={settings.viewDistance}
           reducedMotion={settings.reducedMotion}
-          paused={paused}
+          paused={Boolean(panel || firstMessageVisible || health <= 0)}
           cameraMode={cameraMode}
           creature={creature}
-          characterName={state.characterName ?? creature.genus}
+          customCreature={state.customCreature}
+          characterName={state.characterName ?? state.customCreature?.name ?? creature.genus}
           scenario={state.scenario}
           lifeStage={state.lifeStage}
-          tension={eco.tension}
+          tension={15}
           attackSignal={attackSignal}
-          grabSignal={grabSignal}
+          grabSignal={0}
           onPrey={onPrey}
           onRealmEnter={changeLayer}
-          onLockChange={setLocked}
+          onLockChange={() => {}}
           onPosition={updatePosition}
+          gameMode={gameMode}
+          placedStructures={placedStructures}
+          activeBuildingBlueprint={activeBlueprint}
+          onStructurePlaced={handleStructurePlaced}
+          onFoodHarvested={handleFoodHarvested}
+          onPlayerDamage={handlePlayerDamage}
+          onGoogleDefeated={handleGoogleDefeated}
+          isFlying={isFlying}
         />
       </div>
-      <div className="game-grade" />
+
       <CombatImpactFlash signal={impactFlash} />
-      <div className="game-hud">
-        <header className="hud-top">
-          <GameBrand />
-          <div className="location-heading"><span>{realm.label.toUpperCase()} / {lifeStage.name} / 10{realm.exponent >= 0 ? "+" : ""}{realm.exponent} M • 75+ BIOMES</span><strong>{expedition.destination}</strong><small>{expedition.label} / {lifeStage.era} / {coordinates}</small>{district && <em className="district-banner" style={{ color: district.color }}>DISTRICT / {district.name} • {district.biome.toUpperCase()}</em>}</div>
-          <div className="hud-actions">
-            <button onClick={() => setPanel("atlas")}><Map size={16} /><span>ROUTE</span><b>5</b></button>
-            <button onClick={() => setPanel("journal")}><BookOpen size={16} /><span>JOURNAL</span><b>{state.discoveries.length}</b></button>
-            <button onClick={() => setPanel("inventory")}><Atom size={16} /><span>ITEMS</span><b>{(state.inventory ?? []).reduce((n, item) => n + item.count, 0)}</b></button>
-            <button onClick={() => setPanel("crafting")}><Hammer size={16} /><span>CRAFT</span><b>{(state.crafted ?? []).length}</b></button>
-            <button onClick={() => setPanel("stages")}><Orbit size={16} /><span>TIME</span><b>{lifeStages.findIndex((stage) => stage.id === lifeStage.id) + 1}</b></button>
-            <button onClick={() => setPanel("physics")}><Gauge size={16} /><span>PHYSICS</span></button>
-            <button onClick={() => setPanel("pause")} aria-label="Pause"><Pause size={16} /></button>
-          </div>
-        </header>
-        <BodyTelemetry creature={creature} state={state} onEvolution={() => setPanel("evolution")} />
-        <ContextScanner realm={realm} scanning={scanning} latest={latest} />
-        <div className="hud-right-stack">
-          <EcosystemPanel eco={eco} realm={realm} />
-          <PhysicsPeek realm={realm} seed={state.seed} />
-        </div>
-        <ScaleNavigator realmId={realmId} onChange={changeLayer} disabled={Boolean(transition)} />
-        <div className={`reticle ${scanning ? "is-scanning" : ""}`}><i /><i /><Crosshair size={25} strokeWidth={0.8} /><span>{scanning ? "CLASSIFYING" : ""}</span></div>
-        <div className="hud-bottom-rail">
-          <div className="movement-readout"><Compass size={15} /><span>{speed.toFixed(1)} m/s</span><i /><span>CYCLE {state.cycle}</span><i /><Video size={13} /><span>{cameraMode.toUpperCase()}</span></div>
-          <div className="control-hints">
-            <span><kbd>WASD</kbd> MOVE</span><span><kbd>T</kbd> CAM</span><span><kbd>Q</kbd> STRIKE</span><span><kbd>G</kbd> GRAB</span><span><kbd>E</kbd> OBSERVE</span><span><kbd>F</kbd> FEED</span><span><kbd>M</kbd> ATLAS</span><span><kbd>N</kbd> CRAFT</span><span><kbd>Y</kbd> TIME</span><span><kbd>I</kbd> ITEMS</span>
-          </div>
-        </div>
-        {!locked && !paused && <div className="pointer-hint"><MousePointer2 size={16} /> Click reality to bind camera</div>}
+      <StarvationOverlay active={isStarving} />
+
+      {/* TOP NOTIFICATION TOAST (SAVING / HARVESTING / EATING) */}
+      <div className="fixed top-20 left-0 right-0 z-40 flex flex-col items-center pointer-events-none gap-2">
+        <AnimatePresence>
+          {saveToast && (
+            <motion.div
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -10, opacity: 0 }}
+              className="px-4 py-2 rounded-xl bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-bold font-mono tracking-wider shadow-lg"
+            >
+              {saveToast}
+            </motion.div>
+          )}
+          {eatFeedback && (
+            <motion.div
+              key={eatFeedback.id}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="px-4 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-400 text-emerald-200 text-xs font-bold tracking-wide shadow-md"
+            >
+              {eatFeedback.text}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
+      {/* FIRST MESSAGE BANNER: "FIND AND SURVIVE AND FIND US." */}
       <AnimatePresence>
-        {intro && (
-          <motion.div className="awakening" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.8 }}>
-              <span className="awakening-eyebrow">GENOME SYNCHRONIZED / CYCLE {state.cycle} / {state.seed}</span>
-              <h1>{sandbox ? "Physics is optional here." : "Something in the water has noticed you."}</h1>
-              <p>{sandbox ? "All scale boundaries and directed adaptations are available." : `You awaken as ${creature.genus} inside ${realm.place}. The ecosystem feels your presence.`}</p>
-              <div className="awakening-actions">
-                <button className="awakening-cta" onClick={() => { cinematicAudio.cinematicHit(0.55); setIntro(false); }}>
-                  {sandbox ? "UNBIND REALITY" : "OPEN YOUR SENSES"}
-                  <ChevronRight size={20} strokeWidth={2} />
+        {firstMessageVisible && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/75 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 20 }}
+              className="max-w-2xl w-full p-8 rounded-2xl bg-slate-950/90 border border-cyan-800/80 shadow-2xl shadow-cyan-950/80 text-center space-y-5"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-600/50 text-cyan-400 text-[11px] font-mono tracking-widest uppercase">
+                <Sparkles size={13} /> INCOMING DIRECTIVE ARCHIVE
+              </div>
+
+              <h1 className="text-3xl md:text-5xl font-black text-cyan-100 tracking-wider uppercase drop-shadow-md">
+                FIND AND SURVIVE AND FIND US.
+              </h1>
+
+              <p className="text-sm md:text-base text-slate-300 leading-relaxed font-light">
+                The Mind Girl's voice fades into the planetary winds. The Old Architects remain stranded beyond the cosmic edge. Forage nutrients to survive starvation, beware the roaming <strong className="text-red-400 font-semibold">G.O.O.G.L.E. Watchers</strong>, build shelters, and seek the ancient spires.
+              </p>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    cinematicAudio.select();
+                    setFirstMessageVisible(false);
+                  }}
+                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-cyan-950 transition"
+                >
+                  Acknowledge Directive &amp; Awaken
                 </button>
-                {!sandbox && <button className="awakening-secondary" onClick={() => setIntro(false)}><Play size={14} /> Begin at organism scale</button>}
-                {sandbox && <button className="awakening-secondary" onClick={() => { setCameraMode("orbit"); setIntro(false); }}><Video size={14} /> Cinematic orbit</button>}
               </div>
             </motion.div>
           </motion.div>
         )}
-        {transition && <ScaleTransition from={transition.from} to={transition.to} />}
-        {stageTransition && <LifeStageTransition from={stageTransition.from} to={stageTransition.to} />}
-        {panel === "atlas" && <AtlasPanel scenario={expedition.id} onTravel={travelExpedition} onClose={() => setPanel(null)} />}
-        {panel === "stages" && <LifeStagePanel stageId={lifeStage.id} onTravel={travelLifeStage} onClose={() => setPanel(null)} />}
-        {panel === "inventory" && <InventoryPanel state={state} onConsume={consumeItem} onClose={() => setPanel(null)} />}
-        {panel === "crafting" && <CraftingPanel state={state} onCraft={craft} onClose={() => setPanel(null)} />}
-        {panel === "journal" && <JournalPanel state={state} onClose={() => setPanel(null)} />}
-        {panel === "evolution" && <EvolutionPanel state={state} creature={creature} onUnlock={unlockTrait} onClose={() => setPanel(null)} />}
-        {panel === "civilization" && <CivilizationPanel state={state} seed={state.seed} onClose={() => setPanel(null)} onBuild={build} />}
-        {panel === "physics" && <PhysicsPanel realm={realm} seed={state.seed} onClose={() => setPanel(null)} />}
-        {panel === "pause" && <PausePanel onResume={() => setPanel(null)} onExit={onExit} />}
       </AnimatePresence>
 
-      {realmId === "planet" && state.structures > 0 && <div className="settlement-readout"><Box size={15} /><span>COMMUNAL SIGNAL NETWORK</span><b>{state.structures} {state.structures === 1 ? "SPIRE" : "SPIRES"}</b></div>}
-      {settings.subtitles && <div className="environment-caption"><Waves size={14} /> {expeditionCaption[expedition.id] ?? captionsByArchetype[realm.id] ?? captionsByArchetype[realm.archetype] ?? captionsByArchetype.quantum}</div>}
+      {/* DEATH SCREEN MODAL */}
+      {health <= 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-red-950/90 backdrop-blur-xl">
+          <div className="max-w-md w-full p-8 rounded-2xl bg-black/90 border border-red-600 text-center space-y-5">
+            <ShieldAlert size={48} className="mx-auto text-red-500 animate-bounce" />
+            <h2 className="text-2xl font-black text-red-100 uppercase tracking-wider">
+              ORGANISM DISSOLVED
+            </h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Your organic envelope suffered structural collapse. The Genesis archive remembers your morphological pattern.
+            </p>
+            <button
+              onClick={handleRespawn}
+              className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-widest transition shadow-lg shadow-red-950"
+            >
+              Reconstitute at Beacon
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* HUD INTERFACE */}
+      {!photoMode && (
+        <div className="game-hud pointer-events-none relative z-10 w-full h-full flex flex-col justify-between p-6">
+          {/* TOP BAR */}
+          <header className="hud-top pointer-events-auto flex items-center justify-between">
+            <GameBrand />
+
+            {/* Middle: Game Mode & Biome info */}
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1 rounded-lg border text-xs font-bold uppercase tracking-wider font-mono ${
+                gameMode === "creative"
+                  ? "bg-blue-950/80 border-blue-500/60 text-blue-300"
+                  : gameMode === "exploration"
+                  ? "bg-emerald-950/80 border-emerald-500/60 text-emerald-300"
+                  : "bg-amber-950/80 border-amber-500/60 text-amber-300"
+              }`}>
+                {gameMode} MODE
+              </span>
+
+              <div className="location-heading text-left">
+                <span>{realm.label.toUpperCase()} / {state.seed.slice(0, 8)}</span>
+                <strong>{expedition.destination} {district && <span className="text-cyan-400 font-mono text-xs ml-2">• {district.name}</span>}</strong>
+              </div>
+            </div>
+
+            {/* Actions & Save World */}
+            <div className="hud-actions flex items-center gap-2">
+              <button
+                onClick={persistWorld}
+                className="px-3.5 py-1.5 rounded-lg bg-cyan-900/60 hover:bg-cyan-800/80 border border-cyan-500/50 text-cyan-200 text-xs font-bold tracking-wider transition flex items-center gap-1.5"
+                title="Save World to Archive"
+              >
+                <Zap size={14} className="text-cyan-400" /> SAVE WORLD
+              </button>
+
+              <button onClick={() => setPanel("evolution")}><Dna size={16} /><span>EVOLVE</span></button>
+              <button onClick={() => setPanel("journal")}><BookOpen size={16} /><span>JOURNAL</span></button>
+              <button onClick={() => setPanel("inventory")}><Atom size={16} /><span>MATTER</span></button>
+              <button onClick={() => setPanel("pause")}><Pause size={16} /></button>
+            </div>
+          </header>
+
+          {/* VITALS HUD (SURVIVAL / CREATIVE / EXPLORATION) */}
+          <div className="pointer-events-auto absolute top-20 left-6 flex flex-col gap-2.5 p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 backdrop-blur-md shadow-xl w-64">
+            {/* Health Bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-[10px] font-bold tracking-wider">
+                <span className="flex items-center gap-1 text-red-400"><Heart size={12} fill="currentColor" /> HEALTH</span>
+                <span className="font-mono text-slate-300">{health}/100</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+                <div
+                  className="h-full bg-gradient-to-r from-red-600 to-rose-400 transition-all duration-300"
+                  style={{ width: `${health}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Hunger Bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-[10px] font-bold tracking-wider">
+                <span className="flex items-center gap-1 text-amber-400"><Utensils size={12} /> HUNGER</span>
+                <span className="font-mono text-slate-300">{hunger}%</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    hunger < 20 ? "bg-red-500 animate-pulse" : "bg-gradient-to-r from-amber-500 to-yellow-400"
+                  }`}
+                  style={{ width: `${hunger}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Quick Eat Action Slot */}
+            <div className="pt-1 flex items-center justify-between border-t border-slate-800/80">
+              <button
+                onClick={() => handleEat()}
+                className="flex-1 py-1 px-2.5 rounded-lg bg-amber-950/60 hover:bg-amber-900/80 border border-amber-600/50 text-amber-200 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+                title="Eat Foraged Biomatter (Press E)"
+              >
+                <Utensils size={13} /> EAT BIOMATTER (E)
+              </button>
+            </div>
+
+            {/* Food Rations Count */}
+            <div className="grid grid-cols-4 gap-1 text-[10px] text-center">
+              <div className="p-1 rounded bg-slate-900 border border-slate-800 text-emerald-300">
+                Berry: <b>{foods["lumen-berry"] ?? 0}</b>
+              </div>
+              <div className="p-1 rounded bg-slate-900 border border-slate-800 text-purple-300">
+                Spore: <b>{foods["spore-fruit"] ?? 0}</b>
+              </div>
+              <div className="p-1 rounded bg-slate-900 border border-slate-800 text-cyan-300">
+                Kelp: <b>{foods["hydro-kelp"] ?? 0}</b>
+              </div>
+              <div className="p-1 rounded bg-slate-900 border border-slate-800 text-rose-300">
+                Meat: <b>{foods["organ-marrow"] ?? 0}</b>
+              </div>
+            </div>
+          </div>
+
+          {/* CREATIVE MODE BUILDING TOOLBAR */}
+          {gameMode === "creative" && (
+            <div className="pointer-events-auto absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-2xl bg-slate-950/90 border border-cyan-800/80 backdrop-blur-md shadow-2xl">
+              <button
+                onClick={() => {
+                  setIsFlying(!isFlying);
+                  cinematicAudio.select();
+                }}
+                className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition ${
+                  isFlying
+                    ? "bg-cyan-500/30 border-cyan-400 text-cyan-200"
+                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                }`}
+              >
+                <Wind size={15} /> FLY MODE [G]: {isFlying ? "ON" : "OFF"}
+              </button>
+
+              <div className="h-6 w-px bg-slate-800" />
+
+              <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider px-2">
+                Schematics:
+              </span>
+
+              {structureBlueprints.map((bp) => (
+                <button
+                  key={bp.type}
+                  onClick={() => {
+                    setActiveBlueprint(activeBlueprint === bp.type ? null : bp.type);
+                    cinematicAudio.hover();
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                    activeBlueprint === bp.type
+                      ? "bg-cyan-500/40 border-cyan-400 text-white shadow-md shadow-cyan-950"
+                      : "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700"
+                  }`}
+                  title={bp.description}
+                >
+                  {bp.name.split(" ")[0]}
+                </button>
+              ))}
+
+              {placedStructures.length > 0 && (
+                <button
+                  onClick={() => {
+                    setPlacedStructures([]);
+                    cinematicAudio.thump();
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-red-950/70 border border-red-700/50 text-red-300 text-xs font-bold hover:bg-red-900 transition"
+                  title="Clear Placed Structures"
+                >
+                  Clear ({placedStructures.length})
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* EXPLORATION MODE RADAR & CAMERA TOOLBAR */}
+          {gameMode === "exploration" && (
+            <div className="pointer-events-auto absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-2xl bg-slate-950/90 border border-emerald-800/80 backdrop-blur-md shadow-2xl">
+              <button
+                onClick={triggerRadarScan}
+                className="px-3.5 py-2 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/60 text-emerald-200 text-xs font-bold flex items-center gap-1.5 transition"
+              >
+                <Radio size={15} className="animate-pulse" /> SONIC RADAR SCAN [V]
+              </button>
+              <button
+                onClick={() => setPhotoMode(true)}
+                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition"
+              >
+                <Camera size={15} /> POSTCARD PHOTO MODE [P]
+              </button>
+            </div>
+          )}
+
+          {/* BOTTOM CONTROLS HINTS */}
+          <footer className="hud-bottom-rail flex items-center justify-between">
+            <div className="movement-readout flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <Compass size={14} className="text-cyan-400" />
+              <span>{speed.toFixed(1)} m/s • {position[0].toFixed(1)}, {position[2].toFixed(1)}</span>
+              <span>• {cameraMode.toUpperCase()} VIEW</span>
+            </div>
+
+            <div className="control-hints flex items-center gap-3 text-[11px] text-slate-400">
+              <span><kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-white">WASD</kbd> Move</span>
+              <span><kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-white">E</kbd> Eat</span>
+              <span><kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-white">Q</kbd> Attack</span>
+              <span><kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-white">T</kbd> Cam</span>
+              {gameMode === "creative" && (
+                <>
+                  <span><kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-white">G</kbd> Fly</span>
+                  <span><kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-white">B</kbd> Build</span>
+                </>
+              )}
+            </div>
+          </footer>
+        </div>
+      )}
+
+      {/* PHOTO MODE OVERLAY */}
+      {photoMode && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-between p-8 pointer-events-auto bg-black/10">
+          <div className="flex justify-between items-center">
+            <span className="font-mono text-xs tracking-widest text-cyan-300 bg-black/60 px-3 py-1 rounded-lg">
+              // PHOTO MODE // SNAPSHOT CAMERA
+            </span>
+            <button
+              onClick={() => setPhotoMode(false)}
+              className="px-4 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-xs font-bold hover:bg-slate-800 transition"
+            >
+              Exit Photo Mode [ESC]
+            </button>
+          </div>
+          <div className="text-center">
+            <button
+              onClick={() => {
+                cinematicAudio.select();
+                alert("Postcard snapshot captured to Genesis memory!");
+              }}
+              className="px-6 py-2.5 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold tracking-widest uppercase shadow-2xl transition"
+            >
+              Capture Postcard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PANELS */}
+      <AnimatePresence>
+        {panel === "evolution" && <EvolutionPanel state={state} onUnlock={unlockTrait} onClose={() => setPanel(null)} />}
+        {panel === "journal" && <JournalPanel state={state} onClose={() => setPanel(null)} />}
+        {panel === "inventory" && <InventoryPanel state={state} onConsume={handleEat} onClose={() => setPanel(null)} />}
+        {panel === "pause" && <PausePanel onResume={() => setPanel(null)} onExit={onExit} />}
+      </AnimatePresence>
     </main>
   );
 }
-
-function THREEClamp(value: number, min: number, max: number) { return Math.min(max, Math.max(min, value)); }

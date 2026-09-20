@@ -4,9 +4,9 @@ import { Environment, Float, OrbitControls } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft, ArrowRight, Atom, Bookmark, Check, ChevronRight, CircleDot,
-  Dna, Eye, FlaskConical, Gauge, Globe2, Infinity as InfinityIcon, Leaf,
+  Dna, Eye, Film, FlaskConical, FolderArchive, Gauge, Globe2, Infinity as InfinityIcon, Leaf,
   Maximize, Monitor, Mountain, Orbit, Play, RefreshCw, Search, Settings2,
-  Sparkles, Volume2, Waves,
+  Shirt, Sparkles, Volume2, Waves,
 } from "lucide-react";
 import { CreatureModel } from "./CreatureModel";
 import {
@@ -52,6 +52,9 @@ interface MainMenuProps {
   onSettingsChange: (settings: AppSettings) => void;
   onStart: (mode?: "journey" | "sandbox", expedition?: ExpeditionId) => void;
   onContinue: () => void;
+  onOpenCustomizer?: () => void;
+  onOpenWorldSaves?: () => void;
+  onPlayIntro?: () => void;
 }
 
 type MenuView = "main" | "creatures" | "seed" | "atlas" | "multiverse" | "settings";
@@ -80,7 +83,15 @@ function CornerTelemetry({ seed }: { seed: string }) {
   );
 }
 
-function SaveConstellation({ save, onContinue }: { save: SaveState | null; onContinue: () => void }) {
+function SaveConstellation({
+  save,
+  onContinue,
+  onOpenWorldSaves,
+}: {
+  save: SaveState | null;
+  onContinue: () => void;
+  onOpenWorldSaves?: () => void;
+}) {
   return (
     <motion.aside className="menu-save-panel" initial={{ opacity: 0, x: 34 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8, duration: 0.8 }}>
       <div className="save-panel-header"><span>// LOAD JOURNEY</span><small>{save ? "LOCAL MEMORY / 01" : "NO MEMORY / READY"}</small></div>
@@ -91,6 +102,34 @@ function SaveConstellation({ save, onContinue }: { save: SaveState | null; onCon
       ) : (
         <div className="save-slot save-slot--empty"><span><b>NO SAVE SLOT</b><small>THE FIRST POSSIBILITY IS WAITING</small></span></div>
       )}
+      {onOpenWorldSaves && (
+        <button
+          onClick={onOpenWorldSaves}
+          style={{
+            marginTop: "12px",
+            width: "100%",
+            padding: "8px 12px",
+            background: "rgba(6, 78, 107, 0.45)",
+            border: "1px solid rgba(56, 189, 248, 0.4)",
+            borderRadius: "6px",
+            color: "#7dd3fc",
+            fontSize: "11px",
+            fontFamily: "monospace",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(6, 78, 107, 0.8)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(6, 78, 107, 0.45)"; }}
+        >
+          <FolderArchive size={14} /> World Save Archives
+        </button>
+      )}
       <div className="save-panel-footer"><span><kbd>ENTER</kbd> SELECT</span><span><kbd>ESC</kbd> BACK</span></div>
     </motion.aside>
   );
@@ -100,14 +139,23 @@ function MainNavigation({
   save,
   onNavigate,
   onContinue,
+  onOpenCustomizer,
+  onOpenWorldSaves,
+  onPlayIntro,
 }: {
   save: SaveState | null;
   onNavigate: (view: MenuView, journey?: boolean) => void;
   onContinue: () => void;
+  onOpenCustomizer?: () => void;
+  onOpenWorldSaves?: () => void;
+  onPlayIntro?: () => void;
 }) {
   const items = [
     ...(save ? [{ id: "continue", label: "Continue journey", detail: `Cycle ${save.cycle} / ${save.discoveries.length} discoveries`, icon: Play, onClick: onContinue }] : []),
     { id: "start", label: "New journey", detail: "Awaken in a new living reality", icon: CircleDot, onClick: () => onNavigate("creatures", true) },
+    ...(onOpenWorldSaves ? [{ id: "worlds", label: "World Save Archives", detail: "Create & load Survival, Creative, or Exploration worlds", icon: FolderArchive, onClick: onOpenWorldSaves }] : []),
+    ...(onOpenCustomizer ? [{ id: "customizer", label: "Creature Character Forge", detail: "Name avatar, customize outfits, wings & shaders", icon: Shirt, onClick: onOpenCustomizer }] : []),
+    ...(onPlayIntro ? [{ id: "intro", label: "Awaken: Mind Girl Cutscene", detail: "3D pre-birth egg chamber & voiceover lore", icon: Film, onClick: onPlayIntro }] : []),
     { id: "creatures", label: "Creature / form", detail: "400 viable morphologies", icon: Dna, onClick: () => onNavigate("creatures") },
     { id: "atlas", label: "Living atlas", detail: "Leaf cells to stomach seas", icon: Globe2, onClick: () => onNavigate("atlas") },
     { id: "seed", label: "World seed", detail: "Define the laws of emergence", icon: Orbit, onClick: () => onNavigate("seed") },
@@ -624,14 +672,45 @@ export function MainMenu(props: MainMenuProps) {
               <motion.span initial={{ opacity: 0, letterSpacing: "1.5em", filter: "blur(14px)" }} animate={{ opacity: 1, letterSpacing: "0.22em", filter: "blur(0px)" }} transition={{ duration: 1.6, ease: "easeOut" }}>LUMITAL</motion.span>
               <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8 }}>EVERY SCALE CONTAINS ANOTHER WORLD</motion.p>
             </div>
-            <MainNavigation save={props.save} onNavigate={navigate} onContinue={props.onContinue} />
-            <SaveConstellation save={props.save} onContinue={props.onContinue} />
+            <MainNavigation
+              save={props.save}
+              onNavigate={navigate}
+              onContinue={props.onContinue}
+              onOpenCustomizer={props.onOpenCustomizer}
+              onOpenWorldSaves={props.onOpenWorldSaves}
+              onPlayIntro={props.onPlayIntro}
+            />
+            <SaveConstellation save={props.save} onContinue={props.onContinue} onOpenWorldSaves={props.onOpenWorldSaves} />
             <motion.div className="menu-reality-status" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.05, duration: 1 }}>
               <span className="menu-reality-status__eyebrow"><i /> GENESIS FORM READY</span>
               <strong>{props.characterName.trim() || props.selectedCreature.genus}</strong>
               <p>{props.selectedCreature.genus} / {props.selectedCreature.bodyPlan} / {props.selectedCreature.habitat}</p>
               <div><span>ADAPTABILITY <b>{props.selectedCreature.potential}</b></span><i><i style={{ width: `${props.selectedCreature.potential}%` }} /></i></div>
               <small>FORM {String(props.selectedCreature.id + 1).padStart(3, "0")} OF 400</small>
+              {props.onOpenCustomizer && (
+                <button
+                  onClick={props.onOpenCustomizer}
+                  style={{
+                    marginTop: "12px",
+                    width: "100%",
+                    padding: "8px 10px",
+                    background: "rgba(14, 165, 233, 0.2)",
+                    border: "1px solid rgba(56, 189, 248, 0.5)",
+                    borderRadius: "6px",
+                    color: "#38bdf8",
+                    fontSize: "11px",
+                    fontFamily: "monospace",
+                    letterSpacing: "0.06em",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Shirt size={14} /> CUSTOMIZE AVATAR &amp; OUTFITS
+                </button>
+              )}
             </motion.div>
             <div className="menu-side-copy" aria-hidden="true">A WORLD WITHIN A WORLD WITHIN A WORLD</div>
             <CornerTelemetry seed={props.seed} />

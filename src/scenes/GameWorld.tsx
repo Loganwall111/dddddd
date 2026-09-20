@@ -4,7 +4,13 @@ import { EffectComposer, Bloom, ChromaticAberration, GodRays, Noise, Vignette } 
 import { Environment, Lightformer, MeshReflectorMaterial, Sky, Sparkles, Text } from "@react-three/drei";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
-import { districtsNear, getRealm, hashString, lifeStageFor, realmPhysics, seededRandom, worldParams, type CreatureDefinition, type District, type ExpeditionId, type LifeStageId, type WorldLayer } from "../game/procedural";
+import {
+  districtsNear, getRealm, hashString, lifeStageFor, realmPhysics, seededRandom, worldParams,
+  type CreatureDefinition, type CustomCreatureConfig, type District, type ExpeditionId,
+  type GameMode, type LifeStageId, type PlacedStructure, type StructureBlueprint, type WorldLayer
+} from "../game/procedural";
+import { CreatureModel } from "../components/CreatureModel";
+import { cinematicAudio } from "../audio/CinematicAudio";
 
 const diskVertex = `
   varying vec3 vPosition;
@@ -59,6 +65,7 @@ interface WorldProps {
   paused: boolean;
   cameraMode?: "first" | "third" | "orbit";
   creature?: CreatureDefinition;
+  customCreature?: CustomCreatureConfig;
   characterName?: string;
   scenario?: ExpeditionId;
   lifeStage?: LifeStageId;
@@ -69,9 +76,26 @@ interface WorldProps {
   onRealmEnter?: (realmId: string) => void;
   onLockChange: (locked: boolean) => void;
   onPosition: (position: [number, number, number], speed: number) => void;
+  gameMode?: GameMode;
+  placedStructures?: PlacedStructure[];
+  activeBuildingBlueprint?: StructureBlueprint["type"] | null;
+  onStructurePlaced?: (structure: PlacedStructure) => void;
+  onFoodHarvested?: (foodId: string, count: number) => void;
+  onPlayerDamage?: (damage: number) => void;
+  onGoogleDefeated?: (pos: [number, number, number]) => void;
+  isFlying?: boolean;
 }
 
-function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, onPosition, physics, cameraMode, attackSignal }: Pick<WorldProps, "layer" | "seed" | "paused" | "reducedMotion" | "onLockChange" | "onPosition"> & { physics?: { gravity: number; wind: [number, number, number] }; cameraMode?: string; attackSignal?: number }) {
+function PlayerController({
+  layer, seed, paused, reducedMotion, onLockChange, onPosition, physics, cameraMode, attackSignal, isFlying, activeBuildingBlueprint, onStructurePlaced
+}: Pick<WorldProps, "layer" | "seed" | "paused" | "reducedMotion" | "onLockChange" | "onPosition"> & {
+  physics?: { gravity: number; wind: [number, number, number] };
+  cameraMode?: string;
+  attackSignal?: number;
+  isFlying?: boolean;
+  activeBuildingBlueprint?: StructureBlueprint["type"] | null;
+  onStructurePlaced?: (structure: PlacedStructure) => void;
+}) {
   const { camera, gl } = useThree();
   const keys = useRef<Record<string, boolean>>({});
   const yaw = useRef(Math.PI);
@@ -113,7 +137,25 @@ function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, on
       pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.00145, -1.5, 1.5);
     };
     const lock = () => onLockChange(document.pointerLockElement === gl.domElement);
-    const click = () => { if (!paused && document.pointerLockElement !== gl.domElement) gl.domElement.requestPointerLock(); };
+    const click = () => {
+      if (!paused && document.pointerLockElement !== gl.domElement) {
+        gl.domElement.requestPointerLock();
+      } else if (!paused && activeBuildingBlueprint && onStructurePlaced) {
+        // Place building schematic at crosshair location on ground!
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        const placePos = camera.position.clone().addScaledVector(forward, 6);
+        const groundY = terrainHeightAt(seed, placePos.x, placePos.z);
+        const struct: PlacedStructure = {
+          id: `struct-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          type: activeBuildingBlueprint,
+          position: [placePos.x, groundY, placePos.z],
+          rotation: [0, yaw.current + Math.PI, 0],
+          createdAt: Date.now(),
+        };
+        cinematicAudio.structurePlace();
+        onStructurePlaced(struct);
+      }
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("mousemove", mouse);
@@ -126,7 +168,7 @@ function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, on
       document.removeEventListener("pointerlockchange", lock);
       gl.domElement.removeEventListener("click", click);
     };
-  }, [gl, paused, onLockChange]);
+  }, [gl, paused, onLockChange, activeBuildingBlueprint, onStructurePlaced, seed]);
 
   useFrame(({ clock, camera }, delta) => {
     if (paused) return;
@@ -160,15 +202,20 @@ function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, on
       if (raw.KeyS) direction.sub(forward);
       if (raw.KeyD) direction.add(right);
       if (raw.KeyA) direction.sub(right);
-      if (raw.Space) direction.add(vertical.normalize().multiplyScalar(1.3 * Math.max(phys.gravity, 0.02)));
-      if (raw.KeyC || raw.ControlLeft) direction.sub(vertical.normalize().multiplyScalar(Math.max(phys.gravity, 0.02)));
-      const scaleSys = layer === "cosmos" || layer === "galaxy" || layer === "void" ? 3.8 : layer === "atomic" ? 1.2 : 1;
-      const targetSpeed = direction.lengthSq() > 0 ? (raw.ShiftLeft ? (layer === "cosmos" || layer === "galaxy" || layer === "void" ? 18 : 11) : 5.4) * scaleSys : 0;
+      if (isFlying) {
+        if (raw.Space) direction.add(vertical.clone().multiplyScalar(1.6));
+        if (raw.KeyC || raw.ControlLeft) direction.sub(vertical.clone().multiplyScalar(1.6));
+      } else {
+        if (raw.Space) direction.add(vertical.normalize().multiplyScalar(1.3 * Math.max(phys.gravity, 0.02)));
+        if (raw.KeyC || raw.ControlLeft) direction.sub(vertical.normalize().multiplyScalar(Math.max(phys.gravity, 0.02)));
+      }
+      const scaleSys = isFlying ? 2.5 : layer === "cosmos" || layer === "galaxy" || layer === "void" ? 3.8 : layer === "atomic" ? 1.2 : 1;
+      const targetSpeed = direction.lengthSq() > 0 ? (raw.ShiftLeft ? (isFlying ? 24 : layer === "cosmos" || layer === "galaxy" || layer === "void" ? 18 : 11) : (isFlying ? 12 : 5.4)) * scaleSys : 0;
       speed.current = THREE.MathUtils.lerp(speed.current, targetSpeed, 1 - Math.exp(-delta * 4.6));
       if (direction.lengthSq() > 0) camera.position.addScaledVector(direction.normalize(), speed.current * delta);
       camera.position.addScaledVector(windVec, delta * (layer === "micro" ? 2.4 : 1));
       camera.position.y += Math.sin(clock.elapsedTime * 1.35 + positions.current.x * 0.03) * 0.0011 * speed.current * (reducedMotion ? 0 : 1);
-      if (layer === "planet") {
+      if (layer === "planet" && !isFlying) {
         const ground = terrainHeightAt(seed, camera.position.x, camera.position.z) + 1.85;
         if (camera.position.y < ground) {
           camera.position.y = THREE.MathUtils.lerp(camera.position.y, ground, 1 - Math.exp(-delta * 9));
@@ -2200,23 +2247,439 @@ function ProceduralReflectionRig({ realm, quality }: { realm: ReturnType<typeof 
   );
 }
 
-function PlayerAvatar({ creature, characterName = creature.genus, layer = "planet", avatarRef, visible = true, attackSignal = 0, grabSignal = 0, cameraMode = "first" }: { creature: import("../game/procedural").CreatureDefinition; characterName?: string; layer?: string; avatarRef: React.MutableRefObject<THREE.Group | null>; visible?: boolean; attackSignal?: number; grabSignal?: number; cameraMode?: "first" | "third" | "orbit" }) {
+function GoogleWatcherEnemy({
+  seed,
+  attackSignal = 0,
+  onPlayerDamage,
+  onDefeat,
+}: {
+  seed: string;
+  attackSignal?: number;
+  onPlayerDamage?: (damage: number) => void;
+  onDefeat?: (pos: [number, number, number]) => void;
+}) {
   const { camera } = useThree();
-  const creatureGroup = useMemo(() => {
-    const color = new THREE.Color().setHSL(creature.hue / 360, 0.52, 0.55);
-    const neon = new THREE.Color().setHSL(((creature.hue + 40) % 360) / 360, 0.75, 0.45);
-    return { color, neon, bodyPlan: creature.bodyPlan, scale: creature.scale };
-  }, [creature]);
-  const slashRef = useRef<THREE.Mesh>(null);
-  const shockwaveRef = useRef<THREE.Mesh>(null);
+  const root = useRef<THREE.Group>(null);
+  const ring1 = useRef<THREE.Mesh>(null);
+  const ring2 = useRef<THREE.Mesh>(null);
+  const [health, setHealth] = useState(100);
+  const [isAlert, setIsAlert] = useState(false);
+  const [isDestroyed, setIsDestroyed] = useState(false);
+  const lastAttack = useRef(attackSignal);
+  const lastShot = useRef(0);
+  const alertPlayed = useRef(false);
+  const pos = useRef(new THREE.Vector3(22, 10, -18));
+  const [displayStatus, setDisplayStatus] = useState("QUERY: INDEXING ECOSYSTEM");
+
+  useFrame(({ clock }, delta) => {
+    if (isDestroyed || !root.current) return;
+    const time = clock.elapsedTime;
+
+    // Orbit patrol around local center
+    const patrolAngle = time * 0.18;
+    const targetX = Math.cos(patrolAngle) * 34;
+    const targetZ = Math.sin(patrolAngle) * 34;
+    const ground = terrainHeightAt(seed, targetX, targetZ);
+    const targetY = ground + 6.8 + Math.sin(time * 1.6) * 0.7;
+
+    pos.current.lerp(new THREE.Vector3(targetX, targetY, targetZ), delta * 1.8);
+    root.current.position.copy(pos.current);
+
+    if (ring1.current) ring1.current.rotation.x = time * 1.6;
+    if (ring2.current) ring2.current.rotation.y = time * 2.1;
+
+    const distToPlayer = root.current.position.distanceTo(camera.position);
+
+    if (distToPlayer < 26) {
+      if (!isAlert) {
+        setIsAlert(true);
+        setDisplayStatus("⚠️ THREAT DETECTED: 100%");
+        if (!alertPlayed.current) {
+          cinematicAudio.googleAlert();
+          alertPlayed.current = true;
+        }
+      }
+      root.current.lookAt(camera.position.x, camera.position.y, camera.position.z);
+
+      if (time - lastShot.current > 3.4) {
+        lastShot.current = time;
+        cinematicAudio.googleLaser();
+        if (distToPlayer < 20 && onPlayerDamage) {
+          onPlayerDamage(14);
+        }
+      }
+    } else {
+      if (isAlert) {
+        setIsAlert(false);
+        setDisplayStatus("QUERY: SEARCHING FOR ORGANISM...");
+        alertPlayed.current = false;
+      }
+      root.current.rotation.y = patrolAngle;
+    }
+
+    if (attackSignal !== lastAttack.current) {
+      lastAttack.current = attackSignal;
+      if (distToPlayer < 14) {
+        cinematicAudio.attack();
+        const nextHp = health - 40;
+        setHealth(nextHp);
+        if (nextHp <= 0) {
+          setIsDestroyed(true);
+          cinematicAudio.cinematicHit(1.4);
+          if (onDefeat) onDefeat([pos.current.x, pos.current.y, pos.current.z]);
+        }
+      }
+    }
+  });
+
+  if (isDestroyed) return null;
+
+  return (
+    <group ref={root} position={[22, 10, -18]}>
+      {/* Central Chrome Surveillance Sphere */}
+      <mesh castShadow>
+        <sphereGeometry args={[1.05, 32, 24]} />
+        <meshPhysicalMaterial color="#0f172a" metalness={0.92} roughness={0.15} clearcoat={1} />
+      </mesh>
+
+      {/* 4 Quadrant Google Optical Sensors */}
+      <mesh position={[0, 0.44, 0.9]}>
+        <sphereGeometry args={[0.2, 16, 12]} />
+        <meshBasicMaterial color="#4285F4" />
+      </mesh>
+      <mesh position={[0.44, 0, 0.9]}>
+        <sphereGeometry args={[0.2, 16, 12]} />
+        <meshBasicMaterial color="#EA4335" />
+      </mesh>
+      <mesh position={[0, -0.44, 0.9]}>
+        <sphereGeometry args={[0.2, 16, 12]} />
+        <meshBasicMaterial color="#FBBC05" />
+      </mesh>
+      <mesh position={[-0.44, 0, 0.9]}>
+        <sphereGeometry args={[0.2, 16, 12]} />
+        <meshBasicMaterial color="#34A853" />
+      </mesh>
+
+      {/* Center Camera Eye Pupil */}
+      <mesh position={[0, 0, 1.0]}>
+        <sphereGeometry args={[0.11, 16, 12]} />
+        <meshBasicMaterial color={isAlert ? "#ef4444" : "#ffffff"} />
+      </mesh>
+
+      {/* Rotating Gimbal Rings */}
+      <mesh ref={ring1}>
+        <torusGeometry args={[1.45, 0.03, 8, 36]} />
+        <meshPhysicalMaterial color="#38bdf8" metalness={0.8} emissive="#0284c7" emissiveIntensity={0.6} />
+      </mesh>
+      <mesh ref={ring2} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.65, 0.025, 8, 36]} />
+        <meshPhysicalMaterial color="#f59e0b" metalness={0.8} emissive="#d97706" emissiveIntensity={0.6} />
+      </mesh>
+
+      {/* Sweeping Spotlight Cone */}
+      <mesh position={[0, -4.2, 0]}>
+        <coneGeometry args={[3.2, 8.5, 20, 1, true]} />
+        <meshBasicMaterial
+          color={isAlert ? "#ef4444" : "#38bdf8"}
+          transparent
+          opacity={isAlert ? 0.35 : 0.16}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Overhead 3D Hologram Billboard */}
+      <group position={[0, 2.1, 0]}>
+        <Text
+          fontSize={0.26}
+          color={isAlert ? "#ef4444" : "#38bdf8"}
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.03}
+          outlineColor="#000000"
+        >
+          G.O.O.G.L.E. WATCHER v4.2
+        </Text>
+        <Text
+          position={[0, -0.3, 0]}
+          fontSize={0.17}
+          color={isAlert ? "#fca5a5" : "#e0f2fe"}
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.02}
+          outlineColor="#000000"
+        >
+          {displayStatus}
+        </Text>
+      </group>
+
+      <pointLight color={isAlert ? "#ef4444" : "#38bdf8"} intensity={2.8} distance={10} />
+    </group>
+  );
+}
+
+function PlacedStructuresWorld({ structures = [] }: { structures?: PlacedStructure[] }) {
+  if (!structures.length) return null;
+
+  return (
+    <group>
+      {structures.map((s) => {
+        const [x, y, z] = s.position;
+        return (
+          <group key={s.id} position={[x, y, z]} rotation={s.rotation}>
+            {s.type === "spire" && (
+              <group>
+                <mesh position={[0, 5, 0]} castShadow>
+                  <cylinderGeometry args={[0.3, 0.9, 10, 6]} />
+                  <meshPhysicalMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.8} roughness={0.1} clearcoat={1} />
+                </mesh>
+                <mesh position={[0, 45, 0]}>
+                  <cylinderGeometry args={[0.2, 0.2, 80, 8]} />
+                  <meshBasicMaterial color="#38bdf8" transparent opacity={0.65} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+                <pointLight position={[0, 10, 0]} color="#38bdf8" intensity={4} distance={25} />
+              </group>
+            )}
+
+            {s.type === "dome" && (
+              <group>
+                <mesh position={[0, 0, 0]}>
+                  <sphereGeometry args={[4.2, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
+                  <meshPhysicalMaterial color="#67e8f9" transmission={0.85} transparent opacity={0.7} roughness={0.1} clearcoat={1} side={THREE.DoubleSide} />
+                </mesh>
+                <pointLight position={[0, 2, 0]} color="#a7f3d0" intensity={3} distance={12} />
+              </group>
+            )}
+
+            {s.type === "pylon" && (
+              <group>
+                <mesh position={[0, 1.2, 0]}>
+                  <cylinderGeometry args={[0.8, 1.2, 2.4, 8]} />
+                  <meshPhysicalMaterial color="#1e293b" metalness={0.8} />
+                </mesh>
+                <mesh position={[0, 3.4, 0]} rotation={[0.4, 0.4, 0]}>
+                  <octahedronGeometry args={[1.2, 0]} />
+                  <meshPhysicalMaterial color="#c084fc" emissive="#a855f7" emissiveIntensity={1.4} roughness={0.1} clearcoat={1} />
+                </mesh>
+                <pointLight position={[0, 3.4, 0]} color="#c084fc" intensity={3} distance={15} />
+              </group>
+            )}
+
+            {s.type === "turret" && (
+              <group>
+                <mesh position={[0, 0.7, 0]}>
+                  <cylinderGeometry args={[0.9, 1.2, 1.4, 8]} />
+                  <meshPhysicalMaterial color="#1e293b" metalness={0.9} />
+                </mesh>
+                <mesh position={[0, 1.8, 0]}>
+                  <boxGeometry args={[1.2, 0.7, 1.6]} />
+                  <meshPhysicalMaterial color="#334155" metalness={0.8} />
+                </mesh>
+                <mesh position={[0.4, 1.8, 1.2]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.08, 0.08, 1.2, 8]} />
+                  <meshBasicMaterial color="#ef4444" />
+                </mesh>
+                <mesh position={[-0.4, 1.8, 1.2]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.08, 0.08, 1.2, 8]} />
+                  <meshBasicMaterial color="#ef4444" />
+                </mesh>
+              </group>
+            )}
+
+            {s.type === "gate" && (
+              <group>
+                <mesh position={[0, 3.5, 0]}>
+                  <torusGeometry args={[3.2, 0.4, 8, 24, Math.PI]} />
+                  <meshPhysicalMaterial color="#0f172a" metalness={0.9} emissive="#38bdf8" emissiveIntensity={0.4} />
+                </mesh>
+                <mesh position={[0, 1.8, 0]}>
+                  <circleGeometry args={[2.8, 24]} />
+                  <meshBasicMaterial color="#38bdf8" transparent opacity={0.6} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+                </mesh>
+              </group>
+            )}
+
+            {s.type === "bridge" && (
+              <mesh position={[0, 0.15, 0]}>
+                <boxGeometry args={[4.2, 0.3, 10]} />
+                <meshPhysicalMaterial color="#38bdf8" transmission={0.6} transparent opacity={0.8} roughness={0.2} emissive="#0284c7" emissiveIntensity={0.3} />
+              </mesh>
+            )}
+
+            {s.type === "beacon" && (
+              <group position={[0, 2.5, 0]}>
+                <mesh>
+                  <octahedronGeometry args={[1.1, 0]} />
+                  <meshPhysicalMaterial color="#090d16" roughness={0.2} emissive="#fbbf24" emissiveIntensity={1.2} />
+                </mesh>
+                <pointLight color="#fbbf24" intensity={2.5} distance={12} />
+              </group>
+            )}
+
+            {s.type === "tree" && (
+              <group>
+                <mesh position={[0, 2, 0]}>
+                  <cylinderGeometry args={[0.25, 0.5, 4, 8]} />
+                  <meshPhysicalMaterial color="#78350f" roughness={0.8} />
+                </mesh>
+                <mesh position={[0, 4.2, 0]}>
+                  <dodecahedronGeometry args={[2.2, 0]} />
+                  <meshPhysicalMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.9} transparent opacity={0.85} />
+                </mesh>
+                <pointLight position={[0, 4.2, 0]} color="#fbbf24" intensity={3} distance={15} />
+              </group>
+            )}
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+function GhostStructurePreview({
+  blueprintType,
+  seed,
+}: {
+  blueprintType: StructureBlueprint["type"] | null;
+  seed: string;
+}) {
+  const { camera } = useThree();
+  const ghostRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (!ghostRef.current || !blueprintType) return;
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const target = camera.position.clone().addScaledVector(forward, 6);
+    const ground = terrainHeightAt(seed, target.x, target.z);
+    ghostRef.current.position.set(target.x, ground, target.z);
+  });
+
+  if (!blueprintType) return null;
+
+  return (
+    <group ref={ghostRef}>
+      <mesh position={[0, 1.5, 0]}>
+        <boxGeometry args={[2.5, 3, 2.5]} />
+        <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.65} />
+      </mesh>
+      <Text position={[0, 3.6, 0]} fontSize={0.32} color="#22d3ee" anchorX="center" anchorY="middle">
+        CLICK TO BUILD: {blueprintType.toUpperCase()}
+      </Text>
+    </group>
+  );
+}
+
+function HarvestableFoodsWorld({
+  seed,
+  onHarvest,
+}: {
+  seed: string;
+  onHarvest: (foodId: string) => void;
+}) {
+  const { camera } = useThree();
+  const nodes = useMemo(() => {
+    const random = seededRandom(seed, "forage-foods");
+    const list: Array<{ id: string; type: "lumen-berry" | "spore-fruit" | "hydro-kelp"; x: number; z: number; y: number; harvestedUntil: number }> = [];
+    const types: Array<"lumen-berry" | "spore-fruit" | "hydro-kelp"> = ["lumen-berry", "spore-fruit", "hydro-kelp"];
+    for (let i = 0; i < 48; i++) {
+      const angle = random() * Math.PI * 2;
+      const dist = 12 + random() * 110;
+      const x = Math.cos(angle) * dist;
+      const z = Math.sin(angle) * dist;
+      const y = terrainHeightAt(seed, x, z);
+      list.push({
+        id: `food-${i}`,
+        type: types[i % types.length],
+        x,
+        z,
+        y,
+        harvestedUntil: 0,
+      });
+    }
+    return list;
+  }, [seed]);
+
+  useFrame(({ clock }) => {
+    const time = clock.elapsedTime;
+    nodes.forEach((node) => {
+      if (node.harvestedUntil > time) return;
+      const dx = node.x - camera.position.x;
+      const dz = node.z - camera.position.z;
+      if (dx * dx + dz * dz < 7.5) {
+        node.harvestedUntil = time + 35;
+        cinematicAudio.pickup();
+        onHarvest(node.type);
+      }
+    });
+  });
+
+  return (
+    <group>
+      {nodes.map((node) => (
+        <group key={node.id} position={[node.x, node.y, node.z]}>
+          {node.type === "lumen-berry" ? (
+            <group position={[0, 0.45, 0]}>
+              <mesh>
+                <sphereGeometry args={[0.35, 12, 10]} />
+                <meshStandardMaterial color="#22c55e" roughness={0.4} />
+              </mesh>
+              {[-0.18, 0.18].map((ox, idx) => (
+                <mesh key={idx} position={[ox, 0.25, 0]}>
+                  <sphereGeometry args={[0.16, 10, 8]} />
+                  <meshBasicMaterial color="#4ade80" />
+                </mesh>
+              ))}
+              <pointLight color="#4ade80" intensity={0.6} distance={2.5} />
+            </group>
+          ) : node.type === "spore-fruit" ? (
+            <group position={[0, 0.5, 0]}>
+              <mesh>
+                <coneGeometry args={[0.42, 0.8, 8]} />
+                <meshPhysicalMaterial color="#9333ea" emissive="#a855f7" emissiveIntensity={0.8} />
+              </mesh>
+              <pointLight color="#c084fc" intensity={0.7} distance={2.5} />
+            </group>
+          ) : (
+            <group position={[0, 0.6, 0]}>
+              <mesh rotation={[0.2, 0, 0.1]}>
+                <capsuleGeometry args={[0.15, 0.9, 4, 8]} />
+                <meshPhysicalMaterial color="#0284c7" emissive="#38bdf8" emissiveIntensity={0.9} transparent opacity={0.85} />
+              </mesh>
+              <pointLight color="#38bdf8" intensity={0.8} distance={3} />
+            </group>
+          )}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function PlayerAvatar({
+  creature,
+  customCreature,
+  characterName = creature.genus,
+  layer = "planet",
+  avatarRef,
+  visible = true,
+  attackSignal = 0,
+  cameraMode = "first",
+}: {
+  creature: import("../game/procedural").CreatureDefinition;
+  customCreature?: import("../game/procedural").CustomCreatureConfig;
+  characterName?: string;
+  layer?: string;
+  avatarRef: React.MutableRefObject<THREE.Group | null>;
+  visible?: boolean;
+  attackSignal?: number;
+  grabSignal?: number;
+  cameraMode?: "first" | "third" | "orbit";
+}) {
+  const { camera } = useThree();
   const seenAttack = useRef(attackSignal);
-  const seenGrab = useRef(grabSignal);
   const attackAt = useRef(-10);
-  const grabAt = useRef(-10);
   const bobPhase = useRef(0);
 
-  // In first-person mode, parent the avatar group to the camera (so limbs render in view).
-  // In third-person mode, leave it in world space (it's positioned behind the camera in PlayerController).
   useEffect(() => {
     const holder = avatarRef.current;
     if (!holder) return;
@@ -2231,142 +2694,48 @@ function PlayerAvatar({ creature, characterName = creature.genus, layer = "plane
     if (!avatarRef.current) return;
     const time = clock.elapsedTime;
     if (attackSignal !== seenAttack.current) { seenAttack.current = attackSignal; attackAt.current = time; }
-    if (grabSignal !== seenGrab.current) { seenGrab.current = grabSignal; grabAt.current = time; }
     const attackAge = time - attackAt.current;
-    const grabAge = time - grabAt.current;
     const lunge = attackAge < 0.3 ? Math.sin((attackAge / 0.3) * Math.PI) : 0;
-    const scoop = grabAge < 0.45 ? Math.sin((grabAge / 0.45) * Math.PI) : 0;
     const isThird = cameraMode !== "first";
     bobPhase.current += delta * 3;
     const bob = isThird ? Math.sin(bobPhase.current) * 0.08 : 0;
 
     if (isThird) {
-      // True third-person: the organism leads the camera, rather than hiding behind it.
-      // The camera is its chase view; the avatar remains in the illuminated play space.
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
       const targetPos = camera.position.clone().addScaledVector(forward, 2.8);
       targetPos.y -= layer === "planet" ? 1.62 : 0.62 + bob * 0.15;
       avatarRef.current.position.lerp(targetPos, 1 - Math.exp(-delta * 14));
       const forwardYaw = Math.atan2(forward.x, forward.z);
       avatarRef.current.rotation.y = forwardYaw;
-      avatarRef.current.rotation.x = lunge * 0.55 - scoop * 0.2 + (layer === "planet" ? 0 : Math.sin(time * 2.4) * 0.045);
-      avatarRef.current.rotation.z = layer === "planet" ? Math.sin(time * 0.9) * 0.018 : Math.sin(time * 2.1) * 0.055;
-      avatarRef.current.scale.setScalar(creatureGroup.scale * 0.85 * (1 + lunge * 0.25 + scoop * 0.15));
-    } else {
-      avatarRef.current.rotation.x = lunge * 0.55 - scoop * 0.2;
-      avatarRef.current.rotation.z = 0;
-      avatarRef.current.scale.setScalar(creatureGroup.scale * 0.55 * (1 + lunge * 0.3 + scoop * 0.2));
-    }
-
-    if (slashRef.current) {
-      const age = attackAge < 0.35 ? attackAge : grabAge;
-      const fading = age >= 0 && age < 0.35;
-      slashRef.current.visible = fading;
-      if (fading) {
-        slashRef.current.position.set(0, 0.2, -0.9 - age * 3.4);
-        slashRef.current.rotation.z = -age * 5;
-        slashRef.current.scale.setScalar(0.5 + age * 4.2);
-        const mat = slashRef.current.material as THREE.MeshBasicMaterial;
-        mat.opacity = Math.max(0, 0.85 - age * 2.4);
-      }
-    }
-    if (shockwaveRef.current) {
-      const active = attackAge >= 0 && attackAge < 0.6;
-      shockwaveRef.current.visible = active;
-      if (active) {
-        shockwaveRef.current.scale.setScalar(0.3 + attackAge * 5);
-        const mat = shockwaveRef.current.material as THREE.MeshBasicMaterial;
-        mat.opacity = Math.max(0, 0.7 - attackAge * 1.2);
-        shockwaveRef.current.rotation.z = attackAge * 2;
-      }
+      avatarRef.current.rotation.x = lunge * 0.55;
     }
   });
 
-  const appendageCount = cameraMode !== "first" ? 8 : 0;
+  const isAttacking = attackSignal > 0;
+
   return (
-    <group ref={(node) => { if (node) avatarRef.current = node; }} visible={visible} scale={creatureGroup.scale * (cameraMode === "first" ? 0.55 : 0.85)}>
-      {creatureGroup.bodyPlan === "crystalline" ? (
-        <mesh castShadow><icosahedronGeometry args={[0.68, 1]} /><meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.5} roughness={0.15} metalness={0.4} clearcoat={1} /></mesh>
-      ) : creatureGroup.bodyPlan === "fractal" ? (
-        <mesh castShadow scale={[1.2, 0.55, 0.75]}><dodecahedronGeometry args={[0.7, 0]} /><meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.4} roughness={0.25} /></mesh>
-      ) : creatureGroup.bodyPlan === "colonial" ? (
-        <group>
-          <mesh castShadow scale={[0.9, 0.7, 0.9]}><sphereGeometry args={[0.78, 28, 20]} /><meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.32} transparent opacity={0.55} roughness={0.15} clearcoat={1} /></mesh>
-          <mesh position={[0.3, 0.18, 0]} scale={0.32}><sphereGeometry args={[0.7, 14, 10]} /><meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.7} roughness={0.2} /></mesh>
-        </group>
-      ) : creatureGroup.bodyPlan === "plasma" ? (
-        <mesh castShadow scale={[0.9, 0.78, 0.9]}><sphereGeometry args={[0.78, 24, 20]} /><meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={1.1} transparent opacity={0.62} roughness={0.12} transmission={0.1} clearcoat={1} /></mesh>
-      ) : (
-        <>
-          {/* Body */}
-          <mesh castShadow scale={creatureGroup.bodyPlan === "bilateral" ? [1.14, 0.64, 0.58] : [0.9, 0.78, 0.9]}>
-            <sphereGeometry args={[0.78, 30, 22]} />
-            <meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.4} roughness={0.22} clearcoat={0.65} clearcoatRoughness={0.18} />
-          </mesh>
-          {/* Head (third-person only, forward facing) */}
-          {cameraMode !== "first" && (
-            <mesh position={[0, 0.18, 0.72]} castShadow>
-              <sphereGeometry args={[0.38, 20, 14]} />
-              <meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.55} roughness={0.18} clearcoat={0.8} />
-            </mesh>
-          )}
-          {/* Eyes */}
-          {cameraMode !== "first" && (
-            <>
-              <mesh position={[-0.17, 0.26, 0.9]}>
-                <sphereGeometry args={[0.08, 10, 8]} />
-                <meshBasicMaterial color="#0a0e14" />
-              </mesh>
-              <mesh position={[0.17, 0.26, 0.9]}>
-                <sphereGeometry args={[0.08, 10, 8]} />
-                <meshBasicMaterial color="#0a0e14" />
-              </mesh>
-              <mesh position={[-0.17, 0.28, 0.94]} scale={0.4}>
-                <sphereGeometry args={[0.08, 6, 5]} />
-                <meshBasicMaterial color="#ffffff" />
-              </mesh>
-              <mesh position={[0.17, 0.28, 0.94]} scale={0.4}>
-                <sphereGeometry args={[0.08, 6, 5]} />
-                <meshBasicMaterial color="#ffffff" />
-              </mesh>
-            </>
-          )}
-        </>
-      )}
-      {/* Walking legs / feelers (third-person only) */}
-      {Array.from({ length: appendageCount }, (_, i) => {
-        const angle = (i / appendageCount) * Math.PI * 2;
-        const isFront = Math.cos(angle) > 0.2;
-        const side = Math.sin(angle) > 0 ? 1 : -1;
-        return (
-          <group key={i} position={[side * (isFront ? 0.32 : 0.46), -0.42, (isFront ? 0.35 : -0.35) * Math.cos(angle) * 2]}>
-            <mesh rotation={[0, 0, side * 0.3]} scale={[0.09, 0.38, 0.09]}>
-              <cylinderGeometry args={[1, 1, 1, 5]} />
-              <meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.3} roughness={0.4} />
-            </mesh>
-            <mesh position={[side * 0.08, -0.28, 0]} rotation={[0, 0, side * 0.7]} scale={[0.06, 0.28, 0.06]}>
-              <cylinderGeometry args={[1, 1, 1, 5]} />
-              <meshPhysicalMaterial color={creatureGroup.color} emissive={creatureGroup.neon} emissiveIntensity={0.5} roughness={0.4} />
-            </mesh>
-          </group>
-        );
-      })}
+    <group ref={(node) => { if (node) avatarRef.current = node; }} visible={visible} scale={cameraMode === "first" ? 0.55 : 0.85}>
+      <CreatureModel
+        creature={creature}
+        custom={customCreature}
+        active={isAttacking}
+        scale={1}
+      />
       {cameraMode !== "first" && (
-        <Text position={[0, 1.32, 0]} rotation={[0, Math.PI, 0]} fontSize={0.19} color="#d9ffe5" anchorX="center" anchorY="middle" outlineWidth={0.025} outlineColor="#06100b" fillOpacity={0.92}>
+        <Text
+          position={[0, 1.45, 0]}
+          rotation={[0, Math.PI, 0]}
+          fontSize={0.22}
+          color="#d9ffe5"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.025}
+          outlineColor="#06100b"
+          fillOpacity={0.95}
+        >
           {characterName}
         </Text>
       )}
-      {/* Forward slash plane */}
-      <mesh ref={slashRef} visible={false}>
-        <planeGeometry args={[1.7, 0.24]} />
-        <meshBasicMaterial color={creatureGroup.neon} transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
-      {/* Expanding shockwave ring on attack */}
-      <mesh ref={shockwaveRef} rotation={[Math.PI / 2, 0, 0]} visible={false}>
-        <ringGeometry args={[0.75, 0.95, 48]} />
-        <meshBasicMaterial color={creatureGroup.neon} transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
-      <pointLight color={creatureGroup.neon} intensity={cameraMode !== "first" ? 3.5 : 1.8} distance={cameraMode !== "first" ? 6 : 3.2} />
     </group>
   );
 }
@@ -2431,18 +2800,51 @@ export function GameWorld(props: WorldProps) {
         gl.shadowMap.type = THREE.PCFSoftShadowMap;
       }}
     >
-      <PlayerController layer={authoredKey} seed={props.seed} paused={props.paused} reducedMotion={props.reducedMotion} onLockChange={props.onLockChange} onPosition={props.onPosition} physics={physics} cameraMode={props.cameraMode} attackSignal={props.attackSignal} />
+      <PlayerController
+        layer={authoredKey}
+        seed={props.seed}
+        paused={props.paused}
+        reducedMotion={props.reducedMotion}
+        onLockChange={props.onLockChange}
+        onPosition={props.onPosition}
+        physics={physics}
+        cameraMode={props.cameraMode}
+        attackSignal={props.attackSignal}
+        isFlying={props.isFlying}
+        activeBuildingBlueprint={props.activeBuildingBlueprint}
+        onStructurePlaced={props.onStructurePlaced}
+      />
       {authoredKey === "void" && <QuantumWorld seed={props.seed} density={density} />}
       {authoredKey === "galaxy" && <GalaxyWorld seed={props.seed} />}
       {authoredKey === "cosmos" && <CosmicWorld seed={props.seed} density={density} />}
-      {authoredKey === "planet" && <PlanetWorld seed={props.seed} density={density} structures={props.structures} quality={props.quality} storm={terrainParams.stormBias} ventCount={terrainParams.ventCount} tension={props.tension} attackSignal={props.attackSignal} grabSignal={props.grabSignal} onPrey={props.onPrey} onRealmEnter={props.onRealmEnter} />}
+      {authoredKey === "planet" && (
+        <>
+          <PlanetWorld seed={props.seed} density={density} structures={props.structures} quality={props.quality} storm={terrainParams.stormBias} ventCount={terrainParams.ventCount} tension={props.tension} attackSignal={props.attackSignal} grabSignal={props.grabSignal} onPrey={props.onPrey} onRealmEnter={props.onRealmEnter} />
+          <PlacedStructuresWorld structures={props.placedStructures} />
+          <GhostStructurePreview blueprintType={props.activeBuildingBlueprint ?? null} seed={props.seed} />
+          <HarvestableFoodsWorld seed={props.seed} onHarvest={(foodId) => props.onFoodHarvested?.(foodId, 1)} />
+          <GoogleWatcherEnemy seed={props.seed} attackSignal={props.attackSignal} onPlayerDamage={props.onPlayerDamage} onDefeat={props.onGoogleDefeated} />
+        </>
+      )}
       {authoredKey === "micro" && <MicroWorld seed={props.seed} density={density} onRealmEnter={props.onRealmEnter} />}
       {authoredKey === "atomic" && <AtomicWorld seed={props.seed} density={density} />}
       {authoredKey === "quantum" && <QuantumWorld seed={props.seed} density={density} />}
       {!realm.key && <RealmBody realm={realm} seed={props.seed} density={density} quality={props.quality} />}
       <ScenarioWorld scenario={props.scenario} seed={props.seed} quality={props.quality} />
       <LifeStageWorld stageId={props.lifeStage} seed={props.seed} quality={props.quality} />
-      {props.creature && <PlayerAvatar creature={props.creature} characterName={props.characterName ?? props.creature.genus} layer={authoredKey} avatarRef={avatarRef} visible={props.cameraMode !== "first"} attackSignal={props.attackSignal} grabSignal={props.grabSignal} cameraMode={props.cameraMode ?? "third"} />}
+      {props.creature && (
+        <PlayerAvatar
+          creature={props.creature}
+          customCreature={props.customCreature}
+          characterName={props.characterName ?? props.customCreature?.name ?? props.creature.genus}
+          layer={authoredKey}
+          avatarRef={avatarRef}
+          visible={props.cameraMode !== "first"}
+          attackSignal={props.attackSignal}
+          grabSignal={props.grabSignal}
+          cameraMode={props.cameraMode ?? "third"}
+        />
+      )}
       {props.creature && <CombatArms creature={props.creature} attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} cameraMode={props.cameraMode ?? "first"} />}
       {props.creature && props.cameraShake !== false && !props.reducedMotion && <CombatCameraShake attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} />}
       {props.creature && <CombatParticleBurstWithClock creatureHue={props.creature.hue} attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} />}

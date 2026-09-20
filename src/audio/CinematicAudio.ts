@@ -248,6 +248,175 @@ class CinematicAudioEngine {
     });
   }
 
+  eat() {
+    if (!this.unlocked || !this.context || !this.master) return;
+    const now = this.context.currentTime;
+    // Mastication crunch + bio-replenish chord
+    for (let i = 0; i < 3; i++) {
+      const t = now + i * 0.08;
+      const noise = this.context.createBufferSource();
+      const filter = this.context.createBiquadFilter();
+      const gain = this.context.createGain();
+      noise.buffer = this.createNoise(0.09);
+      filter.type = "bandpass";
+      filter.frequency.value = 800 + i * 350;
+      filter.Q.value = 3.5;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.09, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+      noise.connect(filter).connect(gain).connect(this.master);
+      noise.start(t);
+      noise.stop(t + 0.09);
+    }
+    // Revitalizing rising harmonic chime
+    [329.63, 440, 554.37, 659.25].forEach((f, i) => {
+      const osc = this.context!.createOscillator();
+      const gain = this.context!.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(f, now + 0.22 + i * 0.04);
+      gain.gain.setValueAtTime(0.0001, now + 0.22 + i * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.04, now + 0.22 + i * 0.04 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22 + i * 0.04 + 0.5);
+      osc.connect(gain).connect(this.master!);
+      osc.start(now + 0.22 + i * 0.04);
+      osc.stop(now + 0.22 + i * 0.04 + 0.55);
+    });
+  }
+
+  starvationWarning() {
+    if (!this.unlocked || !this.context || !this.master) return;
+    const now = this.context.currentTime;
+    // Low hollow stomach rumble + urgent warning ping
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(75, now);
+    osc.frequency.linearRampToValueAtTime(45, now + 0.4);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    osc.connect(gain).connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.48);
+
+    const ping = this.context.createOscillator();
+    const pingGain = this.context.createGain();
+    ping.type = "sine";
+    ping.frequency.setValueAtTime(880, now + 0.15);
+    pingGain.gain.setValueAtTime(0.0001, now + 0.15);
+    pingGain.gain.exponentialRampToValueAtTime(0.04, now + 0.17);
+    pingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+    ping.connect(pingGain).connect(this.master);
+    ping.start(now + 0.15);
+    ping.stop(now + 0.4);
+  }
+
+  googleAlert() {
+    if (!this.unlocked || !this.context || !this.master) return;
+    const now = this.context.currentTime;
+    // Sinister digital dialup chirp + query scan alarm
+    const notes = [440, 554, 659, 880, 1108];
+    notes.forEach((f, i) => {
+      const osc = this.context!.createOscillator();
+      const gain = this.context!.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(f, now + i * 0.04);
+      gain.gain.setValueAtTime(0.0001, now + i * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.04, now + i * 0.04 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.04 + 0.07);
+      osc.connect(gain).connect(this.master!);
+      osc.start(now + i * 0.04);
+      osc.stop(now + i * 0.04 + 0.08);
+    });
+    this.noiseBurst(0.2, 1800, 0.4);
+  }
+
+  googleLaser() {
+    if (!this.unlocked || !this.context || !this.master) return;
+    const now = this.context.currentTime;
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(1400, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.22);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    osc.connect(gain).connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.28);
+  }
+
+  structurePlace() {
+    if (!this.unlocked || !this.context || !this.master) return;
+    const now = this.context.currentTime;
+    // Deep heavy materialization thud
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(38, now + 0.35);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.14, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+    osc.connect(gain).connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.42);
+
+    // Crystalline structure resonance
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      const chime = this.context!.createOscillator();
+      const chimeGain = this.context!.createGain();
+      chime.type = "sine";
+      chime.frequency.setValueAtTime(f, now + 0.08 + i * 0.03);
+      chimeGain.gain.setValueAtTime(0.0001, now + 0.08 + i * 0.03);
+      chimeGain.gain.exponentialRampToValueAtTime(0.03, now + 0.08 + i * 0.03 + 0.015);
+      chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08 + i * 0.03 + 0.6);
+      chime.connect(chimeGain).connect(this.master!);
+      chime.start(now + 0.08 + i * 0.03);
+      chime.stop(now + 0.08 + i * 0.03 + 0.65);
+    });
+  }
+
+  scanSonar() {
+    if (!this.unlocked || !this.context || !this.master) return;
+    const now = this.context.currentTime;
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(380, now);
+    osc.frequency.exponentialRampToValueAtTime(760, now + 0.2);
+    osc.frequency.exponentialRampToValueAtTime(190, now + 0.8);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.06, now + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    osc.connect(gain).connect(this.master);
+    osc.start(now);
+    osc.stop(now + 0.95);
+  }
+
+  heartbeat(intensity = 1) {
+    if (!this.unlocked || !this.context || !this.master) return;
+    const now = this.context.currentTime;
+    // Lub-dub double beat
+    [0, 0.18].forEach((offset, idx) => {
+      const osc = this.context!.createOscillator();
+      const gain = this.context!.createGain();
+      const filter = this.context!.createBiquadFilter();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(idx === 0 ? 58 : 50, now + offset);
+      osc.frequency.exponentialRampToValueAtTime(28, now + offset + 0.16);
+      filter.type = "lowpass";
+      filter.frequency.value = 120;
+      gain.gain.setValueAtTime(0.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime((idx === 0 ? 0.16 : 0.11) * intensity, now + offset + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.24);
+      osc.connect(filter).connect(gain).connect(this.master!);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.26);
+    });
+  }
+
   private createContext() {
     const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
