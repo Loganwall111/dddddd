@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, ChromaticAberration, GodRays, Noise, Vignette } from "@react-three/postprocessing";
-import { Environment, Lightformer, MeshReflectorMaterial, Sky, Sparkles } from "@react-three/drei";
+import { Environment, Lightformer, MeshReflectorMaterial, Sky, Sparkles, Text } from "@react-three/drei";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
-import { districtsNear, getRealm, hashString, realmPhysics, seededRandom, worldParams, type CreatureDefinition, type District, type ExpeditionId, type WorldLayer } from "../game/procedural";
+import { districtsNear, getRealm, hashString, lifeStageFor, realmPhysics, seededRandom, worldParams, type CreatureDefinition, type District, type ExpeditionId, type LifeStageId, type WorldLayer } from "../game/procedural";
 
 const diskVertex = `
   varying vec3 vPosition;
@@ -59,7 +59,9 @@ interface WorldProps {
   paused: boolean;
   cameraMode?: "first" | "third" | "orbit";
   creature?: CreatureDefinition;
+  characterName?: string;
   scenario?: ExpeditionId;
+  lifeStage?: LifeStageId;
   tension?: number;
   attackSignal?: number;
   grabSignal?: number;
@@ -85,18 +87,8 @@ function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, on
     const hash = hashString("lumital-avatar-bias");
     yaw.current = Math.PI + ((hash % 13) - 6) * 0.008;
     pitch.current = layer === "planet" ? -0.09 : -0.04;
-    mode.current = cameraMode === "orbit" ? "orbit" : "first";
+    mode.current = cameraMode === "orbit" ? "orbit" : cameraMode === "third" ? "third" : "first";
   }, [layer, cameraMode]);
-
-  useEffect(() => {
-    const onMode = (e: KeyboardEvent) => {
-      if (paused) return;
-      if (e.code === "KeyC") { mode.current = mode.current === "third" ? "first" : "third"; }
-      if (e.code === "KeyR") { mode.current = mode.current === "orbit" ? "first" : "orbit"; }
-    };
-    window.addEventListener("keydown", onMode);
-    return () => window.removeEventListener("keydown", onMode);
-  }, [paused]);
 
   useEffect(() => {
     const start: Record<WorldLayer, [number, number, number]> = {
@@ -1789,6 +1781,28 @@ function ScenarioWorld({ scenario, seed, quality }: { scenario?: ExpeditionId; s
   return <ColossusExpeditionDetail seed={seed} quality={quality} />;
 }
 
+function LifeStageWorld({ stageId, seed, quality }: { stageId?: LifeStageId; seed: string; quality: WorldProps["quality"] }) {
+  const stage = lifeStageFor(stageId);
+  if (!stageId || stage.id === "modern") return null;
+  const detailCount = quality === "low" ? 5 : 9;
+  return (
+    <group>
+      <ambientLight color={stage.color} intensity={0.12} />
+      <pointLight position={[0, 5, -16]} color={stage.color} intensity={stage.id === "hadean" ? 35 : 18} distance={36} />
+      {stage.id === "hadean" && <>
+        <mesh position={[0, -2.4, -18]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[7, 64]} /><meshPhysicalMaterial color="#d33b2f" emissive="#ff542e" emissiveIntensity={1.1} transparent opacity={0.72} /></mesh>
+        <DriftParticles seed={`${seed}:hadean`} count={quality === "low" ? 100 : 230} color="#ffb067" radius={22} speed={0.04} />
+      </>}
+      {stage.id === "archean" && <group position={[0, -1.8, -16]}>{Array.from({ length: detailCount }, (_, i) => <mesh key={i} position={[(i - detailCount / 2) * 1.1, Math.sin(i) * .2, (i % 3) * -1]} scale={[.55, .25 + (i % 4) * .15, .55]}><sphereGeometry args={[1, 14, 10]} /><meshPhysicalMaterial color="#ba8452" emissive="#9e572c" emissiveIntensity={.35} roughness={.8} /></mesh>)}</group>}
+      {(stage.id === "cambrian" || stage.id === "ocean") && <group position={[0, -1.2, -14]}>{Array.from({ length: detailCount }, (_, i) => <mesh key={i} position={[Math.sin(i * 1.7) * 4, Math.cos(i * 1.2) * 1.8, -i * 1.4]} rotation={[0, i, i * .2]} scale={[.3 + i * .025, 1.2 + (i % 3) * .25, .3 + i * .025]}><capsuleGeometry args={[.45, 1, 5, 8]} /><meshPhysicalMaterial color={stage.color} emissive={stage.color} emissiveIntensity={.48} transparent opacity={.72} /></mesh>)}</group>}
+      {(stage.id === "carboniferous" || stage.id === "jurassic" || stage.id === "cretaceous") && <group position={[0, -2, -18]}>{Array.from({ length: detailCount }, (_, i) => <group key={i} position={[(i - detailCount / 2) * 1.7, 0, (i % 3) * -2]}><mesh position={[0, 2 + (i % 3) * .6, 0]} scale={[.55 + (i % 2) * .3, 2.2 + (i % 4) * .5, .55 + (i % 2) * .3]}><coneGeometry args={[1, 1, 6]} /><meshPhysicalMaterial color={stage.color} emissive={stage.color} emissiveIntensity={.22} roughness={.85} /></mesh><mesh position={[0, 4.1 + (i % 3) * .6, 0]} scale={[1.1, .25, 1.1]}><sphereGeometry args={[1, 12, 8]} /><meshPhysicalMaterial color="#79be65" emissive="#3f8b4c" emissiveIntensity={.28} roughness={.7} /></mesh></group>)}</group>}
+      {stage.id === "future" && <group position={[0, -1, -18]}>{Array.from({ length: 5 }, (_, i) => <mesh key={i} position={[(i - 2) * 2.4, 2 + (i % 2) * 1.4, -i * 2]} rotation={[0, i * .7, .35]}><torusKnotGeometry args={[.9, .14, 48, 6, 2, 3]} /><meshPhysicalMaterial color={stage.color} emissive={stage.color} emissiveIntensity={.8} metalness={.35} roughness={.12} /></mesh>)}</group>}
+      {stage.id === "mars" && <group position={[0, -1.8, -16]}>{Array.from({ length: 7 }, (_, i) => <mesh key={i} position={[(i - 3) * 1.8, (i % 3) * .65, -i * 1.7]} scale={[.7, 2.4 + (i % 4) * .8, .7]}><coneGeometry args={[1, 1, 6]} /><meshPhysicalMaterial color="#8c3d32" emissive="#d35c42" emissiveIntensity={.28} roughness={.9} /></mesh>)}</group>}
+      <DriftParticles seed={`${seed}:${stage.id}`} count={quality === "low" ? 70 : 150} color={stage.color} radius={25} speed={stage.id === "hadean" ? .035 : .014} />
+    </group>
+  );
+}
+
 const lensingShaders = {
   vertex: `
     varying vec2 vUv;
@@ -2186,7 +2200,7 @@ function ProceduralReflectionRig({ realm, quality }: { realm: ReturnType<typeof 
   );
 }
 
-function PlayerAvatar({ creature, avatarRef, visible = true, attackSignal = 0, grabSignal = 0, cameraMode = "first" }: { creature: import("../game/procedural").CreatureDefinition; avatarRef: React.MutableRefObject<THREE.Group | null>; visible?: boolean; attackSignal?: number; grabSignal?: number; cameraMode?: "first" | "third" | "orbit" }) {
+function PlayerAvatar({ creature, characterName = creature.genus, layer = "planet", avatarRef, visible = true, attackSignal = 0, grabSignal = 0, cameraMode = "first" }: { creature: import("../game/procedural").CreatureDefinition; characterName?: string; layer?: string; avatarRef: React.MutableRefObject<THREE.Group | null>; visible?: boolean; attackSignal?: number; grabSignal?: number; cameraMode?: "first" | "third" | "orbit" }) {
   const { camera } = useThree();
   const creatureGroup = useMemo(() => {
     const color = new THREE.Color().setHSL(creature.hue / 360, 0.52, 0.55);
@@ -2227,18 +2241,20 @@ function PlayerAvatar({ creature, avatarRef, visible = true, attackSignal = 0, g
     const bob = isThird ? Math.sin(bobPhase.current) * 0.08 : 0;
 
     if (isThird) {
-      // In third-person mode: avatar is in world space, position it behind the camera.
-      // Face the avatar toward camera-forward so it looks like it's walking forward.
-      const back = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion);
-      const targetPos = camera.position.clone().addScaledVector(back, 2.8);
-      targetPos.y -= 0.5 + bob * 0.15;
+      // True third-person: the organism leads the camera, rather than hiding behind it.
+      // The camera is its chase view; the avatar remains in the illuminated play space.
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      const targetPos = camera.position.clone().addScaledVector(forward, 2.8);
+      targetPos.y -= layer === "planet" ? 1.62 : 0.62 + bob * 0.15;
       avatarRef.current.position.lerp(targetPos, 1 - Math.exp(-delta * 14));
-      const forwardYaw = Math.atan2(-back.x, -back.z);
-      avatarRef.current.rotation.y = forwardYaw + Math.PI;
-      avatarRef.current.rotation.x = lunge * 0.55 - scoop * 0.2;
+      const forwardYaw = Math.atan2(forward.x, forward.z);
+      avatarRef.current.rotation.y = forwardYaw;
+      avatarRef.current.rotation.x = lunge * 0.55 - scoop * 0.2 + (layer === "planet" ? 0 : Math.sin(time * 2.4) * 0.045);
+      avatarRef.current.rotation.z = layer === "planet" ? Math.sin(time * 0.9) * 0.018 : Math.sin(time * 2.1) * 0.055;
       avatarRef.current.scale.setScalar(creatureGroup.scale * 0.85 * (1 + lunge * 0.25 + scoop * 0.15));
     } else {
       avatarRef.current.rotation.x = lunge * 0.55 - scoop * 0.2;
+      avatarRef.current.rotation.z = 0;
       avatarRef.current.scale.setScalar(creatureGroup.scale * 0.55 * (1 + lunge * 0.3 + scoop * 0.2));
     }
 
@@ -2335,6 +2351,11 @@ function PlayerAvatar({ creature, avatarRef, visible = true, attackSignal = 0, g
           </group>
         );
       })}
+      {cameraMode !== "first" && (
+        <Text position={[0, 1.32, 0]} rotation={[0, Math.PI, 0]} fontSize={0.19} color="#d9ffe5" anchorX="center" anchorY="middle" outlineWidth={0.025} outlineColor="#06100b" fillOpacity={0.92}>
+          {characterName}
+        </Text>
+      )}
       {/* Forward slash plane */}
       <mesh ref={slashRef} visible={false}>
         <planeGeometry args={[1.7, 0.24]} />
@@ -2420,7 +2441,8 @@ export function GameWorld(props: WorldProps) {
       {authoredKey === "quantum" && <QuantumWorld seed={props.seed} density={density} />}
       {!realm.key && <RealmBody realm={realm} seed={props.seed} density={density} quality={props.quality} />}
       <ScenarioWorld scenario={props.scenario} seed={props.seed} quality={props.quality} />
-      {props.creature && <PlayerAvatar creature={props.creature} avatarRef={avatarRef} visible={props.cameraMode !== "first"} attackSignal={props.attackSignal} grabSignal={props.grabSignal} cameraMode={props.cameraMode ?? "first"} />}
+      <LifeStageWorld stageId={props.lifeStage} seed={props.seed} quality={props.quality} />
+      {props.creature && <PlayerAvatar creature={props.creature} characterName={props.characterName ?? props.creature.genus} layer={authoredKey} avatarRef={avatarRef} visible={props.cameraMode !== "first"} attackSignal={props.attackSignal} grabSignal={props.grabSignal} cameraMode={props.cameraMode ?? "third"} />}
       {props.creature && <CombatArms creature={props.creature} attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} cameraMode={props.cameraMode ?? "first"} />}
       {props.creature && props.cameraShake !== false && !props.reducedMotion && <CombatCameraShake attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} />}
       {props.creature && <CombatParticleBurstWithClock creatureHue={props.creature.hue} attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} />}

@@ -8,10 +8,10 @@ import {
 } from "lucide-react";
 import { GameWorld } from "../scenes/GameWorld";
 import {
-  expeditions, expeditionFor, getRealm, hashString, nearestDistrict,
+  expeditions, expeditionFor, getRealm, hashString, lifeStageFor, lifeStages, nearestDistrict,
   realmAtIndex, realmDiscoveries, realmIndexOf, realmList, realmPhysics, realmReadings,
   realmSceneAudio, settlementProfile,
-  type CreatureDefinition, type Discovery, type District, type EcosystemState, type ExpeditionId, type InventoryItem,
+  type CreatureDefinition, type Discovery, type District, type EcosystemState, type ExpeditionId, type InventoryItem, type LifeStageId,
   type Realm, type SaveState, type WorldLayer,
 } from "../game/procedural";
 import type { AppSettings } from "./MainMenu";
@@ -27,7 +27,7 @@ interface GameExperienceProps {
 }
 
 type CameraMode = "first" | "third" | "orbit";
-type PanelKind = "journal" | "evolution" | "pause" | "civilization" | "physics" | "inventory" | "crafting" | "atlas" | null;
+type PanelKind = "journal" | "evolution" | "pause" | "civilization" | "physics" | "inventory" | "crafting" | "atlas" | "stages" | null;
 
 const inventoryCatalog: Record<string, Omit<InventoryItem, "count">> = {
   "lumen-shard": { id: "lumen-shard", name: "Lumen Shard", kind: "shard", essence: 6 },
@@ -140,7 +140,7 @@ function BodyTelemetry({ creature, state, onEvolution }: { creature: CreatureDef
   return (
     <div className="body-telemetry">
       <span className="hud-label">CURRENT FORM / {String(creature.id + 1).padStart(3, "0")}</span>
-      <div className="body-name"><Activity size={17} /><span><strong>{creature.genus}</strong><small>{creature.bodyPlan} organism</small></span></div>
+      <div className="body-name"><Activity size={17} /><span><strong>{state.characterName ?? creature.genus}</strong><small>{creature.genus} / {creature.bodyPlan} organism</small></span></div>
       <div className={`vital ${starving ? "is-critical" : ""}`}><span>ENERGY</span><i><i style={{ width: `${energy}%` }} /></i><b>{energy}%</b></div>
       <div className="vital"><span>INTEGRITY</span><i><i style={{ width: `${integrity}%` }} /></i><b>{integrity}%</b></div>
       <div className="vital"><span>HUNTS</span><i><i style={{ width: `${Math.min(100, hunts * 4)}%` }} /></i><b>{hunts}</b></div>
@@ -355,6 +355,27 @@ function AtlasPanel({ scenario, onTravel, onClose }: { scenario: ExpeditionId; o
   );
 }
 
+function LifeStagePanel({ stageId, onTravel, onClose }: { stageId: LifeStageId; onTravel: (id: LifeStageId) => void; onClose: () => void }) {
+  const active = lifeStageFor(stageId);
+  const [selectedId, setSelectedId] = useState<LifeStageId>(active.id);
+  const selected = lifeStageFor(selectedId);
+  return (
+    <motion.section className="game-panel stages-panel" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}>
+      <header>
+        <div><span className="hud-label">TIME / FORM / ECOLOGY</span><h2>Life stages</h2></div>
+        <span className="era-badge">{active.era}</span>
+        <button onClick={onClose}><X size={20} /></button>
+      </header>
+      <div className="stage-current" style={{ "--stage-color": active.color } as React.CSSProperties}><span><CircleDot size={18} /></span><div><small>ACTIVE ERA / {active.scale}</small><strong>{active.name}</strong><p>{active.description}</p></div></div>
+      <div className="stage-timeline" role="listbox" aria-label="Life stages timeline">
+        {lifeStages.map((stage, index) => <button key={stage.id} className={selected.id === stage.id ? "is-selected" : ""} onClick={() => setSelectedId(stage.id)}><i style={{ background: stage.color }} /><span><b>{String(index + 1).padStart(2, "0")}</b><strong>{stage.name}</strong><small>{stage.era}</small></span></button>)}
+      </div>
+      <div className="stage-detail"><span className="hud-label">SELECTED STAGE / {selected.scale}</span><h3>{selected.name}</h3><p>{selected.description}</p><div>{selected.landmarks.map((landmark) => <span key={landmark}>{landmark}</span>)}</div></div>
+      <div className="panel-actions"><button className="primary-action" onClick={() => onTravel(selected.id)} disabled={selected.id === active.id}><Orbit size={16} /> {selected.id === active.id ? "Current stage" : `Enter ${selected.name}`}</button></div>
+    </motion.section>
+  );
+}
+
 function JournalPanel({ state, onClose }: { state: SaveState; onClose: () => void }) {
   const categories = new Set(state.discoveries.map((item) => item.category)).size;
   return (
@@ -446,6 +467,18 @@ function ScaleTransition({ from, to }: { from: string; to: string }) {
   );
 }
 
+export function LifeStageTransition({ from, to }: { from: LifeStageId; to: LifeStageId }) {
+  const fromStage = lifeStageFor(from);
+  const toStage = lifeStageFor(to);
+  const forward = lifeStages.findIndex((stage) => stage.id === to) > lifeStages.findIndex((stage) => stage.id === from);
+  return (
+    <motion.div className="life-stage-transition" style={{ "--stage-color": toStage.color } as React.CSSProperties} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="stage-transition-rings"><i /><i /><i /></div>
+      <div><span>{forward ? "MOVING THROUGH TIME" : "RETURNING THROUGH TIME"}</span><strong>{fromStage.name} <em>→</em> {toStage.name}</strong><small>{toStage.era} / {toStage.atmosphere}</small></div>
+    </motion.div>
+  );
+}
+
 export function GameExperience({ initialSave, creature, settings, sandbox = false, onSave, onExit }: GameExperienceProps) {
   const [state, setState] = useState<SaveState>(() => {
     const base: SaveState = sandbox ? { ...initialSave, evolution: Math.max(140, initialSave.evolution), layer: "quantum" } : initialSave;
@@ -457,13 +490,17 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
       districtClaims: base.districtClaims ?? [],
       scenario: base.scenario ?? (sandbox ? undefined : expeditionFor(base.scenario).id),
       crafted: base.crafted ?? [],
+      characterName: base.characterName ?? creature.genus,
+      lifeStage: base.lifeStage ?? "modern",
     };
   });
   const [realmId, setRealmId] = useState<string>(() => sandbox ? "quantum" : initialSave.layer);
   const realm = useMemo(() => getRealm(realmId), [realmId]);
   const expedition = useMemo(() => expeditionFor(state.scenario), [state.scenario]);
+  const lifeStage = useMemo(() => lifeStageFor(state.lifeStage), [state.lifeStage]);
   const [panel, setPanel] = useState<PanelKind>(null);
   const [transition, setTransition] = useState<{ from: string; to: string } | null>(null);
+  const [stageTransition, setStageTransition] = useState<{ from: LifeStageId; to: LifeStageId } | null>(null);
   const [locked, setLocked] = useState(false);
   const [intro, setIntro] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -539,6 +576,17 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
     cinematicAudio.transition(realmIndexOf(nextExpedition.startLayer) > realmIndexOf(realmId));
     if (nextExpedition.startLayer !== realmId) changeLayer(nextExpedition.startLayer, true);
   }, [changeLayer, intro, realmId, transition]);
+
+  const travelLifeStage = useCallback((id: LifeStageId) => {
+    if (stageTransition || transition || intro) return;
+    if (id === lifeStage.id) return;
+    setStageTransition({ from: lifeStage.id, to: id });
+    setState((current) => ({ ...current, lifeStage: id, lastPlayed: Date.now() }));
+    setLatest(null);
+    setPanel(null);
+    cinematicAudio.transition(lifeStages.findIndex((stage) => stage.id === id) > lifeStages.findIndex((stage) => stage.id === lifeStage.id));
+    window.setTimeout(() => setStageTransition(null), settings.reducedMotion ? 280 : 1450);
+  }, [intro, lifeStage.id, settings.reducedMotion, stageTransition, transition]);
 
   const shiftLayer = useCallback((direction: number) => {
     const index = THREEClamp(realmIndexOf(realmId) + direction, 0, realmList.length - 1);
@@ -680,6 +728,7 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
       if (event.code === "KeyI") setPanel((current) => current === "inventory" ? null : "inventory");
       if (event.code === "KeyM") setPanel((current) => current === "atlas" ? null : "atlas");
       if (event.code === "KeyN") setPanel((current) => current === "crafting" ? null : "crafting");
+      if (event.code === "KeyY") setPanel((current) => current === "stages" ? null : "stages");
     };
     window.addEventListener("keydown", keys);
     return () => window.removeEventListener("keydown", keys);
@@ -710,7 +759,7 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
     });
   };
 
-  const paused = Boolean(panel || transition || intro);
+  const paused = Boolean(panel || transition || stageTransition || intro);
   const coordinates = useMemo(() => position.map((value) => `${value >= 0 ? "+" : ""}${value.toFixed(1)}`).join(" / "), [position]);
 
   // Footsteps - trigger when moving
@@ -776,7 +825,9 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
           paused={paused}
           cameraMode={cameraMode}
           creature={creature}
+          characterName={state.characterName ?? creature.genus}
           scenario={state.scenario}
+          lifeStage={state.lifeStage}
           tension={eco.tension}
           attackSignal={attackSignal}
           grabSignal={grabSignal}
@@ -791,12 +842,13 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
       <div className="game-hud">
         <header className="hud-top">
           <GameBrand />
-          <div className="location-heading"><span>{realm.label.toUpperCase()} / 10{realm.exponent >= 0 ? "+" : ""}{realm.exponent} M • 75+ BIOMES</span><strong>{expedition.destination}</strong><small>{expedition.label} / {coordinates}</small>{district && <em className="district-banner" style={{ color: district.color }}>DISTRICT / {district.name} • {district.biome.toUpperCase()}</em>}</div>
+          <div className="location-heading"><span>{realm.label.toUpperCase()} / {lifeStage.name} / 10{realm.exponent >= 0 ? "+" : ""}{realm.exponent} M • 75+ BIOMES</span><strong>{expedition.destination}</strong><small>{expedition.label} / {lifeStage.era} / {coordinates}</small>{district && <em className="district-banner" style={{ color: district.color }}>DISTRICT / {district.name} • {district.biome.toUpperCase()}</em>}</div>
           <div className="hud-actions">
             <button onClick={() => setPanel("atlas")}><Map size={16} /><span>ROUTE</span><b>5</b></button>
             <button onClick={() => setPanel("journal")}><BookOpen size={16} /><span>JOURNAL</span><b>{state.discoveries.length}</b></button>
             <button onClick={() => setPanel("inventory")}><Atom size={16} /><span>ITEMS</span><b>{(state.inventory ?? []).reduce((n, item) => n + item.count, 0)}</b></button>
             <button onClick={() => setPanel("crafting")}><Hammer size={16} /><span>CRAFT</span><b>{(state.crafted ?? []).length}</b></button>
+            <button onClick={() => setPanel("stages")}><Orbit size={16} /><span>TIME</span><b>{lifeStages.findIndex((stage) => stage.id === lifeStage.id) + 1}</b></button>
             <button onClick={() => setPanel("physics")}><Gauge size={16} /><span>PHYSICS</span></button>
             <button onClick={() => setPanel("pause")} aria-label="Pause"><Pause size={16} /></button>
           </div>
@@ -812,7 +864,7 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
         <div className="hud-bottom-rail">
           <div className="movement-readout"><Compass size={15} /><span>{speed.toFixed(1)} m/s</span><i /><span>CYCLE {state.cycle}</span><i /><Video size={13} /><span>{cameraMode.toUpperCase()}</span></div>
           <div className="control-hints">
-            <span><kbd>WASD</kbd> MOVE</span><span><kbd>T</kbd> CAM</span><span><kbd>Q</kbd> STRIKE</span><span><kbd>G</kbd> GRAB</span><span><kbd>E</kbd> OBSERVE</span><span><kbd>F</kbd> FEED</span><span><kbd>M</kbd> ATLAS</span><span><kbd>N</kbd> CRAFT</span><span><kbd>I</kbd> ITEMS</span>
+            <span><kbd>WASD</kbd> MOVE</span><span><kbd>T</kbd> CAM</span><span><kbd>Q</kbd> STRIKE</span><span><kbd>G</kbd> GRAB</span><span><kbd>E</kbd> OBSERVE</span><span><kbd>F</kbd> FEED</span><span><kbd>M</kbd> ATLAS</span><span><kbd>N</kbd> CRAFT</span><span><kbd>Y</kbd> TIME</span><span><kbd>I</kbd> ITEMS</span>
           </div>
         </div>
         {!locked && !paused && <div className="pointer-hint"><MousePointer2 size={16} /> Click reality to bind camera</div>}
@@ -837,7 +889,9 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
           </motion.div>
         )}
         {transition && <ScaleTransition from={transition.from} to={transition.to} />}
+        {stageTransition && <LifeStageTransition from={stageTransition.from} to={stageTransition.to} />}
         {panel === "atlas" && <AtlasPanel scenario={expedition.id} onTravel={travelExpedition} onClose={() => setPanel(null)} />}
+        {panel === "stages" && <LifeStagePanel stageId={lifeStage.id} onTravel={travelLifeStage} onClose={() => setPanel(null)} />}
         {panel === "inventory" && <InventoryPanel state={state} onConsume={consumeItem} onClose={() => setPanel(null)} />}
         {panel === "crafting" && <CraftingPanel state={state} onCraft={craft} onClose={() => setPanel(null)} />}
         {panel === "journal" && <JournalPanel state={state} onClose={() => setPanel(null)} />}

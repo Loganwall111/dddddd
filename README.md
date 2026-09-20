@@ -4,7 +4,7 @@ A cinematic React + Three.js prototype for a cross-scale open world. Choose a pr
 
 ## Cross-scale expeditions
 
-The Living Atlas adds five authored entry routes on top of the seeded world:
+The Living Atlas adds five authored entry routes on top of the seeded world, and the in-game Time panel adds ten traversable life stages from the Hadean Eon through future alien worlds:
 
 - **Leafskin Canopy** — walk a leaf vein, follow a caterpillar and descend into plant cells.
 - **Digestive Passage** — be eaten, travel from enamel through saliva, and survive a stomach acid tide.
@@ -21,4 +21,4 @@ npm install
 npm run dev
 ```
 
-For the cinematic presentation, choose **Lumital Cinematic** in Settings. The app supports keyboard and mouse exploration with `WASD`, `Q`, `G`, `E`, `M` (atlas), `N` (craft), `Z/X` (scale), and `I` (inventory).
+For the cinematic presentation, choose **Lumital Cinematic** in Settings. The app opens in third-person by default, with the named organism visible in the world. It supports keyboard and mouse exploration with `WASD`, `Q`, `G`, `E`, `T` (camera), `M` (atlas), `N` (craft), `Z/X` (scale), and `I` (inventory).

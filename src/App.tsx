@@ -9,6 +9,7 @@ import { UniverseScene } from "./scenes/UniverseScene";
 const SAVE_KEY = "lumital.reality.v1";
 const SETTINGS_KEY = "lumital.settings.v1";
 const FORM_KEY = "lumital.form.v1";
+const CHARACTER_KEY = "lumital.character.v1";
 
 function readJson<T>(key: string): T | null {
   try {
@@ -46,6 +47,29 @@ function BootSequence({ onSkip }: { onSkip: () => void }) {
   );
 }
 
+function CreationSequence({ save, creatureName, formLabel }: { save: SaveState; creatureName: string; formLabel: string }) {
+  const expedition = expeditionFor(save.scenario);
+  return (
+    <motion.div className="creation-sequence" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="creation-backdrop" />
+      <div className="creation-grid" aria-hidden="true"><i /><i /><i /><i /></div>
+      <div className="creation-topline"><span>// GENESIS ARCHIVE / CREATE NEW</span><span>{save.seed}</span></div>
+      <div className="creation-core">
+        <div className="creation-orbit creation-orbit--outer" /><div className="creation-orbit creation-orbit--inner" />
+        <div className="creation-orb"><span>{formLabel.slice(0, 1)}</span></div>
+      </div>
+      <div className="creation-copy">
+        <span className="creation-kicker">ENTITY BINDING / {expedition.scale}</span>
+        <h1>{creatureName}</h1>
+        <p>{formLabel} form selected. Its first memory will be {expedition.destination.toLowerCase()}.</p>
+        <div className="creation-progress"><i /></div>
+        <div className="creation-states"><span>ASSEMBLING MORPHOLOGY</span><span>CALIBRATING SENSES</span><span>OPENING HOST PATH</span></div>
+      </div>
+      <div className="creation-footer"><span>THE ORGANISM IS NOT A CAMERA</span><span>EVERY SCALE CONTAINS A LIFE</span></div>
+    </motion.div>
+  );
+}
+
 function LoadingSequence({ save, creatureName }: { save: SaveState; creatureName: string }) {
   const expedition = expeditionFor(save.scenario);
   return (
@@ -64,13 +88,14 @@ function LoadingSequence({ save, creatureName }: { save: SaveState; creatureName
 }
 
 export default function App() {
-  const [phase, setPhase] = useState<"boot" | "menu" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
+  const [phase, setPhase] = useState<"boot" | "menu" | "creation" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
   const [sandbox, setSandbox] = useState(false);
   const [seed, setSeed] = useState(() => readJson<SaveState>(SAVE_KEY)?.seed ?? generateSeed());
   const [selectedCreature, setSelectedCreature] = useState(() => {
     const id = Number(localStorage.getItem(FORM_KEY) ?? 42);
     return creatures.find((creature) => creature.id === id) ?? creatures[42];
   });
+  const [characterName, setCharacterName] = useState(() => localStorage.getItem(CHARACTER_KEY) ?? readJson<SaveState>(SAVE_KEY)?.characterName ?? "");
   const [save, setSave] = useState<SaveState | null>(() => readJson<SaveState>(SAVE_KEY));
   const [activeSave, setActiveSave] = useState<SaveState | null>(null);
   const [settings, setSettings] = useState<AppSettings>(() => ({
@@ -80,6 +105,7 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }, [settings]);
   useEffect(() => { localStorage.setItem(FORM_KEY, String(selectedCreature.id)); }, [selectedCreature]);
+  useEffect(() => { localStorage.setItem(CHARACTER_KEY, characterName.trim()); }, [characterName]);
   useEffect(() => {
     const audioScene = phase === "game" ? activeSave?.layer ?? "menu" : phase;
     cinematicAudio.setScene(audioScene, settings.audio);
@@ -112,6 +138,11 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [phase, settings.reducedMotion]);
   useEffect(() => {
+    if (phase !== "creation") return;
+    const timer = window.setTimeout(() => setPhase("loading"), settings.reducedMotion ? 240 : 1850);
+    return () => window.clearTimeout(timer);
+  }, [phase, settings.reducedMotion]);
+  useEffect(() => {
     if (phase !== "loading") return;
     const timer = window.setTimeout(() => setPhase("game"), settings.reducedMotion ? 500 : 2600);
     return () => window.clearTimeout(timer);
@@ -130,6 +161,8 @@ export default function App() {
       discoveries: [],
       structures: 0,
       bookmarked: true,
+      characterName: characterName.trim() || selectedCreature.genus,
+      lifeStage: "modern",
       lastPlayed: Date.now(),
     };
     setSandbox(mode === "sandbox");
@@ -137,19 +170,20 @@ export default function App() {
     setSave(next);
     localStorage.setItem(SAVE_KEY, JSON.stringify(next));
     cinematicAudio.cinematicHit(1);
-    setPhase("loading");
-  }, [seed, selectedCreature.id]);
+    setPhase("creation");
+  }, [characterName, seed, selectedCreature.id]);
 
   const continueJourney = useCallback(() => {
     if (!save) return;
     const form = creatures.find((creature) => creature.id === save.creatureId);
     if (form) setSelectedCreature(form);
+    setCharacterName(save.characterName ?? form?.genus ?? characterName);
     setSeed(save.seed);
     setSandbox(false);
     setActiveSave(save);
     cinematicAudio.cinematicHit(1);
     setPhase("loading");
-  }, [save]);
+  }, [characterName, save]);
 
   const persistSave = useCallback((next: SaveState) => {
     setSave(next);
@@ -174,17 +208,21 @@ export default function App() {
             <MainMenu
               seed={seed}
               selectedCreature={selectedCreature}
+              characterName={characterName}
               save={save}
               settings={settings}
               onSeedChange={setSeed}
               onCreatureChange={setSelectedCreature}
+              onCharacterNameChange={setCharacterName}
               onSettingsChange={setSettings}
               onStart={start}
               onContinue={continueJourney}
             />
           </motion.div>
+        ) : phase === "creation" && activeSave ? (
+          <CreationSequence save={activeSave} creatureName={activeSave.characterName ?? (characterName.trim() || selectedCreature.genus)} formLabel={selectedCreature.genus} />
         ) : phase === "loading" && activeSave ? (
-          <LoadingSequence save={activeSave} creatureName={selectedCreature.genus} />
+          <LoadingSequence save={activeSave} creatureName={activeSave.characterName ?? (characterName.trim() || selectedCreature.genus)} />
         ) : activeSave ? (
           <motion.div key="game" className="game-stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}>
             <GameExperience initialSave={activeSave} creature={selectedCreature} settings={settings} sandbox={sandbox} onSave={persistSave} onExit={exitToMenu} />

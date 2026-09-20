@@ -100,6 +100,36 @@ export function expeditionFor(id?: string | null): ExpeditionDefinition {
   return expeditions.find((expedition) => expedition.id === id) ?? expeditions[expeditions.length - 1];
 }
 
+export type LifeStageId = "hadean" | "archean" | "cambrian" | "carboniferous" | "jurassic" | "cretaceous" | "modern" | "future" | "ocean" | "mars";
+
+export interface LifeStageDefinition {
+  id: LifeStageId;
+  name: string;
+  era: string;
+  description: string;
+  scale: string;
+  color: string;
+  atmosphere: string;
+  landmarks: string[];
+}
+
+export const lifeStages: LifeStageDefinition[] = [
+  { id: "hadean", name: "HADEAN EON", era: "4.5B YEARS AGO", description: "A molten young Earth, before the first stable memory of life.", scale: "planetary", color: "#ff6c45", atmosphere: "iron vapor / lava rain", landmarks: ["Magma ocean", "First crust", "Impact basin"] },
+  { id: "archean", name: "ARCHEAN", era: "4.0B YEARS AGO", description: "Mineral coastlines and the first microbial metabolisms shaping the air.", scale: "planetary", color: "#ffad5b", atmosphere: "methane haze", landmarks: ["Stromatolite shelf", "Black smoker", "Sulfur coast"] },
+  { id: "cambrian", name: "CAMBRIAN EXPLOSION", era: "541M YEARS AGO", description: "A sudden abundance of body plans turns the sea into an experiment.", scale: "pelagic", color: "#49d982", atmosphere: "oxygen rise", landmarks: ["Trilobite shelf", "Reef forest", "Anomalocaris trench"] },
+  { id: "carboniferous", name: "CARBONIFEROUS", era: "359M YEARS AGO", description: "Giant forests breathe through warm mist while insects learn to fly.", scale: "forest canopy", color: "#b5e65b", atmosphere: "oxygen-rich", landmarks: ["Fern cathedral", "Dragonfly marsh", "Coal swamp"] },
+  { id: "jurassic", name: "JURASSIC", era: "201M YEARS AGO", description: "Sauropod shadows move through conifers beneath a humid green sky.", scale: "megafauna", color: "#5ecb8c", atmosphere: "warm jungle", landmarks: ["Dinosaur valley", "Volcanic ridge", "Amber forest"] },
+  { id: "cretaceous", name: "CRETACEOUS", era: "145M YEARS AGO", description: "Flowering plants recruit insects while a giant world listens overhead.", scale: "leaf / giant", color: "#6fcf67", atmosphere: "flowering world", landmarks: ["Pollen basin", "Cretaceous sea", "Meteor horizon"] },
+  { id: "modern", name: "MODERN JUNGLE", era: "NOW", description: "The familiar world, full of hidden cities, hosts, tides and microscopic weather.", scale: "open world", color: "#c9ffd9", atmosphere: "breathable", landmarks: ["Leafskin canopy", "Human host", "Tidal underways"] },
+  { id: "future", name: "FUTURE ALIEN", era: "+100M YEARS", description: "Evolution has no obligation to keep the shape of the present.", scale: "speculative", color: "#c084fc", atmosphere: "violet haze", landmarks: ["Glass forest", "Signal desert", "Adaptive city"] },
+  { id: "ocean", name: "PRIMORDIAL OCEAN", era: "OCEAN WORLD", description: "No land interrupts the current. Every surface is a tide and every tide carries life.", scale: "aquatic", color: "#7dd3f7", atmosphere: "salt / pressure", landmarks: ["Abyssal vent", "Cyanobacteria bloom", "Whale fall"] },
+  { id: "mars", name: "MARS — RED PLANET", era: "OTHER PLANET", description: "A cold red frontier where shelters, dust and small organisms make a new history.", scale: "extraterrestrial", color: "#ef6c5b", atmosphere: "thin / dry", landmarks: ["Olympus Mons", "Ice cave", "Red dune city"] },
+];
+
+export function lifeStageFor(id?: string | null): LifeStageDefinition {
+  return lifeStages.find((stage) => stage.id === id) ?? lifeStages.find((stage) => stage.id === "modern")!;
+}
+
 export interface CreatureDefinition {
   id: number;
   name: string;
@@ -157,6 +187,8 @@ export interface SaveState {
   districtClaims?: string[];
   scenario?: ExpeditionId;
   crafted?: string[];
+  characterName?: string;
+  lifeStage?: LifeStageId;
 }
 
 export type DistrictType = "crystal" | "falls" | "ash" | "reef" | "spire" | "jungle" | "ruins" | "hive-city" | "floating-islets" | "graveyard" | "geode-cave" | "spores";
@@ -309,7 +341,7 @@ export function generateSeed() {
   return `LM-${part(random[0])}-${part(random[1])}-${part(random[2])}`;
 }
 
-export const creatures: CreatureDefinition[] = Array.from({ length: 120 }, (_, index) => {
+export const creatures: CreatureDefinition[] = Array.from({ length: 400 }, (_, index) => {
   const random = mulberry32(90210 + index * 7919);
   const pick = <T,>(values: T[]) => values[Math.floor(random() * values.length)];
   const bodyPlan = bodyPlans[index % bodyPlans.length];

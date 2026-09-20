@@ -43,10 +43,12 @@ export interface AppSettings {
 interface MainMenuProps {
   seed: string;
   selectedCreature: CreatureDefinition;
+  characterName: string;
   save: SaveState | null;
   settings: AppSettings;
   onSeedChange: (seed: string) => void;
   onCreatureChange: (creature: CreatureDefinition) => void;
+  onCharacterNameChange: (name: string) => void;
   onSettingsChange: (settings: AppSettings) => void;
   onStart: (mode?: "journey" | "sandbox", expedition?: ExpeditionId) => void;
   onContinue: () => void;
@@ -90,7 +92,7 @@ function MainNavigation({
   const items = [
     ...(save ? [{ id: "continue", label: "Continue journey", detail: `Cycle ${save.cycle} / ${save.discoveries.length} discoveries`, icon: Play, onClick: onContinue }] : []),
     { id: "start", label: "New journey", detail: "Awaken in a new living reality", icon: CircleDot, onClick: () => onNavigate("creatures", true) },
-    { id: "creatures", label: "Creature / form", detail: "120 viable morphologies", icon: Dna, onClick: () => onNavigate("creatures") },
+    { id: "creatures", label: "Creature / form", detail: "400 viable morphologies", icon: Dna, onClick: () => onNavigate("creatures") },
     { id: "atlas", label: "Living atlas", detail: "Leaf cells to stomach seas", icon: Globe2, onClick: () => onNavigate("atlas") },
     { id: "seed", label: "World seed", detail: "Define the laws of emergence", icon: Orbit, onClick: () => onNavigate("seed") },
     { id: "multiverse", label: "Multiverse", detail: "Revisit persistent realities", icon: InfinityIcon, onClick: () => onNavigate("multiverse") },
@@ -190,14 +192,18 @@ function TraitMeter({ label, value }: { label: string; value: number }) {
 
 function CreatureLab({
   selected,
+  characterName,
   onSelect,
+  onCharacterNameChange,
   onClose,
   onContinue,
   journey,
   reducedMotion,
 }: {
   selected: CreatureDefinition;
+  characterName: string;
   onSelect: (creature: CreatureDefinition) => void;
+  onCharacterNameChange: (name: string) => void;
   onClose: () => void;
   onContinue: () => void;
   journey: boolean;
@@ -215,7 +221,7 @@ function CreatureLab({
         <button className="icon-button" onClick={onClose} aria-label="Back"><ArrowLeft size={19} /></button>
         <BrandMark compact />
         <div className="sheet-title"><span>Genesis archive</span><strong>Choose a viable beginning</strong></div>
-        <span className="sheet-index">120 FORMS / DETERMINISTIC GENOMES</span>
+        <span className="sheet-index">400 FORMS / DETERMINISTIC GENOMES</span>
       </header>
 
       <div className="creature-lab__body">
@@ -252,6 +258,7 @@ function CreatureLab({
           <div className="analysis-copy">
             <span className="kicker">FORM {String(selected.id + 1).padStart(3, "0")} / {selected.bodyPlan}</span>
             <h2>{selected.genus}</h2>
+            <label className="entity-name-field"><span>ENTITY CALLSIGN</span><input value={characterName} onChange={(event) => onCharacterNameChange(event.target.value.slice(0, 24))} placeholder={selected.genus} maxLength={24} /></label>
             <p>{selected.description}</p>
             <div className="trait-pairs">
               <span><small>LOCOMOTION</small>{selected.locomotion}</span>
@@ -373,7 +380,7 @@ function LivingAtlas({ onClose, onStart }: { onClose: () => void; onStart: (mode
         <button className="icon-button" onClick={onClose} aria-label="Back"><ArrowLeft size={19} /></button>
         <BrandMark compact />
         <div className="sheet-title"><span>Cross-scale expedition atlas</span><strong>Choose where to become small</strong></div>
-        <span className="sheet-index">700,000+ CITY SEEDS / 66 REALMS</span>
+        <span className="sheet-index">700,000+ CITY SEEDS / 10 LIFE STAGES / 66 REALMS</span>
       </header>
       <div className="atlas-layout">
         <div className="atlas-intro">
@@ -603,16 +610,16 @@ export function MainMenu(props: MainMenuProps) {
             <MainNavigation save={props.save} onNavigate={navigate} onContinue={props.onContinue} />
             <motion.div className="menu-reality-status" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.05, duration: 1 }}>
               <span className="menu-reality-status__eyebrow"><i /> GENESIS FORM READY</span>
-              <strong>{props.selectedCreature.genus}</strong>
-              <p>{props.selectedCreature.bodyPlan} / {props.selectedCreature.metabolism} / {props.selectedCreature.habitat}</p>
+              <strong>{props.characterName.trim() || props.selectedCreature.genus}</strong>
+              <p>{props.selectedCreature.genus} / {props.selectedCreature.bodyPlan} / {props.selectedCreature.habitat}</p>
               <div><span>ADAPTABILITY <b>{props.selectedCreature.potential}</b></span><i><i style={{ width: `${props.selectedCreature.potential}%` }} /></i></div>
-              <small>FORM {String(props.selectedCreature.id + 1).padStart(3, "0")} OF 120</small>
+              <small>FORM {String(props.selectedCreature.id + 1).padStart(3, "0")} OF 400</small>
             </motion.div>
             <div className="menu-side-copy" aria-hidden="true">A WORLD WITHIN A WORLD WITHIN A WORLD</div>
             <CornerTelemetry seed={props.seed} />
           </motion.div>
         ) : view === "creatures" ? (
-          <CreatureLab key="creatures" selected={props.selectedCreature} onSelect={props.onCreatureChange} onClose={close} journey={journeyFlow} onContinue={() => { setView("seed"); setSandboxFlow(false); }} reducedMotion={props.settings.reducedMotion} />
+          <CreatureLab key="creatures" selected={props.selectedCreature} characterName={props.characterName} onSelect={props.onCreatureChange} onCharacterNameChange={props.onCharacterNameChange} onClose={close} journey={journeyFlow} onContinue={() => { setView("seed"); setSandboxFlow(false); }} reducedMotion={props.settings.reducedMotion} />
         ) : view === "seed" ? (
           <SeedComposer key="seed" seed={props.seed} onSeedChange={props.onSeedChange} onClose={close} onStart={() => props.onStart(sandboxFlow ? "sandbox" : "journey")} sandbox={sandboxFlow} />
         ) : view === "atlas" ? (
