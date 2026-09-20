@@ -80,6 +80,22 @@ function CornerTelemetry({ seed }: { seed: string }) {
   );
 }
 
+function SaveConstellation({ save, onContinue }: { save: SaveState | null; onContinue: () => void }) {
+  return (
+    <motion.aside className="menu-save-panel" initial={{ opacity: 0, x: 34 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8, duration: 0.8 }}>
+      <div className="save-panel-header"><span>// LOAD JOURNEY</span><small>{save ? "LOCAL MEMORY / 01" : "NO MEMORY / READY"}</small></div>
+      <div className="save-panel-orbit" aria-hidden="true"><i /><i /><i /><span>{save ? "01" : "＋"}</span></div>
+      <div className="save-panel-caption"><span>{save ? "ACTIVE REALITY" : "GENESIS MEMORY"}</span><strong>{save ? "Vesper Continuum" : "No journey bound"}</strong><small>{save ? `${save.discoveries.length} observations / cycle ${save.cycle}` : "Create an organism to begin"}</small></div>
+      {save ? (
+        <button className="save-slot is-active" onClick={onContinue}><span><b>JOURNEY 01</b><small>{save.seed} / {save.discoveries.length} DISCOVERIES</small></span><em>{Math.min(99, Math.max(1, save.cycle * 3))}%</em><ArrowRight size={17} /></button>
+      ) : (
+        <div className="save-slot save-slot--empty"><span><b>NO SAVE SLOT</b><small>THE FIRST POSSIBILITY IS WAITING</small></span></div>
+      )}
+      <div className="save-panel-footer"><span><kbd>ENTER</kbd> SELECT</span><span><kbd>ESC</kbd> BACK</span></div>
+    </motion.aside>
+  );
+}
+
 function MainNavigation({
   save,
   onNavigate,
@@ -602,12 +618,14 @@ export function MainMenu(props: MainMenuProps) {
                 <span><Maximize size={13} /> DESKTOP</span>
               </div>
             </motion.header>
+            <div className="menu-top-kicker">// MAIN MENU <i /> <span>STABLE / V1.0.0</span></div>
             <div className="hero-brand">
               <motion.i initial={{ opacity: 0, x: -25 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25, duration: 1 }}>THE LIVING REALITY ENGINE</motion.i>
               <motion.span initial={{ opacity: 0, letterSpacing: "1.5em", filter: "blur(14px)" }} animate={{ opacity: 1, letterSpacing: "0.22em", filter: "blur(0px)" }} transition={{ duration: 1.6, ease: "easeOut" }}>LUMITAL</motion.span>
               <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8 }}>EVERY SCALE CONTAINS ANOTHER WORLD</motion.p>
             </div>
             <MainNavigation save={props.save} onNavigate={navigate} onContinue={props.onContinue} />
+            <SaveConstellation save={props.save} onContinue={props.onContinue} />
             <motion.div className="menu-reality-status" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.05, duration: 1 }}>
               <span className="menu-reality-status__eyebrow"><i /> GENESIS FORM READY</span>
               <strong>{props.characterName.trim() || props.selectedCreature.genus}</strong>
