@@ -113,6 +113,7 @@ function MainNavigation({
     { id: "seed", label: "World seed", detail: "Define the laws of emergence", icon: Orbit, onClick: () => onNavigate("seed") },
     { id: "multiverse", label: "Multiverse", detail: "Revisit persistent realities", icon: InfinityIcon, onClick: () => onNavigate("multiverse") },
     { id: "sandbox", label: "Sandbox", detail: "Unbind physics and scale", icon: Atom, onClick: () => onNavigate("seed", true) },
+    { id: "aqua", label: "Aqua physics lab", detail: "Extreme water & destruction sandbox", icon: Waves, onClick: () => { window.location.hash = "aqua"; } },
     { id: "settings", label: "Settings", detail: "Rendering, simulation and access", icon: Settings2, onClick: () => onNavigate("settings") },
   ];
   const [focused, setFocused] = useState(items[0].id);

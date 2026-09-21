@@ -5,6 +5,7 @@ import { MainMenu, defaultSettings, type AppSettings } from "./components/MainMe
 import { cinematicAudio } from "./audio/CinematicAudio";
 import { creatures, expeditionFor, generateSeed, type ExpeditionId, type SaveState } from "./game/procedural";
 import { UniverseScene } from "./scenes/UniverseScene";
+import { AquaLab } from "./aqua/AquaLab";
 
 const SAVE_KEY = "lumital.reality.v1";
 const SETTINGS_KEY = "lumital.settings.v1";
@@ -88,6 +89,12 @@ function LoadingSequence({ save, creatureName }: { save: SaveState; creatureName
 }
 
 export default function App() {
+  const [aqua, setAqua] = useState(() => window.location.hash === "#aqua");
+  useEffect(() => {
+    const onHash = () => setAqua(window.location.hash === "#aqua");
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
   const [phase, setPhase] = useState<"boot" | "menu" | "creation" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
   const [sandbox, setSandbox] = useState(false);
   const [seed, setSeed] = useState(() => readJson<SaveState>(SAVE_KEY)?.seed ?? generateSeed());
@@ -196,6 +203,14 @@ export default function App() {
     setPhase("menu");
     setActiveSave(null);
   }, []);
+
+  if (aqua) {
+    return (
+      <div className="app-shell">
+        <AquaLab onExit={() => { window.location.hash = ""; }} />
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
