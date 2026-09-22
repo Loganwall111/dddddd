@@ -131,6 +131,36 @@ export class LabAudio {
     } catch { /* audio unavailable */ }
   }
 
+  /** One-shot weapon shot: filtered-noise crack + low thump. */
+  gunshot(kind: "pistol" | "rifle" | "rocket"): void {
+    if (!this.ensure()) return;
+    const ctx = this.ctx!;
+    const master = this.master!;
+    const t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter();
+    f.type = kind === "rocket" ? "lowpass" : "bandpass";
+    f.frequency.value = kind === "pistol" ? 2400 : kind === "rifle" ? 1900 : 700;
+    f.Q.value = 0.8;
+    const g = ctx.createGain();
+    const peak = kind === "pistol" ? 0.5 : kind === "rifle" ? 0.36 : 0.6;
+    const dur = kind === "rocket" ? 0.5 : 0.14;
+    g.gain.setValueAtTime(peak, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.connect(f); f.connect(g); g.connect(master);
+    src.start(t); src.stop(t + dur);
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(kind === "rocket" ? 90 : 140, t);
+    osc.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(kind === "rocket" ? 0.7 : 0.3, t);
+    og.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.connect(og); og.connect(master);
+    osc.start(t); osc.stop(t + 0.16);
+  }
+
   dispose(): void {
     try {
       void this.ctx?.close();

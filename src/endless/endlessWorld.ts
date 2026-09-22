@@ -13,7 +13,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { FluidSolver, type SphContext, type SphFx, type SphPush } from "../aqua/sph";
 import { AerosolSystem } from "../aqua/aerosols";
 import { LabAudio } from "../aqua/labAudio";
-import { makeCompositeMaterial, makeSkyMaterial, makeOceanMaterial, makeDiskMaterial, makePortalMaterial } from "../aqua/shaders";
+import { makeDiskMaterial, makePortalMaterial } from "../aqua/shaders";
 import { SOLIDS } from "../aqua/materials";
 import { Rng, clamp, lerp } from "../aqua/rng";
 import {
@@ -38,9 +38,12 @@ export interface EndlessCallbacks {
   onBiome: (name: string) => void;
 }
 
-export type ToolId = "dynamite" | "singularity" | "water" | "crates" | "glass" | "portal" | "ragdoll" | "well";
+export type ToolId = "pistol" | "rifle" | "rocket" | "dynamite" | "singularity" | "water" | "crates" | "glass" | "portal" | "ragdoll";
 
 export const HOTBAR: { id: ToolId; label: string; glyph: string }[] = [
+  { id: "pistol", label: "Pistol", glyph: "▮" },
+  { id: "rifle", label: "Rifle", glyph: "▭" },
+  { id: "rocket", label: "Rocket", glyph: "➤" },
   { id: "dynamite", label: "Dynamite", glyph: "◆" },
   { id: "singularity", label: "Singularity", glyph: "◉" },
   { id: "water", label: "Water blob", glyph: "≋" },
@@ -48,7 +51,6 @@ export const HOTBAR: { id: ToolId; label: string; glyph: string }[] = [
   { id: "glass", label: "Glass wall", glyph: "◫" },
   { id: "portal", label: "Portal", glyph: "◎" },
   { id: "ragdoll", label: "Ragdoll", glyph: "✚" },
-  { id: "well", label: "Gravity well", glyph: "❂" },
 ];
 
 export const BIOME_NAMES: Record<BiomeId, string> = {
@@ -171,13 +173,33 @@ export class EndlessWorld {
   private rt!: THREE.WebGLRenderTarget;
   private compScene = new THREE.Scene();
   private compCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  private compMat = makeCompositeMaterial();
+  private compMat = makeAaaComposite();
   private sun!: THREE.DirectionalLight;
   private hemi!: THREE.HemisphereLight;
   private flashLight!: THREE.PointLight;
   private fireLights: THREE.PointLight[] = [];
-  private skyMat = makeSkyMaterial();
+  private skyMat = makeAaaSky();
   private oceanMat: THREE.ShaderMaterial | null = null;
+
+  // AAA upgrade kit: sandbox, attract mode, planar reflections, visible SPH
+  // water, live terrain height texture, bullet tracers.
+  private sandbox = true;
+  private attract = true;
+  private attractT = 0;
+  private reflRT: THREE.WebGLRenderTarget | null = null;
+  private reflCam: THREE.PerspectiveCamera | null = null;
+  private reflClip: THREE.Plane | null = null;
+  private waterPts: THREE.Points | null = null;
+  private waterGeo: THREE.BufferGeometry | null = null;
+  private waterTex: THREE.Texture | null = null;
+  private heightTex: THREE.DataTexture | null = null;
+  private heightT = 0;
+  private heightCX = 0;
+  private heightCZ = 0;
+  private mouseDown = false;
+  private autoT = 0;
+  private tracers: { line: THREE.Line; life: number }[] = [];
+  private rocketMat: THREE.MeshStandardMaterial | null = null;
   private oceanMesh: THREE.Mesh | null = null;
   private stars: THREE.Points | null = null;
 
@@ -249,7 +271,7 @@ export class EndlessWorld {
   // time / quality
   private timeScale = 1;
   private paused = false;
-  private tool: ToolId = "dynamite";
+  private tool: ToolId = "pistol";
 
   // shared scratch
   private keys = new Set<string>();
@@ -298,13 +320,14 @@ export class EndlessWorld {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.setClearColor(0x05070a);
+    this.renderer.localClippingEnabled = true;
 
     this.camera = new THREE.PerspectiveCamera(70, 1, 0.25, 6000);
     this.scene.add(this.smoke.points);
     this.scene.add(this.glow.points);
-    this.scene.fog = new THREE.FogExp2(0x8aa5b5, 0.0016);
+    this.scene.fog = new THREE.FogExp2(0x8aa5b5, 0.0013);
 
-    this.sun = new THREE.DirectionalLight(0xfff2dd, 2.4);
+    this.sun = new THREE.DirectionalLight(0xfff2dd, 3.0);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     this.sun.shadow.camera.left = -140;
@@ -314,8 +337,9 @@ export class EndlessWorld {
     this.sun.shadow.camera.near = 20;
     this.sun.shadow.camera.far = 420;
     this.sun.shadow.bias = -0.0006;
+    this.sun.shadow.normalBias = 0.55;
     this.scene.add(this.sun, this.sun.target);
-    this.hemi = new THREE.HemisphereLight(0xbfd8ff, 0x33403a, 0.8);
+    this.hemi = new THREE.HemisphereLight(0xbfd8ff, 0x3a443c, 1.05);
     this.scene.add(this.hemi);
     this.flashLight = new THREE.PointLight(0xcfe4ff, 0, 500, 1.6);
     this.scene.add(this.flashLight);
@@ -330,16 +354,35 @@ export class EndlessWorld {
     sky.frustumCulled = false;
     this.scene.add(sky);
 
-    // ocean
-    const foamData = new Uint8Array(64 * 64);
-    for (let i = 0; i < foamData.length; i++) foamData[i] = (this.rng.next() * 255) | 0;
-    const foamTex = new THREE.DataTexture(foamData, 64, 64, THREE.RedFormat);
-    foamTex.needsUpdate = true;
-    this.oceanMat = makeOceanMaterial(foamTex);
+    // ocean (local AAA shader: gerstner waves + planar reflections + sun glints)
+    this.heightTex = new THREE.DataTexture(new Uint8Array(128 * 128), 128, 128, THREE.RedFormat);
+    this.heightTex.needsUpdate = true;
+    this.oceanMat = makeAaaOcean(this.heightTex);
     this.oceanMesh = new THREE.Mesh(new THREE.PlaneGeometry(1500, 1500, 120, 120), this.oceanMat);
     this.oceanMesh.rotation.x = -Math.PI / 2;
     this.oceanMesh.frustumCulled = false;
     this.scene.add(this.oceanMesh);
+
+    // planar-reflection camera + render target (water mirrors the world)
+    this.reflRT = new THREE.WebGLRenderTarget(512, 512, { depthBuffer: true });
+    this.reflCam = new THREE.PerspectiveCamera(70, 1, 0.25, 6000);
+    this.reflClip = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+    // visible SPH water: the solver's particles rendered as droplets
+    this.waterTex = this.dropletTexture();
+    this.waterGeo = new THREE.BufferGeometry();
+    this.waterGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(SPH_CAP * 3), 3));
+    this.waterGeo.setDrawRange(0, 0);
+    this.waterPts = new THREE.Points(this.waterGeo, new THREE.PointsMaterial({
+      map: this.waterTex, size: 0.85, sizeAttenuation: true,
+      transparent: true, opacity: 0.85, depthWrite: false, color: 0xcfe6f2,
+    }));
+    this.waterPts.frustumCulled = false;
+    this.waterPts.renderOrder = 5;
+    this.scene.add(this.waterPts);
+
+    this.rocketMat = new THREE.MeshStandardMaterial({ color: 0x2b3138, roughness: 0.35, metalness: 0.85 });
+    this.updateHeightTex();
 
     // lightning bolt
     const boltGeo = new THREE.BufferGeometry();
@@ -428,7 +471,6 @@ export class EndlessWorld {
   private rawHeight(x: number, z: number, tier: BiomeId, cx: number, cz: number): number {
     const seed = this.worldSeed;
     if (tier === "space") return -9999;
-    const base = fbm(x * 0.01, z * 0.01, seed, 4);
     if (tier === "downtown") {
       // perfect city grid: 32m blocks, 8m roads
       const inRoadX = mod(x, 32) < 8;
@@ -436,8 +478,20 @@ export class EndlessWorld {
       if (inRoadX || inRoadZ) return 6.0;
       return 7.0;
     }
+    // layered natural terrain: continental swell + rolling hills + ridged mountains
+    const cont = fbm(x * 0.003, z * 0.003, seed + 31, 3);   // -1..1 broad swell
+    const hills = fbm(x * 0.012, z * 0.012, seed + 37, 4);  // -1..1 rolling hills
+    const r = fbm(x * 0.006, z * 0.006, seed + 43, 4);
+    const ridge = (1 - Math.abs(r)) ** 2.4;                 // 0..1 ridgelines
     if (tier === "waterfront") {
-      let h = -3 + base * 7.5;
+      let h = -3 + hills * 4.5 + cont * 6 + ridge * 15 * (0.45 + 0.55 * (cont * 0.5 + 0.5));
+      // meandering river channel carved into the lowlands
+      const rv = fbm(x * 0.004 + 137, z * 0.004 - 61, seed + 49, 3);
+      const rd = Math.abs(rv);
+      if (rd < 0.16) {
+        const t = 1 - rd / 0.16;
+        h = Math.min(h, lerp(h, -2.8, t * t * (0.55 + 0.45 * t)));
+      }
       // pool basins (one per chunk, hashed)
       const ph = hash2(cx, cz, seed + 55);
       if (ph < 0.55) {
@@ -452,7 +506,7 @@ export class EndlessWorld {
       return h;
     }
     if (tier === "dislocated") {
-      let h = 2 + base * 16;
+      let h = 2 + cont * 14 + hills * 9 + ridge * 42;
       // floating plateaus: flatten patches
       const ph = hash2(cx, cz, seed + 71);
       if (ph < 0.5) {
@@ -463,8 +517,8 @@ export class EndlessWorld {
       }
       return h;
     }
-    // impossible: jagged + spires
-    let h = 0 + base * 9;
+    // impossible: jagged + spires + real mountains
+    let h = cont * 18 + hills * 11 + ridge * 68;
     const sp = hash2(cx * 3 + 7, cz * 3 + 11, seed + 91);
     if (sp < 0.3) {
       const px = cx * CHUNK + (hash2(cx, cz, seed + 92) - 0.5) * 40 + 32;
@@ -527,11 +581,12 @@ export class EndlessWorld {
     const seed = this.worldSeed;
 
     const heightAt = (x: number, z: number) => this.rawHeight(x, z, tier, cx, cz);
-    const hm = this.heightfieldTrimesh(cx, cz, 16, heightAt);
+    const n = tier === "impossible" || tier === "dislocated" ? 24 : 16;
+    const hm = this.heightfieldTrimesh(cx, cz, n, heightAt);
 
     // visual terrain
     if (tier !== "space") {
-      const geo = new THREE.PlaneGeometry(CHUNK, CHUNK, 16, 16);
+      const geo = new THREE.PlaneGeometry(CHUNK, CHUNK, n, n);
       geo.rotateX(-Math.PI / 2);
       const pattr = geo.getAttribute("position") as THREE.BufferAttribute;
       for (let i = 0; i < pattr.count; i++) {
@@ -1537,9 +1592,11 @@ export class EndlessWorld {
 
   private onKey = (e: KeyboardEvent): void => {
     if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+    if (this.attract) return; // menu mode: the world is a backdrop
     this.keys.add(e.code);
     if (e.code.startsWith("Digit")) {
-      const n = Number(e.code.slice(5)) - 1;
+      const d = e.code.slice(5);
+      const n = d === "0" ? 9 : Number(d) - 1;
       if (n >= 0 && n < HOTBAR.length) {
         this.tool = HOTBAR[n].id;
         this.cb.onLog(`Tool: ${HOTBAR[n].label}.`, "sys");
@@ -1556,7 +1613,7 @@ export class EndlessWorld {
   };
   private onKeyUp = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
 
-  private onPointerUp = (): void => { /* tool is single-shot per click */ };
+  private onPointerUp = (): void => { this.mouseDown = false; };
 
   private onPointerDown = (e: PointerEvent): void => {
     this.audio.unlock();
@@ -1566,6 +1623,8 @@ export class EndlessWorld {
       return;
     }
     if (e.button === 0) {
+      this.mouseDown = true;
+      this.autoT = 0;
       this.fireTool();
     }
   };
@@ -1638,10 +1697,19 @@ export class EndlessWorld {
   selectToolIndex(i: number): void { if (i >= 0 && i < HOTBAR.length) this.tool = HOTBAR[i].id; }
 
   private fireTool(): void {
-    if (!this.alive) return;
+    if (!this.alive || this.attract) return;
     const hit = this.pickSurface();
     const p = hit ? new THREE.Vector3(hit.x, hit.y, hit.z) : this.tmpV2.copy(this.camera.position).addScaledVector(this.cameraDirection(), 14).clone();
     switch (this.tool) {
+      case "pistol":
+        this.shoot("pistol");
+        break;
+      case "rifle":
+        this.shoot("rifle");
+        break;
+      case "rocket":
+        this.throwRocket();
+        break;
       case "dynamite":
         this.throwBomb();
         break;
@@ -1672,14 +1740,6 @@ export class EndlessWorld {
       case "ragdoll":
         this.makeRagdoll(p.x, p.y + 0.4, p.z, 1);
         this.log("Test dummy deployed. It obeys exactly one law: momentum.", "sys");
-        break;
-      case "well":
-        this.wells.push({
-          kind: "well", id: allocId(), x: p.x, y: p.y + 8, z: p.z,
-          strength: 300, radius: 26, softening: 8,
-        });
-        if (this.wells.length > 6) this.wells.shift();
-        this.log("Gravity well installed. Nothing nearby is safe from its patience.", "sys");
         break;
     }
   }
@@ -1713,7 +1773,7 @@ export class EndlessWorld {
   }
 
   private interact(): void {
-    if (!this.alive || this.paused) return;
+    if (!this.alive || this.paused || this.attract) return;
     // sewer grates
     let best: GrateRec | null = null;
     let bestD = 3.2;
@@ -1887,6 +1947,11 @@ export class EndlessWorld {
 
   private die(cause: string): void {
     if (!this.alive) return;
+    if (this.sandbox) {
+      this.hp = Math.max(this.hp, 60);
+      this.log(`Sandbox mode: "${cause}" — but death is disabled here.`, "sys");
+      return;
+    }
     this.alive = false;
     this.hp = 0;
     this.makeRagdoll(this.pos.x, this.pos.y, this.pos.z, 1);
@@ -1905,6 +1970,212 @@ export class EndlessWorld {
     this.playerBody.setNextKinematicTranslation({ x: this.pos.x, y: this.pos.y, z: this.pos.z });
     this.cb.onLog("You reassemble at the last safe point. The universe forgives, but it remembers.", "sys");
   }
+
+
+  /* ============================== AAA SYSTEMS ============================== */
+
+  private shoot(kind: "pistol" | "rifle"): void {
+    const o = this.camera.position;
+    const dir = this.cameraDirection();
+    // right vector for muzzle offset
+    const rx = -dir.z, rz = dir.x; // cross(dir, up)
+    this.raycaster.setFromCamera(this.pointerNdc, this.camera);
+    const hits = this.raycaster.intersectObjects(this.scene.children, true);
+    let px = o.x + dir.x * 160, py = o.y + dir.y * 160, pz = o.z + dir.z * 160;
+    for (const h of hits) {
+      if (h.distance > 240) break;
+      if (h.object === this.stars || (h.object as unknown as { isSprite?: boolean }).isSprite) continue;
+      px = h.point.x; py = h.point.y; pz = h.point.z;
+      break;
+    }
+    this.damageAt(px, py, pz, 3.2, kind === "pistol" ? 50 : 32);
+    for (const gl of this.glass) {
+      if (!gl.dead && Math.hypot(gl.x - px, gl.y - py, gl.z - pz) < 4) this.shatterGlass(gl);
+    }
+    const mx = o.x + dir.x * 1.1 + rx * 0.16 - 0.12;
+    const my = o.y + dir.y * 1.1 - 0.1;
+    const mz = o.z + dir.z * 1.1 + rz * 0.16 - 0.12;
+    this.spawnTracer(mx, my, mz, px, py, pz);
+    this.smoke.burst(px, py, pz, 5,
+      { speed: 2.5, up: 1.2, life: 0.5, size: 0.25, grow: 1.5, r: 0.75, g: 0.75, b: 0.78, alpha: 0.5, grav: -0.5, drag: 2 });
+    this.audio.gunshot(kind);
+    this.trauma = Math.min(1, this.trauma + (kind === "pistol" ? 0.06 : 0.04));
+    this.flashLight.position.set(o.x + dir.x * 3, o.y + dir.y * 3 - 0.4, o.z + dir.z * 3);
+    this.flashLight.intensity = kind === "pistol" ? 900 : 700;
+    this.compMat.uniforms.uFlash.value = Math.max(this.compMat.uniforms.uFlash.value as number, 0.12);
+  }
+
+  private throwRocket(): void {
+    if (!this.rocketMat) return;
+    const o = this.camera.position;
+    const dir = this.cameraDirection();
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.5, 4, 8), this.rocketMat);
+    m.position.set(o.x + dir.x * 1.4, o.y + dir.y * 1.0 - 0.25, o.z + dir.z * 1.4);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    m.castShadow = true;
+    this.scene.add(m);
+    const body = this.rapier.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(m.position.x, m.position.y, m.position.z).setCcdEnabled(true)
+      .setLinearDamping(0).setAngularDamping(1.5));
+    this.rapier.createCollider(RAPIER.ColliderDesc.capsule(0.31, 0.16).setDensity(900), body);
+    body.setLinvel({ x: dir.x * 58, y: dir.y * 58, z: dir.z * 58 }, true);
+    this.dyn.push({
+      id: allocId(), body, mesh: m, kind: "rocket", radius: 0.5, volume: 0.3,
+      age: 0, dead: false, wasSub: 0, debris: true, fuse: 1.5,
+    });
+    this.audio.gunshot("rocket");
+    this.trauma = Math.min(1, this.trauma + 0.12);
+  }
+
+  private spawnTracer(ax: number, ay: number, az: number, bx: number, by: number, bz: number): void {
+    if (this.tracers.length >= 12) {
+      const old = this.tracers.shift()!;
+      this.scene.remove(old.line);
+    }
+    const g = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz),
+    ]);
+    const l = new THREE.Line(g, new THREE.LineBasicMaterial({
+      color: 0xffe0b0, transparent: true, opacity: 0.9,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    this.scene.add(l);
+    this.tracers.push({ line: l, life: 0.07 });
+  }
+
+  private updateTracers(dt: number): void {
+    for (let i = this.tracers.length - 1; i >= 0; i--) {
+      const t = this.tracers[i];
+      t.life -= dt;
+      (t.line.material as THREE.LineBasicMaterial).opacity = Math.max(0, t.life / 0.07) * 0.9;
+      if (t.life <= 0) {
+        this.scene.remove(t.line);
+        t.line.geometry.dispose();
+        (t.line.material as THREE.Material).dispose();
+        this.tracers.splice(i, 1);
+      }
+    }
+  }
+
+  private updateAutoFire(): void {
+    if (!this.mouseDown || this.paused || this.attract || !this.alive) { this.autoT = 0; return; }
+    if (this.tool !== "rifle") return;
+    this.autoT -= STEP;
+    if (this.autoT <= 0) { this.shoot("rifle"); this.autoT = 0.11; }
+  }
+
+  /** Push the solver's particle positions into the droplet Points mesh. */
+  private syncWater(): void {
+    if (!this.waterPts || !this.waterGeo) return;
+    const s = this.solver;
+    const attr = this.waterGeo.getAttribute("position") as THREE.BufferAttribute;
+    const arr = attr.array as Float32Array;
+    const n = s.n;
+    for (let i = 0; i < n; i++) {
+      arr[i * 3] = s.px[i];
+      arr[i * 3 + 1] = s.py[i];
+      arr[i * 3 + 2] = s.pz[i];
+    }
+    this.waterGeo.setDrawRange(0, n);
+    attr.needsUpdate = true;
+  }
+
+  private dropletTexture(): THREE.Texture {
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const g = c.getContext("2d")!;
+    const grd = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+    grd.addColorStop(0, "rgba(255,255,255,1)");
+    grd.addColorStop(0.4, "rgba(225,240,250,0.9)");
+    grd.addColorStop(1, "rgba(180,215,235,0)");
+    g.fillStyle = grd;
+    g.fillRect(0, 0, 64, 64);
+    const t = new THREE.CanvasTexture(c);
+    t.needsUpdate = true;
+    return t;
+  }
+
+  /** 128×128 terrain-height texture (256 m window) that the ocean shades with. */
+  private updateHeightTex(): void {
+    if (!this.heightTex || !this.oceanMat) return;
+    const px = this.pos.x, pz = this.pos.z;
+    this.heightCX = px; this.heightCZ = pz;
+    const N = 128, S = 256;
+    const data = this.heightTex.image.data as Uint8Array;
+    let mn = Infinity, mx = -Infinity;
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const h = this.heightAt(px - S / 2 + (i / (N - 1)) * S, pz - S / 2 + (j / (N - 1)) * S);
+        data[j * N + i] = 0;
+        if (h < mn) mn = h;
+        if (h > mx) mx = h;
+      }
+    }
+    const range = Math.max(1, mx - mn);
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const h = this.heightAt(px - S / 2 + (i / (N - 1)) * S, pz - S / 2 + (j / (N - 1)) * S);
+        data[j * N + i] = Math.max(0, Math.min(255, Math.round(((h - mn) / range) * 255)));
+      }
+    }
+    this.oceanMat.uniforms.uHMin.value = mn;
+    this.oceanMat.uniforms.uHMax.value = mx;
+    (this.oceanMat.uniforms.uHCenter.value as THREE.Vector2).set(px, pz);
+    this.heightTex.needsUpdate = true;
+  }
+
+  private updateHeightTexTimer(dt: number): void {
+    this.heightT -= dt;
+    if (this.heightT > 0) return;
+    this.heightT = 1.2;
+    if (Math.hypot(this.pos.x - this.heightCX, this.pos.z - this.heightCZ) > 48) this.updateHeightTex();
+  }
+
+  /** Mirror the camera across the water plane and render the world for reflections. */
+  private renderReflections(): void {
+    const rt = this.reflRT, cam = this.reflCam, clip = this.reflClip;
+    if (!rt || !cam || !clip || !this.oceanMesh || !this.oceanMat) return;
+    const camPos = this.camera.position;
+    const sea = this.seaLevel;
+    if (camPos.y < sea - 1.5) return; // underwater: nothing to reflect
+    clip.constant = -sea;
+    cam.position.set(camPos.x, 2 * sea - camPos.y, camPos.z);
+    const dir = this.cameraDirection();
+    cam.up.set(0, -1, 0);
+    cam.lookAt(camPos.x + dir.x * 30, 2 * sea - (camPos.y + dir.y * 30), camPos.z + dir.z * 30);
+    cam.fov = this.camera.fov;
+    cam.aspect = this.canvas.width / Math.max(1, this.canvas.height);
+    cam.updateProjectionMatrix();
+    const prevClip = this.renderer.clippingPlanes;
+    this.renderer.clippingPlanes = [clip];
+    const prevVis = this.oceanMesh.visible;
+    this.oceanMesh.visible = false;
+    this.renderer.setRenderTarget(rt);
+    this.renderer.render(this.scene, cam);
+    this.renderer.setRenderTarget(this.rt);
+    this.renderer.clippingPlanes = prevClip;
+    this.oceanMesh.visible = prevVis;
+    this.oceanMat.uniforms.uReflTex.value = rt.texture;
+    (this.oceanMat.uniforms.uReflVP.value as THREE.Matrix4).multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+  }
+
+  setSandbox(b: boolean): void {
+    if (this.sandbox === b) return;
+    this.sandbox = b;
+    if (b) this.hp = 100;
+    this.cb.onLog(b
+      ? "Sandbox mode ON — you cannot die. The universe is lenient with you."
+      : "Sandbox mode OFF — falls, fire and singularities now have consequences.", "sys");
+  }
+  setAttract(b: boolean): void {
+    if (this.attract === b) return;
+    this.attract = b;
+    this.mouseDown = false;
+    this.attractT = 0;
+    if (!b) this.cb.onLog("World locked. Good hunting.", "sys");
+  }
+  get isSandbox(): boolean { return this.sandbox; }
+  get isAttract(): boolean { return this.attract; }
 
   /* ============================== STEP ============================== */
 
@@ -1925,26 +2196,40 @@ export class EndlessWorld {
     }
 
     // camera
-    const camY = this.pos.y + (this.alive ? 1.62 : 2.6);
-    if (this.trauma > 0.01) {
-      const sh = this.trauma * this.trauma * 2.4;
+    if (this.attract) {
+      // menu attract mode: slow cinematic orbit around the spawn district
+      this.attractT += frameDt * 0.07;
       this.camera.position.set(
-        this.pos.x + (Math.random() - 0.5) * sh,
-        camY + (Math.random() - 0.5) * sh,
-        this.pos.z + (Math.random() - 0.5) * sh,
+        this.pos.x + Math.sin(this.attractT) * 82,
+        30 + Math.sin(this.attractT * 2.7) * 7,
+        this.pos.z + Math.cos(this.attractT) * 82,
       );
+      this.camera.lookAt(this.pos.x, this.pos.y + 4, this.pos.z);
     } else {
-      this.camera.position.set(this.pos.x, camY, this.pos.z);
+      const camY = this.pos.y + (this.alive ? 1.62 : 2.6);
+      if (this.trauma > 0.01) {
+        const sh = this.trauma * this.trauma * 2.4;
+        this.camera.position.set(
+          this.pos.x + (Math.random() - 0.5) * sh,
+          camY + (Math.random() - 0.5) * sh,
+          this.pos.z + (Math.random() - 0.5) * sh,
+        );
+      } else {
+        this.camera.position.set(this.pos.x, camY, this.pos.z);
+      }
+      this.camera.rotation.set(0, 0, 0);
+      this.camera.rotateY(this.yaw);
+      this.camera.rotateX(this.pitch);
     }
-    this.camera.rotation.set(0, 0, 0);
-    this.camera.rotateY(this.yaw);
-    this.camera.rotateX(this.pitch);
 
     // sun follows player
     this.sun.position.set(this.pos.x + 70, this.pos.y + 110, this.pos.z + 40);
     this.sun.target.position.set(this.pos.x, this.pos.y, this.pos.z);
 
     this.syncVisuals(frameDt);
+    this.syncWater();
+    this.updateTracers(frameDt);
+    this.updateHeightTexTimer(frameDt);
     this.render();
 
     // stats
@@ -1977,7 +2262,8 @@ export class EndlessWorld {
     this.time += STEP;
     this.updateEnvironment(STEP);
     this.updateChunks();
-    this.updatePlayer(STEP);
+    this.updateAutoFire();
+    if (!this.attract) this.updatePlayer(STEP);
     this.updateDynamic(STEP);
     this.updateBlackHoles(STEP);
     this.updatePortals(STEP);
@@ -2151,10 +2437,12 @@ export class EndlessWorld {
     if (this.grounded) {
       if (this.prevVy < -30 && !this.flying) {
         const dmg = (Math.abs(this.prevVy) - 30) * 4;
-        this.hp -= dmg;
         this.trauma = Math.min(1, this.trauma + 0.5);
         this.audio.crack();
-        if (this.hp <= 0) this.die("the fall ended everything");
+        if (!this.sandbox) {
+          this.hp -= dmg;
+          if (this.hp <= 0) this.die("the fall ended everything");
+        }
       }
       this.safeT += dt;
       if (this.safeT > 1.2 && this.blackholes.every((b) => Math.hypot(b.x - p.x, b.y - p.y, b.z - p.z) > 30)) {
@@ -2186,12 +2474,13 @@ export class EndlessWorld {
       const v = b.body.linvel();
 
       // bombs: fuse + impact
-      if (b.kind === "bomb") {
-        b.fuse = (b.fuse ?? 2.6) - dt;
+      if (b.kind === "bomb" || b.kind === "rocket") {
+        const rocket = b.kind === "rocket";
+        b.fuse = (b.fuse ?? (rocket ? 1.5 : 2.6)) - dt;
         const gy = this.heightAt(p.x, p.z);
         if ((b.fuse ?? 0) <= 0 || (p.y < gy + 0.45 && Math.hypot(p.x, p.z) < 1400)) {
           this.killDyn(b);
-          this.explode(p.x, p.y, p.z, 9, 300, 2.2);
+          this.explode(p.x, p.y, p.z, rocket ? 10 : 9, rocket ? 340 : 300, rocket ? 2.8 : 2.2);
           continue;
         }
       }
@@ -2340,8 +2629,17 @@ export class EndlessWorld {
       bh.glow.material.opacity = 0.5 + Math.sin(this.time * 2.2) * 0.1;
       // player consumption
       if (this.alive) {
-        const d = Math.hypot(bh.x - this.pos.x, bh.y - this.pos.y, bh.z - this.pos.z);
-        if (d < bh.horizon * 1.05) this.die("consumed by the singularity");
+        const d = Math.max(0.001, Math.hypot(bh.x - this.pos.x, bh.y - this.pos.y, bh.z - this.pos.z));
+        if (d < bh.horizon * 1.05) {
+          if (this.sandbox) {
+            const ux = (this.pos.x - bh.x) / d, uy = (this.pos.y - bh.y) / d, uz = (this.pos.z - bh.z) / d;
+            this.vel.x += ux * 42; this.vel.y += uy * 42; this.vel.z += uz * 42;
+            this.pos.set(bh.x + ux * bh.horizon * 1.4, bh.y + uy * bh.horizon * 1.4, bh.z + uz * bh.horizon * 1.4);
+            this.log("Sandbox mode: the singularity reaches for you — and lets go.", "sys");
+          } else {
+            this.die("consumed by the singularity");
+          }
+        }
       }
       // player lensing uniforms handled in render()
     }
@@ -2481,6 +2779,11 @@ export class EndlessWorld {
       const r = b.body.rotation();
       b.mesh.position.set(p.x, p.y, p.z);
       b.mesh.quaternion.set(r.x, r.y, r.z, r.w);
+      if (b.kind === "rocket" && Math.random() < 0.4) {
+        const lv = b.body.linvel();
+        this.smoke.burst(p.x - lv.x * 0.03, p.y - lv.y * 0.03, p.z - lv.z * 0.03, 1,
+          { speed: 0.5, up: 0.4, life: 0.7, size: 0.3, grow: 1.2, r: 0.55, g: 0.55, b: 0.6, alpha: 0.4, grav: -0.3, drag: 1.5 });
+      }
     }
     // player position from body
     const p = this.playerBody.translation();
@@ -2645,6 +2948,7 @@ export class EndlessWorld {
 
   private render(): void {
     const r = this.renderer;
+    this.renderReflections();
     // lensing uniforms
     const lens = this.compMat.uniforms.uLens.value as THREE.Vector4[];
     for (let i = 0; i < 3; i++) {
@@ -2711,10 +3015,324 @@ export class EndlessWorld {
     this.smoke.dispose();
     this.glow.dispose();
     this.rt?.dispose();
+    this.reflRT?.dispose();
+    this.heightTex?.dispose();
+    this.waterTex?.dispose();
+    for (const t of this.tracers) {
+      this.scene.remove(t.line);
+      t.line.geometry.dispose();
+      (t.line.material as THREE.Material).dispose();
+    }
+    this.tracers.length = 0;
     this.renderer?.dispose();
   }
 
   get isAlive(): boolean { return this.alive; }
   get isFlying(): boolean { return this.flying; }
   get currentTool(): ToolId { return this.tool; }
+}
+
+/* ═══════════════════════ AAA GRAPHICS — LOCAL SHADER SET ═══════════════════════
+   Three dedicated materials that give the world its "real" look:
+   a clouded sky, a water surface that reflects the world, and a filmic
+   full-screen grade. Kept local so the Aqua lab keeps its own pipeline. */
+
+const AAA_NOISE_GLSL = /* glsl */ `
+  float ahash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float avnoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(ahash(i), ahash(i + vec2(1.0, 0.0)), u.x),
+               mix(ahash(i + vec2(0.0, 1.0)), ahash(i + vec2(1.0, 1.0)), u.x), u.y);
+  }
+  float afbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) { v += avnoise(p) * a; p = p * 2.03 + vec2(13.7, 7.1); a *= 0.5; }
+    return v;
+  }
+`;
+
+/** Clouded sky: gradient + disc sun + fbm cloud deck with self-shadowing. */
+function makeAaaSky(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uStorm: { value: 0 },
+      uFlash: { value: 0 },
+      uSunDir: { value: new THREE.Vector3(0.5, 0.8, 0.3) },
+    },
+    vertexShader: /* glsl */ `
+      varying vec3 vDir;
+      void main() {
+        vDir = normalize(position);
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_Position.z = gl_Position.w * 0.99999;
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform float uTime;
+      uniform float uStorm;
+      uniform float uFlash;
+      uniform vec3 uSunDir;
+      varying vec3 vDir;
+      ${AAA_NOISE_GLSL}
+      void main() {
+        vec3 d = normalize(vDir);
+        float up = clamp(d.y, -1.0, 1.0);
+        vec3 zen = mix(vec3(0.075, 0.22, 0.48), vec3(0.03, 0.05, 0.09), uStorm);
+        vec3 hor = mix(vec3(0.66, 0.74, 0.80), vec3(0.15, 0.19, 0.25), uStorm);
+        // warm band right at the horizon, like real atmosphere
+        vec3 horWarm = mix(vec3(0.78, 0.72, 0.62), vec3(0.18, 0.2, 0.26), uStorm);
+        vec3 col = mix(hor, zen, pow(clamp(up, 0.0, 1.0), 0.55));
+        col = mix(col, horWarm, (1.0 - smoothstep(0.0, 0.16, up)) * 0.55);
+        if (up < 0.0) col = mix(hor, vec3(0.05, 0.08, 0.1), clamp(-up * 3.0, 0.0, 1.0));
+        // sun: disc + tight halo + broad warmth
+        float s = max(dot(d, normalize(uSunDir)), 0.0);
+        vec3 sunTint = mix(vec3(1.0, 0.9, 0.72), vec3(0.5, 0.55, 0.62), uStorm);
+        col += sunTint * (pow(s, 1500.0) * 6.0 + pow(s, 28.0) * 0.22 + pow(s, 4.0) * 0.05) * (1.0 - uStorm * 0.8);
+        // fbm cloud deck (two scales) with self-shadowing toward the sun
+        vec2 cuv = d.xz / max(d.y + 0.3, 0.12) * 0.35;
+        float ct = uTime * 0.008;
+        float cl = afbm(cuv + vec2(ct, ct * 0.6));
+        float cl2 = afbm(cuv * 2.7 - vec2(ct * 1.4, ct));
+        float cover = smoothstep(1.0 - 0.36 - uStorm * 0.5, 1.02, cl * 0.62 + cl2 * 0.38);
+        float shadowN = afbm(cuv * 1.15 + normalize(uSunDir.xz + vec2(0.0001)) * 0.6 + vec2(ct, ct * 0.6));
+        vec3 cloudLit = mix(vec3(0.99, 0.99, 1.0), vec3(0.16, 0.18, 0.23), uStorm);
+        vec3 cloudDark = mix(vec3(0.66, 0.71, 0.8), vec3(0.07, 0.08, 0.11), uStorm);
+        vec3 cloudCol = mix(cloudDark, cloudLit, clamp(shadowN * 1.5 - 0.15, 0.0, 1.0));
+        float horiz = smoothstep(0.0, 0.2, up);
+        col = mix(col, cloudCol, cover * horiz * (0.62 + uStorm * 0.3));
+        // haze at the horizon
+        col = mix(col, hor, (1.0 - smoothstep(0.0, 0.3, up)) * 0.4);
+        // stars
+        vec2 sp = floor(d.xz / max(d.y, 0.2) * 90.0);
+        float star = step(0.992, ahash(sp)) * smoothstep(0.25, 0.8, up);
+        col += vec3(0.8, 0.9, 1.0) * star * (0.3 + uStorm * 0.4);
+        // lightning wash
+        col += vec3(0.75, 0.82, 1.0) * uFlash * (0.35 + cover * 0.65);
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+  });
+}
+
+/**
+ * Water surface: gerstner waves, planar (mirrored-camera) reflections,
+ * Blinn-Phong sun glints, depth-tinted shallows from the live terrain
+ * height texture, crest + shore foam, exponential distance fog.
+ */
+function makeAaaOcean(heightTex: THREE.Texture): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uStorm: { value: 0 },
+      uSeaLevel: { value: 0 },
+      uHeightTex: { value: heightTex },
+      uWorldSize: { value: 256 },
+      uHMin: { value: -20 },
+      uHMax: { value: 44 },
+      uHCenter: { value: new THREE.Vector2(0, 0) },
+      uDeep: { value: new THREE.Color(0.006, 0.075, 0.14) },
+      uShallow: { value: new THREE.Color(0.04, 0.3, 0.36) },
+      uSunDir: { value: new THREE.Vector3(0.5, 0.8, 0.3) },
+      uSunColor: { value: new THREE.Color(1.0, 0.92, 0.8) },
+      uFogColor: { value: new THREE.Color(0.55, 0.68, 0.78) },
+      uFogDensity: { value: 0.0013 },
+      uCamPos: { value: new THREE.Vector3() },
+      uReflTex: { value: null as THREE.Texture | null },
+      uReflVP: { value: new THREE.Matrix4() },
+      uIce: { value: 0 },
+    },
+    vertexShader: /* glsl */ `
+      uniform float uTime;
+      uniform float uStorm;
+      varying vec3 vNormal;
+      varying vec3 vWorld;
+      varying float vCrest;
+      vec3 gerstner(vec2 dir, float freq, float amp, float speed, vec3 p, float t, inout vec3 nrm, inout float crest) {
+        float f = dot(dir, p.xz) * freq + t * speed;
+        float c = cos(f);
+        float s = sin(f);
+        p.x += dir.x * amp * c;
+        p.z += dir.y * amp * c;
+        p.y += amp * s;
+        nrm.x -= dir.x * freq * amp * c;
+        nrm.z -= dir.y * freq * amp * c;
+        nrm.y -= freq * amp * s;
+        crest += s * amp;
+        return p;
+      }
+      void main() {
+        vec3 p = position;
+        vec4 world = modelMatrix * vec4(p, 1.0);
+        vec3 nrm = vec3(0.0, 1.0, 0.0);
+        float crest = 0.0;
+        float amp = 0.22 + uStorm * 1.5;
+        float t = uTime;
+        p = gerstner(normalize(vec2(1.0, 0.35)), 0.11, amp * 1.0, 1.1, p, t, nrm, crest);
+        p = gerstner(normalize(vec2(-0.7, 1.0)), 0.21, amp * 0.55, 1.5, p, t, nrm, crest);
+        p = gerstner(normalize(vec2(0.4, -1.0)), 0.42, amp * 0.28, 2.1, p, t, nrm, crest);
+        p = gerstner(normalize(vec2(-1.0, -0.4)), 0.85, amp * 0.12, 2.8, p, t, nrm, crest);
+        vCrest = crest;
+        vNormal = normalize(normalMatrix * nrm);
+        world = modelMatrix * vec4(p, 1.0);
+        vWorld = world.xyz;
+        gl_Position = projectionMatrix * viewMatrix * world;
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform float uTime;
+      uniform float uStorm;
+      uniform float uSeaLevel;
+      uniform sampler2D uHeightTex;
+      uniform float uWorldSize;
+      uniform float uHMin;
+      uniform float uHMax;
+      uniform vec2 uHCenter;
+      uniform vec3 uDeep;
+      uniform vec3 uShallow;
+      uniform vec3 uSunDir;
+      uniform vec3 uSunColor;
+      uniform float uIce;
+      uniform vec3 uFogColor;
+      uniform float uFogDensity;
+      uniform vec3 uCamPos;
+      uniform sampler2D uReflTex;
+      uniform mat4 uReflVP;
+      varying vec3 vNormal;
+      varying vec3 vWorld;
+      varying float vCrest;
+      ${AAA_NOISE_GLSL}
+      void main() {
+        // fine ripple normal
+        vec2 p = vWorld.xz;
+        float e = 0.35;
+        vec2 t = vec2(uTime * 0.7, uTime * 0.45);
+        float h0 = sin(p.x * 1.4 + t.x) * sin(p.y * 1.1 - t.y) + 0.5 * sin(p.x * 3.1 - t.y * 1.7) * sin(p.y * 2.7 + t.x);
+        float hx = sin((p.x + e) * 1.4 + t.x) * sin(p.y * 1.1 - t.y) + 0.5 * sin((p.x + e) * 3.1 - t.y * 1.7) * sin(p.y * 2.7 + t.x);
+        float hz = sin(p.x * 1.4 + t.x) * sin((p.y + e) * 1.1 - t.y) + 0.5 * sin(p.x * 1.4 + t.x) * sin((p.y + e) * 2.7 + t.x);
+        vec3 n = normalize(vNormal + vec3((h0 - hx) * 0.35, 0.0, (h0 - hz) * 0.35));
+        // terrain depth under this fragment (live height texture)
+        vec2 huv = (vWorld.xz - uHCenter) / uWorldSize + 0.5;
+        float terrainH = uHMin - 20.0;
+        if (huv.x > 0.0 && huv.x < 1.0 && huv.y > 0.0 && huv.y < 1.0) {
+          terrainH = mix(uHMin, uHMax, texture2D(uHeightTex, huv).r);
+        }
+        float depth = clamp(uSeaLevel - terrainH, -1.0, 40.0);
+        vec3 waterCol = mix(uShallow, uDeep, 1.0 - exp(-depth * 0.16));
+        waterCol = mix(waterCol, uDeep * 0.6, uIce);
+        vec3 V = normalize(uCamPos - vWorld);
+        // planar reflection: bounce the view ray on the surface, project it
+        // through the mirrored camera.
+        float fres = 0.02 + 0.98 * pow(1.0 - max(dot(V, n), 0.0), 5.0);
+        fres = clamp(fres, 0.0, 0.88) * (1.0 - uStorm * 0.2);
+        vec3 refl = vec3(0.0);
+        if (fres > 0.02) {
+          vec3 R = reflect(V, n);
+          float tt = (uSeaLevel - vWorld.y) / max(R.y, 0.015);
+          vec3 hitP = vWorld + R * tt;
+          vec4 cp = uReflVP * vec4(hitP, 1.0);
+          vec2 ruv = cp.xy / max(cp.w, 1e-4) * 0.5 + 0.5;
+          float rin = (cp.w > 0.0 && ruv.x > 0.0 && ruv.x < 1.0 && ruv.y > 0.0 && ruv.y < 1.0) ? 1.0 : 0.0;
+          refl = texture2D(uReflTex, clamp(ruv, 0.0, 1.0)).rgb * rin;
+        }
+        vec3 col = mix(waterCol, refl, fres);
+        // sun glints (blinn-phong on the rippled normal)
+        vec3 H = normalize(normalize(uSunDir) + V);
+        col += uSunColor * pow(max(dot(n, H), 0.0), 420.0) * 1.5 * (1.0 - uStorm * 0.7);
+        // foam: shore + wave crests, broken up by fbm
+        float shore = smoothstep(2.4, 0.0, depth);
+        float crestF = smoothstep(0.3, 0.9, vCrest);
+        float fn = afbm(vWorld.xz * 0.35 + vec2(uTime * 0.16, -uTime * 0.1));
+        float foam = clamp((shore * 0.8 + crestF * 0.55) * (0.35 + fn), 0.0, 1.0);
+        col = mix(col, vec3(0.93, 0.96, 0.98), foam * 0.72);
+        // distance fog matched to the scene
+        float dist = length(uCamPos - vWorld);
+        float fogF = 1.0 - exp(-uFogDensity * uFogDensity * dist * dist);
+        col = mix(col, uFogColor, fogF);
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+  });
+}
+
+/** Full-screen grade: lensing + underwater + flash + ACES + filmic look. */
+function makeAaaComposite(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      tDiffuse: { value: null as THREE.Texture | null },
+      uTime: { value: 0 },
+      uLens: { value: [new THREE.Vector4(0, 0, 0, 0), new THREE.Vector4(0, 0, 0, 0), new THREE.Vector4(0, 0, 0, 0)] },
+      uLensOn: { value: 1 },
+      uUnderwater: { value: 0 },
+      uFlash: { value: 0 },
+      uVignette: { value: 0.38 },
+      uGrain: { value: 0.045 },
+      uAspect: { value: 1.7 },
+    },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D tDiffuse;
+      uniform float uTime;
+      uniform vec4 uLens[3];
+      uniform float uLensOn;
+      uniform float uUnderwater;
+      uniform float uFlash;
+      uniform float uVignette;
+      uniform float uGrain;
+      uniform float uAspect;
+      varying vec2 vUv;
+      vec3 aces(vec3 x) {
+        return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+      }
+      void main() {
+        vec2 uv = vUv;
+        for (int i = 0; i < 3; i++) {
+          vec4 L = uLens[i];
+          if (L.w > 0.0001) {
+            vec2 d = (uv - L.xy) * vec2(uAspect, 1.0);
+            float r = max(length(d), 1e-4);
+            float bend = L.w * (L.z * L.z) / (r * r + L.z * L.z * 0.12);
+            bend = min(bend, 0.45);
+            uv -= (d / r) * bend / vec2(uAspect, 1.0) * uLensOn;
+          }
+        }
+        uv += uUnderwater * vec2(
+          sin(uv.y * 40.0 + uTime * 3.0) * 0.004,
+          cos(uv.x * 34.0 - uTime * 2.2) * 0.004
+        );
+        vec3 col = texture2D(tDiffuse, clamp(uv, 0.001, 0.999)).rgb;
+        vec3 water = col * vec3(0.25, 0.65, 0.7);
+        float depthFog = uUnderwater * 0.55;
+        col = mix(col, water * (1.0 - depthFog) + vec3(0.02, 0.12, 0.14) * depthFog, uUnderwater);
+        col += vec3(0.75, 0.82, 1.0) * uFlash * 0.35;
+        // filmic grade: ACES, gentle contrast, saturation lift, warm cast
+        col = aces(col * 1.16);
+        col = pow(max(col, 0.0), vec3(1.0 / 2.2));
+        col = (col - 0.5) * 1.07 + 0.5;
+        float lum = dot(col, vec3(0.299, 0.587, 0.114));
+        col = mix(vec3(lum), col, 1.16);
+        col *= vec3(1.02, 1.0, 0.965);
+        vec2 vc = vUv - 0.5;
+        col *= 1.0 - uVignette * dot(vc, vc) * 2.2;
+        float g = fract(sin(dot(vUv * (uTime + 13.0), vec2(12.9898, 78.233))) * 43758.5453);
+        col += (g - 0.5) * uGrain;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+    depthTest: false,
+    depthWrite: false,
+  });
 }
