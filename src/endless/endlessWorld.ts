@@ -487,12 +487,11 @@ export class EndlessWorld {
 
   private buildInitialChunks(): void {
     const pcx = Math.floor(this.pos.x / CHUNK), pcz = Math.floor(this.pos.z / CHUNK);
-    for (let dz = -CHUNK_RADIUS; dz <= CHUNK_RADIUS; dz++) {
-      for (let dx = -CHUNK_RADIUS; dx <= CHUNK_RADIUS; dx++) {
-        if (dx * dx + dz * dz > CHUNK_RADIUS * CHUNK_RADIUS + 2) continue;
-        this.buildChunk(pcx + dx, pcz + dz);
-      }
-    }
+    // Only the spawn chunk is built synchronously. A full initial disc of
+    // city chunks (facade canvases, hundreds of colliders) takes many seconds
+    // and freezes the page — instead updateChunks() streams the rest in over
+    // the next ~20 frames, nearest first.
+    this.buildChunk(pcx, pcz);
   }
 
   private heightfieldTrimesh(cx: number, cz: number, n: number, fn: (x: number, z: number) => number) {
