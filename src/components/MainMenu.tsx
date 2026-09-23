@@ -6,7 +6,7 @@ import {
   ArrowLeft, ArrowRight, Atom, Bookmark, Check, ChevronRight, CircleDot,
   Dna, Eye, FlaskConical, Gauge, Globe2, Infinity as InfinityIcon, Leaf,
   Maximize, Monitor, Mountain, Orbit, Play, RefreshCw, Search, Settings2,
-  Sparkles, Volume2, Waves,
+  Sparkles, Volume2, Waves, Zap,
 } from "lucide-react";
 import { CreatureModel } from "./CreatureModel";
 import {
@@ -115,6 +115,7 @@ function MainNavigation({
     { id: "sandbox", label: "Sandbox", detail: "Unbind physics and scale", icon: Atom, onClick: () => onNavigate("seed", true) },
     { id: "aqua", label: "Aqua physics lab", detail: "Extreme water & destruction sandbox", icon: Waves, onClick: () => { window.location.hash = "aqua"; } },
     { id: "endless", label: "Endless Potential", detail: "Infinite physics world — water, cities, black holes, space", icon: InfinityIcon, onClick: () => { window.location.hash = "endless"; } },
+    { id: "rifts", label: "Riftbound", detail: "Voxel sandbox: the Rift, the Gate, the Dream", icon: Zap, onClick: () => { window.location.hash = "rifts"; } },
     { id: "settings", label: "Settings", detail: "Rendering, simulation and access", icon: Settings2, onClick: () => onNavigate("settings") },
   ];
   const [focused, setFocused] = useState(items[0].id);
@@ -131,6 +132,7 @@ function MainNavigation({
       const direction = event.code === "ArrowDown" || event.code === "KeyS" ? 1 : -1;
       const next = (focusedIndex + direction + items.length) % items.length;
       setFocused(items[next].id);
+      document.querySelector(`.menu-link[data-id="${items[next].id}"]`)?.scrollIntoView({ block: "nearest" });
     };
     window.addEventListener("keydown", navigate);
     return () => window.removeEventListener("keydown", navigate);
@@ -149,6 +151,7 @@ function MainNavigation({
         return (
           <button
             key={item.id}
+            data-id={item.id}
             className={`menu-link ${focused === item.id ? "is-focused" : ""} ${index === 0 ? "is-primary" : ""}`}
             onMouseEnter={() => setFocused(item.id)}
             onFocus={() => setFocused(item.id)}

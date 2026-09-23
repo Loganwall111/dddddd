@@ -44,7 +44,10 @@ button:disabled { cursor: not-allowed; }
 .hero-brand { position: absolute; top: 13.5%; left: 6.5%; z-index: 1; pointer-events: none; }
 .hero-brand > span { display: block; font-size: clamp(58px, 8.5vw, 142px); line-height: .9; font-weight: 200; color: #f2f3ed; text-shadow: 0 2px 32px rgba(0,0,0,.6); }
 .hero-brand p { margin: 22px 0 0 8px; color: #aeb9b6; font-size: 10px; letter-spacing: .58em; }
-.main-nav { position: absolute; left: 6.7%; top: 39%; width: min(620px, 48vw); z-index: 3; }
+.main-nav { position: absolute; left: 6.7%; top: 39%; bottom: 74px; width: min(620px, 48vw); z-index: 3; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(183,255,213,.35) transparent; }
+.main-nav::-webkit-scrollbar { width: 3px; }
+.main-nav::-webkit-scrollbar-track { background: transparent; }
+.main-nav::-webkit-scrollbar-thumb { background: rgba(183,255,213,.35); }
 .menu-link { position: relative; width: 100%; min-height: 47px; display: grid; grid-template-columns: 28px 20px minmax(150px, .85fr) 1.5fr 28px; align-items: center; gap: 12px; border: 0; border-top: 1px solid rgba(220,242,235,.1); background: transparent; color: rgba(235,243,238,.72); cursor: pointer; text-align: left; transition: color .25s, padding .35s, background .35s; }
 .menu-link:last-child { border-bottom: 1px solid rgba(220,242,235,.1); }
 .menu-link::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--signal); transform: scaleY(0); transition: transform .25s; }
