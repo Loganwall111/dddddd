@@ -15,6 +15,29 @@
   display: block;
 }
 
+<<<<<<< HEAD
+=======
+/* engine error surface */
+.rb-error {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  max-width: 520px;
+  max-height: 45%;
+  overflow: auto;
+  background: rgba(40, 6, 10, 0.92);
+  border: 1px solid #ff5d6c;
+  border-radius: 8px;
+  color: #ffd7db;
+  font-family: ui-monospace, monospace;
+  font-size: 10.5px;
+  padding: 10px 12px;
+  z-index: 50;
+}
+.rb-error-title { color: #ff8793; letter-spacing: 0.18em; font-size: 9px; margin-bottom: 6px; }
+.rb-error pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+
+>>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
 /* ── HUD ── */
 .rb-hud { position: absolute; inset: 0; pointer-events: none; color: #eef4f8; }
 .rb-info {
