@@ -38,7 +38,7 @@ export interface EndlessCallbacks {
   onBiome: (name: string) => void;
 }
 
-export type ToolId = "pistol" | "smg" | "shotgun" | "rifle" | "rocket" | "grenade" | "dynamite" | "singularity" | "water" | "crates" | "glass" | "portal" | "ragdoll";
+export type ToolId = "pistol" | "smg" | "shotgun" | "rifle" | "sniper" | "minigun" | "rocket" | "grenade" | "dynamite" | "singularity" | "water" | "crates" | "glass" | "portal" | "ragdoll";
 
 export const HOTBAR_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Q", "X"];
 
@@ -47,14 +47,14 @@ export const HOTBAR: { id: ToolId; label: string; glyph: string }[] = [
   { id: "smg", label: "SMG", glyph: "▬" },
   { id: "shotgun", label: "Shotgun", glyph: "▭" },
   { id: "rifle", label: "Rifle", glyph: "≡" },
+  { id: "sniper", label: "Sniper", glyph: "⊹" },
   { id: "rocket", label: "Rocket", glyph: "➤" },
+  { id: "minigun", label: "Minigun", glyph: "✳" },
   { id: "grenade", label: "Grenade", glyph: "◍" },
   { id: "dynamite", label: "Dynamite", glyph: "◆" },
   { id: "water", label: "Water blob", glyph: "≋" },
   { id: "crates", label: "Crate stack", glyph: "▣" },
-  { id: "glass", label: "Glass wall", glyph: "◫" },
   { id: "portal", label: "Portal", glyph: "◎" },
-  { id: "ragdoll", label: "Ragdoll", glyph: "✚" },
 ];
 
 export const BIOME_NAMES: Record<BiomeId, string> = {
@@ -185,12 +185,12 @@ interface Shockwave { mesh: THREE.Mesh; age: number; max: number; }
 interface Bomb { rec: DynRec; }
 
 const SOLIDS_TEX: Record<string, string | undefined> = {
-  concrete: "concrete", brick: "brick", wood: "wood", asphalt: "asphalt", glass: "glass", dirt: "dirt",
+  concrete: "concrete", brick: "brick", wood: "wood", asphalt: "asphalt", glass: "glass", dirt: "dirt", plaster: "plaster",
 };
 
 /* --------------------------- the engine --------------------------- */
 
-export type ScenarioId = "blackhole" | "meteor" | "quake" | "flood" | "storm" | "volcano" | "sewer" | "tornado" | "glassstorm";
+export type ScenarioId = "blackhole" | "meteor" | "meteors" | "bloodmoon" | "zerog" | "quake" | "flood" | "storm" | "volcano" | "sewer" | "tornado" | "glassstorm";
 
 export class EndlessWorld {
   private canvas: HTMLCanvasElement;
@@ -231,6 +231,7 @@ export class EndlessWorld {
   private tracers: { line: THREE.Line; life: number }[] = [];
   private rocketMat: THREE.MeshStandardMaterial | null = null;
   private tex: Record<string, THREE.Texture> = {};
+  private texWaiters = new Map<THREE.Texture, (() => void)[]>();
   private portalA: THREE.Group | null = null;
   private portalB: THREE.Group | null = null;
   private spaceGroup: THREE.Group | null = null;
@@ -251,30 +252,48 @@ export class EndlessWorld {
       "Past the farmland the world starts changing. Careful out there.",
       "They say the mother mountains clear a thousand meters. I've never seen one.",
       "My kid swears she saw a second sun over the coast. I'm not arguing.",
+      "The new lighthouse. Seven years and they finally painted it. Finally.",
+      "There's a river three towns over. You can follow it forever and it never ends.",
+      "I grabbed a crate once, threw it at a billboard. The billboard lost.",
+      "Keep your voice down out here. The hills hear everything.",
     ],
     suburb: [
       "Quietest block on the planet, I'd say. City's ten minutes away.",
       "We plant tomatoes out back. The soil's rich this year.",
       "That ring of light downtown started showing up a year ago. Nobody explains it.",
       "Honest work, good coffee. I wouldn't trade it.",
+      "Street's quiet. Too quiet, if you ask me. The pigeons moved on.",
+      "The farmland's two hours south. Best strawberries this side of the mountains.",
+      "They're widening the highway again. As if the planet needed another scar.",
     ],
     town: [
       "Market day's Saturday. Best bread on the whole route, I promise.",
       "The river floods twice a year. The church gets wettest first.",
       "You look like you've seen a lot of world. Mind the rain on the hills.",
       "My grandfather's mill is up on the plateau. The wind still turns it.",
+      "Bridge's out past the river. Everyone crosses at the shallows now.",
+      "The baker's daughter can throw a horseshoe at a nail from twenty paces.",
+      "Watch the market stall with the blue awning. Honest prices, mostly.",
     ],
     farm: [
       "Good year for the crops. The rain came right on time.",
       "Silo's full. If it wasn't, we'd be having thin soup all winter.",
       "You're a long way from town out here. Stay safe — the hills shift in rain.",
       "Cows don't like loud noises. Neither do I, frankly.",
+      "The river's high this season. Don't cross below the old bridge.",
+      "Silo's full. If it wasn't, we'd be having thin soup all winter.",
+      "My uncle crossed the mother mountains once on foot. Took him eleven days.",
+      "Tractor's acting up again. It's older than the county road, that one.",
     ],
     coast: [
       "Calm water today. You can see the whole coastline from the lighthouse.",
       "I still paint the lighthouse stripes every spring. Old keeper's habit.",
       "Fog comes in at dusk. If you hear bells, that's the harbor — not the fog.",
       "Fish are jumping. Best sign there is.",
+      "The ferry leaves at six, rain or shine. Rain wins most days.",
+      "You'd be surprised how quiet the water gets before a storm.",
+      "My nets are mending themselves. Best fish in the sound, I'll have you know.",
+      "Watch for the sandbars past the point. They move every winter.",
     ],
   };
   private oceanMesh: THREE.Mesh | null = null;
@@ -360,6 +379,14 @@ export class EndlessWorld {
   private sunVis = 1;
   private sunOcc = false;
   private sunOccT = 0;
+  private bloodMoonT = 0;
+  private zeroGT = 0;
+  private fogC0 = new THREE.Color(0x8aa5b5);
+  private sunC0 = new THREE.Color(0xfff2dd);
+  private hemiC0 = new THREE.Color(0xbfd8ff);
+  private bloodFogC = new THREE.Color(0x3a0a08);
+  private bloodSunC = new THREE.Color(0xff3a14);
+  private bloodHemiC = new THREE.Color(0x4a100c);
   private boxGeo = new THREE.BoxGeometry(1, 1, 1);
   private facadeMats: THREE.MeshStandardMaterial[] = [];
   private solidMats = new Map<string, THREE.MeshStandardMaterial>();
@@ -559,13 +586,13 @@ export class EndlessWorld {
       return "space";
     }
     // the prime planet: a real world that gets wilder with distance, forever
-    if (dist < 700) return "downtown";
-    if (dist < 1400) return "suburbs";
-    if (dist < 2200) return "towns";
-    if (dist < 3400) return "farms";
-    if (dist < 4800) return "forest";
-    if (dist < 6500) return "waterfront";
-    if (dist < 9500) return "hills";
+    if (dist < 950) return "downtown";
+    if (dist < 1700) return "suburbs";
+    if (dist < 2600) return "towns";
+    if (dist < 3900) return "farms";
+    if (dist < 5400) return "forest";
+    if (dist < 7200) return "waterfront";
+    if (dist < 10000) return "hills";
     if (dist < 13500) return "mountains";
     if (dist < 17500) return "desert";
     if (dist < 22500) return "plateau";
@@ -580,6 +607,29 @@ export class EndlessWorld {
     const c = this.chunks.get(`${cx},${cz}`);
     if (c) return c.heightAt(x, z);
     return this.rawHeight(x, z, this.biomeAt(Math.hypot(x, z)), cx, cz);
+  }
+
+  /** The great river meanders east–west through the towns, farmland and forest. */
+  private riverZ(x: number): number {
+    return fbm(x * 0.0006, 4.7, this.worldSeed + 911, 3) * 3200;
+  }
+
+  private riverWidth(x: number): number {
+    return 17 + fbm(x * 0.002, 9.1, this.worldSeed + 912, 2) * 9;
+  }
+
+  private riverBed(x: number): number {
+    // a gentle downstream slope so the water actually flows
+    return 2.3 - x * 0.00045;
+  }
+
+  private inRiverBand(cx: number, cz: number): boolean {
+    const dc = Math.hypot(cx * CHUNK + 32, cz * CHUNK + 32);
+    return dc > 1650 && dc < 5300;
+  }
+
+  private riverHere(tier: BiomeId, cx: number, cz: number): boolean {
+    return this.inRiverBand(cx, cz) && (tier === "towns" || tier === "farms" || tier === "forest");
   }
 
   private rawHeight(x: number, z: number, tier: BiomeId, cx: number, cz: number): number {
@@ -600,7 +650,15 @@ export class EndlessWorld {
     const hills = fbm(x * 0.012, z * 0.012, seed + 37, 4);
     const env = (a: number, b: number) => smooth(clamp((d - a) / (b - a), 0, 1));
     if (tier === "suburbs") return 6 + hills * 1.2 + macro * 0.12;
-    if (tier === "towns") return 5 + hills * 2.5 + macro * 0.3;
+    if (tier === "towns") {
+      let h = 5 + hills * 2.5 + macro * 0.3;
+      if (this.riverHere(tier, cx, cz)) {
+        const dR = Math.abs(z - this.riverZ(x));
+        const rw = this.riverWidth(x) * 1.6;
+        if (dR < rw) h = lerp(h, this.riverBed(x), (1 - smooth(clamp(dR / rw, 0, 1))) * 0.94);
+      }
+      return h;
+    }
     if (tier === "farms") {
       let h = 4 + hills * 3 + macro * 0.4;
       // flattened field patches
@@ -611,9 +669,22 @@ export class EndlessWorld {
         const dd = Math.hypot(x - px, z - pz);
         if (dd < 16) h = lerp(h, 4 + cont * 2, 1 - smooth(clamp(dd / 16, 0, 1)));
       }
+      if (this.riverHere(tier, cx, cz)) {
+        const dR = Math.abs(z - this.riverZ(x));
+        const rw = this.riverWidth(x) * 1.6;
+        if (dR < rw) h = lerp(h, this.riverBed(x), (1 - smooth(clamp(dR / rw, 0, 1))) * 0.94);
+      }
       return h;
     }
-    if (tier === "forest") return macro * 0.8 + hills * 22;
+    if (tier === "forest") {
+      let h = macro * 0.8 + hills * 22;
+      if (this.riverHere(tier, cx, cz)) {
+        const dR = Math.abs(z - this.riverZ(x));
+        const rw = this.riverWidth(x) * 1.6;
+        if (dR < rw) h = lerp(h, this.riverBed(x), (1 - smooth(clamp(dR / rw, 0, 1))) * 0.94);
+      }
+      return h;
+    }
     if (tier === "waterfront") {
       let h = -4 + cont * 9 + hills * 5 + macro * 0.5;
       // gentle sand shelf where the water meets land
@@ -723,15 +794,23 @@ export class EndlessWorld {
   }
 
   private whenTexLoaded(t: THREE.Texture, fn: () => void): void {
-    if (t.image && (t.image as HTMLImageElement).width > 0) fn();
-    else (t as unknown as { on(ev: string, cb: () => void): void }).on("load", fn);
+    if (t.image && (t.image as HTMLImageElement).width > 0) { fn(); return; }
+    const list = this.texWaiters.get(t) ?? [];
+    list.push(fn);
+    this.texWaiters.set(t, list);
   }
 
   private loadTextures(): void {
     const loader = new THREE.TextureLoader();
-    const names = ["asphalt", "sidewalk", "brick", "concrete", "glass", "grass", "farmland", "rock", "dirt", "sand"]; // + plaster, wood when generated
+    const names = ["asphalt", "sidewalk", "brick", "concrete", "glass", "grass", "farmland", "rock", "dirt", "sand", "plaster", "wood"];
     for (const nm of names) {
-      const t = loader.load(`/textures/${nm}.jpg`);
+      const t = loader.load(`/textures/${nm}.jpg`, (tex) => {
+        const list = this.texWaiters.get(tex);
+        if (list) {
+          this.texWaiters.delete(tex);
+          for (const fn of list) fn();
+        }
+      });
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
       t.colorSpace = THREE.SRGBColorSpace;
@@ -904,11 +983,27 @@ export class EndlessWorld {
     }
 
     // pedestrians on the sidewalks
-    if (this.rng.next() < 0.8) this.spawnNpc(x0 + this.rng.range(6, 58), z0 + this.rng.range(6, 58), "city");
-    if (this.rng.next() < 0.35) this.spawnNpc(x0 + this.rng.range(6, 58), z0 + this.rng.range(6, 58), "city");
+    this.spawnNpc(x0 + this.rng.range(6, 58), z0 + this.rng.range(6, 58), "city");
+    if (this.rng.next() < 0.6) this.spawnNpc(x0 + this.rng.range(6, 58), z0 + this.rng.range(6, 58), "city");
+
+    // billboards + benches on block corners
+    if (hash2(cx, cz, seed + 610) < 0.5) {
+      const bx = x0 + (hash2(cx, cz, seed + 611) - 0.5) * 50 + 32;
+      const bz = z0 + (hash2(cz, cx, seed + 612) - 0.5) * 50 + 32;
+      this.addBillboard(bx, 7.0, bz, group);
+    }
+    if (hash2(cx + 3, cz, seed + 613) < 0.6) {
+      const bx = x0 + (hash2(cx, cz + 2, seed + 614) - 0.5) * 50 + 32;
+      const bz = z0 + (hash2(cz, cx + 5, seed + 615) - 0.5) * 50 + 32;
+      const b = new THREE.Mesh(this.boxGeo, this.solidMat("concrete"));
+      b.scale.set(2.4, 0.7, 0.7);
+      b.position.set(bx, 7.3, bz);
+      b.castShadow = true;
+      group.add(b);
+    }
 
     // cars on the roads
-    const carN = this.rng.next() < 0.6 ? 2 : 1;
+    const carN = 2 + Math.floor(this.rng.next() * 3);
     for (let i = 0; i < carN; i++) {
       const along = Math.random() < 0.5;
       const lane = Math.random() < 0.5 ? 2.2 : -2.2;
@@ -1166,6 +1261,65 @@ export class EndlessWorld {
     }
   }
 
+  private buildRiverChunk(cx: number, cz: number, tier: BiomeId, group: THREE.Group): void {
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    let zMin = 1e9, zMax = -1e9;
+    for (let i = 0; i <= 8; i++) {
+      const z = this.riverZ(x0 + (i / 8) * CHUNK);
+      zMin = Math.min(zMin, z);
+      zMax = Math.max(zMax, z);
+    }
+    zMin -= 26; zMax += 26;
+    if (zMax < z0 || zMin > z0 + CHUNK) return;
+    // translucent water ribbon laid over the carved bed
+    const w = this.riverWidth(x0 + 32) * 1.5;
+    const zc = Math.max(z0 + 2, Math.min(z0 + CHUNK - 2, (zMin + zMax) / 2));
+    const bedY = this.riverBed(x0 + 32) + 0.55;
+    const ribbon = new THREE.Mesh(
+      new THREE.PlaneGeometry(CHUNK + 24, Math.min(zMax - zMin, CHUNK + 24)),
+      new THREE.MeshStandardMaterial({
+        color: 0x2e6f8f, transparent: true, opacity: 0.78, roughness: 0.18, metalness: 0.25,
+        emissive: 0x0c3346, emissiveIntensity: 0.4, side: THREE.DoubleSide,
+      }),
+    );
+    ribbon.rotation.x = -Math.PI / 2;
+    ribbon.position.set(x0 + 32, bedY, Math.max(z0, Math.min(z0 + CHUNK, zc)));
+    ribbon.receiveShadow = true;
+    group.add(ribbon);
+    // live SPH water in the channel (a little, so the solver stays fast)
+    const emit = (ex0: number, ex1: number) => {
+      const ez0 = this.riverZ((ex0 + ex1) / 2) - w * 0.5;
+      const ez1 = this.riverZ((ex0 + ex1) / 2) + w * 0.5;
+      this.solver.emitBox(ex0, bedY - 0.45, ez0, ex1, bedY + 0.35, ez1, 1.3, 0, 16, SPH_CAP);
+    };
+    emit(x0 + 4, x0 + 30);
+    emit(x0 + 34, x0 + 60);
+    void tier;
+  }
+
+  private addBillboard(x: number, y: number, z: number, group: THREE.Group): void {
+    const g = new THREE.Group();
+    const poleMat = this.solidMat("steel");
+    const p1 = new THREE.Mesh(this.boxGeo, poleMat);
+    p1.scale.set(0.18, 4.6, 0.18);
+    p1.position.set(-2.6, 2.3, 0);
+    const p2 = p1.clone();
+    p2.position.x = 2.6;
+    g.add(p1, p2);
+    const ads = [0xe94b3c, 0x2f9e5b, 0x2478c8, 0xf2c11f, 0xb04ad8];
+    const ad = new THREE.Mesh(this.boxGeo, new THREE.MeshBasicMaterial({ color: ads[Math.floor(Math.random() * ads.length)] }));
+    ad.scale.set(6.4, 2.4, 0.12);
+    ad.position.y = 5.0;
+    g.add(ad);
+    const copy = new THREE.Mesh(this.boxGeo, new THREE.MeshBasicMaterial({ color: 0xf5f2ea }));
+    copy.scale.set(5.6, 0.7, 0.05);
+    copy.position.set(0, 5.25, 0.09);
+    g.add(copy);
+    g.position.set(x, y, z);
+    g.rotation.y = Math.random() * Math.PI;
+    group.add(g);
+  }
+
   /* -------------------------- the Great Coast -------------------------- */
 
   private buildCoastChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
@@ -1351,7 +1505,7 @@ export class EndlessWorld {
   private addShop(x: number, y: number, z: number, style: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
     const awnings = [0xc0392b, 0x2980b9, 0x27ae60, 0xd4a017, 0x8e44ad];
     const g = new THREE.Group();
-    const body = new THREE.Mesh(this.boxGeo, this.solidMat("concrete"));
+    const body = new THREE.Mesh(this.boxGeo, this.solidMat("plaster"));
     body.scale.set(11, 4.6, 9);
     body.position.y = 2.3;
     body.castShadow = body.receiveShadow = true;
@@ -1417,6 +1571,7 @@ export class EndlessWorld {
 
   private buildTownsChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
     const seed = this.worldSeed;
+    this.buildRiverChunk(cx, cz, "towns", group);
     const x0 = cx * CHUNK, z0 = cz * CHUNK;
     // shop rows along the east/west streets
     for (let bz = 0; bz < 2; bz++) {
@@ -1502,6 +1657,7 @@ export class EndlessWorld {
 
   private buildFarmsChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
     const seed = this.worldSeed;
+    this.buildRiverChunk(cx, cz, "farms", group);
     const x0 = cx * CHUNK, z0 = cz * CHUNK;
     // crop field (photographic farmland texture, flat patch)
     const fx = x0 + 24 + (hash2(cx, cz, seed + 440) - 0.5) * 20;
@@ -1552,6 +1708,7 @@ export class EndlessWorld {
 
   private buildForestChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
     const seed = this.worldSeed;
+    this.buildRiverChunk(cx, cz, "forest", group);
     const x0 = cx * CHUNK, z0 = cz * CHUNK;
     const n = 12 + Math.floor(hash2(cx, cz, seed + 460) * 6);
     for (let i = 0; i < n; i++) {
@@ -1966,13 +2123,27 @@ export class EndlessWorld {
       color: palette[Math.floor(this.rng.next() * palette.length)], roughness: 0.35, metalness: 0.5,
     });
     const g = new THREE.Group();
+    const variant = this.rng.next(); // 0 sedan · 0.7 truck · 0.92 bus
+    const len = variant < 0.7 ? 4.2 : variant < 0.92 ? 5.8 : 9.5;
     const lower = new THREE.Mesh(this.boxGeo, paint);
-    lower.scale.set(4.2, 0.9, 1.9);
+    lower.scale.set(len, 0.9, 1.9);
     lower.position.y = 0.75;
     lower.castShadow = true;
-    const cabin = new THREE.Mesh(this.boxGeo, new THREE.MeshStandardMaterial({ color: 0x18242e, roughness: 0.2, metalness: 0.4 }));
-    cabin.scale.set(2.2, 0.7, 1.7);
-    cabin.position.y = 1.5;
+    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x18242e, roughness: 0.2, metalness: 0.4 });
+    let cabin: THREE.Mesh;
+    if (variant < 0.92) {
+      cabin = new THREE.Mesh(this.boxGeo, cabinMat);
+      cabin.scale.set(len * 0.52, 0.7, 1.7);
+      cabin.position.y = 1.5;
+    } else {
+      cabin = new THREE.Mesh(this.boxGeo, paint);
+      cabin.scale.set(len - 0.4, 1.5, 1.9);
+      cabin.position.set(0, 1.65, 0);
+      const strip = new THREE.Mesh(this.boxGeo, cabinMat);
+      strip.scale.set(len - 1.2, 0.5, 1.95);
+      strip.position.set(0, 1.8, 0);
+      cabin.add(strip);
+    }
     g.add(lower, cabin);
     g.rotation.y = yaw;
     const body = this.rapier.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
@@ -2549,6 +2720,7 @@ export class EndlessWorld {
 
   setTool(t: ToolId): void { this.tool = t; }
   selectToolIndex(i: number): void { if (i >= 0 && i < HOTBAR.length) { this.tool = HOTBAR[i].id; this.buildWeaponMesh(this.tool); } }
+  selectTool(id: ToolId): void { this.tool = id; this.buildWeaponMesh(this.tool); }
 
   private fireTool(): void {
     if (!this.alive || this.attract) return;
@@ -2566,6 +2738,12 @@ export class EndlessWorld {
         break;
       case "rifle":
         this.shoot("rifle");
+        break;
+      case "sniper":
+        this.shoot("sniper");
+        break;
+      case "minigun":
+        this.shoot("minigun");
         break;
       case "rocket":
         this.throwRocket();
@@ -2920,6 +3098,28 @@ export class EndlessWorld {
       add(new THREE.CylinderGeometry(0.014, 0.014, 0.22, 8), dark, 0, 0.08, -0.44).rotation.x = Math.PI / 2;
       add(new THREE.BoxGeometry(0.04, 0.12, 0.05), dark, 0, -0.01, 0.08);
       add(new THREE.BoxGeometry(0.03, 0.05, 0.04), metal, 0, 0.14, 0.02);
+    } else if (tool === "sniper") {
+      add(new THREE.BoxGeometry(0.045, 0.07, 0.5), metal, 0, 0.08, -0.12);
+      add(new THREE.CylinderGeometry(0.012, 0.012, 0.3, 8), dark, 0, 0.08, -0.52).rotation.x = Math.PI / 2;
+      add(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 8), dark, 0, 0.15, -0.05).rotation.x = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.04, 0.1, 0.05), dark, 0, -0.02, 0.12);
+    } else if (tool === "minigun") {
+      const barrel = new THREE.Group();
+      for (let b = 0; b < 6; b++) {
+        const a = (b / 6) * Math.PI * 2;
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.34, 6), dark);
+        bar.position.set(Math.cos(a) * 0.024, Math.sin(a) * 0.024, 0);
+        bar.rotation.x = Math.PI / 2;
+        barrel.add(bar);
+      }
+      barrel.position.set(0, 0.08, -0.3);
+      g.add(barrel);
+      add(new THREE.BoxGeometry(0.07, 0.1, 0.2), metal, 0, 0.07, -0.08);
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.09, 12), metal);
+      drum.position.set(0, 0.02, 0.02);
+      drum.rotation.x = Math.PI / 2;
+      g.add(drum);
+      add(new THREE.BoxGeometry(0.04, 0.09, 0.05), dark, 0, -0.04, 0.14);
     } else if (tool === "rocket") {
       const tube = add(new THREE.CylinderGeometry(0.075, 0.075, 0.5, 14), metal, 0, 0.06, -0.08);
       tube.rotation.x = Math.PI / 2;
@@ -2998,11 +3198,16 @@ export class EndlessWorld {
     void dt;
     const o = this.camera.position;
     const dir = this.cameraDirection();
-    this.grabbed.setNextKinematicTranslation({
-      x: o.x + dir.x * 2.4,
-      y: Math.max(this.heightAt(o.x + dir.x * 2.4, o.z + dir.z * 2.4) + 0.4, o.y - 0.5 + dir.y * 2.4),
-      z: o.z + dir.z * 2.4,
-    });
+    try {
+      this.grabbed.setNextKinematicTranslation({
+        x: o.x + dir.x * 2.4,
+        y: Math.max(this.heightAt(o.x + dir.x * 2.4, o.z + dir.z * 2.4) + 0.4, o.y - 0.5 + dir.y * 2.4),
+        z: o.z + dir.z * 2.4,
+      });
+    } catch {
+      this.grabbed = null;
+      this.grabFrom = null;
+    }
   }
 
   private releaseGrab(): void {
@@ -3087,6 +3292,11 @@ export class EndlessWorld {
     this.grates = [];
     for (const npc of this.npcs) this.killNpc(npc, true);
     this.npcs = [];
+    for (const b of this.bubbles) {
+      this.scene.remove(b.spr);
+      b.spr.material.dispose();
+    }
+    this.bubbles = [];
     this.bubbleCache.forEach((t) => t.dispose());
     this.bubbleCache.clear();
     for (const r of this.ragdolls) this.removeRagdoll(r);
@@ -3107,6 +3317,8 @@ export class EndlessWorld {
     this.solver.clear();
     this.spaceBuilt = false;
     this.launchpads = [];
+    this.grabbed = null;
+    this.grabFrom = null;
     this.portalA!.visible = to === "prime";
     this.portalB!.visible = to === "other";
     if (to === "other") this.buildSpace();
@@ -3159,6 +3371,35 @@ export class EndlessWorld {
           });
         }
         this.log("IMPACT EVENT — kinetic kill vehicles inbound from the sky.", "alert");
+        break;
+      case "meteors":
+        for (let i = 0; i < 14; i++) {
+          const mx = p.x + (this.rng.next() - 0.5) * 900;
+          const mz = p.z + (this.rng.next() - 0.5) * 900;
+          const s = this.rng.range(2.5, 7);
+          const m = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 1), this.solidMat("rock"));
+          m.position.set(mx, 260 + this.rng.next() * 380, mz);
+          this.scene.add(m);
+          const body = this.rapier.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
+            .setTranslation(m.position.x, m.position.y, m.position.z).setCcdEnabled(true));
+          this.rapier.createCollider(RAPIER.ColliderDesc.ball(s).setDensity(3200), body);
+          body.setLinvel({ x: (this.rng.next() - 0.5) * 16, y: -52, z: (this.rng.next() - 0.5) * 16 }, true);
+          this.dyn.push({
+            id: allocId(), body, mesh: m, kind: "meteor", radius: s, volume: s ** 3,
+            age: 0, dead: false, wasSub: 0, debris: true,
+          });
+        }
+        this.log("METEOR SHOWER — a whole family of rocks is falling on the planet. Run.", "alert");
+        break;
+      case "bloodmoon":
+        this.bloodMoonT = 32;
+        this.log("The moon rises red. The light itself feels wrong.", "alert");
+        break;
+      case "zerog":
+        this.zeroGT = 12;
+        this.rapier.gravity = { x: 0, y: 0, z: 0 };
+        this.vel.y += 20;
+        this.log("GRAVITY OFFLINE — for twelve seconds, nothing is heavy.", "alert");
         break;
       case "quake":
         this.quakeT = 7;
@@ -3296,24 +3537,24 @@ export class EndlessWorld {
 
   /* ============================== AAA SYSTEMS ============================== */
 
-  private shoot(kind: "pistol" | "rifle" | "smg" | "shotgun"): void {
+  private shoot(kind: "pistol" | "rifle" | "smg" | "shotgun" | "sniper" | "minigun"): void {
     if (kind === "shotgun") {
       for (let i = 0; i < 6; i++) this.fireBullet(kind, 0.05);
     } else {
-      this.fireBullet(kind, kind === "smg" ? 0.014 : 0);
+      this.fireBullet(kind, kind === "smg" ? 0.014 : kind === "minigun" ? 0.03 : 0);
     }
     this.audio.gunshot(kind);
-    this.trauma = Math.min(1, this.trauma + (kind === "pistol" ? 0.06 : kind === "rifle" ? 0.04 : kind === "shotgun" ? 0.11 : 0.02));
-    this.vmRecoil = Math.min(1, this.vmRecoil + (kind === "shotgun" ? 0.5 : kind === "smg" ? 0.12 : 0.3));
+    this.trauma = Math.min(1, this.trauma + (kind === "pistol" ? 0.06 : kind === "rifle" ? 0.04 : kind === "shotgun" ? 0.11 : kind === "sniper" ? 0.14 : kind === "minigun" ? 0.015 : 0.02));
+    this.vmRecoil = Math.min(1, this.vmRecoil + (kind === "shotgun" ? 0.5 : kind === "sniper" ? 0.85 : kind === "smg" ? 0.12 : kind === "minigun" ? 0.06 : 0.3));
     {
       const fd = this.cameraDirection();
       this.flashLight.position.set(this.camera.position.x + fd.x * 3, this.camera.position.y - 0.4, this.camera.position.z + fd.z * 3);
     }
-    this.flashLight.intensity = kind === "pistol" ? 900 : kind === "shotgun" ? 1100 : 700;
+    this.flashLight.intensity = kind === "pistol" ? 900 : kind === "shotgun" ? 1100 : kind === "sniper" ? 1300 : 700;
     this.compMat.uniforms.uFlash.value = Math.max(this.compMat.uniforms.uFlash.value as number, 0.12);
   }
 
-  private fireBullet(kind: "pistol" | "rifle" | "smg" | "shotgun", spread: number): void {
+  private fireBullet(kind: "pistol" | "rifle" | "smg" | "shotgun" | "sniper" | "minigun", spread: number): void {
     const o = this.camera.position;
     let dir = this.cameraDirection();
     if (spread > 0) {
@@ -3348,8 +3589,9 @@ export class EndlessWorld {
         break;
       }
     }
-    const dmg = kind === "pistol" ? 50 : kind === "rifle" ? 32 : kind === "smg" ? 24 : 16;
-    this.damageAt(px, py, pz, kind === "shotgun" ? 2.4 : 3.2, dmg);
+    const dmg = kind === "pistol" ? 50 : kind === "rifle" ? 32 : kind === "smg" ? 24 : kind === "minigun" ? 8 : kind === "sniper" ? 95 : 16;
+    const radius = kind === "sniper" ? 1.4 : kind === "shotgun" ? 2.4 : kind === "minigun" ? 2.0 : 3.2;
+    this.damageAt(px, py, pz, radius, dmg);
     for (const gl of this.glass) {
       if (!gl.dead && Math.hypot(gl.x - px, gl.y - py, gl.z - pz) < 4) this.shatterGlass(gl);
     }
@@ -3439,11 +3681,11 @@ export class EndlessWorld {
 
   private updateAutoFire(): void {
     if (!this.mouseDown || this.paused || this.attract || !this.alive) { this.autoT = 0; return; }
-    if (this.tool !== "rifle" && this.tool !== "smg") return;
+    if (this.tool !== "rifle" && this.tool !== "smg" && this.tool !== "minigun") return;
     this.autoT -= STEP;
     if (this.autoT <= 0) {
       this.shoot(this.tool);
-      this.autoT = this.tool === "smg" ? 0.06 : 0.11;
+      this.autoT = this.tool === "smg" ? 0.06 : this.tool === "minigun" ? 0.035 : 0.11;
     }
   }
 
@@ -3697,6 +3939,28 @@ export class EndlessWorld {
             this.fractureSegment(seg, (p.x - this.pos.x) / 20, (p.z - this.pos.z) / 20);
           }
         }
+      }
+    }
+    // blood moon
+    if (this.bloodMoonT > 0) {
+      this.bloodMoonT -= dt;
+      const f = Math.min(1, dt * 2);
+      (this.scene.fog as THREE.FogExp2).color.lerp(this.bloodFogC, f);
+      this.sun.color.lerp(this.bloodSunC, f);
+      this.hemi.color.lerp(this.bloodHemiC, f);
+      if (this.bloodMoonT <= 0) {
+        (this.scene.fog as THREE.FogExp2).color.copy(this.fogC0);
+        this.sun.color.copy(this.sunC0);
+        this.hemi.color.copy(this.hemiC0);
+        this.log("The sky bleeds back to normal.", "sys");
+      }
+    }
+    // zero-g
+    if (this.zeroGT > 0) {
+      this.zeroGT -= dt;
+      if (this.zeroGT <= 0) {
+        this.rapier.gravity = { x: 0, y: -9.81, z: 0 };
+        this.log("Gravity returns. Everything falls at once.", "sys");
       }
     }
     this.trauma = Math.max(0, this.trauma - dt * 1.1);
@@ -4368,7 +4632,7 @@ export class EndlessWorld {
       const hits = this.sunRaycaster.intersectObjects(this.scene.children, true);
       let blocked = false;
       for (const h of hits) {
-        if (h.object === this.stars) continue;
+        if (h.object === this.stars || h.object === this.oceanMesh || (h.object as THREE.Points).isPoints) continue;
         blocked = true;
         break;
       }

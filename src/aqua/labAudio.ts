@@ -132,7 +132,7 @@ export class LabAudio {
   }
 
   /** One-shot weapon shot: filtered-noise crack + low thump. */
-  gunshot(kind: "pistol" | "rifle" | "rocket" | "smg" | "shotgun"): void {
+  gunshot(kind: "pistol" | "rifle" | "rocket" | "smg" | "shotgun" | "sniper" | "minigun"): void {
     if (!this.ensure()) return;
     const ctx = this.ctx!;
     const master = this.master!;
@@ -141,11 +141,11 @@ export class LabAudio {
     src.buffer = this.noiseBuf;
     const f = ctx.createBiquadFilter();
     f.type = kind === "rocket" ? "lowpass" : "bandpass";
-    f.frequency.value = kind === "pistol" ? 2400 : kind === "rifle" ? 1900 : kind === "smg" ? 2900 : kind === "shotgun" ? 950 : 700;
+    f.frequency.value = kind === "pistol" ? 2400 : kind === "rifle" ? 1900 : kind === "smg" ? 2900 : kind === "shotgun" ? 950 : kind === "sniper" ? 1100 : kind === "minigun" ? 2700 : 700;
     f.Q.value = 0.8;
     const g = ctx.createGain();
-    const peak = kind === "pistol" ? 0.5 : kind === "rifle" ? 0.36 : kind === "smg" ? 0.28 : kind === "shotgun" ? 0.62 : 0.6;
-    const dur = kind === "rocket" ? 0.5 : kind === "shotgun" ? 0.2 : kind === "smg" ? 0.09 : 0.14;
+    const peak = kind === "pistol" ? 0.5 : kind === "rifle" ? 0.36 : kind === "smg" ? 0.28 : kind === "shotgun" ? 0.62 : kind === "sniper" ? 0.55 : kind === "minigun" ? 0.17 : 0.6;
+    const dur = kind === "rocket" ? 0.5 : kind === "shotgun" ? 0.2 : kind === "smg" ? 0.09 : kind === "sniper" ? 0.3 : kind === "minigun" ? 0.05 : 0.14;
     g.gain.setValueAtTime(peak, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     src.connect(f); f.connect(g); g.connect(master);

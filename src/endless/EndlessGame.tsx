@@ -25,6 +25,9 @@ const SCENARIOS: { id: ScenarioId; label: string; hint: string; icon: string }[]
   { id: "sewer", label: "Into the Sewers", hint: "The drainage network fails. Grates vent water.", icon: "⬒" },
   { id: "tornado", label: "Tornado", hint: "A column of wind walks across the land.", icon: "❋" },
   { id: "glassstorm", label: "Glass Storm", hint: "A blizzard of razor glass. Do not stand still.", icon: "❄" },
+  { id: "meteors", label: "Meteor Shower", hint: "Fourteen rocks, one planet, zero warning.", icon: "☄" },
+  { id: "bloodmoon", label: "Blood Moon", hint: "The sky turns red for thirty seconds. Something notices you.", icon: "🌑" },
+  { id: "zerog", label: "Zero-G", hint: "Gravity goes offline for twelve seconds. Nothing is heavy.", icon: "❁" },
 ];
 
 const INVENTORY: { id: ToolId; name: string; desc: string }[] = [
@@ -32,13 +35,15 @@ const INVENTORY: { id: ToolId; name: string; desc: string }[] = [
   { id: "smg", name: "SMG", desc: "A buzz of lead. Faster than thought, lighter than trouble." },
   { id: "shotgun", name: "Shotgun", desc: "Six pellets, one opinion. Best served close." },
   { id: "rifle", name: "Assault Rifle", desc: "Full-auto carbine. Hold the trigger — it never gets tired." },
+  { id: "sniper", name: "Sniper Rifle", desc: "Slow to breathe, impossible to argue with. One round, one crater." },
   { id: "rocket", name: "Rocket Launcher", desc: "An unstable warhead on a stick. It finds soft things." },
+  { id: "minigun", name: "Minigun", desc: "Six barrels, one philosophy: volume is accuracy." },
   { id: "grenade", name: "Grenade", desc: "A spinning argument. It bounces, it waits, it detonates." },
   { id: "dynamite", name: "Dynamite", desc: "Throw a stick of dynamite. Fuses hate being ignored." },
   { id: "water", name: "Water Cannon", desc: "Pour a few hundred litres of very motivated water." },
   { id: "crates", name: "Crate Stack", desc: "Spawns load-bearing crates. They break under pressure." },
-  { id: "glass", name: "Glass Wall", desc: "Raises a pane of glass. It will shatter — that is the point." },
   { id: "portal", name: "Portal Frame", desc: "Two clicks, two holes, one confused physics engine." },
+  { id: "glass", name: "Glass Wall", desc: "Raises a pane of glass. It will shatter — that is the point." },
   { id: "ragdoll", name: "Test Dummy", desc: "It obeys exactly one law: momentum." },
 ];
 
@@ -461,10 +466,10 @@ export default function EndlessGame({ onExit }: { onExit: () => void }) {
                 <h2>The world is yours.</h2>
                 <p>Click to take control. Move with WASD, and look around with your mouse.</p>
                 <p className="ep-enter-dim">
-                  Twelve tools in the hotbar (1–0, Q, X). Hold <b>RMB</b> to grab and throw.
-                  Nine scenarios under <b>Scenarios</b>. Press <b>I</b> for the inventory.
-                  Everything you break is real — and somewhere downtown, a ring of light
-                  is waiting for you.
+                  Twelve tools in the hotbar (1–0, Q, X) and a longer list under <b>I</b>.
+                  Hold <b>RMB</b> to grab and throw. Twelve scenarios under <b>Scenarios</b> —
+                  meteors, blood moons, zero-g. Everything you break is real, the river is
+                  flowing, and somewhere downtown a ring of light is waiting for you.
                 </p>
               </div>
             </div>
@@ -479,16 +484,22 @@ export default function EndlessGame({ onExit }: { onExit: () => void }) {
                   <button className="ep-icon-btn" title="Close (I)" onClick={closeInventory}>✕</button>
                 </div>
                 <div className="ep-inv-grid">
-                  {INVENTORY.map((it, i) => (
-                    <button key={it.id} className={`ep-inv-item ${i === toolIdx ? "on" : ""}`}
-                      onClick={() => pickTool(i)}>
-                      <span className="ep-inv-glyph">{HOTBAR[i].glyph}</span>
-                      <span className="ep-inv-body">
-                        <b>{it.name} <small className="ep-inv-key">[{slotKey(i)}]</small></b>
-                        <small>{it.desc}</small>
-                      </span>
-                    </button>
-                  ))}
+                  {INVENTORY.map((it) => {
+                    const hIdx = HOTBAR.findIndex((h) => h.id === it.id);
+                    return (
+                      <button key={it.id} className={`ep-inv-item ${hIdx === toolIdx ? "on" : ""}`}
+                        onClick={() => {
+                          setToolIdx(hIdx);
+                          worldRef.current?.selectTool(it.id);
+                        }}>
+                        <span className="ep-inv-glyph">{hIdx >= 0 ? HOTBAR[hIdx].glyph : "✦"}</span>
+                        <span className="ep-inv-body">
+                          <b>{it.name} {hIdx >= 0 && <small className="ep-inv-key">[{slotKey(hIdx)}]</small>}</b>
+                          <small>{it.desc}</small>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

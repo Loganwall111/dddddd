@@ -54,4 +54,5 @@ export const SOLIDS: Record<string, SolidDef> = {
   rock:     { name: "Rock",     density: 2700, friction: 1.0, restitution: 0.05, strength: 25, color: [0.4, 0.38, 0.35],  brittle: 0.6 },
   asphalt:  { name: "Asphalt",  density: 2300, friction: 0.95, restitution: 0.02, strength: 8, color: [0.16, 0.16, 0.17],  brittle: 0.4 },
   soil:     { name: "Soil",     density: 1600, friction: 1.0, restitution: 0.0,  strength: 2,  color: [0.32, 0.24, 0.15],  brittle: 0.3 },
+  plaster:  { name: "Plaster", density: 1700, friction: 0.9, restitution: 0.05, strength: 6,  color: [0.9, 0.88, 0.82],   brittle: 0.6 },
 };
