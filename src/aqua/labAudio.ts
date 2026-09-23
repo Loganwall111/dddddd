@@ -132,7 +132,7 @@ export class LabAudio {
   }
 
   /** One-shot weapon shot: filtered-noise crack + low thump. */
-  gunshot(kind: "pistol" | "rifle" | "rocket"): void {
+  gunshot(kind: "pistol" | "rifle" | "rocket" | "smg" | "shotgun"): void {
     if (!this.ensure()) return;
     const ctx = this.ctx!;
     const master = this.master!;
@@ -141,11 +141,11 @@ export class LabAudio {
     src.buffer = this.noiseBuf;
     const f = ctx.createBiquadFilter();
     f.type = kind === "rocket" ? "lowpass" : "bandpass";
-    f.frequency.value = kind === "pistol" ? 2400 : kind === "rifle" ? 1900 : 700;
+    f.frequency.value = kind === "pistol" ? 2400 : kind === "rifle" ? 1900 : kind === "smg" ? 2900 : kind === "shotgun" ? 950 : 700;
     f.Q.value = 0.8;
     const g = ctx.createGain();
-    const peak = kind === "pistol" ? 0.5 : kind === "rifle" ? 0.36 : 0.6;
-    const dur = kind === "rocket" ? 0.5 : 0.14;
+    const peak = kind === "pistol" ? 0.5 : kind === "rifle" ? 0.36 : kind === "smg" ? 0.28 : kind === "shotgun" ? 0.62 : 0.6;
+    const dur = kind === "rocket" ? 0.5 : kind === "shotgun" ? 0.2 : kind === "smg" ? 0.09 : 0.14;
     g.gain.setValueAtTime(peak, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     src.connect(f); f.connect(g); g.connect(master);
@@ -159,6 +159,27 @@ export class LabAudio {
     og.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
     osc.connect(og); og.connect(master);
     osc.start(t); osc.stop(t + 0.16);
+  }
+
+  throwWhoosh(): void {
+    if (!this.ensure()) return;
+    const ctx = this.ctx!;
+    const master = this.master!;
+    const t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    src.playbackRate.value = 0.4;
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.setValueAtTime(300, t);
+    f.frequency.exponentialRampToValueAtTime(2400, t + 0.22);
+    f.Q.value = 1.4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    src.connect(f); f.connect(g); g.connect(master);
+    src.start(t); src.stop(t + 0.32);
   }
 
   dispose(): void {

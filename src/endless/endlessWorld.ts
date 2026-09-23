@@ -22,7 +22,7 @@ import {
   type PortalPair, type BodyProxy, type FireSource,
 } from "../aqua/fields";
 
-export type BiomeId = "downtown" | "waterfront" | "dislocated" | "impossible" | "space";
+export type BiomeId = "downtown" | "suburbs" | "towns" | "farms" | "forest" | "waterfront" | "hills" | "mountains" | "desert" | "plateau" | "dislocated" | "impossible" | "space";
 export type WeatherId = "clear" | "rain" | "storm";
 
 export interface EndlessStats {
@@ -38,14 +38,18 @@ export interface EndlessCallbacks {
   onBiome: (name: string) => void;
 }
 
-export type ToolId = "pistol" | "rifle" | "rocket" | "dynamite" | "singularity" | "water" | "crates" | "glass" | "portal" | "ragdoll";
+export type ToolId = "pistol" | "smg" | "shotgun" | "rifle" | "rocket" | "grenade" | "dynamite" | "singularity" | "water" | "crates" | "glass" | "portal" | "ragdoll";
+
+export const HOTBAR_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Q", "X"];
 
 export const HOTBAR: { id: ToolId; label: string; glyph: string }[] = [
   { id: "pistol", label: "Pistol", glyph: "▮" },
-  { id: "rifle", label: "Rifle", glyph: "▭" },
+  { id: "smg", label: "SMG", glyph: "▬" },
+  { id: "shotgun", label: "Shotgun", glyph: "▭" },
+  { id: "rifle", label: "Rifle", glyph: "≡" },
   { id: "rocket", label: "Rocket", glyph: "➤" },
+  { id: "grenade", label: "Grenade", glyph: "◍" },
   { id: "dynamite", label: "Dynamite", glyph: "◆" },
-  { id: "singularity", label: "Singularity", glyph: "◉" },
   { id: "water", label: "Water blob", glyph: "≋" },
   { id: "crates", label: "Crate stack", glyph: "▣" },
   { id: "glass", label: "Glass wall", glyph: "◫" },
@@ -54,11 +58,19 @@ export const HOTBAR: { id: ToolId; label: string; glyph: string }[] = [
 ];
 
 export const BIOME_NAMES: Record<BiomeId, string> = {
-  downtown: "DOWNTOWN — SECTOR 0",
-  waterfront: "THE WATERFRONT",
-  dislocated: "THE DISLOCATED",
-  impossible: "THE IMPOSSIBLE",
-  space: "DEEP SPACE",
+  downtown: "DOWNTOWN — THE MEGACITY",
+  suburbs: "THE SUBURBS",
+  towns: "RIVERBEND TOWNS",
+  farms: "THE FARMLANDS",
+  forest: "THE PINEMIST FOREST",
+  waterfront: "THE GREAT COAST",
+  hills: "THE HIGHLANDS",
+  mountains: "THE MOTHER MOUNTAINS",
+  desert: "THE AMBER DESERT",
+  plateau: "THE STONE PLATEAU",
+  dislocated: "THE DISLOCATED — ANOTHER REALITY",
+  impossible: "THE IMPOSSIBLE — ANOTHER REALITY",
+  space: "DEEP SPACE — ANOTHER REALITY",
 };
 
 const STEP = 1 / 60;
@@ -146,6 +158,19 @@ interface PortalVis {
   matA: THREE.ShaderMaterial;
   matB: THREE.ShaderMaterial;
 }
+interface NpcRec {
+  body: RAPIER.RigidBody;
+  group: THREE.Group;
+  head: THREE.Object3D | null;
+  kind: string;
+  top: number;
+  target: THREE.Vector3;
+  speed: number;
+  sayT: number;
+  lineIdx: number;
+  alive: boolean;
+}
+
 interface Ragdoll {
   group: THREE.Group;
   bodies: RAPIER.RigidBody[];
@@ -158,6 +183,10 @@ interface GrateRec { x: number; z: number; }
 interface Shard { mesh: THREE.Mesh; vx: number; vy: number; vz: number; life: number; }
 interface Shockwave { mesh: THREE.Mesh; age: number; max: number; }
 interface Bomb { rec: DynRec; }
+
+const SOLIDS_TEX: Record<string, string | undefined> = {
+  concrete: "concrete", brick: "brick", wood: "wood", asphalt: "asphalt", glass: "glass", dirt: "dirt",
+};
 
 /* --------------------------- the engine --------------------------- */
 
@@ -184,6 +213,7 @@ export class EndlessWorld {
   // AAA upgrade kit: sandbox, attract mode, planar reflections, visible SPH
   // water, live terrain height texture, bullet tracers.
   private sandbox = true;
+  private dimension: "prime" | "other" = "prime";
   private attract = true;
   private attractT = 0;
   private reflRT: THREE.WebGLRenderTarget | null = null;
@@ -200,6 +230,53 @@ export class EndlessWorld {
   private autoT = 0;
   private tracers: { line: THREE.Line; life: number }[] = [];
   private rocketMat: THREE.MeshStandardMaterial | null = null;
+  private tex: Record<string, THREE.Texture> = {};
+  private portalA: THREE.Group | null = null;
+  private portalB: THREE.Group | null = null;
+  private spaceGroup: THREE.Group | null = null;
+  private npcs: NpcRec[] = [];
+  private bubbleCache = new Map<string, THREE.Texture>();
+  // first-person viewmodel + grab
+  private viewmodel: THREE.Group | null = null;
+  private weaponMesh: THREE.Group | null = null;
+  private vmRecoil = 0;
+  private vmBobT = 0;
+  private grabbed: RAPIER.RigidBody | null = null;
+  private grabFrom: "dyn" | "npc" | "ragdoll" | null = null;
+  private bubbles: { spr: THREE.Sprite; ttl: number }[] = [];
+  private npcLines: Record<string, string[]> = {
+    city: [
+      "That tower downtown — nobody will say what's inside.",
+      "The sky feels thinner than it used to. Just me?",
+      "Past the farmland the world starts changing. Careful out there.",
+      "They say the mother mountains clear a thousand meters. I've never seen one.",
+      "My kid swears she saw a second sun over the coast. I'm not arguing.",
+    ],
+    suburb: [
+      "Quietest block on the planet, I'd say. City's ten minutes away.",
+      "We plant tomatoes out back. The soil's rich this year.",
+      "That ring of light downtown started showing up a year ago. Nobody explains it.",
+      "Honest work, good coffee. I wouldn't trade it.",
+    ],
+    town: [
+      "Market day's Saturday. Best bread on the whole route, I promise.",
+      "The river floods twice a year. The church gets wettest first.",
+      "You look like you've seen a lot of world. Mind the rain on the hills.",
+      "My grandfather's mill is up on the plateau. The wind still turns it.",
+    ],
+    farm: [
+      "Good year for the crops. The rain came right on time.",
+      "Silo's full. If it wasn't, we'd be having thin soup all winter.",
+      "You're a long way from town out here. Stay safe — the hills shift in rain.",
+      "Cows don't like loud noises. Neither do I, frankly.",
+    ],
+    coast: [
+      "Calm water today. You can see the whole coastline from the lighthouse.",
+      "I still paint the lighthouse stripes every spring. Old keeper's habit.",
+      "Fog comes in at dusk. If you hear bells, that's the harbor — not the fog.",
+      "Fish are jumping. Best sign there is.",
+    ],
+  };
   private oceanMesh: THREE.Mesh | null = null;
   private stars: THREE.Points | null = null;
 
@@ -279,6 +356,10 @@ export class EndlessWorld {
   private pointerNdc = new THREE.Vector2();
   private tmpV = new THREE.Vector3();
   private tmpV2 = new THREE.Vector3();
+  private sunRaycaster = new THREE.Raycaster();
+  private sunVis = 1;
+  private sunOcc = false;
+  private sunOccT = 0;
   private boxGeo = new THREE.BoxGeometry(1, 1, 1);
   private facadeMats: THREE.MeshStandardMaterial[] = [];
   private solidMats = new Map<string, THREE.MeshStandardMaterial>();
@@ -323,6 +404,8 @@ export class EndlessWorld {
     this.renderer.localClippingEnabled = true;
 
     this.camera = new THREE.PerspectiveCamera(70, 1, 0.25, 6000);
+    this.scene.add(this.camera); // viewmodel parents to the camera
+    this.loadTextures();
     this.scene.add(this.smoke.points);
     this.scene.add(this.glow.points);
     this.scene.fog = new THREE.FogExp2(0x8aa5b5, 0.0013);
@@ -353,6 +436,11 @@ export class EndlessWorld {
     const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), this.skyMat);
     sky.frustumCulled = false;
     this.scene.add(sky);
+
+    // dimension portals (E near the ring to cross realities)
+    this.buildPortals();
+    // first-person hands + weapon art
+    this.buildViewmodel();
 
     // ocean (local AAA shader: gerstner waves + planar reflections + sun glints)
     this.heightTex = new THREE.DataTexture(new Uint8Array(128 * 128), 128, 128, THREE.RedFormat);
@@ -417,10 +505,21 @@ export class EndlessWorld {
     quad.frustumCulled = false;
     this.compScene.add(quad);
 
-    // facades
-    this.facadeMats = [0, 1, 2].map((v) => new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0.34 + v * 0.07, 0.36 + v * 0.06, 0.42 + v * 0.08), roughness: 0.85, metalness: 0.05,
-    }));
+    // facades — photographic masonry, three tones
+    const facadeDefs = [
+      { tex: "brick", tint: new THREE.Color(0.72, 0.55, 0.5) },
+      { tex: "concrete", tint: new THREE.Color(0.78, 0.76, 0.72) },
+      { tex: "brick", tint: new THREE.Color(0.85, 0.82, 0.78) },
+    ];
+    this.facadeMats = facadeDefs.map((fd) => {
+      const m = new THREE.MeshStandardMaterial({ color: fd.tint.clone(), roughness: 0.85, metalness: 0.05 });
+      const t = this.tex[fd.tex];
+      if (t) {
+        t.repeat.set(3, 6);
+        this.whenTexLoaded(t, () => { m.map = t; m.needsUpdate = true; });
+      }
+      return m;
+    });
 
     // physics
     this.rapier = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
@@ -453,11 +552,26 @@ export class EndlessWorld {
   /* ============================== BIOMES ============================== */
 
   private biomeAt(dist: number): BiomeId {
-    if (dist < 190) return "downtown";
-    if (dist < 420) return "waterfront";
-    if (dist < 800) return "dislocated";
-    if (dist < 1400) return "impossible";
-    return "space";
+    if (this.dimension === "other") {
+      // the strange dimension: everything weird lives here
+      if (dist < 320) return "dislocated";
+      if (dist < 950) return "impossible";
+      return "space";
+    }
+    // the prime planet: a real world that gets wilder with distance, forever
+    if (dist < 700) return "downtown";
+    if (dist < 1400) return "suburbs";
+    if (dist < 2200) return "towns";
+    if (dist < 3400) return "farms";
+    if (dist < 4800) return "forest";
+    if (dist < 6500) return "waterfront";
+    if (dist < 9500) return "hills";
+    if (dist < 13500) return "mountains";
+    if (dist < 17500) return "desert";
+    if (dist < 22500) return "plateau";
+    // endless variety beyond: repeating bands at planet scale
+    const bands: BiomeId[] = ["mountains", "forest", "desert", "plateau", "hills", "waterfront"];
+    return bands[Math.floor(dist / 5200) % bands.length];
   }
 
   /** Ground height at a world point (chunk-cached function or fallback). */
@@ -478,63 +592,153 @@ export class EndlessWorld {
       if (inRoadX || inRoadZ) return 6.0;
       return 7.0;
     }
-    // layered natural terrain: continental swell + rolling hills + ridged mountains
-    const cont = fbm(x * 0.003, z * 0.003, seed + 31, 3);   // -1..1 broad swell
-    const hills = fbm(x * 0.012, z * 0.012, seed + 37, 4);  // -1..1 rolling hills
-    const r = fbm(x * 0.006, z * 0.006, seed + 43, 4);
-    const ridge = (1 - Math.abs(r)) ** 2.4;                 // 0..1 ridgelines
-    if (tier === "waterfront") {
-      let h = -3 + hills * 4.5 + cont * 6 + ridge * 15 * (0.45 + 0.55 * (cont * 0.5 + 0.5));
-      // meandering river channel carved into the lowlands
-      const rv = fbm(x * 0.004 + 137, z * 0.004 - 61, seed + 49, 3);
-      const rd = Math.abs(rv);
-      if (rd < 0.16) {
-        const t = 1 - rd / 0.16;
-        h = Math.min(h, lerp(h, -2.8, t * t * (0.55 + 0.45 * t)));
+    const d = Math.hypot(x, z);
+    // one continuous macro swell for the whole planet — no seam cliffs,
+    // and the land grows grander the farther you go (hills → 1000m peaks)
+    const macro = fbm(x * 0.0006, z * 0.0006, seed + 67, 3) * (160 + d * 0.045);
+    const cont = fbm(x * 0.003, z * 0.003, seed + 31, 3);
+    const hills = fbm(x * 0.012, z * 0.012, seed + 37, 4);
+    const env = (a: number, b: number) => smooth(clamp((d - a) / (b - a), 0, 1));
+    if (tier === "suburbs") return 6 + hills * 1.2 + macro * 0.12;
+    if (tier === "towns") return 5 + hills * 2.5 + macro * 0.3;
+    if (tier === "farms") {
+      let h = 4 + hills * 3 + macro * 0.4;
+      // flattened field patches
+      const ph = hash2(cx, cz, seed + 77);
+      if (ph < 0.85) {
+        const px = cx * CHUNK + (hash2(cx, cz, seed + 78) - 0.5) * 24 + 32;
+        const pz = cz * CHUNK + (hash2(cx, cz + 1, seed + 79) - 0.5) * 24 + 32;
+        const dd = Math.hypot(x - px, z - pz);
+        if (dd < 16) h = lerp(h, 4 + cont * 2, 1 - smooth(clamp(dd / 16, 0, 1)));
       }
-      // pool basins (one per chunk, hashed)
-      const ph = hash2(cx, cz, seed + 55);
-      if (ph < 0.55) {
-        const px = cx * CHUNK + (hash2(cx, cz, seed + 56) - 0.5) * 34 + 32;
-        const pz = cz * CHUNK + (hash2(cx, cz, seed + 57) - 0.5) * 34 + 32;
-        const d = Math.hypot(x - px, z - pz);
-        if (d < 10) {
-          const wall = smooth(clamp((d - 6.5) / 3.5, 0, 1));
-          h = Math.min(h, lerp(3.2, Math.max(h, 6), wall));
+      return h;
+    }
+    if (tier === "forest") return macro * 0.8 + hills * 22;
+    if (tier === "waterfront") {
+      let h = -4 + cont * 9 + hills * 5 + macro * 0.5;
+      // gentle sand shelf where the water meets land
+      h = lerp(h, 0.7, smooth(clamp((2.2 - h) / 6.0, 0, 1)));
+      return h;
+    }
+    if (tier === "hills") return macro + hills * 26;
+    if (tier === "mountains") {
+      const mr = fbm(x * 0.0012, z * 0.0012, seed + 53, 4);
+      const mRidge = (1 - Math.abs(mr)) ** 2.6;
+      return macro + mRidge * 640 * env(9200, 11600) + hills * 14;
+    }
+    if (tier === "desert") {
+      let h = macro * 0.55 + hills * 6;
+      // flat-topped mesas
+      const ph = hash2(cx, cz, seed + 83);
+      if (ph < 0.4) {
+        const px = cx * CHUNK + (hash2(cx, cz, seed + 84) - 0.5) * 20 + 32;
+        const pz = cz * CHUNK + (hash2(cx, cz + 2, seed + 85) - 0.5) * 20 + 32;
+        const dd = Math.hypot(x - px, z - pz);
+        const mh = 18 + hash2(cx, cz, seed + 86) * 46;
+        if (dd < 14) {
+          const t = 1 - smooth(clamp((dd - 8) / 6, 0, 1));
+          h = lerp(h, h + mh, t);
         }
       }
       return h;
     }
+    if (tier === "plateau") {
+      let h = macro * 0.5 + 140 * env(20500, 22000) + hills * 8;
+      const ph = hash2(cx, cz, seed + 95);
+      if (ph < 0.3) {
+        const px = cx * CHUNK + (hash2(cx, cz, seed + 96) - 0.5) * 26 + 32;
+        const pz = cz * CHUNK + (hash2(cx, cz + 3, seed + 97) - 0.5) * 26 + 32;
+        const dd = Math.hypot(x - px, z - pz);
+        if (dd < 16) h = lerp(h, h + 24, 1 - smooth(clamp(dd / 16, 0, 1)));
+      }
+      return h;
+    }
+    // other dimension: dislocated
     if (tier === "dislocated") {
-      let h = 2 + cont * 14 + hills * 9 + ridge * 42;
-      // floating plateaus: flatten patches
+      let h = 2 + cont * 14 + hills * 9;
+      const r0 = fbm(x * 0.006, z * 0.006, seed + 43, 4);
+      h += (1 - Math.abs(r0)) ** 2.4 * 42;
       const ph = hash2(cx, cz, seed + 71);
       if (ph < 0.5) {
         const px = cx * CHUNK + (hash2(cx, cz, seed + 72) - 0.5) * 30 + 32;
         const pz = cz * CHUNK + (hash2(cx, cz, seed + 73) - 0.5) * 30 + 32;
-        const d = Math.hypot(x - px, z - pz);
-        if (d < 12) h = lerp(8, h, clamp(d / 12, 0, 1));
+        const dd = Math.hypot(x - px, z - pz);
+        if (dd < 12) h = lerp(8, h, clamp(dd / 12, 0, 1));
       }
       return h;
     }
-    // impossible: jagged + spires + real mountains
-    let h = cont * 18 + hills * 11 + ridge * 68;
+    // other dimension: impossible — jagged + spires + mountains
+    let h = cont * 18 + hills * 11;
+    const r0 = fbm(x * 0.006, z * 0.006, seed + 43, 4);
+    h += (1 - Math.abs(r0)) ** 2.4 * 68;
     const sp = hash2(cx * 3 + 7, cz * 3 + 11, seed + 91);
     if (sp < 0.3) {
       const px = cx * CHUNK + (hash2(cx, cz, seed + 92) - 0.5) * 40 + 32;
       const pz = cz * CHUNK + (hash2(cx, cz, seed + 93) - 0.5) * 40 + 32;
-      const d = Math.hypot(x - px, z - pz);
+      const dd = Math.hypot(x - px, z - pz);
       const spireH = 18 + hash2(cx, cz, seed + 94) * 26;
-      if (d < 7) h = Math.max(h, spireH * (1 - d / 7) ** 1.4);
+      if (dd < 7) h = Math.max(h, spireH * (1 - dd / 7) ** 1.4);
     }
     return h;
   }
 
+
   private terrainColor(tier: BiomeId): number {
-    if (tier === "downtown") return 0x3c4046;
-    if (tier === "waterfront") return 0x7a7458;
-    if (tier === "dislocated") return 0x5a4a6e;
+    if (tier === "downtown") return 0xffffff;
+    if (tier === "suburbs") return 0xffffff;
+    if (tier === "towns") return 0xffffff;
+    if (tier === "farms") return 0xffffff;
+    if (tier === "forest") return 0x9fbf9f;
+    if (tier === "waterfront") return 0xffffff;
+    if (tier === "hills") return 0xbfd3a8;
+    if (tier === "mountains") return 0xffffff;
+    if (tier === "desert") return 0xffd9a8;
+    if (tier === "plateau") return 0xd8c8b0;
+    if (tier === "dislocated") return 0x9a86c0;
+    if (tier === "impossible") return 0x8888a0;
     return 0x2b2b33;
+  }
+
+  /** Assign the photographic terrain texture for a biome (falls back to flat color). */
+  private applyTerrainTex(mat: THREE.MeshStandardMaterial, tier: BiomeId): void {
+    const map = (nm: string, rx: number, ry: number, tint?: THREE.Color) => {
+      const t = this.tex[nm];
+      if (!t) return;
+      t.repeat.set(rx, ry);
+      if (tint) mat.color.copy(tint);
+      this.whenTexLoaded(t, () => { mat.map = t; mat.needsUpdate = true; });
+    };
+    if (tier === "downtown") map("asphalt", 4, 4);
+    else if (tier === "suburbs") map("grass", 5, 5);
+    else if (tier === "towns") map("dirt", 5, 5);
+    else if (tier === "farms") map("farmland", 6, 6);
+    else if (tier === "forest") map("grass", 6, 6);
+    else if (tier === "waterfront") map("sand", 6, 6);
+    else if (tier === "hills") map("grass", 7, 7);
+    else if (tier === "mountains") map("rock", 5, 8);
+    else if (tier === "desert") map("sand", 5, 5);
+    else if (tier === "plateau") map("dirt", 5, 7);
+    else if (tier === "dislocated") map("grass", 5, 5);
+    else if (tier === "impossible") map("rock", 5, 6);
+  }
+
+  private whenTexLoaded(t: THREE.Texture, fn: () => void): void {
+    if (t.image && (t.image as HTMLImageElement).width > 0) fn();
+    else (t as unknown as { on(ev: string, cb: () => void): void }).on("load", fn);
+  }
+
+  private loadTextures(): void {
+    const loader = new THREE.TextureLoader();
+    const names = ["asphalt", "sidewalk", "brick", "concrete", "glass", "grass", "farmland", "rock", "dirt", "sand"]; // + plaster, wood when generated
+    for (const nm of names) {
+      const t = loader.load(`/textures/${nm}.jpg`);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.minFilter = THREE.LinearMipmapLinearFilter;
+      t.generateMipmaps = true;
+      this.tex[nm] = t;
+    }
   }
 
   /* ============================== CHUNKS ============================== */
@@ -572,7 +776,7 @@ export class EndlessWorld {
   }
 
   private buildChunk(cx: number, cz: number): void {
-    const key = `${cx},${cz}`;
+    const key = `${this.dimension}:${cx},${cz}`;
     if (this.chunks.has(key)) return;
     const group = new THREE.Group();
     const colliders: RAPIER.Collider[] = [];
@@ -581,10 +785,10 @@ export class EndlessWorld {
     const seed = this.worldSeed;
 
     const heightAt = (x: number, z: number) => this.rawHeight(x, z, tier, cx, cz);
-    const n = tier === "impossible" || tier === "dislocated" ? 24 : 16;
+    const n = tier === "impossible" || tier === "dislocated" || tier === "mountains" || tier === "plateau" || tier === "hills" ? 24 : 16;
     const hm = this.heightfieldTrimesh(cx, cz, n, heightAt);
 
-    // visual terrain
+    // visual terrain (photographic textures per biome)
     if (tier !== "space") {
       const geo = new THREE.PlaneGeometry(CHUNK, CHUNK, n, n);
       geo.rotateX(-Math.PI / 2);
@@ -597,6 +801,7 @@ export class EndlessWorld {
         color: this.terrainColor(tier), roughness: 0.95, metalness: 0.0,
         flatShading: tier === "impossible",
       });
+      this.applyTerrainTex(mat, tier);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(cx * CHUNK, 0, cz * CHUNK);
       mesh.receiveShadow = true;
@@ -610,7 +815,15 @@ export class EndlessWorld {
     }
 
     if (tier === "downtown") this.buildCityChunk(cx, cz, group, colliders);
-    else if (tier === "waterfront") this.buildWaterfrontChunk(cx, cz, group, colliders);
+    else if (tier === "suburbs") this.buildSuburbsChunk(cx, cz, group, colliders);
+    else if (tier === "towns") this.buildTownsChunk(cx, cz, group, colliders);
+    else if (tier === "farms") this.buildFarmsChunk(cx, cz, group, colliders);
+    else if (tier === "forest") this.buildForestChunk(cx, cz, group, colliders);
+    else if (tier === "waterfront") this.buildCoastChunk(cx, cz, group, colliders);
+    else if (tier === "hills") this.buildHillsChunk(cx, cz, group, colliders);
+    else if (tier === "mountains") this.buildMountainsChunk(cx, cz, group, colliders);
+    else if (tier === "desert") this.buildDesertChunk(cx, cz, group, colliders);
+    else if (tier === "plateau") this.buildPlateauChunk(cx, cz, group, colliders);
     else if (tier === "dislocated") this.buildDislocatedChunk(cx, cz, group, colliders);
     else if (tier === "impossible") this.buildImpossibleChunk(cx, cz, group, colliders);
 
@@ -642,6 +855,14 @@ export class EndlessWorld {
         color: new THREE.Color(def.color[0], def.color[1], def.color[2]),
         roughness: 0.9, metalness: name === "steel" ? 0.6 : 0.0,
       });
+      const texName = SOLIDS_TEX[name];
+      if (texName) {
+        const t = this.tex[texName];
+        if (t) {
+          t.repeat.set(2, 2);
+          this.whenTexLoaded(t, () => { m!.map = t; m!.color.set(0xffffff); m!.needsUpdate = true; });
+        }
+      }
       this.solidMats.set(name, m);
     }
     return m;
@@ -668,15 +889,23 @@ export class EndlessWorld {
     // sewers under this chunk (tunnels along road centerlines x = 32k+4, z = 32k+4)
     this.buildSewer(cx, cz, group, colliders);
 
-    // buildings per 32m block
+    // buildings per 32m block (the portal plaza block is kept clear)
     for (let bx = 0; bx < 2; bx++) {
       for (let bz = 0; bz < 2; bz++) {
         const cellX = x0 + bx * 32, cellZ = z0 + bz * 32;
+        if (cellX === 96 && cellZ === 96) {
+          this.buildPortalPlaza(group, colliders);
+          continue;
+        }
         const bh = hash2(cellX >> 5, cellZ >> 5, seed + 200);
         if (bh > 0.62) continue;
         this.buildBuilding(cellX + 8 + (hash2(bx, bz, seed + 201) - 0.5) * 6, cellZ + 8 + (hash2(bz, bx, seed + 202) - 0.5) * 6, group, colliders);
       }
     }
+
+    // pedestrians on the sidewalks
+    if (this.rng.next() < 0.8) this.spawnNpc(x0 + this.rng.range(6, 58), z0 + this.rng.range(6, 58), "city");
+    if (this.rng.next() < 0.35) this.spawnNpc(x0 + this.rng.range(6, 58), z0 + this.rng.range(6, 58), "city");
 
     // cars on the roads
     const carN = this.rng.next() < 0.6 ? 2 : 1;
@@ -760,12 +989,16 @@ export class EndlessWorld {
 
   private buildBuilding(px: number, pz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
     const seed = this.worldSeed;
-    const floors = 2 + Math.floor(hash2(px | 0, pz | 0, seed + 400) * 3); // 2..4
+    // skyline: tall near the center, lower at the edge of the megacity
+    const d0 = Math.hypot(px, pz);
+    const maxF = d0 < 150 ? 10 : d0 < 300 ? 7 : d0 < 500 ? 5 : 4;
+    const floors = 2 + Math.floor(hash2(px | 0, pz | 0, seed + 400) * (maxF - 1));
     const w = 12 + hash2(pz | 0, px | 0, seed + 401) * 7;
     const d = 12 + hash2(px | 0, pz + 1, seed + 402) * 7;
     const h = 3.2;
     const hollow = hash2(px | 0, pz | 0, seed + 403) < 0.4;
     const facade = this.facadeMats[Math.floor(hash2(px | 0, pz | 0, seed + 404) * 3)];
+    const style = Math.floor(hash2(px | 0, pz | 0, seed + 406) * 4); // architectural flavor
     const y0 = 7.0;
     for (let f = 0; f < floors; f++) {
       const y = y0 + f * h + h / 2;
@@ -793,18 +1026,70 @@ export class EndlessWorld {
         group.add(lamp);
       }
       // windows (front face)
-      const winN = 2 + Math.floor(hash2(f, px | 0, seed + 405) * 2);
-      for (let wi = 0; wi < winN; wi++) {
-        const wx = px - w / 2 + (wi + 0.6) * (w / (winN + 0.2));
-        const wy = y + 0.2;
+      if (style === 2) {
+        // curtain-wall: one full glass band per floor
         const pane = new THREE.Mesh(this.boxGeo, this.glassMat);
-        pane.scale.set(1.5, 1.5, 0.06);
-        pane.position.set(wx, wy, pz + d / 2 + 0.02);
+        pane.scale.set(w * 0.8, h * 0.55, 0.06);
+        pane.position.set(px, y + 0.15, pz + d / 2 + 0.02);
         group.add(pane);
         this.glass.push({
-          id: allocId(), mesh: pane, x: wx, y: wy, z: pz + d / 2, nx: 0, ny: 0, nz: 1, dead: false,
+          id: allocId(), mesh: pane, x: px, y: y + 0.15, z: pz + d / 2, nx: 0, ny: 0, nz: 1, dead: false,
         });
+      } else {
+        const winN = 2 + Math.floor(hash2(f, px | 0, seed + 405) * (2 + (w > 15 ? 1 : 0)));
+        for (let wi = 0; wi < winN; wi++) {
+          const wx = px - w / 2 + (wi + 0.6) * (w / (winN + 0.2));
+          const wy = y + 0.2;
+          const pane = new THREE.Mesh(this.boxGeo, this.glassMat);
+          pane.scale.set(1.5, 1.5, 0.06);
+          pane.position.set(wx, wy, pz + d / 2 + 0.02);
+          group.add(pane);
+          this.glass.push({
+            id: allocId(), mesh: pane, x: wx, y: wy, z: pz + d / 2, nx: 0, ny: 0, nz: 1, dead: false,
+          });
+        }
       }
+      // style 1: dark accent bands on the side
+      if (style === 1 && f % 2 === 0) {
+        const band = new THREE.Mesh(this.boxGeo, new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.6 }));
+        band.scale.set(0.08, h, d * 0.9);
+        band.position.set(px - w / 2 - 0.04, y, pz);
+        group.add(band);
+      }
+    }
+    // rooftop equipment — every tower gets life on top
+    const roofY = y0 + floors * h;
+    if (floors >= 4) {
+      const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 2.2, 10), this.solidMat("steel"));
+      tank.position.set(px - w * 0.22, roofY + 1.1, pz - d * 0.15);
+      tank.castShadow = true;
+      group.add(tank);
+      const acN = 1 + Math.floor(hash2(px | 0, pz | 0, seed + 407) * 3);
+      for (let ai = 0; ai < acN; ai++) {
+        const ac = new THREE.Mesh(this.boxGeo, this.solidMat("concrete"));
+        ac.scale.set(1.6, 1.0, 1.6);
+        ac.position.set(px + w * 0.2 + ai * 2, roofY + 0.5, pz + d * 0.2);
+        ac.castShadow = true;
+        group.add(ac);
+      }
+    }
+    if (hash2(px | 0, pz | 0, seed + 408) < 0.5 || floors >= 8) {
+      const ant = new THREE.Mesh(this.boxGeo, this.solidMat("steel"));
+      ant.scale.set(0.12, 3.4, 0.12);
+      ant.position.set(px + w * 0.3, roofY + 1.7, pz - d * 0.3);
+      group.add(ant);
+      const blink = new THREE.Mesh(this.boxGeo, new THREE.MeshBasicMaterial({ color: 0xff3b30 }));
+      blink.scale.set(0.2, 0.2, 0.2);
+      blink.position.set(px + w * 0.3, roofY + 3.5, pz - d * 0.3);
+      group.add(blink);
+    }
+    // style 3: penthouse block
+    if (style === 3) {
+      const pent = new THREE.Mesh(this.boxGeo, facade);
+      pent.scale.set(w * 0.45, h * 0.8, d * 0.45);
+      pent.position.set(px, roofY + h * 0.4, pz);
+      pent.castShadow = true;
+      group.add(pent);
     }
   }
 
@@ -858,9 +1143,32 @@ export class EndlessWorld {
     this.fixedCol(RAPIER.ColliderDesc.cylinder(1.2 * s, 0.35 * s).setFriction(0.8), x, y + 1.5 * s, z, colliders);
   }
 
-  /* -------------------------- waterfront -------------------------- */
+  private buildPortalPlaza(group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    // open plaza around the ring at (112, 7, 112)
+    const slab = new THREE.Mesh(this.boxGeo, this.solidMat("sidewalk"));
+    slab.scale.set(26, 0.3, 26);
+    slab.position.set(112, 6.85, 112);
+    slab.receiveShadow = true;
+    group.add(slab);
+    this.fixedCol(RAPIER.ColliderDesc.cuboid(13, 0.15, 13).setFriction(0.9), 112, 6.9, 112, colliders);
+    // low benches ring
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const b = new THREE.Mesh(this.boxGeo, this.solidMat("concrete"));
+      b.scale.set(2.2, 0.7, 0.7);
+      b.position.set(112 + Math.cos(a) * 8.5, 7.3, 112 + Math.sin(a) * 8.5);
+      b.castShadow = true;
+      group.add(b);
+    }
+    // corner light columns
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      this.addLamp(112 + sx * 11.5, 7, 112 + sz * 11.5, group, colliders);
+    }
+  }
 
-  private buildWaterfrontChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+  /* -------------------------- the Great Coast -------------------------- */
+
+  private buildCoastChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
     const seed = this.worldSeed;
     // pool water (SPH) where a basin exists
     const ph = hash2(cx, cz, seed + 55);
@@ -886,13 +1194,533 @@ export class EndlessWorld {
       this.fixedCol(RAPIER.ColliderDesc.cuboid(1.5, 0.2, 7).setFriction(0.8), px, 0.4, pz, colliders);
       this.spawnBoat(px + 5, 0.6, pz, this.rng.next() * 6, false);
     }
-    // a few trees + lamps
-    for (let i = 0; i < 3; i++) {
-      const px = cx * CHUNK + this.rng.range(6, 58);
-      const pz = cz * CHUNK + this.rng.range(6, 58);
+    // palms along the shore
+    for (let i = 0; i < 5; i++) {
+      const px = cx * CHUNK + (hash2(cx, cz + i, seed + 450) - 0.5) * 56 + 32;
+      const pz = cz * CHUNK + (hash2(cz, i, seed + 451) - 0.5) * 56 + 32;
       const gy = this.rawHeight(px, pz, "waterfront", cx, cz);
-      if (gy < 0.8) continue;
+      if (gy < 0.4 || gy > 2.5) continue;
+      this.addPalm(px, gy, pz, group, colliders);
+    }
+    // the lighthouse stands on the chunk's best headland
+    if (hash2(cx, cz, seed + 452) < 0.25) {
+      const lx = cx * CHUNK + (hash2(cx, cz, seed + 453) - 0.5) * 30 + 32;
+      const lz = cz * CHUNK + (hash2(cz, cx, seed + 454) - 0.5) * 30 + 32;
+      const ly = this.rawHeight(lx, lz, "waterfront", cx, cz);
+      if (ly > 0.5) this.addLighthouse(lx, ly, lz, group, colliders);
+    }
+    // coastal NPC: fisher
+    if (this.rng.next() < 0.4) this.spawnNpc(cx * CHUNK + this.rng.range(8, 56), cz * CHUNK + this.rng.range(8, 56), "coast");
+  }
+
+  private addPalm(x: number, y: number, z: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const g = new THREE.Group();
+    const lean = 0.12;
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8a6a48, roughness: 1 });
+    for (let i = 0; i < 3; i++) {
+      const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.16 - i * 0.03, 0.2 - i * 0.03, 1.8, 6), trunkMat);
+      seg.position.set(i * i * 0.14 * lean, 0.9 + i * 1.65, 0);
+      seg.rotation.z = -lean * i;
+      seg.castShadow = true;
+      g.add(seg);
+    }
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x2e7d3a, roughness: 1, side: THREE.DoubleSide });
+    for (let i = 0; i < 6; i++) {
+      const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.35, 2.6, 4), leafMat);
+      const a = (i / 6) * Math.PI * 2;
+      leaf.position.set(Math.cos(a) * 0.9, 5.4, Math.sin(a) * 0.9);
+      leaf.rotation.set(Math.sin(a) * 1.25, 0, -Math.cos(a) * 1.25);
+      leaf.castShadow = true;
+      g.add(leaf);
+    }
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cylinder(0.5, 2.6).setFriction(0.8), x, y + 2.6, z, colliders);
+  }
+
+  private addLighthouse(x: number, y: number, z: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const g = new THREE.Group();
+    const white = new THREE.MeshStandardMaterial({ color: 0xf2f0e8, roughness: 0.7 });
+    const red = new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.7 });
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.8, 9, 12), white);
+    tower.position.y = 4.5;
+    tower.castShadow = true;
+    g.add(tower);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(1.36, 1.5, 1.6, 12), red);
+    band.position.y = 5.4;
+    g.add(band);
+    const gallery = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 0.3, 12), red);
+    gallery.position.y = 9.2;
+    g.add(gallery);
+    const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 1.4, 12), new THREE.MeshBasicMaterial({ color: 0xfff6c8 }));
+    lamp.position.y = 10.1;
+    g.add(lamp);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(1.4, 1.2, 12), red);
+    roof.position.y = 11.3;
+    roof.castShadow = true;
+    g.add(roof);
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cylinder(1.6, 5.5).setFriction(0.8), x, y + 5.5, z, colliders);
+  }
+
+  /* -------------------------- the Suburbs -------------------------- */
+
+  private addHouse(x: number, y: number, z: number, style: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const palettes = [
+      { wall: 0xe8e4da, roof: 0x5a4a42 },
+      { wall: 0xb5654d, roof: 0x3d3a40 },
+      { wall: 0xcfd6dd, roof: 0x44586c },
+      { wall: 0xd9c9a8, roof: 0x6a4a3a },
+      { wall: 0x9db3c8, roof: 0x4a4440 },
+    ];
+    const pal = palettes[style % palettes.length];
+    const w = 8 + (style % 3) * 2.5;
+    const d = 8 + (style % 2) * 3;
+    const h = 5.4 + (style % 3) * 1.7;
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(this.boxGeo, new THREE.MeshStandardMaterial({ color: pal.wall, roughness: 0.92 }));
+    body.scale.set(w, h, d);
+    body.position.y = h / 2;
+    body.castShadow = body.receiveShadow = true;
+    g.add(body);
+    const roofH = 2.6 + (style % 2) * 1.5;
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.79, roofH, 4),
+      new THREE.MeshStandardMaterial({ color: pal.roof, roughness: 0.85 }));
+    roof.position.y = h + roofH / 2;
+    roof.rotation.y = Math.PI / 4;
+    roof.castShadow = true;
+    g.add(roof);
+    const door = new THREE.Mesh(this.boxGeo, new THREE.MeshStandardMaterial({ color: 0x3a2e24, roughness: 0.8 }));
+    door.scale.set(1.1, 2.2, 0.14);
+    door.position.set(0, 1.1, d / 2 + 0.07);
+    g.add(door);
+    const winMat = new THREE.MeshStandardMaterial({ color: 0x1c2a38, roughness: 0.2, metalness: 0.6 });
+    for (let wx = -1; wx <= 1; wx += 2) {
+      const win = new THREE.Mesh(this.boxGeo, winMat);
+      win.scale.set(1.7, 1.2, 0.1);
+      win.position.set(wx * (w * 0.26), h * 0.55, d / 2 + 0.05);
+      g.add(win);
+    }
+    // chimney on some
+    if (style % 2 === 0) {
+      const chim = new THREE.Mesh(this.boxGeo, this.solidMat("brick"));
+      chim.scale.set(0.7, 2.4, 0.7);
+      chim.position.set(w * 0.3, h + 1.2, -d * 0.25);
+      g.add(chim);
+    }
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cuboid(w / 2, h / 2, d / 2).setFriction(0.8), x, y + h / 2, z, colliders);
+  }
+
+  private buildSuburbsChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    for (let lx = 0; lx < 2; lx++) {
+      for (let lz = 0; lz < 2; lz++) {
+        const hx = x0 + lx * 32 + 20, hz = z0 + lz * 32 + 20;
+        const r = hash2(cx * 2 + lx, cz * 2 + lz, seed + 410);
+        if (r > 0.8) continue;
+        const gy = this.rawHeight(hx, hz, "suburbs", cx, cz);
+        this.addHouse(hx, gy, hz, Math.floor(r * 5) * 3 + lx, group, colliders);
+        const drive = new THREE.Mesh(this.boxGeo, this.solidMat("asphalt"));
+        drive.scale.set(2.4, 0.08, 7);
+        drive.position.set(hx - 6, gy + 0.06, hz + 6);
+        group.add(drive);
+      }
+    }
+    // street trees + lamps
+    for (let i = 0; i < 6; i++) {
+      const px = x0 + (hash2(cx, cz + i, seed + 420) - 0.5) * 56 + 32;
+      const pz = z0 + (i % 2 === 0 ? 4 : 36) + (hash2(cz, i, seed + 421) - 0.5) * 56;
+      const gy = this.rawHeight(px, pz, "suburbs", cx, cz);
+      if (hash2(i, cx, seed + 422) < 0.6) this.addTree(px, gy, pz, group, colliders);
+      else this.addLamp(px, gy, pz, group, colliders);
+    }
+    if (this.rng.next() < 0.45) {
+      const px = x0 + this.rng.range(8, 56), pz = z0 + (this.rng.next() < 0.5 ? 4 : 36);
+      this.spawnCar(px, this.rawHeight(px, pz, "suburbs", cx, cz) + 0.4, pz, this.rng.next() < 0.5 ? 0 : Math.PI, false);
+    }
+    // a suburbanite
+    if (this.rng.next() < 0.55) this.spawnNpc(x0 + this.rng.range(10, 54), z0 + this.rng.range(10, 54), "suburb");
+  }
+
+  /* -------------------------- Riverbend Towns -------------------------- */
+
+  private addShop(x: number, y: number, z: number, style: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const awnings = [0xc0392b, 0x2980b9, 0x27ae60, 0xd4a017, 0x8e44ad];
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(this.boxGeo, this.solidMat("concrete"));
+    body.scale.set(11, 4.6, 9);
+    body.position.y = 2.3;
+    body.castShadow = body.receiveShadow = true;
+    g.add(body);
+    const roof = new THREE.Mesh(this.boxGeo, this.solidMat("brick"));
+    roof.scale.set(11.6, 0.4, 9.6);
+    roof.position.y = 4.8;
+    g.add(roof);
+    // storefront glass
+    const glass = new THREE.Mesh(this.boxGeo, this.glassMat);
+    glass.scale.set(8, 2.4, 0.1);
+    glass.position.set(0, 1.6, 4.56);
+    g.add(glass);
+    // awning
+    const awn = new THREE.Mesh(this.boxGeo, new THREE.MeshStandardMaterial({ color: awnings[style % awnings.length], roughness: 0.9 }));
+    awn.scale.set(8.6, 0.16, 1.8);
+    awn.position.set(0, 3.1, 5.3);
+    awn.rotation.x = 0.32;
+    awn.castShadow = true;
+    g.add(awn);
+    // sign
+    const sign = new THREE.Mesh(this.boxGeo, new THREE.MeshBasicMaterial({ color: awnings[(style + 1) % awnings.length] }));
+    sign.scale.set(5, 0.8, 0.14);
+    sign.position.set(0, 3.9, 4.6);
+    g.add(sign);
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cuboid(5.5, 2.3, 4.5).setFriction(0.8), x, y + 2.3, z, colliders);
+  }
+
+  private addChurch(x: number, y: number, z: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const g = new THREE.Group();
+    const wall = new THREE.MeshStandardMaterial({ color: 0xf0ede4, roughness: 0.9 });
+    const nave = new THREE.Mesh(this.boxGeo, wall);
+    nave.scale.set(9, 8, 16);
+    nave.position.y = 4;
+    nave.castShadow = true;
+    g.add(nave);
+    const naveRoof = new THREE.Mesh(new THREE.ConeGeometry(9.4, 3.4, 4), new THREE.MeshStandardMaterial({ color: 0x54483e, roughness: 0.9 }));
+    naveRoof.rotation.y = Math.PI / 4;
+    naveRoof.scale.z = 1.9;
+    naveRoof.position.y = 9.5;
+    g.add(naveRoof);
+    const tower = new THREE.Mesh(this.boxGeo, wall);
+    tower.scale.set(4.4, 14, 4.4);
+    tower.position.set(0, 7, 9.5);
+    tower.castShadow = true;
+    g.add(tower);
+    const spire = new THREE.Mesh(new THREE.ConeGeometry(3, 6.4, 4), new THREE.MeshStandardMaterial({ color: 0x54483e, roughness: 0.85 }));
+    spire.rotation.y = Math.PI / 4;
+    spire.position.y = 17;
+    spire.castShadow = true;
+    g.add(spire);
+    const rose = new THREE.Mesh(this.boxGeo, this.glassMat);
+    rose.scale.set(1.6, 1.6, 0.1);
+    rose.position.set(0, 9.5, 11.76);
+    g.add(rose);
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cuboid(4.5, 4, 8).setFriction(0.8), x, y + 4, z, colliders);
+    this.fixedCol(RAPIER.ColliderDesc.cuboid(2.2, 7, 2.2).setFriction(0.8), x, y + 7, z + 9.5, colliders);
+  }
+
+  private buildTownsChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    // shop rows along the east/west streets
+    for (let bz = 0; bz < 2; bz++) {
+      const cellZ = z0 + bz * 32;
+      const row = hash2(cx, bz, seed + 430);
+      if (row < 0.7) {
+        const n = 2 + Math.floor(row * 2.5);
+        for (let si = 0; si < n; si++) {
+          const sx = x0 + 8 + si * 15, sz = cellZ + 20;
+          const sy = this.rawHeight(sx, sz, "towns", cx, cz);
+          this.addShop(sx, sy, sz, Math.floor(hash2(si, cx * 2 + bz, seed + 431) * 5), group, colliders);
+        }
+      }
+    }
+    // a church anchors some towns
+    if (hash2(cx, cz, seed + 432) < 0.22) {
+      const ex = x0 + 24, ez = z0 + 46;
+      const ey = this.rawHeight(ex, ez, "towns", cx, cz);
+      this.addChurch(ex, ey, ez, group, colliders);
+    }
+    // the town well
+    if (this.rng.next() < 0.5) {
+      const wx = x0 + this.rng.range(12, 52), wz = z0 + this.rng.range(12, 52);
+      const wy = this.rawHeight(wx, wz, "towns", cx, cz);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.35, 8, 16), this.solidMat("concrete"));
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(wx, wy + 0.5, wz);
+      ring.castShadow = true;
+      group.add(ring);
+      this.fixedCol(RAPIER.ColliderDesc.cylinder(1.7, 0.5).setFriction(0.8), wx, wy + 0.4, wz, colliders);
+    }
+    // lamps + a couple of trees
+    for (let i = 0; i < 4; i++) {
+      const px = x0 + (hash2(cx, i, seed + 433) - 0.5) * 56 + 32;
+      const pz = z0 + (hash2(i, cz, seed + 434) - 0.5) * 56 + 32;
+      const gy = this.rawHeight(px, pz, "towns", cx, cz);
+      if (hash2(i, cx + cz, seed + 435) < 0.5) this.addLamp(px, gy, pz, group, colliders);
+      else this.addTree(px, gy, pz, group, colliders);
+    }
+    if (this.rng.next() < 0.7) this.spawnNpc(x0 + this.rng.range(10, 54), z0 + this.rng.range(10, 54), "town");
+    if (this.rng.next() < 0.4) this.spawnNpc(x0 + this.rng.range(10, 54), z0 + this.rng.range(10, 54), "town");
+  }
+
+  /* -------------------------- the Farmlands -------------------------- */
+
+  private addBarn(x: number, y: number, z: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const g = new THREE.Group();
+    const red = new THREE.MeshStandardMaterial({ color: 0xa83226, roughness: 0.85 });
+    const trim = new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.9 });
+    const body = new THREE.Mesh(this.boxGeo, red);
+    body.scale.set(8, 5, 12);
+    body.position.y = 2.5;
+    body.castShadow = body.receiveShadow = true;
+    g.add(body);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(8.4, 3, 4), trim);
+    roof.rotation.y = Math.PI / 4;
+    roof.scale.z = 1.6;
+    roof.position.y = 6.5;
+    g.add(roof);
+    const door = new THREE.Mesh(this.boxGeo, trim);
+    door.scale.set(3.4, 3.6, 0.2);
+    door.position.set(0, 1.8, 6.1);
+    g.add(door);
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cuboid(4, 2.5, 6).setFriction(0.8), x, y + 2.5, z, colliders);
+  }
+
+  private addSilo(x: number, y: number, z: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const g = new THREE.Group();
+    const steel = new THREE.MeshStandardMaterial({ color: 0xb8bcc2, roughness: 0.4, metalness: 0.7 });
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 11, 12), steel);
+    drum.position.y = 5.5;
+    drum.castShadow = true;
+    g.add(drum);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(2.2, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), steel);
+    dome.position.y = 11;
+    g.add(dome);
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cylinder(2.2, 6).setFriction(0.8), x, y + 6, z, colliders);
+  }
+
+  private buildFarmsChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    // crop field (photographic farmland texture, flat patch)
+    const fx = x0 + 24 + (hash2(cx, cz, seed + 440) - 0.5) * 20;
+    const fz = z0 + 24 + (hash2(cz, cx, seed + 441) - 0.5) * 20;
+    const fy = this.rawHeight(fx, fz, "farms", cx, cz);
+    const ft = this.tex["farmland"];
+    const fmat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 });
+    if (ft) this.whenTexLoaded(ft, () => { fmat.map = ft; fmat.needsUpdate = true; });
+    const field = new THREE.Mesh(new THREE.PlaneGeometry(28, 28), fmat);
+    field.rotation.x = -Math.PI / 2;
+    field.position.set(fx, fy + 0.18, fz);
+    field.receiveShadow = true;
+    group.add(field);
+    // fence along two edges
+    const fenceMat = this.solidMat("wood");
+    for (let i = 0; i < 7; i++) {
+      const post = new THREE.Mesh(this.boxGeo, fenceMat);
+      post.scale.set(0.22, 1.3, 0.22);
+      post.position.set(fx - 14 + i * 4.7, fy + 0.65, fz + 14);
+      group.add(post);
+    }
+    // barn + silo compound
+    if (hash2(cx, cz, seed + 442) < 0.6) {
+      const bx = x0 + 52, bz = z0 + 12;
+      const by = this.rawHeight(bx, bz, "farms", cx, cz);
+      this.addBarn(bx, by, bz, group, colliders);
+      this.addSilo(bx + 7, by, bz, group, colliders);
+    }
+    // hay bales
+    const hayMat = new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 1 });
+    for (let i = 0; i < 3; i++) {
+      const hx = x0 + 10 + hash2(cx, i, seed + 443) * 44;
+      const hz = z0 + 40 + hash2(i, cz, seed + 444) * 14;
+      const hy = this.rawHeight(hx, hz, "farms", cx, cz);
+      const bale = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 2.2, 10), hayMat);
+      bale.rotation.z = Math.PI / 2;
+      bale.rotation.y = hash2(cx, i, seed + 445) * Math.PI;
+      bale.position.set(hx, hy + 0.9, hz);
+      bale.castShadow = true;
+      group.add(bale);
+      this.fixedCol(RAPIER.ColliderDesc.cylinder(1.1, 1.1).setFriction(0.9), hx, hy + 0.9, hz, colliders);
+    }
+    // a farmer
+    if (this.rng.next() < 0.6) this.spawnNpc(x0 + this.rng.range(10, 54), z0 + this.rng.range(10, 54), "farm");
+  }
+
+  /* -------------------------- the Pinemist Forest -------------------------- */
+
+  private buildForestChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    const n = 12 + Math.floor(hash2(cx, cz, seed + 460) * 6);
+    for (let i = 0; i < n; i++) {
+      const px = x0 + (hash2(cx, i, seed + 461) - 0.5) * 58 + 32;
+      const pz = z0 + (hash2(i, cz, seed + 462) - 0.5) * 58 + 32;
+      const gy = this.rawHeight(px, pz, "forest", cx, cz);
       this.addTree(px, gy, pz, group, colliders);
+    }
+    // fallen log + boulder
+    if (hash2(cx, cz, seed + 463) < 0.5) {
+      const lx = x0 + (hash2(cx, cz, seed + 464) - 0.5) * 40 + 32;
+      const lz = z0 + (hash2(cz, cx, seed + 465) - 0.5) * 40 + 32;
+      const ly = this.rawHeight(lx, lz, "forest", cx, cz);
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 6, 8), this.solidMat("wood"));
+      log.rotation.z = Math.PI / 2;
+      log.rotation.y = hash2(cx, cz, seed + 466) * Math.PI;
+      log.position.set(lx, ly + 0.7, lz);
+      log.castShadow = true;
+      group.add(log);
+      this.fixedCol(RAPIER.ColliderDesc.cylinder(0.8, 3).setFriction(0.9), lx, ly + 0.7, lz, colliders);
+    }
+  }
+
+  /* -------------------------- the Highlands -------------------------- */
+
+  private addBoulder(x: number, y: number, z: number, scale: number, seedN: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), this.solidMat("rock"));
+    b.scale.set(scale, scale * (0.7 + hash2(x | 0, z | 0, seedN) * 0.5), scale);
+    b.position.set(x, y + scale * 0.35, z);
+    b.rotation.set(hash2(x, z, seedN + 1) * 3, hash2(z, x, seedN + 2) * 3, 0);
+    b.castShadow = true;
+    b.receiveShadow = true;
+    group.add(b);
+    this.fixedCol(RAPIER.ColliderDesc.cuboid(scale * 0.6, scale * 0.4, scale * 0.6).setFriction(0.9), x, y + scale * 0.35, z, colliders);
+  }
+
+  private buildHillsChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    for (let i = 0; i < 6; i++) {
+      const px = x0 + (hash2(cx, i, seed + 470) - 0.5) * 56 + 32;
+      const pz = z0 + (hash2(i, cz, seed + 471) - 0.5) * 56 + 32;
+      const gy = this.rawHeight(px, pz, "hills", cx, cz);
+      this.addBoulder(px, gy, pz, 1.2 + hash2(i, cx, seed + 472) * 2.6, seed + 473, group, colliders);
+    }
+    for (let i = 0; i < 3; i++) {
+      const px = x0 + (hash2(i, cx, seed + 474) - 0.5) * 56 + 32;
+      const pz = z0 + (hash2(cx, i, seed + 475) - 0.5) * 56 + 32;
+      const gy = this.rawHeight(px, pz, "hills", cx, cz);
+      this.addTree(px, gy, pz, group, colliders);
+    }
+  }
+
+  /* -------------------------- the Mother Mountains -------------------------- */
+
+  private buildMountainsChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    // giant boulder fields under the peaks
+    const n = 3 + Math.floor(hash2(cx, cz, seed + 480) * 4);
+    for (let i = 0; i < n; i++) {
+      const px = x0 + (hash2(cx, i, seed + 481) - 0.5) * 56 + 32;
+      const pz = z0 + (hash2(i, cz, seed + 482) - 0.5) * 56 + 32;
+      const gy = this.rawHeight(px, pz, "mountains", cx, cz);
+      this.addBoulder(px, gy, pz, 4 + hash2(i, cx, seed + 483) * 8, seed + 484, group, colliders);
+    }
+  }
+
+  /* -------------------------- the Amber Desert -------------------------- */
+
+  private addCactus(x: number, y: number, z: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const g = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color: 0x4d7a3a, roughness: 1 });
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 3.4, 8), mat);
+    trunk.position.y = 1.7;
+    trunk.castShadow = true;
+    g.add(trunk);
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 1.6, 8), mat);
+    armL.position.set(-0.75, 2.2, 0);
+    armL.rotation.z = 0.9;
+    g.add(armL);
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 1.2, 8), mat);
+    armR.position.set(0.7, 2.6, 0);
+    armR.rotation.z = -0.9;
+    g.add(armR);
+    g.position.set(x, y, z);
+    group.add(g);
+    this.fixedCol(RAPIER.ColliderDesc.cylinder(0.8, 1.8).setFriction(0.8), x, y + 1.8, z, colliders);
+  }
+
+  private buildDesertChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    for (let i = 0; i < 4; i++) {
+      const px = x0 + (hash2(cx, i, seed + 490) - 0.5) * 56 + 32;
+      const pz = z0 + (hash2(i, cz, seed + 491) - 0.5) * 56 + 32;
+      const gy = this.rawHeight(px, pz, "desert", cx, cz);
+      this.addCactus(px, gy, pz, group, colliders);
+    }
+    for (let i = 0; i < 5; i++) {
+      const px = x0 + (hash2(i, cx, seed + 492) - 0.5) * 56 + 32;
+      const pz = z0 + (hash2(cz, i, seed + 493) - 0.5) * 56 + 32;
+      const gy = this.rawHeight(px, pz, "desert", cx, cz);
+      this.addBoulder(px, gy, pz, 0.7 + hash2(i, cz, seed + 494) * 1.6, seed + 495, group, colliders);
+    }
+    // a buried ruin: half-collapsed arch
+    if (hash2(cx, cz, seed + 496) < 0.3) {
+      const rx = x0 + (hash2(cx, cz, seed + 497) - 0.5) * 30 + 32;
+      const rz = z0 + (hash2(cz, cx, seed + 498) - 0.5) * 30 + 32;
+      const ry = this.rawHeight(rx, rz, "desert", cx, cz);
+      const arch = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.7, 8, 20, Math.PI), this.solidMat("concrete"));
+      arch.position.set(rx, ry + 0.4, rz);
+      arch.rotation.y = hash2(cx, cz, seed + 499) * Math.PI;
+      arch.castShadow = true;
+      group.add(arch);
+    }
+  }
+
+  /* -------------------------- the Stone Plateau -------------------------- */
+
+  private buildPlateauChunk(cx: number, cz: number, group: THREE.Group, colliders: RAPIER.Collider[]): void {
+    const seed = this.worldSeed;
+    const x0 = cx * CHUNK, z0 = cz * CHUNK;
+    // standing stones (monoliths)
+    const n = 2 + Math.floor(hash2(cx, cz, seed + 500) * 2);
+    for (let i = 0; i < n; i++) {
+      const px = x0 + (hash2(cx, i, seed + 501) - 0.5) * 50 + 32;
+      const pz = z0 + (hash2(i, cz, seed + 502) - 0.5) * 50 + 32;
+      const gy = this.rawHeight(px, pz, "plateau", cx, cz);
+      const mono = new THREE.Mesh(this.boxGeo, this.solidMat("rock"));
+      mono.scale.set(1.5, 6 + hash2(i, cx, seed + 503) * 4, 0.9);
+      mono.position.set(px, gy + 3, pz);
+      mono.rotation.set(0, hash2(cx, i, seed + 504) * Math.PI, (hash2(i, cz, seed + 505) - 0.5) * 0.3);
+      mono.castShadow = true;
+      group.add(mono);
+      this.fixedCol(RAPIER.ColliderDesc.cuboid(0.8, 3.4, 0.5).setFriction(0.9), px, gy + 3, pz, colliders);
+    }
+    // an old windmill
+    if (hash2(cx, cz, seed + 506) < 0.35) {
+      const wx = x0 + (hash2(cx, cz, seed + 507) - 0.5) * 24 + 32;
+      const wz = z0 + (hash2(cz, cx, seed + 508) - 0.5) * 24 + 32;
+      const wy = this.rawHeight(wx, wz, "plateau", cx, cz);
+      const g = new THREE.Group();
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 10, 8), this.solidMat("concrete"));
+      pole.position.y = 5;
+      pole.castShadow = true;
+      g.add(pole);
+      const hub = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), this.solidMat("steel"));
+      hub.position.y = 10;
+      g.add(hub);
+      for (let b = 0; b < 4; b++) {
+        const blade = new THREE.Mesh(this.boxGeo, this.solidMat("wood"));
+        blade.scale.set(0.5, 4.4, 0.1);
+        blade.position.y = 12.2;
+        const holder = new THREE.Group();
+        holder.add(blade);
+        holder.rotation.z = (b / 4) * Math.PI * 2;
+        holder.position.y = 10;
+        g.add(holder);
+      }
+      g.position.set(wx, wy, wz);
+      group.add(g);
+      this.fixedCol(RAPIER.ColliderDesc.cylinder(0.8, 5.5).setFriction(0.8), wx, wy + 5.5, wz, colliders);
+    }
+    for (let i = 0; i < 4; i++) {
+      const px = x0 + (hash2(i, cx, seed + 509) - 0.5) * 56 + 32;
+      const pz = z0 + (hash2(cz, i, seed + 510) - 0.5) * 56 + 32;
+      const gy = this.rawHeight(px, pz, "plateau", cx, cz);
+      this.addBoulder(px, gy, pz, 1 + hash2(i, cx, seed + 511) * 3, seed + 512, group, colliders);
     }
   }
 
@@ -1017,6 +1845,7 @@ export class EndlessWorld {
     this.spaceBuilt = true;
     const g = new THREE.Group();
     g.name = "space";
+    this.spaceGroup = g;
 
     // starfield
     const starN = 4200;
@@ -1101,6 +1930,7 @@ export class EndlessWorld {
     this.spawnBlackHole(4900, 320, -1200, 4, 30000, g);
 
     this.scene.add(g);
+    g.visible = false; // only visible in the other dimension
   }
 
   private planetTexture(color: number, rnd: number): THREE.CanvasTexture {
@@ -1313,11 +2143,11 @@ export class EndlessWorld {
 
   /* ============================== RAGDOLLS ============================== */
 
-  private makeRagdoll(x: number, y: number, z: number, scale: number): Ragdoll {
+  private makeRagdoll(x: number, y: number, z: number, scale: number, clothHex?: number, skinHex?: number): Ragdoll {
     const g = new THREE.Group();
-    const skin = new THREE.MeshStandardMaterial({ color: 0xd8c4a8, roughness: 0.8 });
-    const cloth = new THREE.MeshStandardMaterial({ color: 0x2e6fc2, roughness: 0.9 });
-    const cloth2 = new THREE.MeshStandardMaterial({ color: 0xc23b2e, roughness: 0.9 });
+    const skin = new THREE.MeshStandardMaterial({ color: skinHex ?? 0xd8c4a8, roughness: 0.8 });
+    const cloth = new THREE.MeshStandardMaterial({ color: clothHex ?? 0x2e6fc2, roughness: 0.9 });
+    const cloth2 = new THREE.MeshStandardMaterial({ color: clothHex ?? 0xc23b2e, roughness: 0.9 });
     const bodies: RAPIER.RigidBody[] = [];
     const meshes: THREE.Object3D[] = [];
     const addPart = (geo: THREE.BufferGeometry, mat: THREE.Material, dx: number, dy: number, dz: number, density: number, colDesc: RAPIER.ColliderDesc) => {
@@ -1427,6 +2257,16 @@ export class EndlessWorld {
             z: ((p.z - z) / Math.max(d, 0.5)) * k,
           }, true);
         }
+      }
+    }
+    // people
+    for (const npc of this.npcs) {
+      if (!npc.alive) continue;
+      const t = npc.body.translation();
+      const d = Math.hypot(t.x - x, t.y - y, t.z - z);
+      if (d < radius) {
+        const k = 1 - d / radius;
+        this.ragdollNpc(npc, ((t.x - x) / Math.max(d, 0.5)) * 30 * k, 10 + 14 * k, ((t.z - z) / Math.max(d, 0.5)) * 30 * k);
       }
     }
     // SPH fluid kick + heat
@@ -1599,6 +2439,15 @@ export class EndlessWorld {
       const n = d === "0" ? 9 : Number(d) - 1;
       if (n >= 0 && n < HOTBAR.length) {
         this.tool = HOTBAR[n].id;
+        this.buildWeaponMesh(this.tool);
+        this.cb.onLog(`Tool: ${HOTBAR[n].label}.`, "sys");
+      }
+    }
+    if (e.code === "KeyQ" || e.code === "KeyX") {
+      const n = e.code === "KeyQ" ? 10 : 11;
+      if (n < HOTBAR.length) {
+        this.tool = HOTBAR[n].id;
+        this.buildWeaponMesh(this.tool);
         this.cb.onLog(`Tool: ${HOTBAR[n].label}.`, "sys");
       }
     }
@@ -1613,7 +2462,10 @@ export class EndlessWorld {
   };
   private onKeyUp = (e: KeyboardEvent): void => { this.keys.delete(e.code); };
 
-  private onPointerUp = (): void => { this.mouseDown = false; };
+  private onPointerUp = (e: PointerEvent): void => {
+    this.mouseDown = false;
+    if (e.button === 2) this.releaseGrab();
+  };
 
   private onPointerDown = (e: PointerEvent): void => {
     this.audio.unlock();
@@ -1626,6 +2478,8 @@ export class EndlessWorld {
       this.mouseDown = true;
       this.autoT = 0;
       this.fireTool();
+    } else if (e.button === 2) {
+      this.grabNearest();
     }
   };
   private onPointerMove = (e: PointerEvent): void => {
@@ -1694,7 +2548,7 @@ export class EndlessWorld {
   /* ============================== TOOLS ============================== */
 
   setTool(t: ToolId): void { this.tool = t; }
-  selectToolIndex(i: number): void { if (i >= 0 && i < HOTBAR.length) this.tool = HOTBAR[i].id; }
+  selectToolIndex(i: number): void { if (i >= 0 && i < HOTBAR.length) { this.tool = HOTBAR[i].id; this.buildWeaponMesh(this.tool); } }
 
   private fireTool(): void {
     if (!this.alive || this.attract) return;
@@ -1704,11 +2558,20 @@ export class EndlessWorld {
       case "pistol":
         this.shoot("pistol");
         break;
+      case "smg":
+        this.shoot("smg");
+        break;
+      case "shotgun":
+        this.shoot("shotgun");
+        break;
       case "rifle":
         this.shoot("rifle");
         break;
       case "rocket":
         this.throwRocket();
+        break;
+      case "grenade":
+        this.throwGrenade();
         break;
       case "dynamite":
         this.throwBomb();
@@ -1774,6 +2637,12 @@ export class EndlessWorld {
 
   private interact(): void {
     if (!this.alive || this.paused || this.attract) return;
+    // dimension portal
+    const portal = this.portalNearby();
+    if (portal) {
+      this.switchDimension(this.dimension === "prime" ? "other" : "prime");
+      return;
+    }
     // sewer grates
     let best: GrateRec | null = null;
     let bestD = 3.2;
@@ -1798,7 +2667,7 @@ export class EndlessWorld {
         this.vel.set(0, 130, 0);
         this.trauma = 0.5;
         this.audio.explosion(0.6);
-        this.log("LAUNCH VECTOR — ignition. You are leaving the planet. Space is ahead; the station is at (2500, 80, 0).", "alert");
+        this.log("LAUNCH VECTOR — ignition. You rocket skyward over the endless planet.", "alert");
         return;
       }
     }
@@ -1808,6 +2677,459 @@ export class EndlessWorld {
     this.pos.set(x, y, z);
     this.vel.set(0, 0, 0);
     this.playerBody.setNextKinematicTranslation({ x, y, z });
+  }
+
+  /* ============================== NPCS — OTHER PEOPLE ============================== */
+
+  private npcSkin(): number {
+    const arr = [0xe8c39e, 0xd8a878, 0xb07a4e, 0x8a5a34, 0xf0d0b0];
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  private spawnNpc(x: number, z: number, kind: string): void {
+    if (this.npcs.length >= 40) return;
+    const y = this.heightAt(x, z);
+    const g = new THREE.Group();
+    let top = 0x3b6ea5, bottom = 0x33415c;
+    if (kind === "farm") { top = 0x7a8c4a; bottom = 0x5a4632; }
+    else if (kind === "coast") { top = 0xc96a3a; bottom = 0x44586c; }
+    else {
+      const tops = [0x3b6ea5, 0x884455, 0x557744, 0x887766, 0x555577, 0xaa6633, 0x224466];
+      const bots = [0x33415c, 0x4a4a52, 0x6b5a44, 0x2f3a2f, 0x3a3a3a];
+      top = tops[Math.floor(Math.random() * tops.length)];
+      bottom = bots[Math.floor(Math.random() * bots.length)];
+    }
+    const skinM = new THREE.MeshStandardMaterial({ color: this.npcSkin(), roughness: 0.85 });
+    const topM = new THREE.MeshStandardMaterial({ color: top, roughness: 0.95 });
+    const botM = new THREE.MeshStandardMaterial({ color: bottom, roughness: 0.95 });
+    const hairM = new THREE.MeshStandardMaterial({ color: [0x2a1d12, 0x4a3a22, 0x141414, 0x6a4a2a][Math.floor(Math.random() * 4)], roughness: 1 });
+    const addPart = (geo: THREE.BufferGeometry, mat: THREE.Material, dx: number, dy: number, dz: number) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(dx, dy, dz);
+      m.castShadow = true;
+      g.add(m);
+      return m;
+    };
+    addPart(new THREE.CapsuleGeometry(0.11, 0.42, 3, 6), botM, -0.13, 0.5, 0);
+    addPart(new THREE.CapsuleGeometry(0.11, 0.42, 3, 6), botM, 0.13, 0.5, 0);
+    addPart(new THREE.CapsuleGeometry(0.24, 0.42, 3, 8), topM, 0, 1.2, 0);
+    addPart(new THREE.CapsuleGeometry(0.09, 0.3, 3, 6), topM, -0.34, 1.18, 0);
+    addPart(new THREE.CapsuleGeometry(0.09, 0.3, 3, 6), topM, 0.34, 1.18, 0);
+    addPart(new THREE.SphereGeometry(0.16, 10, 8), skinM, 0, 1.72, 0);
+    addPart(new THREE.SphereGeometry(0.165, 10, 8), hairM, 0, 1.79, -0.03);
+    g.position.set(x, y, z);
+    this.scene.add(g);
+    const body = this.rapier.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(x, y + 0.9, z)
+      .setLinearDamping(0.7).setAngularDamping(2.2));
+    this.rapier.createCollider(RAPIER.ColliderDesc.capsule(0.32, 0.32).setFriction(0.6), body);
+    const a = Math.random() * Math.PI * 2;
+    this.npcs.push({
+      body, group: g, head: null, kind, top,
+      target: new THREE.Vector3(x + Math.cos(a) * 8, 0, z + Math.sin(a) * 8),
+      speed: 1.3 + Math.random() * 0.9,
+      sayT: 1.5 + Math.random() * 7,
+      lineIdx: Math.floor(Math.random() * 4),
+      alive: true,
+    });
+  }
+
+  private killNpc(npc: NpcRec, silent: boolean): void {
+    if (!npc.alive) return;
+    npc.alive = false;
+    try { this.rapier.removeRigidBody(npc.body); } catch { /* gone */ }
+    this.scene.remove(npc.group);
+    npc.group.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.geometry) m.geometry.dispose();
+      const mat = m.material as THREE.Material | undefined;
+      if (mat) mat.dispose();
+    });
+    if (!silent) this.log("A local goes down under your feet.", "sys");
+  }
+
+  private ragdollNpc(npc: NpcRec, ix: number, iy: number, iz: number): void {
+    if (!npc.alive) return;
+    const t = npc.body.translation();
+    const r = this.makeRagdoll(t.x, t.y + 0.5, t.z, 1.0, npc.top, 0xd8c4a8);
+    for (const b of r.bodies) b.applyImpulse({ x: ix, y: iy, z: iz }, true);
+    this.killNpc(npc, true);
+    this.log("They go down in a tangle of limbs — a ragdoll crumpling to the ground.", "alert");
+  }
+
+  private bubbleTexture(text: string): THREE.Texture {
+    const hit = this.bubbleCache.get(text);
+    if (hit) return hit;
+    const cv = document.createElement("canvas");
+    cv.width = 512; cv.height = 128;
+    const c = cv.getContext("2d")!;
+    c.fillStyle = "rgba(252, 252, 255, 0.95)";
+    c.beginPath();
+    c.roundRect(14, 8, 484, 88, 22);
+    c.fill();
+    c.beginPath();
+    c.moveTo(226, 92); c.lineTo(256, 124); c.lineTo(286, 92);
+    c.closePath();
+    c.fill();
+    c.fillStyle = "#1c2230";
+    c.font = "600 30px system-ui, sans-serif";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    let l1 = text, l2 = "";
+    if (c.measureText(text).width > 440) {
+      const words = text.split(" ");
+      const mid = Math.ceil(words.length / 2);
+      l1 = words.slice(0, mid).join(" ");
+      l2 = words.slice(mid).join(" ");
+    }
+    if (l2) { c.fillText(l1, 256, 40); c.fillText(l2, 256, 74); }
+    else c.fillText(l1, 256, 52);
+    const tex = new THREE.CanvasTexture(cv);
+    this.bubbleCache.set(text, tex);
+    return tex;
+  }
+
+  private sayLine(npc: NpcRec, text: string): void {
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.bubbleTexture(text), transparent: true, depthWrite: false }));
+    const t = npc.body.translation();
+    spr.position.set(t.x, t.y + 2.2, t.z);
+    spr.scale.set(3.4, 0.85, 1);
+    this.scene.add(spr);
+    this.bubbles.push({ spr, ttl: 4.5 });
+  }
+
+  private updateNpcs(dt: number): void {
+    for (const b of this.bubbles) {
+      b.ttl -= dt;
+      if (b.ttl <= 0) {
+        this.scene.remove(b.spr);
+        b.spr.material.dispose();
+      }
+    }
+    this.bubbles = this.bubbles.filter((b) => b.ttl > 0);
+    for (const npc of this.npcs) {
+      if (!npc.alive) continue;
+      const t = npc.body.translation();
+      const ground = this.heightAt(t.x, t.z);
+      npc.group.position.set(t.x, ground - 0.02, t.z);
+      const dx = npc.target.x - t.x, dz = npc.target.z - t.z;
+      const dd = Math.hypot(dx, dz);
+      if (dd < 0.8) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 6 + Math.random() * 16;
+        npc.target.set(t.x + Math.cos(a) * r, 0, t.z + Math.sin(a) * r);
+      } else {
+        npc.body.setLinvel({ x: (dx / dd) * npc.speed, y: 0, z: (dz / dd) * npc.speed }, true);
+        npc.group.rotation.y = Math.atan2(dx, dz);
+      }
+      // flung by a fast object → ragdoll
+      for (const d of this.dyn) {
+        const lv = d.body.linvel();
+        if (Math.hypot(lv.x, lv.y, lv.z) > 8) {
+          const dp = d.body.translation();
+          if (Math.hypot(dp.x - t.x, dp.z - t.z) < 1.6) {
+            this.ragdollNpc(npc, lv.x * 1.1, Math.abs(lv.y) * 0.5 + 4, lv.z * 1.1);
+            break;
+          }
+        }
+      }
+      // speak to nearby players
+      npc.sayT -= dt;
+      if (npc.sayT <= 0) {
+        const p = this.pos;
+        if (npc.alive && Math.hypot(t.x - p.x, t.z - p.z) < 18) {
+          const lines = this.npcLines[npc.kind] ?? this.npcLines.city;
+          this.sayLine(npc, lines[npc.lineIdx % lines.length]);
+          npc.lineIdx++;
+        }
+        npc.sayT = 8 + Math.random() * 16;
+      }
+    }
+    this.npcs = this.npcs.filter((n) => n.alive);
+  }
+
+  /* ============================== FIRST-PERSON VIEWMODEL ============================== */
+
+  private buildViewmodel(): void {
+    const g = new THREE.Group();
+    const skinM = new THREE.MeshStandardMaterial({ color: 0xd8b088, roughness: 0.9 });
+    const suitM = new THREE.MeshStandardMaterial({ color: 0x2e3440, roughness: 0.85 });
+    const mkArm = (side: number) => {
+      const arm = new THREE.Group();
+      const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.3, 4, 8), suitM);
+      upper.position.set(side * 0.09, -0.1, 0.12);
+      upper.rotation.x = 0.95;
+      upper.castShadow = false;
+      const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.062, 0.26, 4, 8), suitM);
+      fore.position.set(side * 0.055, 0.03, -0.06);
+      fore.rotation.x = -0.45;
+      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.075, 0.13), skinM);
+      hand.position.set(side * 0.035, 0.05, -0.15);
+      arm.add(upper, fore, hand);
+      arm.position.set(side * 0.44, -0.44, -0.56);
+      return arm;
+    };
+    g.add(mkArm(-1), mkArm(1));
+    g.position.set(0.14, -0.36, -0.62);
+    this.camera.add(g);
+    this.viewmodel = g;
+    this.buildWeaponMesh(this.tool);
+  }
+
+  private buildWeaponMesh(tool: string): void {
+    if (!this.viewmodel) return;
+    if (this.weaponMesh) {
+      this.viewmodel.remove(this.weaponMesh);
+      this.weaponMesh.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.geometry) m.geometry.dispose();
+        const mat = m.material as THREE.Material | undefined;
+        if (mat) mat.dispose();
+      });
+      this.weaponMesh = null;
+    }
+    const g = new THREE.Group();
+    const metal = new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.42, metalness: 0.8 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.85 });
+    const wood = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: 0.8 });
+    const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, rx = 0, rz = 0) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.rotation.set(rx, 0, rz);
+      g.add(m);
+      return m;
+    };
+    if (tool === "pistol") {
+      add(new THREE.BoxGeometry(0.05, 0.05, 0.24), metal, 0, 0.09, -0.02);
+      add(new THREE.BoxGeometry(0.055, 0.04, 0.3), metal, 0, 0.13, -0.03);
+      add(new THREE.BoxGeometry(0.045, 0.1, 0.06), dark, 0, 0.01, 0.05);
+    } else if (tool === "smg") {
+      add(new THREE.BoxGeometry(0.055, 0.09, 0.34), metal, 0, 0.08, -0.06);
+      add(new THREE.CylinderGeometry(0.016, 0.016, 0.14, 8), dark, 0, 0.08, -0.28).rotation.x = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.04, 0.12, 0.05), dark, 0, -0.02, 0.02);
+      add(new THREE.BoxGeometry(0.035, 0.05, 0.06), metal, 0, 0.13, -0.1);
+    } else if (tool === "shotgun") {
+      const b1 = add(new THREE.CylinderGeometry(0.022, 0.022, 0.52, 10), metal, -0.022, 0.07, -0.18);
+      b1.rotation.x = Math.PI / 2;
+      const b2 = add(new THREE.CylinderGeometry(0.022, 0.022, 0.52, 10), metal, 0.022, 0.07, -0.18);
+      b2.rotation.x = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.06, 0.07, 0.16), wood, 0, 0.02, 0.1);
+      add(new THREE.BoxGeometry(0.05, 0.05, 0.12), wood, 0, 0.0, -0.05);
+    } else if (tool === "rifle") {
+      add(new THREE.BoxGeometry(0.05, 0.07, 0.46), metal, 0, 0.08, -0.1);
+      add(new THREE.CylinderGeometry(0.014, 0.014, 0.22, 8), dark, 0, 0.08, -0.44).rotation.x = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.04, 0.12, 0.05), dark, 0, -0.01, 0.08);
+      add(new THREE.BoxGeometry(0.03, 0.05, 0.04), metal, 0, 0.14, 0.02);
+    } else if (tool === "rocket") {
+      const tube = add(new THREE.CylinderGeometry(0.075, 0.075, 0.5, 14), metal, 0, 0.06, -0.08);
+      tube.rotation.x = Math.PI / 2;
+      add(new THREE.CylinderGeometry(0.05, 0.05, 0.06, 12), dark, 0, 0.06, 0.18).rotation.x = Math.PI / 2;
+      add(new THREE.BoxGeometry(0.04, 0.1, 0.05), dark, 0, -0.04, 0.06);
+    } else if (tool === "grenade") {
+      add(new THREE.SphereGeometry(0.075, 12, 10), new THREE.MeshStandardMaterial({ color: 0x3e5a34, roughness: 0.7 }), 0, 0.05, -0.1);
+      add(new THREE.CylinderGeometry(0.012, 0.012, 0.05, 6), metal, 0, 0.14, -0.1);
+    }
+    g.position.set(0.02, 0.02, -0.16);
+    g.rotation.y = 0.06;
+    this.weaponMesh = g;
+    this.viewmodel.add(g);
+  }
+
+  private updateViewmodel(frameDt: number): void {
+    if (!this.viewmodel) return;
+    const sp = Math.hypot(this.vel.x, this.vel.z);
+    this.vmBobT += frameDt * (3 + sp * 1.5);
+    const bob = Math.sin(this.vmBobT * 2.2) * 0.009 * Math.min(1, sp / 4);
+    this.vmRecoil = Math.max(0, this.vmRecoil - frameDt * 3.2);
+    this.viewmodel.position.set(0.14, -0.36 + bob, -0.62);
+    this.viewmodel.rotation.x = this.vmRecoil * 0.16;
+    if (this.weaponMesh) this.weaponMesh.position.z = -0.16 + this.vmRecoil * 0.09;
+  }
+
+  /* ============================== GRAB & THROW ============================== */
+
+  private grabNearest(): void {
+    if (this.grabbed) return;
+    const o = this.camera.position;
+    const dir = this.cameraDirection();
+    // candidates: dynamic objects, walking people, ragdolls
+    const cand: { body: RAPIER.RigidBody; x: number; y: number; z: number; src: "dyn" | "npc" | "ragdoll"; ref?: unknown }[] = [];
+    for (const d of this.dyn) {
+      if (d.dead || d.kind === "rocket" || d.kind === "bomb" || d.kind === "grenade") continue;
+      const p = d.body.translation();
+      cand.push({ body: d.body, x: p.x, y: p.y, z: p.z, src: "dyn" });
+    }
+    for (const npc of this.npcs) {
+      if (!npc.alive) continue;
+      const p = npc.body.translation();
+      cand.push({ body: npc.body, x: p.x, y: p.y, z: p.z, src: "npc", ref: npc });
+    }
+    for (const r of this.ragdolls) {
+      if (r.dead) continue;
+      const p = r.bodies[0]?.translation();
+      if (p) cand.push({ body: r.bodies[0], x: p.x, y: p.y, z: p.z, src: "ragdoll", ref: r });
+    }
+    let best: (typeof cand)[number] | null = null;
+    let bestD = 6;
+    for (const c of cand) {
+      const dx = c.x - o.x, dy = c.y - o.y, dz = c.z - o.z;
+      const d = Math.hypot(dx, dy, dz);
+      if (d > bestD) continue;
+      const dot = (dx / d) * dir.x + (dy / d) * dir.y + (dz / d) * dir.z;
+      if (dot < 0.2) continue;
+      bestD = d; best = c;
+    }
+    if (!best) return;
+    try {
+      best.body.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true);
+    } catch { return; }
+    this.grabbed = best.body;
+    this.grabFrom = best.src;
+    if (best.src === "npc" && best.ref) {
+      // a person you pick up becomes a ragdoll in your arms
+      const npc = best.ref as NpcRec;
+      this.ragdollNpc(npc, 0, 0, 0);
+    }
+    this.log(best.src === "dyn" ? "You grip it. Let go to launch it." : "You've got a hold of them.", "sys");
+  }
+
+  private updateGrab(dt: number): void {
+    if (!this.grabbed) return;
+    void dt;
+    const o = this.camera.position;
+    const dir = this.cameraDirection();
+    this.grabbed.setNextKinematicTranslation({
+      x: o.x + dir.x * 2.4,
+      y: Math.max(this.heightAt(o.x + dir.x * 2.4, o.z + dir.z * 2.4) + 0.4, o.y - 0.5 + dir.y * 2.4),
+      z: o.z + dir.z * 2.4,
+    });
+  }
+
+  private releaseGrab(): void {
+    if (!this.grabbed) return;
+    const body = this.grabbed;
+    const src = this.grabFrom;
+    this.grabbed = null;
+    this.grabFrom = null;
+    try {
+      body.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+      const dir = this.cameraDirection();
+      body.setLinvel({
+        x: dir.x * 22 + this.vel.x * 0.5,
+        y: Math.abs(dir.y) * 14 + 5 + this.vel.y * 0.4,
+        z: dir.z * 22 + this.vel.z * 0.5,
+      }, true);
+      body.setAngvel({ x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8, z: (Math.random() - 0.5) * 8 }, true);
+    } catch { /* body gone */ }
+    this.audio.throwWhoosh();
+    this.trauma = Math.min(1, this.trauma + 0.05);
+    if (src === "ragdoll" || src === "npc") this.log("You let go. Physics takes them from there.", "sys");
+  }
+
+  /* ============================== DIMENSIONS ============================== */
+
+  private makePortal(x: number, y: number, z: number, hue: number): THREE.Group {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(2.6, 0.28, 12, 40),
+      new THREE.MeshStandardMaterial({ color: 0x222630, emissive: new THREE.Color().setHSL(hue, 0.8, 0.5), emissiveIntensity: 2.2, metalness: 0.7, roughness: 0.3 }),
+    );
+    g.add(ring);
+    const discMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color().setHSL(hue, 0.9, 0.55), transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false,
+    });
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(2.45, 40), discMat);
+    g.add(disc);
+    const light = new THREE.PointLight(new THREE.Color().setHSL(hue, 0.9, 0.6), 30, 40, 1.8);
+    g.add(light);
+    (g.userData as { spin?: THREE.Mesh }).spin = ring;
+    return g;
+  }
+
+  private buildPortals(): void {
+    // the one way out of the prime world: a glowing ring in a downtown tower
+    this.portalA = this.makePortal(112, 9.6, 112, 0.52);
+    this.scene.add(this.portalA);
+    // the way back home, inside the Dislocated
+    this.portalB = this.makePortal(14, 10, 10, 0.83);
+    this.scene.add(this.portalB);
+    this.portalB.visible = false;
+  }
+
+  /** Wipe one reality and materialize in the other. */
+  private switchDimension(to: "prime" | "other"): void {
+    if (this.dimension === to) return;
+    this.dimension = to;
+    for (const [key, rec] of Array.from(this.chunks)) {
+      rec.group.traverse((o) => {
+        const m = o as THREE.Mesh | undefined;
+        if (!m) return;
+        if (m.geometry) m.geometry.dispose();
+        const mat = m.material as THREE.Material | THREE.Material[] | undefined;
+        if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
+        else if (mat) mat.dispose();
+      });
+      for (const col of rec.colliders) {
+        try { this.rapier.removeCollider(col, true); } catch { /* already gone */ }
+      }
+      this.scene.remove(rec.group);
+      this.chunks.delete(key);
+    }
+    for (const seg of this.segments) {
+      this.scene.remove(seg.mesh);
+      seg.mesh.geometry.dispose();
+      (seg.mesh.material as THREE.Material).dispose();
+      try { this.rapier.removeRigidBody(seg.body); } catch { /* gone */ }
+    }
+    this.segments = [];
+    this.glass = [];
+    this.grates = [];
+    for (const npc of this.npcs) this.killNpc(npc, true);
+    this.npcs = [];
+    this.bubbleCache.forEach((t) => t.dispose());
+    this.bubbleCache.clear();
+    for (const r of this.ragdolls) this.removeRagdoll(r);
+    this.ragdolls = [];
+    for (const d of this.dyn) this.killDyn(d);
+    this.dyn = [];
+    this.fires = [];
+    this.vortices = [];
+    this.wells = [];
+    this.bombs = [];
+    for (const bh of this.blackholes) {
+      this.scene.remove(bh.disk, bh.glow, bh.sphere);
+      bh.disk.geometry.dispose();
+      bh.glow.material.dispose();
+      bh.sphere.geometry.dispose();
+    }
+    this.blackholes = [];
+    this.solver.clear();
+    this.spaceBuilt = false;
+    this.launchpads = [];
+    this.portalA!.visible = to === "prime";
+    this.portalB!.visible = to === "other";
+    if (to === "other") this.buildSpace();
+    if (this.spaceGroup) this.spaceGroup.visible = to === "other";
+    if (to === "other") {
+      this.portalB!.position.set(14, this.heightAt(14, 10) + 2.7, 10);
+      this.teleportPlayer(2, this.heightAt(2, 14) + 3, 14);
+    } else {
+      this.teleportPlayer(112, 13, 112);
+    }
+    this.flying = false;
+    this.vel.set(0, 0, 0);
+    this.log(to === "other"
+      ? "You step through the ring. Reality comes apart beautifully around you."
+      : "You fall back through the ring into the real world. The planet is exactly where you left it.", "alert");
+    this.cb.onBiome(BIOME_NAMES[this.biomeAt(0)]);
+  }
+
+  private portalNearby(): THREE.Group | null {
+    const p = this.pos;
+    const near = (pg: THREE.Group | null) => pg && pg.visible && Math.hypot(pg.position.x - p.x, pg.position.y - p.y, pg.position.z - p.z) < 4.5;
+    if (this.dimension === "prime") return near(this.portalA) ? this.portalA : null;
+    return near(this.portalB) ? this.portalB : null;
   }
 
   /* ============================== SCENARIOS ============================== */
@@ -1974,9 +3296,33 @@ export class EndlessWorld {
 
   /* ============================== AAA SYSTEMS ============================== */
 
-  private shoot(kind: "pistol" | "rifle"): void {
+  private shoot(kind: "pistol" | "rifle" | "smg" | "shotgun"): void {
+    if (kind === "shotgun") {
+      for (let i = 0; i < 6; i++) this.fireBullet(kind, 0.05);
+    } else {
+      this.fireBullet(kind, kind === "smg" ? 0.014 : 0);
+    }
+    this.audio.gunshot(kind);
+    this.trauma = Math.min(1, this.trauma + (kind === "pistol" ? 0.06 : kind === "rifle" ? 0.04 : kind === "shotgun" ? 0.11 : 0.02));
+    this.vmRecoil = Math.min(1, this.vmRecoil + (kind === "shotgun" ? 0.5 : kind === "smg" ? 0.12 : 0.3));
+    {
+      const fd = this.cameraDirection();
+      this.flashLight.position.set(this.camera.position.x + fd.x * 3, this.camera.position.y - 0.4, this.camera.position.z + fd.z * 3);
+    }
+    this.flashLight.intensity = kind === "pistol" ? 900 : kind === "shotgun" ? 1100 : 700;
+    this.compMat.uniforms.uFlash.value = Math.max(this.compMat.uniforms.uFlash.value as number, 0.12);
+  }
+
+  private fireBullet(kind: "pistol" | "rifle" | "smg" | "shotgun", spread: number): void {
     const o = this.camera.position;
-    const dir = this.cameraDirection();
+    let dir = this.cameraDirection();
+    if (spread > 0) {
+      dir = dir.clone();
+      dir.x += (Math.random() - 0.5) * spread * 2;
+      dir.y += (Math.random() - 0.5) * spread * 2;
+      dir.z += (Math.random() - 0.5) * spread * 2;
+      dir.normalize();
+    }
     // right vector for muzzle offset
     const rx = -dir.z, rz = dir.x; // cross(dir, up)
     this.raycaster.setFromCamera(this.pointerNdc, this.camera);
@@ -1988,7 +3334,22 @@ export class EndlessWorld {
       px = h.point.x; py = h.point.y; pz = h.point.z;
       break;
     }
-    this.damageAt(px, py, pz, 3.2, kind === "pistol" ? 50 : 32);
+    // people in the line of fire
+    for (const npc of this.npcs) {
+      if (!npc.alive) continue;
+      const t = npc.body.translation();
+      const cx = t.x - o.x, cy = t.y + 0.6 - o.y, cz = t.z - o.z;
+      const along = cx * dir.x + cy * dir.y + cz * dir.z;
+      if (along < 0.5 || along > 200) continue;
+      const qx = o.x + dir.x * along, qy = o.y + dir.y * along, qz = o.z + dir.z * along;
+      if (Math.hypot(t.x - qx, t.y + 0.6 - qy, t.z - qz) < 0.6) {
+        px = qx; py = qy; pz = qz;
+        this.ragdollNpc(npc, dir.x * 34, 8, dir.z * 34);
+        break;
+      }
+    }
+    const dmg = kind === "pistol" ? 50 : kind === "rifle" ? 32 : kind === "smg" ? 24 : 16;
+    this.damageAt(px, py, pz, kind === "shotgun" ? 2.4 : 3.2, dmg);
     for (const gl of this.glass) {
       if (!gl.dead && Math.hypot(gl.x - px, gl.y - py, gl.z - pz) < 4) this.shatterGlass(gl);
     }
@@ -1998,11 +3359,6 @@ export class EndlessWorld {
     this.spawnTracer(mx, my, mz, px, py, pz);
     this.smoke.burst(px, py, pz, 5,
       { speed: 2.5, up: 1.2, life: 0.5, size: 0.25, grow: 1.5, r: 0.75, g: 0.75, b: 0.78, alpha: 0.5, grav: -0.5, drag: 2 });
-    this.audio.gunshot(kind);
-    this.trauma = Math.min(1, this.trauma + (kind === "pistol" ? 0.06 : 0.04));
-    this.flashLight.position.set(o.x + dir.x * 3, o.y + dir.y * 3 - 0.4, o.z + dir.z * 3);
-    this.flashLight.intensity = kind === "pistol" ? 900 : 700;
-    this.compMat.uniforms.uFlash.value = Math.max(this.compMat.uniforms.uFlash.value as number, 0.12);
   }
 
   private throwRocket(): void {
@@ -2025,6 +3381,30 @@ export class EndlessWorld {
     });
     this.audio.gunshot("rocket");
     this.trauma = Math.min(1, this.trauma + 0.12);
+  }
+
+  private throwGrenade(): void {
+    const o = this.camera.position;
+    const dir = this.cameraDirection();
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12), new THREE.MeshStandardMaterial({ color: 0x3e5a34, roughness: 0.7, metalness: 0.15 }));
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.1, 6), new THREE.MeshStandardMaterial({ color: 0x888890, metalness: 0.8, roughness: 0.3 }));
+    pin.position.y = 0.2;
+    m.add(pin);
+    m.position.set(o.x + dir.x * 1.3, o.y + dir.y * 1.0 - 0.2, o.z + dir.z * 1.3);
+    m.castShadow = true;
+    this.scene.add(m);
+    const body = this.rapier.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(m.position.x, m.position.y, m.position.z)
+      .setLinearDamping(0.05).setAngularDamping(0.4));
+    this.rapier.createCollider(RAPIER.ColliderDesc.ball(0.19).setDensity(1200).setRestitution(0.42), body);
+    body.setLinvel({ x: dir.x * 15, y: dir.y * 15 + 5.5, z: dir.z * 15 }, true);
+    body.setAngvel({ x: 9, y: 0, z: 6 }, true);
+    this.dyn.push({
+      id: allocId(), body, mesh: m, kind: "grenade", radius: 0.19, volume: 0.029,
+      age: 0, dead: false, wasSub: 0, debris: true, fuse: 2.2,
+    });
+    this.audio.gunshot("smg");
+    this.vmRecoil = Math.min(1, this.vmRecoil + 0.2);
   }
 
   private spawnTracer(ax: number, ay: number, az: number, bx: number, by: number, bz: number): void {
@@ -2059,9 +3439,12 @@ export class EndlessWorld {
 
   private updateAutoFire(): void {
     if (!this.mouseDown || this.paused || this.attract || !this.alive) { this.autoT = 0; return; }
-    if (this.tool !== "rifle") return;
+    if (this.tool !== "rifle" && this.tool !== "smg") return;
     this.autoT -= STEP;
-    if (this.autoT <= 0) { this.shoot("rifle"); this.autoT = 0.11; }
+    if (this.autoT <= 0) {
+      this.shoot(this.tool);
+      this.autoT = this.tool === "smg" ? 0.06 : 0.11;
+    }
   }
 
   /** Push the solver's particle positions into the droplet Points mesh. */
@@ -2227,6 +3610,8 @@ export class EndlessWorld {
     this.sun.target.position.set(this.pos.x, this.pos.y, this.pos.z);
 
     this.syncVisuals(frameDt);
+    if (this.viewmodel) this.viewmodel.visible = !this.attract;
+    if (!this.attract) this.updateViewmodel(frameDt);
     this.syncWater();
     this.updateTracers(frameDt);
     this.updateHeightTexTimer(frameDt);
@@ -2271,6 +3656,8 @@ export class EndlessWorld {
     this.stepSph(STEP);
     this.stepPhysics();
     this.updateRagdolls();
+    this.updateNpcs(STEP);
+    this.updateGrab(STEP);
     this.updateEffects(STEP);
     this.simMs = this.simMs * 0.9 + (performance.now() - t0) * 0.1;
   }
@@ -2337,7 +3724,7 @@ export class EndlessWorld {
     let budget = 2;
     for (const [cx, cz] of want) {
       if (budget <= 0) break;
-      if (!this.chunks.has(`${cx},${cz}`)) {
+      if (!this.chunks.has(`${this.dimension}:${cx},${cz}`)) {
         this.buildChunk(cx, cz);
         budget--;
       }
@@ -2474,13 +3861,14 @@ export class EndlessWorld {
       const v = b.body.linvel();
 
       // bombs: fuse + impact
-      if (b.kind === "bomb" || b.kind === "rocket") {
+      if (b.kind === "bomb" || b.kind === "rocket" || b.kind === "grenade") {
         const rocket = b.kind === "rocket";
-        b.fuse = (b.fuse ?? (rocket ? 1.5 : 2.6)) - dt;
+        const gren = b.kind === "grenade";
+        b.fuse = (b.fuse ?? (rocket ? 1.5 : gren ? 2.2 : 2.6)) - dt;
         const gy = this.heightAt(p.x, p.z);
         if ((b.fuse ?? 0) <= 0 || (p.y < gy + 0.45 && Math.hypot(p.x, p.z) < 1400)) {
           this.killDyn(b);
-          this.explode(p.x, p.y, p.z, rocket ? 10 : 9, rocket ? 340 : 300, rocket ? 2.8 : 2.2);
+          this.explode(p.x, p.y, p.z, rocket ? 10 : gren ? 8 : 9, rocket ? 340 : gren ? 280 : 300, rocket ? 2.8 : 2.2);
           continue;
         }
       }
@@ -2877,7 +4265,7 @@ export class EndlessWorld {
       this.oceanMat.uniforms.uCamPos.value.copy(this.camera.position);
       this.oceanMat.uniforms.uIce.value = 0;
     }
-    if (this.stars) this.stars.visible = d > 1200;
+    if (this.stars) this.stars.visible = this.dimension === "other" && d > 900;
     this.skyMat.uniforms.uTime.value = this.time;
     this.skyMat.uniforms.uStorm.value = this.stormAmt;
 
@@ -2969,6 +4357,37 @@ export class EndlessWorld {
     }
     this.compMat.uniforms.uTime.value = this.time;
     this.compMat.uniforms.uAspect.value = this.canvas.width / Math.max(1, this.canvas.height);
+    // sun flare: project the sun, fade when occluded or under storm
+    this.sunOccT -= STEP;
+    if (this.sunOccT <= 0) {
+      this.sunOccT = 0.25;
+      const sp0 = this.tmpV2.copy(this.camera.position);
+      const sd0 = this.tmpV.copy(this.sun.position).sub(sp0).normalize();
+      this.sunRaycaster.set(sp0, sd0);
+      this.sunRaycaster.far = 600;
+      const hits = this.sunRaycaster.intersectObjects(this.scene.children, true);
+      let blocked = false;
+      for (const h of hits) {
+        if (h.object === this.stars) continue;
+        blocked = true;
+        break;
+      }
+      this.sunOcc = blocked;
+    }
+    this.sunVis = lerp(this.sunVis, this.sunOcc ? 0.06 : 1, Math.min(1, STEP * 6));
+    {
+      const sd = this.tmpV.copy(this.sun.position).sub(this.camera.position);
+      const alt = clamp(sd.y / Math.max(sd.length(), 1), 0, 1);
+      const dayF = 1 - this.stormAmt * 0.75;
+      const intensity = (0.3 + (1 - alt) * 1.1) * dayF * (this.dimension === "other" ? 0.25 : 1);
+      this.tmpV2.copy(this.sun.position).project(this.camera);
+      (this.compMat.uniforms.uSunFlare.value as THREE.Vector4).set(
+        this.tmpV2.x * 0.5 + 0.5,
+        this.tmpV2.y * 0.5 + 0.5,
+        this.sunVis,
+        intensity,
+      );
+    }
     const under = this.camera.position.y < this.waterLevelAt(this.pos.x, this.pos.z) - 0.3;
     this.compMat.uniforms.uUnderwater.value = lerp(
       this.compMat.uniforms.uUnderwater.value as number, under ? 1 : 0, Math.min(1, 0.25));
@@ -3270,6 +4689,7 @@ function makeAaaComposite(): THREE.ShaderMaterial {
       uTime: { value: 0 },
       uLens: { value: [new THREE.Vector4(0, 0, 0, 0), new THREE.Vector4(0, 0, 0, 0), new THREE.Vector4(0, 0, 0, 0)] },
       uLensOn: { value: 1 },
+      uSunFlare: { value: new THREE.Vector4(0, 0, 0, 0) },
       uUnderwater: { value: 0 },
       uFlash: { value: 0 },
       uVignette: { value: 0.38 },
@@ -3288,6 +4708,7 @@ function makeAaaComposite(): THREE.ShaderMaterial {
       uniform float uTime;
       uniform vec4 uLens[3];
       uniform float uLensOn;
+      uniform vec4 uSunFlare;
       uniform float uUnderwater;
       uniform float uFlash;
       uniform float uVignette;
@@ -3325,6 +4746,34 @@ function makeAaaComposite(): THREE.ShaderMaterial {
         float lum = dot(col, vec3(0.299, 0.587, 0.114));
         col = mix(vec3(lum), col, 1.16);
         col *= vec3(1.02, 1.0, 0.965);
+        // ── sun lens flare: core glow, anamorphic streak, ghost discs ──
+        if (uSunFlare.w > 0.001) {
+          vec2 sunP = uSunFlare.xy;
+          vec2 sd = vUv - sunP;
+          sd.x *= uAspect;
+          float sr = length(sd);
+          float glow = exp(-sr * 5.5) * 1.1 + exp(-sr * 24.0) * 2.4;
+          float streak = exp(-abs(sd.y) * 26.0) * exp(-abs(sd.x) * 2.0) * 0.85;
+          vec3 warm = vec3(1.0, 0.9, 0.72);
+          vec3 cold = vec3(0.62, 0.8, 1.0);
+          float ring = exp(-abs(sr - 0.16) * 90.0) * 0.5; // lens ring
+          vec2 ax = sunP - 0.5;
+          vec3 ghostCol = vec3(0.0);
+          for (int i = 1; i <= 5; i++) {
+            float f = float(i) * 0.21;
+            vec2 gp = vec2(0.5 - ax.x * f, 0.5 - ax.y * f);
+            vec2 gd = vUv - gp;
+            gd.x *= uAspect;
+            float gr = 0.016 + float(i) * 0.013;
+            float ga = exp(-dot(gd, gd) / (gr * gr)) * 0.3;
+            vec3 gc = (i == 2) ? cold : (i == 3) ? vec3(1.0, 0.68, 0.5) : warm;
+            ghostCol += gc * ga;
+          }
+          float sfVis = uSunFlare.z;
+          col += warm * (glow + streak + ring * 0.5) * uSunFlare.w * sfVis;
+          col += cold * streak * 0.35 * uSunFlare.w * sfVis;
+          col += ghostCol * 1.5 * uSunFlare.w * sfVis;
+        }
         vec2 vc = vUv - 0.5;
         col *= 1.0 - uVignette * dot(vc, vc) * 2.2;
         float g = fract(sin(dot(vUv * (uTime + 13.0), vec2(12.9898, 78.233))) * 43758.5453);

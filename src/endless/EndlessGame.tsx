@@ -29,10 +29,12 @@ const SCENARIOS: { id: ScenarioId; label: string; hint: string; icon: string }[]
 
 const INVENTORY: { id: ToolId; name: string; desc: string }[] = [
   { id: "pistol", name: "Pistol", desc: "Semi-automatic sidearm. Hitscan, heavy punch per round." },
+  { id: "smg", name: "SMG", desc: "A buzz of lead. Faster than thought, lighter than trouble." },
+  { id: "shotgun", name: "Shotgun", desc: "Six pellets, one opinion. Best served close." },
   { id: "rifle", name: "Assault Rifle", desc: "Full-auto carbine. Hold the trigger — it never gets tired." },
   { id: "rocket", name: "Rocket Launcher", desc: "An unstable warhead on a stick. It finds soft things." },
+  { id: "grenade", name: "Grenade", desc: "A spinning argument. It bounces, it waits, it detonates." },
   { id: "dynamite", name: "Dynamite", desc: "Throw a stick of dynamite. Fuses hate being ignored." },
-  { id: "singularity", name: "Singularity Seed", desc: "A small black hole. It grows hungry." },
   { id: "water", name: "Water Cannon", desc: "Pour a few hundred litres of very motivated water." },
   { id: "crates", name: "Crate Stack", desc: "Spawns load-bearing crates. They break under pressure." },
   { id: "glass", name: "Glass Wall", desc: "Raises a pane of glass. It will shatter — that is the point." },
@@ -44,17 +46,20 @@ const CONTROLS: { k: string; a: string }[] = [
   { k: "WASD", a: "Move" },
   { k: "Mouse", a: "Look (click the world to lock the cursor)" },
   { k: "LMB", a: "Use the selected tool / fire" },
+  { k: "RMB", a: "Grab — hold to carry crates, dummies… or people; release to throw" },
   { k: "Space", a: "Jump / rise in flight" },
   { k: "Shift", a: "Sprint / descend in flight" },
   { k: "F", a: "Toggle flight" },
-  { k: "E", a: "Interact — sewer grates, launch pads" },
-  { k: "1–0", a: "Select tool (10 slots)" },
+  { k: "E", a: "Interact — sewer grates, launch pads, the portal ring" },
+  { k: "1–0 · Q · X", a: "Select tool (12 slots)" },
   { k: "I", a: "Open inventory" },
   { k: "T / G", a: "Time scale down / up" },
   { k: "R", a: "Respawn after death" },
   { k: "P", a: "Pause" },
   { k: "H", a: "Toggle this help" },
 ];
+
+const slotKey = (i: number): string => (i < 9 ? String(i + 1) : i === 9 ? "0" : i === 10 ? "Q" : "X");
 
 interface LogEntry { id: number; msg: string; kind: string; }
 
@@ -319,12 +324,13 @@ export default function EndlessGame({ onExit }: { onExit: () => void }) {
       {phase === "menu" && (
         <div className={`nms-menu ${booting ? "booting" : ""}`}>
           <div className="nms-panel">
-            <div className="nms-eyebrow">An infinite physics sandbox</div>
+            <div className="nms-eyebrow">The Planet Update · v2.1</div>
             <h1 className="nms-title">ENDLESS<br />POTENTIAL</h1>
             <p className="nms-sub">
-              Water that floods. Glass that shatters. Buildings with interiors, sewers you can
-              travel, hills that become mountains — and a sky that eventually gives way to space.
-              Everything you throw at it reacts; everything you break stays broken.
+              A whole planet: megacity, suburbs, towns, farmland, a thousand-metre mountain range,
+              coast, desert — endless, and every one of its people alive, walking, talking back.
+              Grab anything and hurl it. Somewhere downtown a ring of light opens onto another
+              reality. Water floods, glass shatters, everything you break stays broken.
             </p>
             <div className="nms-list">
               {menuOptions.map((o, i) => (
@@ -420,10 +426,10 @@ export default function EndlessGame({ onExit }: { onExit: () => void }) {
                 <button key={t.id}
                   className={`ep-slot ${i === toolIdx ? "on" : ""}`}
                   onClick={() => pickTool(i)}
-                  title={`${t.label} — key ${i + 1}`}>
+                  title={`${t.label} — key ${slotKey(i)}`}>
                   <span className="ep-slot-glyph">{t.glyph}</span>
                   <span className="ep-slot-label">{t.label}</span>
-                  <span className="ep-slot-key">{i + 1 === 10 ? "0" : i + 1}</span>
+                  <span className="ep-slot-key">{slotKey(i)}</span>
                 </button>
               ))}
             </div>
@@ -455,9 +461,10 @@ export default function EndlessGame({ onExit }: { onExit: () => void }) {
                 <h2>The world is yours.</h2>
                 <p>Click to take control. Move with WASD, and look around with your mouse.</p>
                 <p className="ep-enter-dim">
-                  Ten tools in the hotbar below (1–0). Nine scenarios under <b>Scenarios</b>.
-                  Press <b>I</b> for the inventory. Everything you break is real, and everything
-                  you build can be broken back.
+                  Twelve tools in the hotbar (1–0, Q, X). Hold <b>RMB</b> to grab and throw.
+                  Nine scenarios under <b>Scenarios</b>. Press <b>I</b> for the inventory.
+                  Everything you break is real — and somewhere downtown, a ring of light
+                  is waiting for you.
                 </p>
               </div>
             </div>
@@ -477,7 +484,7 @@ export default function EndlessGame({ onExit }: { onExit: () => void }) {
                       onClick={() => pickTool(i)}>
                       <span className="ep-inv-glyph">{HOTBAR[i].glyph}</span>
                       <span className="ep-inv-body">
-                        <b>{it.name} <small className="ep-inv-key">[{i + 1 === 10 ? "0" : i + 1}]</small></b>
+                        <b>{it.name} <small className="ep-inv-key">[{slotKey(i)}]</small></b>
                         <small>{it.desc}</small>
                       </span>
                     </button>
