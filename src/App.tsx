@@ -7,6 +7,7 @@ import { creatures, expeditionFor, generateSeed, type ExpeditionId, type SaveSta
 import { UniverseScene } from "./scenes/UniverseScene";
 import { AquaLab } from "./aqua/AquaLab";
 import EndlessGame from "./endless/EndlessGame";
+import RiftsGame from "./rifts/RiftsGame";
 
 const SAVE_KEY = "lumital.reality.v1";
 const SETTINGS_KEY = "lumital.settings.v1";
@@ -92,10 +93,12 @@ function LoadingSequence({ save, creatureName }: { save: SaveState; creatureName
 export default function App() {
   const [aqua, setAqua] = useState(() => window.location.hash === "#aqua");
   const [endless, setEndless] = useState(() => window.location.hash === "#endless");
+  const [rifts, setRifts] = useState(() => window.location.hash === "#rifts");
   useEffect(() => {
     const onHash = () => {
       setAqua(window.location.hash === "#aqua");
       setEndless(window.location.hash === "#endless");
+      setRifts(window.location.hash === "#rifts");
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -221,6 +224,14 @@ export default function App() {
     return (
       <div className="app-shell">
         <EndlessGame onExit={() => { window.location.hash = ""; }} />
+      </div>
+    );
+  }
+
+  if (rifts) {
+    return (
+      <div className="app-shell">
+        <RiftsGame onExit={() => { window.location.hash = ""; }} />
       </div>
     );
   }
