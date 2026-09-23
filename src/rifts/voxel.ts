@@ -246,7 +246,7 @@ export function generateChunk(c: Chunk, dim: Dim, seed: number): void {
         for (let dy = 0; dy < depth; dy++) {
           const y = Math.floor(is.y) - dy;
           if (y < 1 || y >= CY - 2) continue;
-          const b = dy === 0 ? B.P_GRASS : B.P_DIRT;
+          const b = dy === 0 ? B.GRASS : dy < 3 ? B.DIRT : B.STONE;
           if (c.get(lx, y, lz) === B.AIR) c.set(lx, y, lz, b);
         }
         // crystal sprout
@@ -276,9 +276,12 @@ const FACES = [
   { dir: [0, 0, -1], corners: [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], shade: 0.84 },
 ];
 
+const GRID_W = 8, GRID_H = 2;
 function tileUV(tile: number, x: number, y: number, uvs: number[]): void {
-  const tx = tile % 8, ty = Math.floor(tile / 8);
-  uvs.push(tx / 8 + x * 0.0015, 1 - (ty + 1) / 2 + (1 - y) * 0.0015);
+  const tx = tile % GRID_W, ty = Math.floor(tile / GRID_W);
+  const u = tx / GRID_W + (0.5 + x * 15) / (GRID_W * 16);
+  const v = 1 - (ty + 1) / GRID_H + (1 - (0.5 + y * 15)) / (GRID_H * 16);
+  uvs.push(u, v);
 }
 
 export function buildChunkMesh(c: Chunk, getNeighbor: (x: number, y: number, z: number) => number, dim: Dim): { solid: MeshData; water: MeshData; glow: MeshData } {

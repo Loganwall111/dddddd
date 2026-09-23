@@ -54,6 +54,7 @@ export class RiftsWorld {
   private hemi!: THREE.HemisphereLight;
   private dayT = 0.22; // start morning
   private cloudMesh!: THREE.InstancedMesh;
+  private cloudShadow!: THREE.InstancedMesh;
   private cloudSeeds: { x: number; y: number; z: number; sx: number; sy: number; sz: number }[] = [];
 
   // player
@@ -88,6 +89,10 @@ export class RiftsWorld {
   private gateGroup: THREE.Group | null = null;
   private gateShader!: THREE.ShaderMaterial;
   private gateRimMats: THREE.MeshBasicMaterial[] = [];
+  private gateBeamMats: THREE.MeshBasicMaterial[] = [];
+  private riftPillarMats: THREE.MeshBasicMaterial[] = [];
+  private riftSparks?: THREE.Points;
+  private sparkVel: number[] = [];
   private gateSpriteMat!: THREE.SpriteMaterial;
 
   // audio
@@ -139,14 +144,20 @@ export class RiftsWorld {
         void main() {
           vec3 col;
           if (uPastel > 0.5) {
-            float sw = sin(vW.x * 0.055 + uTime * 0.5) * cos(vW.z * 0.048 - uTime * 0.34);
-            float sw2 = sin(vW.x * 0.028 - vW.z * 0.04 + uTime * 0.22);
-            vec3 p1 = vec3(0.95, 0.62, 0.86);
-            vec3 p2 = vec3(0.52, 0.92, 0.88);
-            vec3 p3 = vec3(0.78, 0.62, 0.97);
-            col = mix(p1, p2, 0.5 + 0.5 * sw);
-            col = mix(col, p3, 0.5 + 0.5 * sw2);
-            col = mix(col, vec3(1.0), 0.18);
+            vec2 p = vW.xz * 0.035;
+            float n1 = sin(p.x * 1.7 + uTime * 0.35) * cos(p.y * 1.9 - uTime * 0.28);
+            float n2 = sin(p.x * 3.3 - p.y * 2.6 + uTime * 0.5);
+            float n3 = sin(p.x * 5.9 + p.y * 4.7 - uTime * 0.8);
+            vec3 a = vec3(1.0, 0.37, 0.82);    // magenta
+            vec3 b2 = vec3(0.25, 0.88, 0.79);   // teal
+            vec3 c3 = vec3(0.66, 0.61, 0.98);   // lavender
+            vec3 d4 = vec3(1.0, 0.76, 0.48);    // peach
+            col = mix(a, b2, smoothstep(0.2, 0.8, 0.5 + 0.5 * n1));
+            col = mix(col, c3, smoothstep(0.35, 0.75, 0.5 + 0.5 * n2));
+            col = mix(col, d4, smoothstep(0.62, 0.95, 0.5 + 0.5 * n3) * 0.55);
+            float spk = h21(floor(vW.xz * 0.9));
+            if (spk > 0.93) col = mix(col, vec3(1.0), 0.85);
+            col = mix(col, vec3(1.0), 0.10);
           } else {
             float n = h21(floor(vW.xz * 0.5) + floor(uTime * 2.0) * 0.13);
             col = mix(vec3(0.14, 0.4, 0.64), vec3(0.34, 0.62, 0.86), n);
@@ -189,25 +200,31 @@ export class RiftsWorld {
     this.scene.add(this.sun, this.sun.target);
     this.hemi = new THREE.HemisphereLight(0xbfd8ff, 0x4a5a4a, 0.85);
     this.scene.add(this.hemi);
-    this.scene.fog = new THREE.FogExp2(0xbcd2e2, 0.0032);
+    this.scene.fog = new THREE.FogExp2(0xcfe2f0, 0.0022);
 
     // blocky drifting clouds
+    const cloudGeo = new THREE.BoxGeometry(1, 1, 1);
     this.cloudMesh = new THREE.InstancedMesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, roughness: 1 }),
-      130,
+      cloudGeo,
+      new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.94, roughness: 1 }),
+      110,
     );
-    for (let i = 0; i < 130; i++) {
+    this.cloudShadow = new THREE.InstancedMesh(
+      cloudGeo,
+      new THREE.MeshStandardMaterial({ color: 0xb3c2d6, transparent: true, opacity: 0.85, roughness: 1 }),
+      110,
+    );
+    for (let i = 0; i < 110; i++) {
       this.cloudSeeds.push({
         x: (hash2(i, 1, 9001) - 0.5) * 840,
         y: 54 + hash2(i, 2, 9002) * 10,
         z: (hash2(i, 3, 9003) - 0.5) * 840,
-        sx: 6 + hash2(i, 4, 9004) * 14,
-        sy: 1.6 + hash2(i, 5, 9005) * 1.6,
-        sz: 6 + hash2(i, 6, 9006) * 14,
+        sx: 7 + hash2(i, 4, 9004) * 15,
+        sy: 1.6 + hash2(i, 5, 9005) * 1.8,
+        sz: 7 + hash2(i, 6, 9006) * 15,
       });
     }
-    this.scene.add(this.cloudMesh);
+    this.scene.add(this.cloudMesh, this.cloudShadow);
 
     this.scene.add(new THREE.Group()); // scene root group for entities
     this.buildEntities();
@@ -370,33 +387,39 @@ export class RiftsWorld {
     }
 
     const boxGeo = new THREE.BoxGeometry(0.92, 0.92, 0.5);
-    this.riftCoreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const midMat = new THREE.MeshStandardMaterial({ color: 0xffa8c4, emissive: 0xff5f8a, emissiveIntensity: 1.1, roughness: 0.4 });
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff77aa, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false });
+    this.riftCoreMat = new THREE.MeshBasicMaterial({ color: 0xfff6e8 });
+    const midMat = new THREE.MeshStandardMaterial({ color: 0xffc2ae, emissive: 0xff7d6e, emissiveIntensity: 1.15, roughness: 0.4 });
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xff8a70, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false });
     const core = new THREE.Group(), mid = new THREE.Group(), glow = new THREE.Group();
+    const inMask = (x: number, y: number) => x >= 0 && y >= 0 && x < S && y < S && mask[y][x];
     for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
       if (!mask[y][x]) continue;
       const px = x - c, py = c - y;
-      const m1 = new THREE.Mesh(boxGeo, this.riftCoreMat);
-      m1.position.set(px, py, 0.18);
+      // interior: pink plasma; boundary: bright stepped white ring
+      const edgeCell = !inMask(x + 1, y) || !inMask(x - 1, y) || !inMask(x, y + 1) || !inMask(x, y - 1);
+      if (edgeCell) {
+        const m1 = new THREE.Mesh(boxGeo, this.riftCoreMat);
+        m1.position.set(px, py, 0.18);
+        core.add(m1);
+      }
       const m2 = new THREE.Mesh(boxGeo, midMat);
       m2.position.set(px, py, -0.1);
       const m3 = new THREE.Mesh(boxGeo, glowMat);
       m3.position.set(px, py, -0.5);
       m3.scale.setScalar(1.05);
-      core.add(m1); mid.add(m2); glow.add(m3);
+      mid.add(m2); glow.add(m3);
     }
     g.add(core, mid, glow);
 
-    const sprite = this.makeGlowSprite("rgba(255,240,250,0.95)", "rgba(255,140,190,0.4)");
+    const sprite = this.makeGlowSprite("rgba(255,225,190,0.95)", "rgba(255,150,90,0.38)");
     sprite.scale.set(30, 30, 1);
     sprite.position.z = -2.5;
     this.riftSpriteMat = sprite.material as THREE.SpriteMaterial;
     g.add(sprite);
 
-    this.riftLight = new THREE.PointLight(0xfff0f6, 260, 48, 1.7);
+    this.riftLight = new THREE.PointLight(0xffb46a, 260, 48, 1.7);
     this.riftLight.position.set(0, 0, 2.4);
-    this.riftLight2 = new THREE.PointLight(0xff77aa, 190, 34, 1.8);
+    this.riftLight2 = new THREE.PointLight(0xff77aa, 130, 34, 1.8);
     this.riftLight2.position.set(0, 0, -1.5);
     g.add(this.riftLight, this.riftLight2);
 
@@ -419,6 +442,43 @@ export class RiftsWorld {
         spin: (hash2(i, 17, 929) - 0.5) * 2,
       });
     }
+
+    // vertical light pillar rising from the top of the tear
+    this.riftPillarMats = [];
+    const pillarSpec: [number, number, number][] = [[2.6, 7, 0.38], [1.7, 15, 0.26], [0.9, 23, 0.16]];
+    for (const [w, py, op] of pillarSpec) {
+      const pm = new THREE.MeshBasicMaterial({
+        color: 0xfff4e2, transparent: true, opacity: op,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const box = new THREE.Mesh(new THREE.BoxGeometry(w, 8, 0.7), pm);
+      box.position.set(0, py, -0.4);
+      g.add(box);
+      this.riftPillarMats.push(pm);
+    }
+
+    // drifting white sparks inside the tear
+    const sparkPos: number[] = [];
+    this.sparkVel = [];
+    for (let i = 0; i < 80; i++) {
+      let sx = 0, sy = 0, ok = false;
+      for (let t = 0; t < 12 && !ok; t++) {
+        sx = (hash2(i, t, 711) - 0.5) * 13;
+        sy = (hash2(i, t, 712) - 0.5) * 13;
+        ok = (Math.abs(sx) <= 3 && Math.abs(sy) <= 6.5) || (Math.abs(sy) <= 3 && Math.abs(sx) <= 6.5);
+      }
+      if (!ok) continue;
+      sparkPos.push(sx, sy, (hash2(i, 9, 713) - 0.5) * 1.6);
+      this.sparkVel.push(0.5 + hash2(i, 8, 714) * 0.9);
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.Float32BufferAttribute(sparkPos, 3));
+    const sm = new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.17, transparent: true, opacity: 0.9,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+    });
+    this.riftSparks = new THREE.Points(sg, sm);
+    g.add(this.riftSparks);
 
     this.scene.add(g);
     this.riftGroup = g;
@@ -443,6 +503,9 @@ export class RiftsWorld {
     this.riftGroup = null;
     this.debris = [];
     this.bolts = [];
+    this.riftPillarMats = [];
+    this.riftSparks = undefined;
+    this.sparkVel = [];
   }
 
   /** Pixel-tile gate: dark stepped frame + animated cyan tile field + glow rim. */
@@ -469,19 +532,24 @@ export class RiftsWorld {
         varying vec2 vUv;
         float h21(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }
         void main() {
-          vec2 t = floor(vUv * vec2(6.0, 9.0));
-          float n = h21(t + floor(uTime * 3.0) * 0.37);
-          float n2 = h21(t * 1.7 + floor(uTime * 2.2));
-          float b = 0.55 + 0.45 * sin(n * 6.2831 + uTime * 2.0 + n2 * 3.0);
-          vec3 col = mix(vec3(0.08, 0.62, 0.74), vec3(0.72, 1.0, 1.0), b);
-          if (h21(t + floor(uTime * 0.5) * 0.77) > 0.92) col = vec3(1.0);
-          float edge = max(max(step(vUv.x, 0.02), step(1.0 - vUv.x, 0.02)), max(step(vUv.y, 0.02), step(1.0 - vUv.y, 0.02)));
-          col = mix(col, vec3(1.0), edge * 0.85);
-          gl_FragColor = vec4(col, 0.94);
+          // coarse square-tile mosaic: deep teal → pale cyan → white, top rows brighter
+          vec2 tc = floor(vUv * vec2(12.0, 7.0));
+          float n = h21(tc);
+          float n2 = h21(tc + 4.7);
+          float bias = mix(vUv.y, 1.0 - vUv.x, 0.6);
+          float v = n * 0.55 + bias * 0.5 + n2 * 0.2 + 0.04 * sin(uTime * 2.4 + n * 21.0);
+          vec3 c1 = vec3(0.10, 0.45, 0.58);
+          vec3 c2 = vec3(0.28, 0.68, 0.78);
+          vec3 c3 = vec3(0.60, 0.90, 0.95);
+          vec3 c4 = vec3(0.88, 0.99, 1.00);
+          vec3 col = v < 0.34 ? c1 : v < 0.52 ? c2 : v < 0.70 ? c3 : v < 0.87 ? c4 : vec3(1.0);
+          float edge = max(max(step(vUv.x, 0.055), step(1.0 - vUv.x, 0.055)), max(step(vUv.y, 0.055), step(1.0 - vUv.y, 0.055)));
+          col = mix(col, vec3(1.0), edge * 0.95);
+          gl_FragColor = vec4(col, 0.96);
         }`,
     });
-    const surf = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 8.6), this.gateShader);
-    surf.position.set(0, 1 + 5, 0.06);
+    const surf = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 4.6), this.gateShader);
+    surf.position.set(0, 4.0, 0.06);
     g.add(surf);
 
     // glowing stepped rim
@@ -496,19 +564,53 @@ export class RiftsWorld {
       m.position.set(x, y, z);
       g.add(m);
     };
-    rim(6.6, 0.22, 0, 1 + 9.1, 0.1);
-    rim(6.6, 0.22, 0, 1 + 0.95, 0.1);
-    rim(0.22, 8.4, -3.1, 1 + 5, 0.1);
-    rim(0.22, 8.4, 3.1, 1 + 5, 0.1);
+    rim(7.9, 0.22, 0, 4.0 + 2.41, 0.1);
+    // stepped silhouette cap on the top edge
+    const capXs: [number, number][] = [[-3.4, 0.5], [-1.9, 0.8], [-0.5, 0.6], [0.9, 0.9], [2.3, 0.55], [3.5, 0.35]];
+    for (const [cx, ch] of capXs) {
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(1.3, ch, 0.2), rimMat());
+      cap.position.set(cx, 4.0 + 2.41 + 0.11 + ch / 2, 0.1);
+      g.add(cap);
+    }
+    rim(7.9, 0.22, 0, 4.0 - 2.41, 0.1);
+    rim(0.22, 5.0, -3.91, 4.0, 0.1);
+    rim(0.22, 5.0, 3.91, 4.0, 0.1);
+
+    // gold/brass trim on the platform edge + frame cap (reference: dark stone w/ gold lines)
+    const goldMat = new THREE.MeshBasicMaterial({ color: 0xffd27a });
+    const gold = (w: number, h: number, d: number, x: number, y: number, z: number) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), goldMat);
+      m.position.set(x, y, z);
+      g.add(m);
+    };
+    gold(9.4, 0.16, 0.16, 0, 1.52, 4.6);
+    gold(9.4, 0.16, 0.16, 0, 1.52, -4.6);
+    gold(0.16, 0.16, 9.4, 4.6, 1.52, 0);
+    gold(0.16, 0.16, 9.4, -4.6, 1.52, 0);
+
+    // colored light beams rising behind the panel (red / orange / magenta / gold)
+    this.gateBeamMats = [];
+    const beamCols = [0xff4a3d, 0xff8a3d, 0xff3d9e, 0xffcf4a, 0xff6f5f, 0xffb13d];
+    for (let i = 0; i < 6; i++) {
+      const bm = new THREE.MeshBasicMaterial({
+        color: beamCols[i], transparent: true,
+        opacity: 0.13 + (i % 3) * 0.05, blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const bh = 16 + hash2(i, 3, 777) * 10;
+      const bx = new THREE.Mesh(new THREE.BoxGeometry(0.5 + hash2(i, 4, 778) * 0.7, bh, 0.5), bm);
+      bx.position.set(-5 + i * 2 + (hash2(i, 5, 779) - 0.5), bh / 2 + 1, -1.8);
+      g.add(bx);
+      this.gateBeamMats.push(bm);
+    }
 
     const sprite = this.makeGlowSprite("rgba(210,255,255,0.9)", "rgba(80,220,240,0.35)");
-    sprite.scale.set(16, 18, 1);
-    sprite.position.set(0, 6, -1.6);
+    sprite.scale.set(18, 12, 1);
+    sprite.position.set(0, 4.0, -1.6);
     this.gateSpriteMat = sprite.material as THREE.SpriteMaterial;
     g.add(sprite);
 
     const pl = new THREE.PointLight(0x9feaff, 160, 30, 1.8);
-    pl.position.set(0, 6, 3);
+    pl.position.set(0, 4.0, 3);
     g.add(pl);
 
     this.scene.add(g);
@@ -530,12 +632,6 @@ export class RiftsWorld {
       rec!.chunk.set(lx, gyv, lz, b);
     };
     for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) put(at.x + dx, gy + 1, at.z + dz, B.FRAME);
-    for (let dx = -3; dx <= 3; dx++) for (let dy = 1; dy <= 9; dy++) {
-      const edge = dy === 9 || Math.abs(dx) === 3;
-      if (!edge) continue;
-      if (Math.abs(dx) === 3 && dy >= 8) continue; // stepped corner
-      put(at.x + dx, gy + 1 + dy, at.z, B.FRAME);
-    }
     this.rebuildMesh(rec, cx, cz);
     // neighbor chunks may share the platform edge
     if (at.x - cx * CX < 2) { const r = this.chunkRec(cx - 1, cz); if (r) this.rebuildMesh(r, cx - 1, cz); }
@@ -560,6 +656,7 @@ export class RiftsWorld {
     });
     this.gateGroup = null;
     this.gateRimMats = [];
+    this.gateBeamMats = [];
   }
 
   /* ── dimension switch ── */
@@ -572,9 +669,9 @@ export class RiftsWorld {
       if (rec.glow) { this.scene.remove(rec.glow); rec.glow.geometry.dispose(); }
     }
     this.chunks.clear();
-    (this.scene.fog as THREE.FogExp2).color.set(to === "prime" ? 0xbcd2e2 : 0xffcfe6);
-    (this.scene.fog as THREE.FogExp2).density = to === "prime" ? 0.0032 : 0.0042;
+    (this.scene.fog as THREE.FogExp2).density = to === "prime" ? 0.0022 : 0.0038;
     (this.cloudMesh.material as THREE.MeshStandardMaterial).color.set(to === "prime" ? 0xffffff : 0xffeaf6);
+    (this.cloudShadow.material as THREE.MeshStandardMaterial).color.set(to === "prime" ? 0xb3c2d6 : 0xd9b8cf);
     this.waterMat.uniforms.uPastel.value = to === "rainbow" ? 1 : 0;
     this.buildEntities();
     const sp = to === "prime" ? { x: 8, z: 8 } : { x: 10, z: -12 };
@@ -629,9 +726,9 @@ export class RiftsWorld {
     const isRainbow = this.dim === "rainbow";
 
     const topDay = new THREE.Color(isRainbow ? 0x9fe8d8 : 0x6fb9f0);
-    const botDay = new THREE.Color(isRainbow ? 0xffd9ec : 0xdceaf2);
+    const botDay = new THREE.Color(isRainbow ? 0xd8ece2 : 0xdceaf2);
     const topNight = new THREE.Color(isRainbow ? 0x1c2a4a : 0x0a1024);
-    const botNight = new THREE.Color(isRainbow ? 0x3a2a4a : 0x141d38);
+    const botNight = new THREE.Color(isRainbow ? 0x26384a : 0x141d38);
     (this.skyMat.uniforms.uTop.value as THREE.Color).copy(topNight).lerp(topDay, day);
     (this.skyMat.uniforms.uBottom.value as THREE.Color).copy(botNight).lerp(botDay, day);
     (this.scene.fog as THREE.FogExp2).color.copy((this.skyMat.uniforms.uBottom.value as THREE.Color));
@@ -658,8 +755,13 @@ export class RiftsWorld {
       s.set(c.sx, c.sy, c.sz);
       M.compose(v, q, s);
       cm.setMatrixAt(i, M);
+      v.y -= c.sy * 0.62;
+      s.set(c.sx * 0.96, c.sy * 0.8, c.sz * 0.96);
+      M.compose(v, q, s);
+      this.cloudShadow.setMatrixAt(i, M);
     }
     cm.instanceMatrix.needsUpdate = true;
+    this.cloudShadow.instanceMatrix.needsUpdate = true;
 
     // keep sky + camera-centered far plane in reach
     const skyMesh = this.scene.children.find((o) => (o as THREE.Mesh).geometry instanceof THREE.SphereGeometry) as THREE.Mesh;
@@ -675,7 +777,21 @@ export class RiftsWorld {
     this.riftCoreMat.color.setScalar(flick * (1 + this.riftFlash * 0.8));
     this.riftSpriteMat.opacity = (0.4 + 0.1 * Math.sin(t * 5.3)) * (1 + this.riftFlash * 1.4);
     this.riftLight.intensity = 260 * flick * (1 + this.riftFlash * 2.6);
-    this.riftLight2.intensity = 190 * (1 + this.riftFlash * 2.2);
+    this.riftLight2.intensity = 130 * (1 + this.riftFlash * 2.2);
+    for (let i = 0; i < this.riftPillarMats.length; i++) {
+      const base = [0.38, 0.26, 0.16][i] ?? 0.16;
+      this.riftPillarMats[i].opacity = base * (0.75 + 0.25 * Math.sin(t * 7.3 + i * 2.1)) * (1 + this.riftFlash * 0.8);
+    }
+    if (this.riftSparks) {
+      const attr = this.riftSparks.geometry.getAttribute("position") as THREE.BufferAttribute;
+      for (let i = 0; i < attr.count; i++) {
+        let y = attr.getY(i) + this.sparkVel[i] * dt;
+        if (y > 6.5) y = -6.5;
+        attr.setY(i, y);
+      }
+      attr.needsUpdate = true;
+      (this.riftSparks.material as THREE.PointsMaterial).opacity = 0.75 * flick + 0.2 * this.riftFlash;
+    }
 
     // debris orbit
     for (const d of this.debris) {
@@ -724,9 +840,9 @@ export class RiftsWorld {
   private spawnBolt(): void {
     const start = this.boltTarget();
     const end = new THREE.Vector3(
-      start.x + (Math.random() - 0.5) * 26,
-      start.y + (Math.random() - 0.5) * 12,
-      start.z + (Math.random() - 0.5) * 18,
+      start.x + (Math.random() - 0.5) * 34,
+      start.y + (Math.random() - 0.5) * 10,
+      start.z + (Math.random() - 0.5) * 22,
     );
     // occasionally drop to the ground
     if (Math.random() < 0.5) {
@@ -755,7 +871,7 @@ export class RiftsWorld {
       const dir = b.clone().sub(a);
       const len = dir.length();
       if (len < 0.01) continue;
-      const m = new THREE.Mesh(new THREE.BoxGeometry(0.11, len, 0.11), mat);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.06, len, 0.06), mat);
       m.position.copy(a).addScaledVector(dir, 0.5);
       m.quaternion.setFromUnitVectors(up, dir.normalize());
       grp.add(m);
@@ -772,6 +888,9 @@ export class RiftsWorld {
     const pulse = 0.75 + 0.25 * Math.sin(this.clockT * 2.4);
     for (const m of this.gateRimMats) m.color.setRGB(1, 1, 1).multiplyScalar(pulse * 0.9 + 0.1);
     this.gateSpriteMat.opacity = 0.5 + 0.15 * Math.sin(this.clockT * 1.7);
+    for (let i = 0; i < this.gateBeamMats.length; i++) {
+      this.gateBeamMats[i].opacity = (0.12 + (i % 3) * 0.05) * (0.7 + 0.3 * Math.sin(this.clockT * 1.9 + i * 1.7));
+    }
     void dt;
   }
 
