@@ -1,0 +1,551 @@
+/* AquaLab command-deck theme — deep-sea glass + signal cyan. */
+
+.aqua-lab {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #020507;
+  font-family: "Segoe UI Variable", "Helvetica Neue", Arial, sans-serif;
+  --aqua: #6fe3ff;
+  --aqua-dim: rgba(111, 227, 255, 0.55);
+  --panel: rgba(3, 10, 15, 0.82);
+  --line: rgba(120, 200, 235, 0.16);
+  --ink: #d9eef5;
+  --muted: #7d97a3;
+  color: var(--ink);
+}
+
+.aqua-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.aqua-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 40%, #07202c, #010304 70%);
+}
+
+.aqua-loading__core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.aqua-loading__core strong {
+  letter-spacing: 0.5em;
+  font-size: 26px;
+  font-weight: 200;
+  color: #dff6ff;
+  text-shadow: 0 0 24px rgba(111, 227, 255, 0.6);
+}
+
+.aqua-loading__core small {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+}
+
+.aqua-loading__ring {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 1px solid rgba(111, 227, 255, 0.25);
+  border-top-color: var(--aqua);
+  animation: aqua-spin 1s linear infinite;
+  box-shadow: 0 0 30px rgba(111, 227, 255, 0.2), inset 0 0 20px rgba(111, 227, 255, 0.1);
+}
+
+@keyframes aqua-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* top bar */
+.aqua-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 14px;
+  background: linear-gradient(180deg, rgba(2, 8, 12, 0.92), rgba(2, 8, 12, 0.55) 80%, transparent);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.aqua-topbar > * {
+  pointer-events: auto;
+}
+
+.aqua-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--aqua);
+}
+
+.aqua-brand strong {
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: #eaf8ff;
+}
+
+.aqua-brand span {
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+.aqua-time {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.aqua-time button,
+.aqua-topactions button {
+  min-width: 34px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  background: rgba(4, 14, 20, 0.7);
+  backdrop-filter: blur(8px);
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.aqua-time button:hover,
+.aqua-topactions button:hover {
+  color: #fff;
+  border-color: var(--aqua-dim);
+}
+
+.aqua-time button.is-active {
+  color: #04121a;
+  background: var(--aqua);
+  border-color: var(--aqua);
+  box-shadow: 0 0 14px rgba(111, 227, 255, 0.5);
+}
+
+.aqua-topactions {
+  display: flex;
+  gap: 6px;
+}
+
+/* docks */
+.aqua-dock {
+  position: absolute;
+  top: 60px;
+  bottom: 34px;
+  width: 228px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 9;
+  padding: 12px;
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  transition: transform 0.25s ease;
+  scrollbar-width: thin;
+}
+
+.aqua-dock--left {
+  left: 12px;
+  transform: translateX(calc(-100% - 20px));
+}
+
+.aqua-dock--right {
+  right: 12px;
+  width: 248px;
+  transform: translateX(calc(100% + 20px));
+}
+
+.aqua-dock.is-open {
+  transform: translateX(0);
+}
+
+.aqua-dock section {
+  margin-bottom: 16px;
+}
+
+.aqua-dock h4 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  color: var(--aqua);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.aqua-docktab {
+  position: absolute;
+  top: 60px;
+  z-index: 10;
+  width: 26px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--aqua);
+  cursor: pointer;
+}
+
+.aqua-docktab--left {
+  left: 12px;
+}
+
+.aqua-docktab--left.is-open {
+  left: 248px;
+}
+
+.aqua-docktab--right {
+  right: 12px;
+}
+
+.aqua-docktab--right.is-open {
+  right: 268px;
+}
+
+.aqua-tools {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.aqua-tools button {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  background: rgba(10, 24, 32, 0.5);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.aqua-tools button span {
+  font-size: 7px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.aqua-tools button:hover {
+  color: #fff;
+  border-color: var(--aqua-dim);
+}
+
+.aqua-tools button.is-active {
+  color: #04121a;
+  background: var(--aqua);
+  border-color: var(--aqua);
+  box-shadow: 0 0 12px rgba(111, 227, 255, 0.45);
+}
+
+.aqua-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.aqua-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  background: rgba(10, 24, 32, 0.5);
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.aqua-chips button.is-active {
+  color: #04121a;
+  background: var(--aqua);
+  border-color: var(--aqua);
+}
+
+.aqua-scenarios {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.aqua-scenarios button {
+  padding: 9px 6px;
+  border: 1px solid var(--line);
+  background: rgba(10, 24, 32, 0.5);
+  color: var(--ink);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.aqua-scenarios button:hover {
+  border-color: var(--aqua);
+  box-shadow: 0 0 10px rgba(111, 227, 255, 0.25);
+}
+
+.aqua-scenarios button.is-hot {
+  border-color: rgba(255, 120, 90, 0.4);
+  color: #ffb59d;
+}
+
+.aqua-scenarios button.is-hot:hover {
+  border-color: #ff7a5c;
+  box-shadow: 0 0 10px rgba(255, 122, 92, 0.3);
+}
+
+.aqua-weather {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.aqua-weather button {
+  flex: 1;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: rgba(10, 24, 32, 0.5);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.aqua-weather button.is-active {
+  color: #04121a;
+  background: var(--aqua);
+  border-color: var(--aqua);
+}
+
+.aqua-slider {
+  display: block;
+  margin: 8px 0;
+}
+
+.aqua-slider span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.aqua-slider input {
+  width: 100%;
+  accent-color: var(--aqua);
+  height: 18px;
+  cursor: pointer;
+}
+
+.aqua-toggles {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.aqua-toggles button {
+  flex: 1;
+  padding: 8px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  background: rgba(10, 24, 32, 0.5);
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.aqua-toggles button.is-active {
+  color: var(--aqua);
+  border-color: var(--aqua-dim);
+}
+
+.aqua-toggles button.is-extreme {
+  color: #ffd166;
+  border-color: rgba(255, 209, 102, 0.6);
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.25);
+}
+
+.aqua-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.aqua-stats span {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  background: rgba(10, 24, 32, 0.5);
+}
+
+.aqua-stats small {
+  display: block;
+  color: var(--muted);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+}
+
+.aqua-stats b {
+  color: #eaf8ff;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.aqua-inspect {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--aqua-dim);
+  background: rgba(8, 30, 40, 0.6);
+  color: #c9f2ff;
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  font-family: "Consolas", "Segoe UI Mono", monospace;
+}
+
+.aqua-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.aqua-logwrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+}
+
+.aqua-log {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+}
+
+.aqua-log__line {
+  margin: 0;
+  padding: 6px 8px;
+  border-left: 2px solid var(--aqua-dim);
+  background: rgba(10, 24, 32, 0.5);
+  font-size: 9px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.aqua-log__line--warn {
+  border-left-color: #ffd166;
+}
+
+.aqua-log__line--alert,
+.aqua-log__line--err {
+  border-left-color: #ff7a5c;
+  color: #ffc9b8;
+}
+
+.aqua-log__line--ok {
+  border-left-color: #7dffb0;
+}
+
+.aqua-reset {
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 122, 92, 0.4);
+  background: rgba(40, 12, 8, 0.4);
+  color: #ffb59d;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+}
+
+.aqua-reset:hover {
+  border-color: #ff7a5c;
+  box-shadow: 0 0 12px rgba(255, 122, 92, 0.3);
+}
+
+.aqua-hints {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: linear-gradient(0deg, rgba(2, 8, 12, 0.9), transparent);
+  z-index: 10;
+  pointer-events: none;
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.aqua-hints b {
+  color: var(--aqua);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .aqua-brand span {
+    display: none;
+  }
+
+  .aqua-dock {
+    width: 200px;
+  }
+
+  .aqua-dock--right {
+    width: 210px;
+  }
+
+  .aqua-hints span:nth-child(n + 4) {
+    display: none;
+  }
+}
