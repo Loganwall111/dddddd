@@ -15,8 +15,6 @@
   display: block;
 }
 
-<<<<<<< HEAD
-=======
 /* engine error surface */
 .rb-error {
   position: absolute;
@@ -37,7 +35,6 @@
 .rb-error-title { color: #ff8793; letter-spacing: 0.18em; font-size: 9px; margin-bottom: 6px; }
 .rb-error pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
 
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
 /* ── HUD ── */
 .rb-hud { position: absolute; inset: 0; pointer-events: none; color: #eef4f8; }
 .rb-info {

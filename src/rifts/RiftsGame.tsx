@@ -31,10 +31,7 @@ export default function RiftsGame({ onExit }: { onExit: () => void }) {
   const [stats, setStats] = useState<RiftsStats | null>(null);
   const [hot, setHot] = useState(0);
   const [log, setLog] = useState<{ id: number; msg: string; kind: string }[]>([]);
-<<<<<<< HEAD
-=======
   const [engineError, setEngineError] = useState<string | null>(null);
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
   const logId = useRef(0);
 
   const previews = useMemo(() => HOTBAR_BLOCKS.map((b) => tilePreview(BLOCKS[b].tiles[1])), []);
@@ -52,10 +49,7 @@ export default function RiftsGame({ onExit }: { onExit: () => void }) {
       onStats: setStats,
       onLog: pushLog,
       onDown: () => setPaused(false),
-<<<<<<< HEAD
-=======
       onError: setEngineError,
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
     });
     worldRef.current = world;
     void world.init();
@@ -100,15 +94,12 @@ export default function RiftsGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="rb-root">
       <canvas ref={canvasRef} className="rb-canvas" />
-<<<<<<< HEAD
-=======
       {engineError && (
         <div className="rb-error">
           <div className="rb-error-title">ENGINE ERROR</div>
           <pre>{engineError.split("\n").slice(0, 8).join("\n")}</pre>
         </div>
       )}
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
 
       {playing && !paused && !down && (
         <div className="rb-hud">

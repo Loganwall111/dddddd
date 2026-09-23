@@ -4,11 +4,7 @@
 export const CX = 16; // chunk size x
 export const CY = 48; // chunk height
 export const CZ = 16; // chunk size z
-<<<<<<< HEAD
-export const WATER_PRIME = 12;
-=======
 export const WATER_PRIME = 14;
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
 export const WATER_RAINBOW = 8;
 
 // ── block ids ──
@@ -57,17 +53,10 @@ export const HOTBAR_BLOCKS: number[] = [B.GRASS, B.DIRT, B.STONE, B.PLANK, B.LOG
 
 /* ── tiny deterministic noise ── */
 export function hash2(x: number, z: number, seed: number): number {
-<<<<<<< HEAD
-  let h = seed + x * 374761393 + z * 668265263;
-  h = (h ^ (h >> 13)) * 1274126177;
-  h = h ^ (h >> 16);
-  return ((h >>> 0) % 100000) / 100000;
-=======
   let h = ((x | 0) * 374761393 + (z | 0) * 668265263 + (seed | 0) * 1442695041) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   h = h ^ (h >>> 16);
   return (h >>> 0) / 4294967296;
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
 }
 function vnoise(x: number, z: number, seed: number): number {
   const xi = Math.floor(x), zi = Math.floor(z);
@@ -194,15 +183,12 @@ export function islandsNear(x0: number, z0: number, x1: number, z1: number, seed
   return out;
 }
 
-<<<<<<< HEAD
-=======
 /* shared terrain height (mirrored nowhere else) */
 export function terrainHeightAt(x: number, z: number, dim: Dim, seed: number): number {
   if (dim === "prime") return Math.floor(8 + fbm2(x * 0.02, z * 0.02, seed, 4) * 14 + fbm2(x * 0.005, z * 0.005, seed + 5, 2) * 8);
   return Math.floor(6 + fbm2(x * 0.024, z * 0.024, seed + 40, 3) * 6);
 }
 
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
 /* ── terrain generation into a chunk ── */
 export function generateChunk(c: Chunk, dim: Dim, seed: number): void {
   const x0 = c.cx * CX, z0 = c.cz * CZ;
@@ -211,16 +197,7 @@ export function generateChunk(c: Chunk, dim: Dim, seed: number): void {
   for (let lx = 0; lx < CX; lx++) {
     for (let lz = 0; lz < CZ; lz++) {
       const x = x0 + lx, z = z0 + lz;
-<<<<<<< HEAD
-      let h: number;
-      if (dim === "prime") {
-        h = Math.floor(14 + fbm2(x * 0.02, z * 0.02, seed, 4) * 10 + fbm2(x * 0.005, z * 0.005, seed + 5, 2) * 7);
-      } else {
-        h = Math.floor(10 + fbm2(x * 0.024, z * 0.024, seed + 40, 3) * 5);
-      }
-=======
       const h = terrainHeightAt(x, z, dim, seed);
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
       const top: number = dim === "prime" ? (h <= wl ? B.SAND : B.GRASS) : B.P_GRASS;
       for (let y = 0; y <= h; y++) {
         let b: number = dim === "prime" ? (y >= h - 2 ? B.DIRT : B.STONE) : B.P_DIRT;
@@ -342,13 +319,8 @@ export function buildChunkMesh(c: Chunk, getNeighbor: (x: number, y: number, z: 
       if (isWater) {
         if (nb !== B.AIR) continue;
       } else {
-<<<<<<< HEAD
-        if (nb !== B.AIR && !(nbDef.transparent && nb !== b)) continue;
-        if (nbDef.transparent && nbDef.glow) continue;
-=======
         if (nb !== B.AIR && !(nbDef?.transparent && nb !== b)) continue;
         if (nbDef?.transparent && nbDef.glow) continue;
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
       }
       const tile = f.dir[1] === 1 ? def.tiles[0] : f.dir[1] === -1 ? def.tiles[2] : def.tiles[1];
       addFace(m, tile, f.shade, f.corners, wx, y, wz, isWater);

@@ -4,11 +4,7 @@
    rainbow dimension, and soft blocky clouds in the fog. */
 import * as THREE from "three";
 import {
-<<<<<<< HEAD
-  B, BLOCKS, HOTBAR_BLOCKS, CX, CY, CZ,
-=======
   B, BLOCKS, HOTBAR_BLOCKS, CX, CY, CZ, terrainHeightAt,
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
   Chunk, Dim, buildChunkMesh, generateChunk, hash2, makeAtlas, raycastVoxel,
 } from "./voxel";
 
@@ -20,10 +16,7 @@ export interface RiftsCallbacks {
   onStats: (s: RiftsStats) => void;
   onLog: (msg: string, kind: string) => void;
   onDown: () => void;
-<<<<<<< HEAD
-=======
   onError?: (msg: string) => void;
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
 }
 
 const STEP = 1 / 60;
@@ -113,10 +106,7 @@ export class RiftsWorld {
   }
 
   async init(): Promise<void> {
-<<<<<<< HEAD
-=======
     try {
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, powerPreference: "high-performance" });
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.06;
@@ -257,39 +247,17 @@ export class RiftsWorld {
       this.frame();
     };
     loop();
-<<<<<<< HEAD
-=======
     } catch (e) {
       const msg = e instanceof Error ? (e.stack || e.message) : String(e);
       console.error(msg);
       this.cb.onError?.(msg);
       throw e;
     }
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
   }
 
   /* ── helpers ── */
   private terrainHeight(x: number, z: number, dim: Dim): number {
-<<<<<<< HEAD
-    // mirrors generateChunk's surface formula (no caves/trees)
-    const fbm = (fx: number, fz: number, seed: number, oct: number) => {
-      let v = 0, amp = 0.5, f = 1;
-      for (let i = 0; i < oct; i++) {
-        const xi = Math.floor(fx * f), zi = Math.floor(fz * f);
-        const xf = fx * f - xi, zf = fz * f - zi;
-        const s = (t: number) => t * t * (3 - 2 * t);
-        const a = hash2(xi, zi, seed + i * 101), b = hash2(xi + 1, zi, seed + i * 101);
-        const c = hash2(xi, zi + 1, seed + i * 101), d = hash2(xi + 1, zi + 1, seed + i * 101);
-        v += (a + (b - a) * s(xf) + (c - a) * s(zf) + (a - b - c + d) * s(xf) * s(zf)) * amp;
-        amp *= 0.5; f *= 2.07;
-      }
-      return v;
-    };
-    if (dim === "prime") return Math.floor(14 + fbm(x * 0.02, z * 0.02, this.rngSeed, 4) * 10 + fbm(x * 0.005, z * 0.005, this.rngSeed + 5, 2) * 7);
-    return Math.floor(10 + fbm(x * 0.024, z * 0.024, this.rngSeed + 40, 3) * 5);
-=======
     return terrainHeightAt(x, z, dim, this.rngSeed);
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
   }
 
   private getBlock(x: number, y: number, z: number): number {
@@ -711,13 +679,9 @@ export class RiftsWorld {
   }
 
   /* ── frame ── */
-<<<<<<< HEAD
-  private frame(): void {
-=======
   private errReported = false;
   private frame(): void {
     try {
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
     const now = performance.now();
     const dt = Math.min(0.1, (now - this.lastT) / 1000);
     this.lastT = now;
@@ -748,8 +712,6 @@ export class RiftsWorld {
         hp: this.hp, down: this.down,
       });
     }
-<<<<<<< HEAD
-=======
     } catch (e) {
       if (!this.errReported) {
         this.errReported = true;
@@ -758,7 +720,6 @@ export class RiftsWorld {
         this.cb.onError?.(msg);
       }
     }
->>>>>>> 0e80b88 (Fix black screen: mesher crashed on every face next to air; add lakes)
   }
 
   private updateEnvironment(dt: number): void {
