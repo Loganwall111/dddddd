@@ -39,7 +39,13 @@ public final class EnterTheSift implements ModInitializer {
         run(level, String.format(Locale.ROOT,"execute in %s positioned %.2f %.2f %.2f run %s",level.dimension().identifier(),f.x(),f.y(),f.z(),command));
     }
     private static boolean hasTag(ServerLevel level, AncientFrame f, String tag) {
-        return !level.getEntitiesOfClass(Entity.class,new AABB(f.x()-1,f.y()-1,f.z()-1,f.x()+1,f.y()+1,f.z()+1),e -> e.getTags().contains(tag)).isEmpty();
+        // Use the command tag selector API, avoiding version-specific Entity tag accessors.
+        java.util.concurrent.atomic.AtomicBoolean found = new java.util.concurrent.atomic.AtomicBoolean(false);
+        var source = level.getServer().createCommandSourceStack().withSuppressedOutput()
+            .withCallback((success, value) -> found.set(success && value > 0));
+        String query=String.format(Locale.ROOT,"execute in %s positioned %.2f %.2f %.2f if entity @e[type=minecraft:marker,tag=%s,distance=..1]",level.dimension().identifier(),f.x(),f.y(),f.z(),tag);
+        level.getServer().getCommands().performPrefixedCommand(source, query);
+        return found.get();
     }
     private static boolean gauntlet(ItemStack stack) { return stack.is(SiftContent.GAUNTLET) || stack.is(SiftContent.RED_GAUNTLET); }
     private static boolean note(Level world, BlockPos pos) {
@@ -75,8 +81,8 @@ public final class EnterTheSift implements ModInitializer {
             }
         });
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
-            if (entity.getTags().contains("sift.guardian") && entity.level() instanceof ServerLevel level)
-                run(level,"execute as "+entity.getUUID()+" at @s run function entersift:guardian/slain");
+            if (entity.level() instanceof ServerLevel level)
+                run(level,"execute as "+entity.getUUID()+" at @s if entity @s[tag=sift.guardian] run function entersift:guardian/slain");
         });
         UseBlockCallback.EVENT.register((player,world,hand,hit) -> {
             BlockPos pos=hit.getBlockPos();
