@@ -39,3 +39,10 @@ processResources {
 
 // Shader resources are also consumed by the sources archive.
 tasks.named("sourcesJar") { dependsOn tasks.named("bundleShaders") }
+
+// CI API probe helper (tools/probe): writes the compile classpath to a file.
+tasks.register('printProbeClasspath') {
+    def out = layout.buildDirectory.file('probe-classpath.txt')
+    def cp = sourceSets.client.compileClasspath + sourceSets.main.compileClasspath
+    doLast { def f = out.get().asFile; f.parentFile.mkdirs(); f.text = cp.files.findAll { it.exists() }.join(':') }
+}

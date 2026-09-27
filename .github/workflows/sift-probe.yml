@@ -1,0 +1,20 @@
+name: Enter the Sift — API probe
+on:
+  push:
+    paths: ['fabric-mod/tools/probe/**', '.github/workflows/sift-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fabric-mod
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: '25' }
+      - uses: gradle/actions/setup-gradle@v4
+      - run: bash tools/probe/probe.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: api-probe, path: fabric-mod/build/probe/ }
