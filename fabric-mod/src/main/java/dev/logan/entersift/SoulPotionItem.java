@@ -26,7 +26,7 @@ public final class SoulPotionItem extends Item {
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
                 if (stack.isEmpty()) return new ItemStack(Items.GLASS_BOTTLE);
-                if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
+                if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) EnterTheSift.runAs(player, "give @s minecraft:glass_bottle");
             }
         }
         return stack;
