@@ -36,3 +36,6 @@ processResources {
     inputs.property 'version', project.version
     filesMatching('fabric.mod.json') { expand version: project.version }
 }
+
+// Shader resources are also consumed by the sources archive.
+tasks.named("sourcesJar") { dependsOn tasks.named("bundleShaders") }
