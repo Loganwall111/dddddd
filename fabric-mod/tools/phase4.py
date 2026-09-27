@@ -333,7 +333,7 @@ def sky_textures():
     out = Image.alpha_composite(glow, img)
     out.save(env / "sky_shard.png")
     # Pillar: soft vertical column (gaussian across, fades at both ends).
-    pw, ph = 32, 128
+    pw, ph = 64, 64
     img = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
     px = img.load()
     for y in range(ph):
