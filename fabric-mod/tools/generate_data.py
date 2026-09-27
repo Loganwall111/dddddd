@@ -380,3 +380,5 @@ print('Generated Sift data, models, recipes and original animated textures.')
 # Final reference-driven pass; kept separate so the base gameplay generator stays readable.
 from visual_pass import generate as generate_visual_pass
 generate_visual_pass(ROOT, RES, DATA, fn, js, asset, display, png)
+from expansion import generate as generate_expansion
+generate_expansion(ROOT, RES, DATA, fn, js, asset, display, png)

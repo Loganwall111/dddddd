@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:deepslate",
+    "minecraft:amethyst_shard",
+    "minecraft:echo_shard"
+  ],
+  "result": {
+    "id": "entersift:sonorous_deepslate",
+    "count": 8
+  }
+}

@@ -1,0 +1,1 @@
+function entersift:ritual/singer

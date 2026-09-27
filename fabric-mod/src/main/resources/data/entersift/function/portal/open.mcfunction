@@ -1,3 +1,4 @@
+kill @e[type=minecraft:block_display,tag=sift.forming,distance=..1]
 kill @e[type=minecraft:block_display,tag=sift.singer,distance=..6]
 tag @s remove sift.ritual
 tag @s add sift.portal

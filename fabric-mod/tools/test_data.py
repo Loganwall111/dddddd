@@ -21,17 +21,17 @@ class DataContracts(unittest.TestCase):
         for dim in ['minecraft:overworld','minecraft:the_nether','minecraft:the_end','entersift:the_sift']:
             self.assertIn(dim,text)
         self.assertIn('$(dimension)',fn('travel/return_macro'))
-    def test_ritual_six_delayed_replies(self):
-        for i,t in enumerate([80,104,128,152,176,200]):
+    def test_ritual_eight_delayed_replies(self):
+        for i,t in enumerate([60,84,108,132,156,180,204,228]):
             self.assertIn(f'matches {t} run function entersift:ritual/note_{i}',fn('ritual/tick'))
             self.assertIn(f'$(n{i}x)',fn(f'ritual/note_{i}'))
-        self.assertIn('matches 220..',fn('ritual/tick'))
+        self.assertIn('matches 350..',fn('ritual/tick'))
     def test_gauntlet_cost_and_cooldown(self):
         text=fn('rift/punch')
         self.assertLess(text.index('unless block'),text.index('remove @s sift.souls 10'))
         self.assertIn('sift.cooldown 60',text)
     def test_rift_expires(self):
-        self.assertIn('matches 900.. run function entersift:rift/close',fn('rift/tick'))
+        self.assertIn('matches 6000.. run function entersift:rift/close',fn('rift/tick'))
         self.assertIn('kill @s',fn('rift/close'))
         self.assertIn('tag=sift.rift_visual',fn('rift/close'))
     def test_haunting_is_opt_in(self):
@@ -68,8 +68,8 @@ class DataContracts(unittest.TestCase):
             if path.suffix in ['.fsh','.vsh','.glsl']:
                 for inc in re.findall(r'#include "(/[^"\n]+)"',path.read_text()):
                     self.assertTrue((shaders/inc.lstrip('/')).is_file(),inc)
-    def test_six_note_glows_follow_the_song(self):
-        for i,color in enumerate(['red','magenta','pink','cyan','blue','purple']):
+    def test_eight_note_glows_follow_the_song(self):
+        for i,color in enumerate(['red','yellow','purple','blue','cyan','orange','green','pink']):
             self.assertIn(f'function entersift:notes/{color}',fn(f'ritual/note_{i}'))
             self.assertIn('entersift:resonance_'+color,fn('notes/create_'+color))
         self.assertIn('matches 80.. run function entersift:notes/clear',fn('notes/tick'))
@@ -101,6 +101,46 @@ class DataContracts(unittest.TestCase):
         self.assertEqual(rule[-2]['then_run']['result_state'],'entersift:salt')
     def test_shader_upgrade_is_non_destructive(self):
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
-        self.assertIn('Sift-Cinematic-0.2.zip',code)
+        self.assertIn('Sift-Cinematic-0.3.zip',code)
         self.assertIn('!Files.exists(target)',code)
+    def test_guardian_unlock_requires_death_and_link(self):
+        self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
+        self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))
+        self.assertNotIn('unless entity',fn('guardian/slain'))
+    def test_creature_eggs_have_functions_and_models(self):
+        for name in ['blub','singer','twisted_warden','drift_jelly','antlerling','chestmaw']:
+            self.assertTrue((D/f'function/creature/{name}/spawn.mcfunction').exists())
+            self.assertTrue((R/f'assets/entersift/items/{name}_spawn_egg.json').exists())
+    def test_gauntlet_creative_use_does_not_require_souls(self):
+        self.assertIn('unless entity @s[gamemode=creative] if score',fn('rift/punch'))
+        self.assertIn('unless entity @s[gamemode=creative] run scoreboard players remove',fn('rift/punch'))
+    def test_rift_expansion_has_real_target_transforms(self):
+        self.assertEqual(fn('rift/warp').count('interpolation_duration:40'),27)
+        self.assertIn('scale:[0.012f,0.15f,0.012f]',fn('rift/create'))
+        self.assertIn('matches 5 run function entersift:rift/warp',fn('rift/tick'))
+    def test_portal_assembly_and_simultaneous_resonance(self):
+        self.assertEqual(fn('ritual/tick').count('matches 1 run function entersift:ritual/note_'),8)
+        self.assertEqual(fn('portal/form').count('summon minecraft:block_display'),8)
+        self.assertEqual(sum(fn(f'portal/assemble_{i}').count('interpolation_duration:40') for i in range(8)),8)
+    def test_natural_rift_cycle_is_ten_minutes_total(self):
+        self.assertIn('#riftcycle sift.clock matches 12000..',fn('tick'))
+        self.assertIn('tag=sift.natural',fn('rift/tick'))
+        self.assertIn('#riftcycle sift.clock matches 6000..',fn('rift/tick'))
+    def test_generated_skies_are_wired_to_shader(self):
+        shaders=ROOT/'shaderpack/shaders'
+        for name in ['sift_day','sift_night']:
+            self.assertTrue((shaders/f'textures/{name}.png').exists())
+            self.assertIn(f'textures/{name}.png',(shaders/'shaders.properties').read_text())
+    def test_new_scenery_generates_in_biomes(self):
+        b=read('worldgen/biome/singer_meadow.json')
+        self.assertIn('entersift:weeping_soul_tree',b['features'][9])
+        self.assertIn('entersift:ruined_arch',b['features'][9])
+    def test_overworld_graphics_are_dimension_scoped(self):
+        shaders=ROOT/'shaderpack/shaders'
+        self.assertIn('dimension.world_overworld = minecraft:overworld',(shaders/'dimension.properties').read_text())
+        self.assertIn('SIFT_OVERWORLD 1',(shaders/'world_overworld/composite.fsh').read_text())
+        self.assertIn('SIFT_OVERWORLD 0',(shaders/'world_sift/composite.fsh').read_text())
+    def test_eight_fixture_notes_have_sonorous_support(self):
+        self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
+        for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))
 if __name__=='__main__': unittest.main(verbosity=2)

@@ -22,3 +22,8 @@ execute in minecraft:the_end run forceload add -4 -4 4 4
 execute in entersift:the_sift run forceload add -4 -4 4 4
 
 execute unless score #souls_fx sift.roll matches 0..2 run scoreboard players set #souls_fx sift.roll 2
+
+
+scoreboard objectives add sift.link dummy
+scoreboard players add #encounter sift.link 0
+scoreboard players add #riftcycle sift.clock 0

@@ -2,6 +2,9 @@
 // World-direction anchored, not a flat screen overlay. No textures or assets copied.
 #define SIFT_RIBBONS 0.8 // [0.0 0.35 0.6 0.8 1.0]
 #define SIFT_SKY_SPEED 0.5 // [0.0 0.25 0.5 1.0]
+#define SIFT_SKY_RIFTS 0.6 // [0.0 0.3 0.6 1.0]
+uniform sampler2D siftDaySky;
+uniform sampler2D siftNightSky;
 vec3 siftSky(vec3 direction, float dayTicks, float seconds) {
     float phase = (mod(dayTicks, 24000.0) - 6000.0) / 24000.0 * 6.2831853;
     float daylight = smoothstep(-0.25, 0.45, cos(phase));
@@ -14,6 +17,10 @@ vec3 siftSky(vec3 direction, float dayTicks, float seconds) {
     // Projection onto a high sky plane: smooth, continuous and independent of camera translation.
     vec2 p = direction.xz / max(direction.y + 0.18, 0.18);
     float time = seconds * 0.025 * SIFT_SKY_SPEED;
+    vec2 uv=vec2(atan(direction.z,direction.x)/6.2831853+.5,acos(clamp(direction.y,-1.0,1.0))/3.1415927);
+    uv.x=fract(uv.x+.003*sin(uv.y*12.0+time));
+    vec3 painted=mix(texture2D(siftNightSky,uv).rgb,texture2D(siftDaySky,uv).rgb,daylight);
+    sky=mix(sky,painted,.65);
     vec3 ribbons = vec3(0.0);
     for (int i = 0; i < 5; i++) {
         float fi = float(i);
@@ -36,5 +43,13 @@ vec3 siftSky(vec3 direction, float dayTicks, float seconds) {
     float hash = fract(sin(dot(cell, vec3(127.1, 311.7, 74.7))) * 43758.5453);
     float star = smoothstep(0.9987, 1.0, hash) * (1.0 - daylight);
     sky += vec3(0.52, 0.79, 0.85) * star * smoothstep(0.0, 0.3, direction.y);
+    // Decorative distant sky tear: not a traversable portal or a live destination view.
+    vec2 q=p-vec2(1.3,-.6); q.x+=.025*sin(time+q.y*8.0);
+    float shape=min(max(abs(q.x)-.34,abs(q.y)-.17),max(abs(q.x)-.11,abs(q.y)-.32));
+    float rim=1.0-smoothstep(.004,.018,abs(shape));
+    float inside=1.0-smoothstep(-.01,.004,shape);
+    float visibility=SIFT_SKY_RIFTS*smoothstep(.2,.4,direction.y)*(.6+.4*sin(time*.2)*sin(time*.2));
+    vec3 tear=mix(vec3(.16,.75,.82),vec3(.76,.28,.58),.5+.5*sin(q.x*18.0+q.y*11.0+time));
+    sky=mix(sky,tear,inside*visibility*.65)+vec3(.7,.95,1.0)*rim*visibility;
     return sky;
 }

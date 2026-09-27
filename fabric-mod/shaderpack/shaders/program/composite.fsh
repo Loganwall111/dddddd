@@ -12,11 +12,18 @@ uniform float near;
 uniform float far;
 uniform float frameTimeCounter;
 varying vec2 texcoord;
-#if SIFT_DIMENSION == 1
+#if SIFT_DIMENSION == 1 || SIFT_OVERWORLD == 1
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
 uniform int worldTime;
+#endif
+#if SIFT_DIMENSION == 1
 #include "/lib/sift_sky.glsl"
+#endif
+#if SIFT_OVERWORLD == 1
+uniform mat4 gbufferProjection;
+uniform vec3 sunPosition;
+#include "/lib/overworld.glsl"
 #endif
 vec3 sampleColor(vec2 uv) { return texture2D(colortex0, clamp(uv, vec2(0.001), vec2(0.999))).rgb; }
 float luminance(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
@@ -29,6 +36,24 @@ void main() {
         vec4 view = gbufferProjectionInverse * vec4(texcoord * 2.0 - 1.0, 1.0, 1.0);
         vec3 direction = normalize(mat3(gbufferModelViewInverse) * (view.xyz / view.w));
         color = siftSky(direction, float(worldTime), frameTimeCounter);
+    }
+#endif
+#if SIFT_OVERWORLD == 1
+    if (depth >= 0.999999) {
+        vec4 view=gbufferProjectionInverse*vec4(texcoord*2.0-1.0,1.0,1.0);
+        vec3 dir=normalize(mat3(gbufferModelViewInverse)*(view.xyz/view.w));
+        color=overworldClouds(color,dir,frameTimeCounter,float(worldTime));
+    }
+    vec4 sunClip=gbufferProjection*vec4(sunPosition,1.0);
+    if (sunClip.w>0.0) {
+        vec2 sunUV=sunClip.xy/sunClip.w*.5+.5;
+        float shafts=0.0;
+        for(int j=1;j<=12;j++) {
+            vec2 sampleUV=mix(texcoord,sunUV,float(j)/24.0);
+            if(sampleUV.x>0.0 && sampleUV.x<1.0 && sampleUV.y>0.0 && sampleUV.y<1.0)
+                shafts+=step(.999999,texture2D(depthtex0,sampleUV).r)/12.0;
+        }
+        color+=vec3(1.0,.83,.61)*shafts*SIFT_SHAFTS*exp(-length(texcoord-sunUV)*3.0)*smoothstep(.7,1.0,depth);
     }
 #endif
     vec2 pixel = 1.0 / vec2(viewWidth, viewHeight);

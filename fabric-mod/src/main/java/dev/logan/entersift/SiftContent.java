@@ -27,12 +27,22 @@ public final class SiftContent {
         Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
         return block;
     }
+    public static final Block SONOROUS_DEEPSLATE = block("sonorous_deepslate", Blocks.DEEPSLATE, 5);
+    public static final Block SOULWOOD = block("soulwood", Blocks.DEEPSLATE, 0);
+    public static final Block SOUL_CANOPY = block("soul_canopy", Blocks.MOSS_BLOCK, 7);
+    public static final Block SOUL_LANTERN_STONE = block("soul_lantern_stone", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RESONANCE_ORANGE = block("resonance_orange", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RESONANCE_YELLOW = block("resonance_yellow", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RESONANCE_GREEN = block("resonance_green", Blocks.AMETHYST_BLOCK, 15);
     public static final Block SALTSTONE = block("saltstone", Blocks.CALCITE, 0);
     public static final Block SALT = block("salt", Blocks.CALCITE, 0);
     public static final Block SOUL_SALT = block("soul_salt", Blocks.CALCITE, 9);
     public static final Block CARAPACE = block("carapace", Blocks.BONE_BLOCK, 0);
     public static final Block SINGER_MOSS = block("singer_moss", Blocks.MOSS_BLOCK, 3);
     public static final Block THRESHOLD = block("threshold", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_OVERWORLD = block("rift_overworld", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_END = block("rift_end", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_SIFT = block("rift_sift", Blocks.AMETHYST_BLOCK, 15);
     public static final Block RIFT_MEMBRANE = block("rift_membrane", Blocks.AMETHYST_BLOCK, 15);
     public static final Block RIFT_EDGE = block("rift_edge", Blocks.AMETHYST_BLOCK, 15);
     public static final Block RESONANCE_RED = block("resonance_red", Blocks.AMETHYST_BLOCK, 15);
@@ -50,8 +60,30 @@ public final class SiftContent {
         new BucketItem(ICHOR, itemProperties("ichor_bucket").craftRemainder(Items.BUCKET).stacksTo(1)));
     public static final Item GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("rift_gauntlet"),
         new Item(itemProperties("rift_gauntlet").stacksTo(1)));
+    public static final Item RED_GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("red_rift_gauntlet"),
+        new Item(itemProperties("red_rift_gauntlet").stacksTo(1)));
+    private static Item egg(String creature) {
+        String name = creature + "_spawn_egg";
+        return Registry.register(BuiltInRegistries.ITEM, id(name), new CreatureEggItem(itemProperties(name), creature));
+    }
+    public static final Item BLUB_EGG = egg("blub");
+    public static final Item SINGER_EGG = egg("singer");
+    public static final Item WARDEN_EGG = egg("twisted_warden");
+    public static final Item JELLYFISH_EGG = egg("drift_jelly");
+    public static final Item ANTLERLING_EGG = egg("antlerling");
+    public static final Item CHESTMAW_EGG = egg("chestmaw");
     public static final Item SOUL_POTION = Registry.register(BuiltInRegistries.ITEM, id("soul_potion"),
         new SoulPotionItem(itemProperties("soul_potion").stacksTo(16)));
-    public static void initialize() { /* Load and register once, on the common entrypoint. */ }
+    public static void initialize() {
+        net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.SPAWN_EGGS).register(output -> {
+            for (Item item : new Item[]{BLUB_EGG,SINGER_EGG,WARDEN_EGG,JELLYFISH_EGG,ANTLERLING_EGG,CHESTMAW_EGG}) output.accept(item);
+        });
+        net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
+            output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
+        });
+        net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS).register(output -> {
+            output.accept(SONOROUS_DEEPSLATE); output.accept(SALT); output.accept(SOUL_SALT); output.accept(SOULWOOD); output.accept(SOUL_CANOPY);
+        });
+    }
     private SiftContent() {}
 }
