@@ -1,0 +1,31 @@
+name: Enter the Sift — build & validate
+on:
+  push:
+    paths: ['fabric-mod/**', '.github/workflows/sift-build.yml']
+  pull_request:
+    paths: ['fabric-mod/**', '.github/workflows/sift-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fabric:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fabric-mod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: python3 tools/validate.py
+      - run: python3 tools/test_data.py
+      - run: ./gradlew --no-daemon build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Enter-the-Sift-26.3-alpha
+          path: |
+            fabric-mod/build/libs/*.jar
+            fabric-mod/build/generated/sift-shaders/assets/entersift/shaderpacks/*.zip

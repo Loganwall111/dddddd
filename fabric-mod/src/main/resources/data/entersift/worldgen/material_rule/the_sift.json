@@ -1,0 +1,48 @@
+{
+  "type": "minecraft:sequence",
+  "sequence": [
+    "minecraft:bedrock_floor",
+    {
+      "type": "minecraft:condition",
+      "if_true": {
+        "type": "minecraft:biome",
+        "biome_is": "entersift:carapace"
+      },
+      "then_run": {
+        "type": "minecraft:condition",
+        "if_true": "minecraft:on_floor",
+        "then_run": {
+          "type": "minecraft:block",
+          "result_state": "entersift:carapace"
+        }
+      }
+    },
+    {
+      "type": "minecraft:condition",
+      "if_true": {
+        "type": "minecraft:biome",
+        "biome_is": "entersift:singer_meadow"
+      },
+      "then_run": {
+        "type": "minecraft:condition",
+        "if_true": "minecraft:on_floor",
+        "then_run": {
+          "type": "minecraft:block",
+          "result_state": "entersift:singer_moss"
+        }
+      }
+    },
+    {
+      "type": "minecraft:condition",
+      "if_true": "minecraft:on_floor",
+      "then_run": {
+        "type": "minecraft:block",
+        "result_state": "entersift:salt"
+      }
+    },
+    {
+      "type": "minecraft:block",
+      "result_state": "entersift:saltstone"
+    }
+  ]
+}

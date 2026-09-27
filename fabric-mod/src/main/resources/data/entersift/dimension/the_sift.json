@@ -1,0 +1,16 @@
+{
+  "type": "entersift:the_sift",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "entersift:the_sift",
+    "biome_source": {
+      "type": "minecraft:checkerboard",
+      "biomes": [
+        "entersift:carapace",
+        "entersift:singer_meadow",
+        "entersift:saltwound_expanse"
+      ],
+      "scale": 5
+    }
+  }
+}

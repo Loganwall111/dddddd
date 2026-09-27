@@ -2,3 +2,14 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Minecraft / Gradle generated files
+.gradle/
+**/build/
+fabric-mod/run/
+fabric-mod/.idea/
+*.class
+
+# Python authoring tools
+__pycache__/
+*.pyc

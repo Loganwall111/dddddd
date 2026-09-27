@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:glass_bottle",
+    "minecraft:echo_shard",
+    "entersift:soul_salt"
+  ],
+  "result": {
+    "id": "entersift:soul_potion",
+    "count": 1
+  }
+}

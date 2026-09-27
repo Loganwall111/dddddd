@@ -1,0 +1,10 @@
+profile.SUBTLE=Subtle
+profile.CINEMATIC=Cinematic
+profile.DREAMLIKE=Dreamlike
+option.SIFT_BLOOM=Soul glow
+option.SIFT_FOG=Blue atmospheric haze
+option.SIFT_EXPOSURE=Exposure
+option.SIFT_GRAIN=Film grain
+
+option.SIFT_RIBBONS=Sift sky ribbons
+option.SIFT_SKY_SPEED=Ribbon motion speed
