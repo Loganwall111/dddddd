@@ -14,15 +14,29 @@ jobs:
       run:
         working-directory: fabric-mod
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
       - run: python3 tools/validate.py
       - run: python3 tools/test_data.py
-      - run: ./gradlew --no-daemon build
+      - name: Compile mod and report diagnostics
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! ./gradlew --no-daemon build 2>&1 | tee "$RUNNER_TEMP/sift-build.log"; then
+            python3 - <<'PYLOG'
+          import os
+          from pathlib import Path
+          log = Path(os.environ['RUNNER_TEMP']) / 'sift-build.log'
+          text = '\n'.join(log.read_text().splitlines()[-100:])
+          text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print('::error title=Fabric build diagnostics::' + text)
+          PYLOG
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: Enter-the-Sift-26.3-alpha
