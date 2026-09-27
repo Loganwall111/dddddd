@@ -33,3 +33,6 @@ execute if score @s sift.age matches 282 run function entersift:portal/assemble_
 execute if score @s sift.age matches 290 run function entersift:portal/assemble_6 with entity @s data
 
 execute if score @s sift.age matches 298 run function entersift:portal/assemble_7 with entity @s data
+execute if score @s sift.age matches 240..349 run particle minecraft:electric_spark ~ ~2 ~ 1.6 2 0.3 0.4 10 normal
+execute if score @s sift.age matches 240..349 run particle minecraft:end_rod ~ ~2 ~ 1.4 2 0.2 0.02 4 normal
+execute if score @s sift.age matches 240 run playsound minecraft:block.beacon.activate ambient @a[distance=..48] ~ ~ ~ 2 0.6

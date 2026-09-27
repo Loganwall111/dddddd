@@ -8,9 +8,12 @@
       "biomes": [
         "entersift:carapace",
         "entersift:singer_meadow",
-        "entersift:saltwound_expanse"
+        "entersift:saltwound_expanse",
+        "entersift:rose_spires",
+        "entersift:pale_grove",
+        "entersift:tidepool_reef"
       ],
-      "scale": 5
+      "scale": 4
     }
   }
 }

@@ -11,4 +11,7 @@ give @s entersift:singer_spawn_egg
 give @s entersift:twisted_warden_spawn_egg
 give @s entersift:drift_jelly_spawn_egg
 give @s entersift:antlerling_spawn_egg
-give @s entersift:chestmaw_spawn_egg
+give @s entersift:sculker_spawn_egg
+give @s entersift:sculkling_spawn_egg
+give @s entersift:licker_spawn_egg
+give @s entersift:overseer_spawn_egg

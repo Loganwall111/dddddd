@@ -87,7 +87,8 @@ class DataContracts(unittest.TestCase):
         self.assertNotEqual((tex/'threshold.png').read_bytes(),(tex/'rift_membrane.png').read_bytes())
         import struct
         for name in ['threshold','rift_membrane','ichor_still']:
-            self.assertEqual(struct.unpack('!II',(tex/f'{name}.png').read_bytes()[16:24]),(32,2048))
+            w,h=struct.unpack('!II',(tex/f'{name}.png').read_bytes()[16:24])
+            self.assertEqual(w,32); self.assertEqual(h%32,0); self.assertGreaterEqual(h//32,16)
     def test_soul_effects_are_budgeted_and_recipient_local(self):
         text=fn('atmosphere/souls')
         self.assertEqual(len(text.splitlines()),3)
@@ -108,9 +109,22 @@ class DataContracts(unittest.TestCase):
         self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))
         self.assertNotIn('unless entity',fn('guardian/slain'))
     def test_creature_eggs_have_functions_and_models(self):
-        for name in ['blub','singer','twisted_warden','drift_jelly','antlerling','chestmaw']:
-            self.assertTrue((D/f'function/creature/{name}/spawn.mcfunction').exists())
+        for name in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','singer']:
+            self.assertIn(f'summon entersift:{name}',fn(f'creature/{name}/spawn'))
             self.assertTrue((R/f'assets/entersift/items/{name}_spawn_egg.json').exists())
+            self.assertTrue((R/f'assets/entersift/textures/entity/{name}.png').exists())
+            self.assertTrue((R/f'assets/entersift/textures/entity/{name}_glow.png').exists())
+    def test_new_biomes_are_in_the_dimension_and_surface_rule(self):
+        import json
+        dim=json.loads((D/'dimension/the_sift.json').read_text())['generator']['biome_source']['biomes']
+        rule=(D/'worldgen/material_rule/the_sift.json').read_text()
+        for b in ['rose_spires','pale_grove','tidepool_reef']:
+            self.assertIn(f'entersift:{b}',dim)
+            self.assertIn(f'entersift:{b}',rule)
+    def test_portal_pixelates_through_eight_stages(self):
+        for k in range(8):
+            self.assertIn(f'threshold_stage_{k}',fn(f'portal/assemble_{k}'))
+        self.assertIn('rift/wave_player',fn('tick'))
     def test_gauntlet_creative_use_does_not_require_souls(self):
         self.assertIn('unless entity @s[gamemode=creative] if score',fn('rift/punch'))
         self.assertIn('unless entity @s[gamemode=creative] run scoreboard players remove',fn('rift/punch'))

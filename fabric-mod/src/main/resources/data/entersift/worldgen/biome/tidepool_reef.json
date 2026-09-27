@@ -1,0 +1,50 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#2fd2c4"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#4fa7a5",
+    "minecraft:visual/sky_color": "#6cc7c9",
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.002
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    }
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:reef_boulder",
+      "entersift:sift_coral_red",
+      "entersift:sift_coral_yellow",
+      "entersift:crystals",
+      "entersift:glow_bulb"
+    ],
+    []
+  ]
+}

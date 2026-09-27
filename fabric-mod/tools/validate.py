@@ -14,7 +14,7 @@ for p in (r/'data').rglob('*.mcfunction'):
     for line in p.read_text().splitlines():
         if '$(' in line and not line.startswith('$'): errors.append(f'{p}: macro line missing $')
 for p in (r/'assets/entersift').rglob('*.json'):
-    for kind,name in re.findall(r'entersift:(block|item)/([a-z_]+)',p.read_text()):
+    for kind,name in re.findall(r'entersift:(block|item|entity)/([a-z0-9_]+)',p.read_text()):
         # Model JSON contains texture refs; item definitions/blockstates contain model refs.
         folder='textures' if 'models' in p.parts else 'models'
         ext='.png' if folder=='textures' else '.json'
@@ -24,7 +24,7 @@ for p in (r/'assets/entersift/textures').rglob('*.png'):
     if b[:8]!=b'\x89PNG\r\n\x1a\n': errors.append(f'{p}: bad PNG')
     w,h=struct.unpack('!II',b[16:24])
     if h>w and not p.with_suffix('.png.mcmeta').exists(): errors.append(f'{p}: animation metadata missing')
-assert len(list((r/'data/entersift/worldgen/biome').glob('*.json')))==3
+assert len(list((r/'data/entersift/worldgen/biome').glob('*.json')))==6
 assert '1, 3, 7, 6, 5, 2, 4, 8' in (root/'src/main/java/dev/logan/entersift/RitualSequence.java').read_text()
 assert (root/'gradle/wrapper/gradle-wrapper.jar').read_bytes()[:2]==b'PK'
 # Validate that custom worldgen block/biome/feature refs resolve locally.
@@ -32,5 +32,5 @@ for p in (r/'data/entersift/worldgen/placed_feature').glob('*.json'):
     f=json.loads(p.read_text())['feature']
     if isinstance(f,str) and f.startswith('entersift:') and not (r/f'data/entersift/worldgen/feature/{f.split(":")[1]}.json').exists(): errors.append(f'{p}: missing feature {f}')
 if errors: print('\n'.join(errors)); sys.exit(1)
-print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper and three biomes.')
+print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper and six biomes.')
 print('Minecraft 26.3 compilation, registry codecs, command parsing and in-game behavior still require Gradle/client/server tests.')

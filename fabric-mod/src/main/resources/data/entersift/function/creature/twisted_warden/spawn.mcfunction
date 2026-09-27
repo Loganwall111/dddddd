@@ -1,2 +1,8 @@
-summon minecraft:warden ~ ~ ~ {Tags:["sift.guardian"],PersistenceRequired:1b,CustomName:{text:"Twisted Warden",color:"dark_aqua"},Brain:{memories:{"minecraft:dig_cooldown":{value:{},ttl:2147483647L}}},Passengers:[{id:"minecraft:block_display",Tags:["sift.creature_part","sift.guardian_part"],block_state:{Name:"entersift:soul_lantern_stone"},brightness:{block:12,sky:0},transformation:{translation:[-0.8f,-0.7f,0.0f],scale:[0.2f,0.6f,0.25f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}},{id:"minecraft:block_display",Tags:["sift.creature_part","sift.guardian_part"],block_state:{Name:"entersift:soul_lantern_stone"},brightness:{block:12,sky:0},transformation:{translation:[0.6f,-0.7f,0.0f],scale:[0.2f,0.6f,0.25f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}]}
-effect give @e[type=minecraft:warden,tag=sift.guardian,distance=..1,limit=1,sort=nearest] minecraft:resistance 999999 0 true
+summon entersift:twisted_warden ~ ~ ~ {Tags:["sift.guardian"],PersistenceRequired:1b,CustomName:{text:"Twisted Warden",color:"dark_aqua"}}
+bossbar add entersift:guardian {"text":"Twisted Warden","color":"dark_aqua"}
+bossbar set entersift:guardian color blue
+bossbar set entersift:guardian style notched_10
+bossbar set entersift:guardian max 300
+bossbar set entersift:guardian players @a[distance=..48]
+playsound minecraft:entity.warden.emerge hostile @a[distance=..40] ~ ~ ~ 1 0.6
+particle minecraft:sculk_soul ~ ~1 ~ 1 1.5 1 0.02 60 normal

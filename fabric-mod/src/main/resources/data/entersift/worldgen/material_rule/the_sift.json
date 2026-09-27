@@ -34,6 +34,51 @@
     },
     {
       "type": "minecraft:condition",
+      "if_true": {
+        "type": "minecraft:biome",
+        "biome_is": "entersift:rose_spires"
+      },
+      "then_run": {
+        "type": "minecraft:condition",
+        "if_true": "minecraft:on_floor",
+        "then_run": {
+          "type": "minecraft:block",
+          "result_state": "entersift:rose_path"
+        }
+      }
+    },
+    {
+      "type": "minecraft:condition",
+      "if_true": {
+        "type": "minecraft:biome",
+        "biome_is": "entersift:pale_grove"
+      },
+      "then_run": {
+        "type": "minecraft:condition",
+        "if_true": "minecraft:on_floor",
+        "then_run": {
+          "type": "minecraft:block",
+          "result_state": "entersift:teal_path"
+        }
+      }
+    },
+    {
+      "type": "minecraft:condition",
+      "if_true": {
+        "type": "minecraft:biome",
+        "biome_is": "entersift:tidepool_reef"
+      },
+      "then_run": {
+        "type": "minecraft:condition",
+        "if_true": "minecraft:on_floor",
+        "then_run": {
+          "type": "minecraft:block",
+          "result_state": "entersift:reef_stone"
+        }
+      }
+    },
+    {
+      "type": "minecraft:condition",
       "if_true": "minecraft:on_floor",
       "then_run": {
         "type": "minecraft:block",

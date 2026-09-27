@@ -1,6 +1,3 @@
-summon minecraft:block_display ~ ~ ~ {Tags:["sift.singer"],block_state:{Name:"entersift:carapace"},brightness:{block:12,sky:0},transformation:{translation:[-0.25f,-1.6f,-0.18f],scale:[0.5f,1.6f,0.36f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
-summon minecraft:block_display ~ ~ ~ {Tags:["sift.singer"],block_state:{Name:"entersift:carapace"},brightness:{block:12,sky:0},transformation:{translation:[-0.5f,0.0f,-0.35f],scale:[1.0f,0.65f,0.7f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
-summon minecraft:block_display ~ ~ ~ {Tags:["sift.singer"],block_state:{Name:"entersift:soul_salt"},brightness:{block:12,sky:0},transformation:{translation:[-0.33f,0.22f,-0.39f],scale:[0.18f,0.1f,0.05f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
-summon minecraft:block_display ~ ~ ~ {Tags:["sift.singer"],block_state:{Name:"entersift:soul_salt"},brightness:{block:12,sky:0},transformation:{translation:[0.15f,0.22f,-0.39f],scale:[0.18f,0.1f,0.05f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
-summon minecraft:block_display ~ ~ ~ {Tags:["sift.singer"],block_state:{Name:"entersift:carapace"},brightness:{block:12,sky:0},transformation:{translation:[-0.7f,-1.4f,-0.12f],scale:[0.17f,1.4f,0.24f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
-summon minecraft:block_display ~ ~ ~ {Tags:["sift.singer"],block_state:{Name:"entersift:carapace"},brightness:{block:12,sky:0},transformation:{translation:[0.53f,-1.4f,-0.12f],scale:[0.17f,1.4f,0.24f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
+summon entersift:singer ~ ~ ~ {PersistenceRequired:1b,Invulnerable:1b,Tags:["sift.singer"],CustomName:{text:"The Singer",color:"light_purple"}}
+particle minecraft:end_rod ~ ~1.5 ~ 1 1.5 1 0.05 60 normal
+playsound minecraft:block.amethyst_block.resonate neutral @a[distance=..48] ~ ~ ~ 2 0.5

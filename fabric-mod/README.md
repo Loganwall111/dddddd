@@ -120,8 +120,12 @@ Do not remove a dimension/content mod from a valuable world without a backup. Fi
 
 ```sh
 python3 tools/generate_data.py  # Deterministic resources, textures and animation strips
+python3 tools/extract_textures.py  # Terrain/portal/rift textures sampled from the reference screenshots
+python3 tools/creatures.py      # 9 creature models (SiftModelDefs.java), entity textures, spawn eggs
+python3 tools/phase4.py         # Entities in data, new blocks, 3 new biomes, staged portal, rift waves, sky textures
+python3 tools/preview_creatures.py  # Software render of every model -> docs/creature-preview.png
 python3 tools/validate.py       # JSON, function references, model/texture integrity
-python3 tools/test_data.py      # 20 offline data-contract tests
+python3 tools/test_data.py      # offline data-contract tests
 ./gradlew test                  # Java ritual-state tests; requires JDK + dependencies
 ./gradlew runClient             # Minecraft client smoke test
 ```
@@ -143,3 +147,20 @@ See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) for the outstanding acceptance test
 - `tools/templates`: exact-version vanilla dimension/noise templates used by the generator.
 
 The fluid implementation adapts Fabric's Apache-licensed fluid test example. See [`THIRD_PARTY.md`](THIRD_PARTY.md).
+
+## Phase 4 (0.4): real creatures, new biomes, pixelating portal
+
+![Creature preview](docs/creature-preview.png)
+
+- **Nine real entity types** with animated models and emissive layers: Blub (red-eyed hopping blob), Sculker (blue
+  gaping creature), Sculkling, Antlerling (small two-antlered villager-like), Drift Jelly (floating jellyfish), Licker,
+  Overseer (floating brain-eye), **Twisted Warden** (300 HP guardian whose chest maw splits open; sonic pulse every 7 s,
+  boss bar) and **the Singer**. All are summonable with spawn eggs and spawn naturally in the Sift's biomes.
+- **Three new biomes**: Rose Spires (pink mesa pillars and arches), Pale Grove (weeping pale trees, glow bulbs),
+  Tidepool Reef (reef boulders and red/yellow coral). Textures sampled from the reference screenshots.
+- **Portal**: the eight threshold panels now pixelate inward through eight mosaic stages while electric arcs play, and
+  the note beams are beacon-tall (40 blocks).
+- **Rifts**: every 5 minutes a wave of rifts bleeds through near every player in every dimension; they seal again
+  halfway through the cycle. Rift rims take one of six palettes independent of their destination.
+- **Vanilla sky layer** (no Iris needed): drifting curtains of translucent aurora shards and a distant threshold that
+  pixelates in and out overhead. The Iris pack uses new painted day/night skies.

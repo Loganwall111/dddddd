@@ -27,6 +27,20 @@ public final class SiftContent {
         Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
         return block;
     }
+    private static Block see(String name, Block base, int light) {
+        var key = blockKey(name);
+        Block block = Registry.register(BuiltInRegistries.BLOCK, key,
+            new Block(BlockBehaviour.Properties.ofFullCopy(base).setId(key).lightLevel(state -> light).noOcclusion()));
+        Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
+        return block;
+    }
+    private static Block plant(String name, int light) {
+        var key = blockKey(name);
+        Block block = Registry.register(BuiltInRegistries.BLOCK, key,
+            new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS).setId(key).lightLevel(state -> light).noOcclusion()));
+        Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
+        return block;
+    }
     public static final Block SONOROUS_DEEPSLATE = block("sonorous_deepslate", Blocks.DEEPSLATE, 5);
     public static final Block SOULWOOD = block("soulwood", Blocks.DEEPSLATE, 0);
     public static final Block SOUL_CANOPY = block("soul_canopy", Blocks.MOSS_BLOCK, 7);
@@ -52,6 +66,25 @@ public final class SiftContent {
     public static final Block RESONANCE_BLUE = block("resonance_blue", Blocks.AMETHYST_BLOCK, 15);
     public static final Block RESONANCE_PURPLE = block("resonance_purple", Blocks.AMETHYST_BLOCK, 15);
     public static final Block BLUB_JELLY = block("blub_jelly", Blocks.SLIME_BLOCK, 4);
+    // Phase 4 terrain + portal/rift blocks (textures from tools/extract_textures.py).
+    public static final Block ROSE_SPIRE = block("rose_spire", Blocks.TERRACOTTA, 0);
+    public static final Block SPIRE_BRICKS = block("spire_bricks", Blocks.STONE_BRICKS, 0);
+    public static final Block ROSE_PATH = block("rose_path", Blocks.TERRACOTTA, 0);
+    public static final Block TEAL_PATH = block("teal_path", Blocks.MOSS_BLOCK, 0);
+    public static final Block REEF_STONE = block("reef_stone", Blocks.TUFF, 0);
+    public static final Block PALE_CANOPY = see("pale_canopy", Blocks.OAK_LEAVES, 6);
+    public static final Block SIFT_MOSAIC = block("sift_mosaic", Blocks.AMETHYST_BLOCK, 12);
+    public static final Block SIFT_GRASS = plant("sift_grass", 0);
+    public static final Block GLOW_BULB = plant("glow_bulb", 12);
+    public static final Block SIFT_CORAL_RED = plant("sift_coral_red", 4);
+    public static final Block SIFT_CORAL_YELLOW = plant("sift_coral_yellow", 4);
+    public static final Block RIFT_PINK = block("rift_pink", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_ORANGE = block("rift_orange", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_YELLOW = block("rift_yellow", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_RED = block("rift_red", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_OLIVE = block("rift_olive", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block[] THRESHOLD_STAGES = new Block[8];
+    static { for (int i = 0; i < 8; i++) THRESHOLD_STAGES[i] = see("threshold_stage_" + i, Blocks.AMETHYST_BLOCK, 15); }
     public static final IchorFluid ICHOR = Registry.register(BuiltInRegistries.FLUID, id("ichor"), new IchorFluid.Still());
     public static final IchorFluid FLOWING_ICHOR = Registry.register(BuiltInRegistries.FLUID, id("flowing_ichor"), new IchorFluid.Flowing());
     public static final LiquidBlock ICHOR_BLOCK = Registry.register(BuiltInRegistries.BLOCK, blockKey("ichor"),
@@ -71,18 +104,23 @@ public final class SiftContent {
     public static final Item WARDEN_EGG = egg("twisted_warden");
     public static final Item JELLYFISH_EGG = egg("drift_jelly");
     public static final Item ANTLERLING_EGG = egg("antlerling");
-    public static final Item CHESTMAW_EGG = egg("chestmaw");
+    public static final Item SCULKER_EGG = egg("sculker");
+    public static final Item SCULKLING_EGG = egg("sculkling");
+    public static final Item LICKER_EGG = egg("licker");
+    public static final Item OVERSEER_EGG = egg("overseer");
     public static final Item SOUL_POTION = Registry.register(BuiltInRegistries.ITEM, id("soul_potion"),
         new SoulPotionItem(itemProperties("soul_potion").stacksTo(16)));
     public static void initialize() {
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.SPAWN_EGGS).register(output -> {
-            for (Item item : new Item[]{BLUB_EGG,SINGER_EGG,WARDEN_EGG,JELLYFISH_EGG,ANTLERLING_EGG,CHESTMAW_EGG}) output.accept(item);
+            for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
             output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS).register(output -> {
             output.accept(SONOROUS_DEEPSLATE); output.accept(SALT); output.accept(SOUL_SALT); output.accept(SOULWOOD); output.accept(SOUL_CANOPY);
+            for (Block b : new Block[]{ROSE_SPIRE,SPIRE_BRICKS,ROSE_PATH,TEAL_PATH,REEF_STONE,PALE_CANOPY,SIFT_MOSAIC,SIFT_GRASS,GLOW_BULB,
+                SIFT_CORAL_RED,SIFT_CORAL_YELLOW,RIFT_PINK,RIFT_ORANGE,RIFT_YELLOW,RIFT_RED,RIFT_OLIVE}) output.accept(b);
         });
     }
     private SiftContent() {}

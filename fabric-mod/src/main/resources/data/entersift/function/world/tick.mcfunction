@@ -16,5 +16,7 @@ execute as @e[tag=sift.creature] at @s run function entersift:creature/tick
 execute as @e[type=minecraft:block_display,tag=sift.guardian_part] at @s unless entity @e[tag=sift.guardian,distance=..4] run kill @s
 execute as @e[type=minecraft:block_display,tag=sift.creature_part,tag=!sift.guardian_part] at @s unless entity @e[tag=sift.creature,distance=..3] run kill @s
 execute as @e[type=minecraft:block_display,tag=sift.beam] run scoreboard players add @s sift.age 1
-kill @e[type=minecraft:block_display,tag=sift.beam,scores={sift.age=80..}]
+kill @e[type=minecraft:block_display,tag=sift.beam,scores={sift.age=160..}]
 execute as @e[type=minecraft:marker,tag=sift.ready] at @s if entity @a[distance=..24] run function entersift:guardian/guide
+execute as @e[type=entersift:twisted_warden,tag=sift.guardian,limit=1] store result bossbar entersift:guardian value run data get entity @s Health
+execute as @e[type=entersift:twisted_warden,tag=sift.guardian,limit=1] at @s run bossbar set entersift:guardian players @a[distance=..48]
