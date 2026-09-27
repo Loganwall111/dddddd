@@ -53,7 +53,14 @@ class DataContracts(unittest.TestCase):
         dim=read('dimension_type/the_sift.json')
         self.assertTrue(dim['has_skylight'])
         self.assertEqual(dim['default_clock'],'minecraft:overworld')
-        self.assertEqual(dim['timelines'],'#minecraft:in_overworld')
+        self.assertEqual(dim['timelines'],['entersift:sift_cycle'])
+        import json as _j
+        tl=_j.loads((D/'timeline/sift_cycle.json').read_text())
+        self.assertEqual(tl['period_ticks'],24000)
+        self.assertIn('minecraft:visual/sun_angle',tl['tracks'])
+        # The Sift sky stays luminous at night (teal), never black/navy.
+        night=tl['tracks']['minecraft:visual/sky_color']['keyframes'][-1]['value']
+        self.assertGreater(sum(int(night[i:i+2],16) for i in (1,3,5)),450)
         self.assertNotIn('fixed_time',dim)
     def test_sky_is_dimension_scoped(self):
         shaders=ROOT/'shaderpack/shaders'

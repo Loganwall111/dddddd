@@ -6,8 +6,7 @@ option.SIFT_FOG=Blue atmospheric haze
 option.SIFT_EXPOSURE=Exposure
 option.SIFT_GRAIN=Film grain
 
-option.SIFT_RIBBONS=Sift sky ribbons
-option.SIFT_SKY_SPEED=Ribbon motion speed
+option.SIFT_CURTAIN_DRIFT=Aurora curtain drift
 
 option.SIFT_SKY_RIFTS=Distant sky rift
 option.SIFT_CLOUDS=Overworld soft clouds

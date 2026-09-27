@@ -122,6 +122,7 @@ Do not remove a dimension/content mod from a valuable world without a backup. Fi
 python3 tools/generate_data.py  # Deterministic resources, textures and animation strips
 python3 tools/extract_textures.py  # Terrain/portal/rift textures sampled from the reference screenshots
 python3 tools/creatures.py      # 9 creature models (SiftModelDefs.java), entity textures, spawn eggs
+python3 tools/paint_skies.py    # Day (peach/rose + crimson pillars) and night (luminous teal + aurora curtains) panoramas
 python3 tools/phase4.py         # Entities in data, new blocks, 3 new biomes, staged portal, rift waves, sky textures
 python3 tools/preview_creatures.py  # Software render of every model -> docs/creature-preview.png
 python3 tools/validate.py       # JSON, function references, model/texture integrity
@@ -162,5 +163,11 @@ The fluid implementation adapts Fabric's Apache-licensed fluid test example. See
   the note beams are beacon-tall (40 blocks).
 - **Rifts**: every 5 minutes a wave of rifts bleeds through near every player in every dimension; they seal again
   halfway through the cycle. Rift rims take one of six palettes independent of their destination.
-- **Vanilla sky layer** (no Iris needed): drifting curtains of translucent aurora shards and a distant threshold that
-  pixelates in and out overhead. The Iris pack uses new painted day/night skies.
+- **Sky colour cycle (matches the footage):** days are a warm orange/peach/rose-pink ichor mist with hazy crimson
+  pillars across the upper sky; nights stay a luminous pale cyan-teal/mint fog with clean horizontal aurora curtains
+  of flat panes. The sky never turns navy; darkness comes from the terrain. Vanilla uses the custom timeline
+  `entersift:sift_cycle` plus a pane/pillar sky layer (no Iris needed); the Iris pack uses the painted panoramas,
+  sky-coloured distance haze and rose-tinted sun shafts.
+
+![Sift day and night panoramas](art/sift-day-sky.png)
+![](art/sift-night-sky.png)

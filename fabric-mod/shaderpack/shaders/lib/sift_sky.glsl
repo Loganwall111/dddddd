@@ -1,7 +1,9 @@
-// Original procedural sky inspired by the supplied ribbon-sky references.
-// World-direction anchored, not a flat screen overlay. No textures or assets copied.
-#define SIFT_RIBBONS 0.8 // [0.0 0.35 0.6 0.8 1.0]
-#define SIFT_SKY_SPEED 0.5 // [0.0 0.25 0.5 1.0]
+// Sift sky, matched to the reference footage:
+//   day   = warm orange / peach / rose ichor mist with hazy crimson pillars in the upper sky
+//   night = luminous pale cyan-teal / mint fog with clean horizontal aurora curtains of flat panes
+// The painted panoramas (tools/paint_skies.py) carry the detail; this adds slow drift, a shimmer
+// on the curtains and the distant sky tear. The backdrop never goes dark: darkness comes from terrain.
+#define SIFT_CURTAIN_DRIFT 0.5 // [0.0 0.25 0.5 1.0]
 #define SIFT_SKY_RIFTS 0.6 // [0.0 0.3 0.6 1.0]
 uniform sampler2D siftDaySky;
 uniform sampler2D siftNightSky;
@@ -9,47 +11,30 @@ vec3 siftSky(vec3 direction, float dayTicks, float seconds) {
     float phase = (mod(dayTicks, 24000.0) - 6000.0) / 24000.0 * 6.2831853;
     float daylight = smoothstep(-0.25, 0.45, cos(phase));
     float altitude = max(direction.y, 0.0);
-    float dusk = pow(1.0 - abs(cos(phase)), 5.0);
-    vec3 horizon = mix(vec3(0.045, 0.055, 0.135), vec3(0.50, 0.73, 0.74), daylight);
-    vec3 zenith = mix(vec3(0.012, 0.020, 0.075), vec3(0.19, 0.52, 0.59), daylight);
-    vec3 sky = mix(horizon, zenith, pow(altitude, 0.48));
-    sky += vec3(0.14, 0.04, 0.10) * dusk * pow(1.0 - altitude, 3.0);
-    // Projection onto a high sky plane: smooth, continuous and independent of camera translation.
-    vec2 p = direction.xz / max(direction.y + 0.18, 0.18);
-    float time = seconds * 0.025 * SIFT_SKY_SPEED;
-    vec2 uv=vec2(atan(direction.z,direction.x)/6.2831853+.5,acos(clamp(direction.y,-1.0,1.0))/3.1415927);
-    uv.x=fract(uv.x+.003*sin(uv.y*12.0+time));
-    vec3 painted=mix(texture2D(siftNightSky,uv).rgb,texture2D(siftDaySky,uv).rgb,daylight);
-    sky=mix(sky,painted,.65);
-    vec3 ribbons = vec3(0.0);
-    for (int i = 0; i < 5; i++) {
-        float fi = float(i);
-        float angle = fi * 0.47;
-        vec2 q = mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * p;
-        float fold = sin(q.x * 0.73 + time + fi * 1.7)
-                   + 0.32 * sin(q.x * 1.8 - time * 0.7 + fi);
-        float centre = (fi - 2.0) * 1.05 + fold * 0.60;
-        float distanceToRibbon = abs(q.y - centre);
-        float body = exp(-distanceToRibbon * distanceToRibbon * 12.0);
-        float fringe = exp(-distanceToRibbon * distanceToRibbon * 75.0);
-        float folds = 0.65 + 0.35 * sin(q.x * 4.0 + fold * 2.0 + fi);
-        vec3 tint = mix(vec3(0.08, 0.90, 0.72), vec3(0.64, 0.30, 0.53), smoothstep(1.6, 4.0, fi));
-        ribbons += tint * (body * 0.35 + fringe * 0.28) * folds;
-    }
-    sky += ribbons * SIFT_RIBBONS * smoothstep(0.015, 0.18, direction.y)
-        * mix(0.85, 0.65, daylight);
-    // Stable sparse stars; no frame-random flashing or lightning strobe.
-    vec3 cell = floor(direction * 360.0);
-    float hash = fract(sin(dot(cell, vec3(127.1, 311.7, 74.7))) * 43758.5453);
-    float star = smoothstep(0.9987, 1.0, hash) * (1.0 - daylight);
-    sky += vec3(0.52, 0.79, 0.85) * star * smoothstep(0.0, 0.3, direction.y);
+    // Fallback gradients (used where the texture is missing / below the horizon blend).
+    vec3 dayHorizon = vec3(1.00, 0.84, 0.66), dayZenith = vec3(0.91, 0.55, 0.57);
+    vec3 nightHorizon = vec3(0.84, 0.97, 0.91), nightZenith = vec3(0.52, 0.81, 0.82);
+    vec3 base = mix(mix(nightHorizon, nightZenith, pow(altitude, 0.6)), mix(dayHorizon, dayZenith, pow(altitude, 0.6)), daylight);
+    float time = seconds * SIFT_CURTAIN_DRIFT;
+    vec2 uv = vec2(atan(direction.z, direction.x) / 6.2831853 + 0.5, acos(clamp(direction.y, -1.0, 1.0)) / 3.1415927);
+    // Night curtains sweep slowly sideways; day pillars sway very gently.
+    vec2 uvN = vec2(fract(uv.x + time * 0.0015 + 0.004 * sin(uv.y * 9.0 + time * 0.3)), uv.y);
+    vec2 uvD = vec2(fract(uv.x + time * 0.0004 + 0.002 * sin(uv.y * 14.0 + time * 0.2)), uv.y);
+    vec3 night = texture2D(siftNightSky, uvN).rgb;
+    vec3 day = texture2D(siftDaySky, uvD).rgb;
+    // Curtain shimmer: brighten the flat panes in travelling bands.
+    float shimmer = 0.5 + 0.5 * sin(uv.x * 40.0 - time * 0.8 + uv.y * 6.0);
+    night += max(night - nightHorizon * 0.9, 0.0) * shimmer * 0.6;
+    vec3 sky = mix(night, day, daylight);
+    sky = mix(base, sky, 0.92);
     // Decorative distant sky tear: not a traversable portal or a live destination view.
-    vec2 q=p-vec2(1.3,-.6); q.x+=.025*sin(time+q.y*8.0);
-    float shape=min(max(abs(q.x)-.34,abs(q.y)-.17),max(abs(q.x)-.11,abs(q.y)-.32));
-    float rim=1.0-smoothstep(.004,.018,abs(shape));
-    float inside=1.0-smoothstep(-.01,.004,shape);
-    float visibility=SIFT_SKY_RIFTS*smoothstep(.2,.4,direction.y)*(.6+.4*sin(time*.2)*sin(time*.2));
-    vec3 tear=mix(vec3(.16,.75,.82),vec3(.76,.28,.58),.5+.5*sin(q.x*18.0+q.y*11.0+time));
-    sky=mix(sky,tear,inside*visibility*.65)+vec3(.7,.95,1.0)*rim*visibility;
+    vec2 p = direction.xz / max(direction.y + 0.18, 0.18);
+    vec2 q = p - vec2(1.3, -0.6); q.x += 0.025 * sin(time * 0.025 + q.y * 8.0);
+    float shape = min(max(abs(q.x) - 0.34, abs(q.y) - 0.17), max(abs(q.x) - 0.11, abs(q.y) - 0.32));
+    float rim = 1.0 - smoothstep(0.004, 0.018, abs(shape));
+    float inside = 1.0 - smoothstep(-0.01, 0.004, shape);
+    float visibility = SIFT_SKY_RIFTS * smoothstep(0.2, 0.4, direction.y);
+    vec3 tear = mix(vec3(0.16, 0.75, 0.82), vec3(0.95, 0.35, 0.55), 0.5 + 0.5 * sin(q.x * 18.0 + q.y * 11.0 + time * 0.03));
+    sky = mix(sky, tear, inside * visibility * 0.6) + vec3(1.0) * rim * visibility * 0.8;
     return sky;
 }

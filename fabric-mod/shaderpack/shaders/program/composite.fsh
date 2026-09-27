@@ -19,10 +19,15 @@ uniform int worldTime;
 #endif
 #if SIFT_DIMENSION == 1
 #include "/lib/sift_sky.glsl"
+#ifndef SIFT_SHAFTS
+#define SIFT_SHAFTS 0.25 // [0.0 0.15 0.25 0.4]
 #endif
-#if SIFT_OVERWORLD == 1
+#endif
+#if SIFT_DIMENSION == 1 || SIFT_OVERWORLD == 1
 uniform mat4 gbufferProjection;
 uniform vec3 sunPosition;
+#endif
+#if SIFT_OVERWORLD == 1
 #include "/lib/overworld.glsl"
 #endif
 vec3 sampleColor(vec2 uv) { return texture2D(colortex0, clamp(uv, vec2(0.001), vec2(0.999))).rgb; }
@@ -44,6 +49,8 @@ void main() {
         vec3 dir=normalize(mat3(gbufferModelViewInverse)*(view.xyz/view.w));
         color=overworldClouds(color,dir,frameTimeCounter,float(worldTime));
     }
+#endif
+#if SIFT_DIMENSION == 1 || SIFT_OVERWORLD == 1
     vec4 sunClip=gbufferProjection*vec4(sunPosition,1.0);
     if (sunClip.w>0.0) {
         vec2 sunUV=sunClip.xy/sunClip.w*.5+.5;
@@ -53,7 +60,12 @@ void main() {
             if(sampleUV.x>0.0 && sampleUV.x<1.0 && sampleUV.y>0.0 && sampleUV.y<1.0)
                 shafts+=step(.999999,texture2D(depthtex0,sampleUV).r)/12.0;
         }
-        color+=vec3(1.0,.83,.61)*shafts*SIFT_SHAFTS*exp(-length(texcoord-sunUV)*3.0)*smoothstep(.7,1.0,depth);
+#if SIFT_DIMENSION == 1
+        vec3 shaftTint=vec3(1.0,.72,.62);
+#else
+        vec3 shaftTint=vec3(1.0,.83,.61);
+#endif
+        color+=shaftTint*shafts*SIFT_SHAFTS*exp(-length(texcoord-sunUV)*3.0)*smoothstep(.7,1.0,depth);
     }
 #endif
     vec2 pixel = 1.0 / vec2(viewWidth, viewHeight);
@@ -73,7 +85,15 @@ void main() {
 #if SIFT_DIMENSION == 1
     if (depth >= 0.999999) mist = 0.0;
 #endif
-    color = mix(color, vec3(0.055, 0.105, 0.145), mist);
+#if SIFT_DIMENSION == 1
+    // Distant terrain dissolves into the luminous sky haze (peach by day, pale teal at night).
+    float siftDay = smoothstep(-0.25, 0.45, cos((mod(float(worldTime), 24000.0) - 6000.0) / 24000.0 * 6.2831853));
+    vec3 mistColor = mix(vec3(0.62, 0.86, 0.84), vec3(0.96, 0.76, 0.66), siftDay);
+    mist *= 2.2;
+#else
+    vec3 mistColor = vec3(0.055, 0.105, 0.145);
+#endif
+    color = mix(color, mistColor, mist);
     float light = luminance(color);
     vec3 shadowTone = vec3(0.78, 0.94, 1.12);
     vec3 highlightTone = vec3(1.08, 1.02, 0.91);

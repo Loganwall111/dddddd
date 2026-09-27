@@ -11,15 +11,16 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 
 /**
- * Vanilla (no-Iris) Sift sky: slow curtains of translucent rectangular aurora shards, like the
- * reference skies, plus a distant animated threshold that pixelates in and out overhead.
+ * Vanilla (no-Iris) Sift sky: clean horizontal curtains of flat aurora panes and hazy crimson
+ * pillars, like the reference skies (the backdrop colour comes from timeline entersift:sift_cycle), plus a distant animated threshold that pixelates in and out overhead.
  * Drawn camera-relative with a full-bright emissive translucent type, so it follows the player.
  */
 public final class SiftSkyLayer {
     private static final int LIGHT = 0x00F000F0;
     private static final Identifier SHARD = SiftContent.id("textures/environment/sky_shard.png");
     private static final Identifier PORTAL = SiftContent.id("textures/environment/sky_portal.png");
-    private static final int SHARDS = 110;
+    private static final Identifier PILLAR = SiftContent.id("textures/environment/sky_pillar.png");
+    private static final int SHARDS = 112;
     private static final float[][] PALETTE = {
         {0.55f, 1.0f, 0.85f}, {0.62f, 0.93f, 1.0f}, {0.95f, 1.0f, 1.0f}, {0.52f, 0.95f, 0.72f}, {1.0f, 0.62f, 0.82f}};
     private static final float[][] SEEDS = new float[SHARDS][6];
@@ -39,6 +40,8 @@ public final class SiftSkyLayer {
             PoseStack pose = context.poseStack();
             RenderType shards = RenderTypes.entityTranslucentEmissive(SHARD);
             context.submitNodeCollector().submitCustomGeometry(pose, shards, (p, vc) -> drawShards(p, vc, t));
+            RenderType pillars = RenderTypes.entityTranslucentEmissive(PILLAR);
+            context.submitNodeCollector().submitCustomGeometry(pose, pillars, (p, vc) -> drawPillars(p, vc, t));
             RenderType portal = RenderTypes.entityTranslucentEmissive(PORTAL);
             context.submitNodeCollector().submitCustomGeometry(pose, portal, (p, vc) -> drawPortal(p, vc, t));
         });
@@ -46,21 +49,37 @@ public final class SiftSkyLayer {
 
     private static void drawShards(PoseStack.Pose pose, VertexConsumer vc, float t) {
         final float radius = 62f;
+        final int curtains = 4, per = SHARDS / curtains;
         for (int i = 0; i < SHARDS; i++) {
             float[] s = SEEDS[i];
-            int curtain = i % 5;
-            // Curtains: bands of shards that wave in elevation, drifting slowly around the sky.
-            float az = (float) (s[0] * Math.PI * 2 + t * (0.006f + 0.004f * s[1]) + curtain * 1.2566f);
-            float el = 0.42f + curtain * 0.12f + 0.16f * (float) Math.sin(az * 3 + curtain + t * 0.05f) + (s[2] - 0.5f) * 0.12f;
-            el = Math.max(0.28f, Math.min(1.35f, el));
+            int curtain = i % curtains, slot = i / curtains;
+            // Clean sweeping horizontal curtains: panes sit edge to edge along a gentle wave.
+            double drift = t * (0.004 + curtain * 0.0015) * (curtain % 2 == 0 ? 1 : -1);
+            float az = (float) (slot * Math.PI * 2 / per + drift + curtain * 0.7 + (s[0] - 0.5) * 0.02);
+            float wave = (float) Math.sin(az * 2 + curtain * 1.9 + t * 0.03);
+            float el = 0.5f + curtain * 0.16f + 0.09f * wave;
             float cx = (float) (Math.cos(el) * Math.cos(az)) * radius;
             float cy = (float) Math.sin(el) * radius;
             float cz = (float) (Math.cos(el) * Math.sin(az)) * radius;
-            float w = 3.5f + s[3] * 8f, h = w * (0.55f + s[4] * 1.3f);
-            float roll = (s[5] - 0.5f) * 0.9f + (float) Math.sin(t * 0.1f + i) * 0.08f;
-            float alpha = 0.18f + 0.34f * (0.5f + 0.5f * (float) Math.sin(t * (0.25f + s[1] * 0.4f) + i * 2.1f));
-            float[] c = PALETTE[(i * 7 + curtain) % PALETTE.length];
-            quad(pose, vc, cx, cy, cz, w, h, roll, c[0], c[1], c[2], alpha, 0, 0, 1, 1);
+            float w = (float) (Math.PI * 2 * radius * Math.cos(el) / per) * 0.95f;
+            float h = 9f + curtain * 1.5f + s[4] * 2.5f;
+            float slope = (float) Math.atan(0.09f * 2 * Math.cos(az * 2 + curtain * 1.9 + t * 0.03) / Math.cos(el));
+            float alpha = 0.22f + 0.22f * (0.5f + 0.5f * (float) Math.sin(t * 0.6f - slot * 0.45f + curtain));
+            float[] c = PALETTE[curtain % 4];
+            quad(pose, vc, cx, cy, cz, w, h, slope, c[0], c[1], c[2], alpha, 0, 0, 1, 1);
+        }
+    }
+
+    /** Hazy crimson vertical pillars across the upper sky, as in the reference footage. */
+    private static void drawPillars(PoseStack.Pose pose, VertexConsumer vc, float t) {
+        final float radius = 66f;
+        for (int i = 0; i < 12; i++) {
+            float[] s = SEEDS[i * 7 % SHARDS];
+            float az = (float) (i * Math.PI * 2 / 12 + s[1] * 0.4 + t * 0.001);
+            float el = 0.95f + s[2] * 0.2f;
+            float cx = (float) (Math.cos(el) * Math.cos(az)) * radius, cy = (float) Math.sin(el) * radius, cz = (float) (Math.cos(el) * Math.sin(az)) * radius;
+            float a = 0.16f + 0.1f * (float) Math.sin(t * 0.15f + i * 1.7f);
+            quad(pose, vc, cx, cy, cz, 7f + s[3] * 9f, 46f, 0f, 0.92f, 0.2f, 0.3f, a, 0, 0, 1, 1);
         }
     }
 

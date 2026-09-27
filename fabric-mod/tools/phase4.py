@@ -137,7 +137,7 @@ def creature_functions():
     # Natural spawn pulse (fallback / supplement to biome spawn lists).
     pulse = F / "world/pulse.mcfunction"
     lines = [l for l in pulse.read_text().splitlines()
-             if not any(k in l for k in ("function entersift:blub/spawn", "creature/drift_jelly/spawn", "creature/antlerling/spawn"))]
+             if not any(k in l for k in ("function entersift:blub/spawn", "run function entersift:creature/"))]
     table = [("singer_meadow", "blub", "~4 ~ ~4", True), ("singer_meadow", "antlerling", "~6 ~ ~", True),
              ("singer_meadow", "drift_jelly", "~5 ~3 ~", False), ("pale_grove", "drift_jelly", "~-5 ~3 ~", False),
              ("pale_grove", "sculkling", "~5 ~ ~-3", True), ("rose_spires", "licker", "~-8 ~ ~6", True),
@@ -332,6 +332,16 @@ def sky_textures():
     glow = img.filter(ImageFilter.GaussianBlur(2.5))
     out = Image.alpha_composite(glow, img)
     out.save(env / "sky_shard.png")
+    # Pillar: soft vertical column (gaussian across, fades at both ends).
+    pw, ph = 32, 128
+    img = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(ph):
+        fy = min(1.0, y / (ph * 0.25)) * min(1.0, (ph - 1 - y) / (ph * 0.35))
+        for x in range(pw):
+            fx = math.exp(-((x - pw / 2 + 0.5) / (pw * 0.22)) ** 2)
+            px[x, y] = (255, 255, 255, int(255 * fx * fy))
+    img.save(env / "sky_pillar.png")
     # Portal: cyan pixel mosaic with a white jagged rim, like the threshold reference.
     rng = random.Random(9)
     w, h = 40, 24
@@ -351,7 +361,39 @@ def sky_textures():
     img.resize((w * 4, h * 4), Image.NEAREST).save(env / "sky_portal.png")
 
 
+def timeline():
+    """Sift day/night: warm peach-rose days, luminous pale teal nights; the sky never goes black."""
+    def track(day, night, modifier=None, ease=None):
+        tr = {"keyframes": [{"ticks": 500, "value": day}, {"ticks": 11500, "value": day},
+                            {"ticks": 13500, "value": night}, {"ticks": 22500, "value": night}]}
+        if modifier:
+            tr["modifier"] = modifier
+        return tr
+    bezier = {"cubic_bezier": [0.362, 0.241, 0.638, 0.759]}
+    write(D / "timeline/sift_cycle.json", {
+        "clock": "minecraft:overworld",
+        "period_ticks": 24000,
+        "tracks": {
+            "minecraft:visual/sky_color": track("#f3b09a", "#a4e4dc"),
+            "minecraft:visual/fog_color": track("#eab7a2", "#9ad6cf"),
+            "minecraft:visual/cloud_color": track("#fff0e8ff", "#e6fff8ff"),
+            "minecraft:visual/sky_light_color": track("#ffe6dc", "#b8fff2", "multiply"),
+            "minecraft:visual/sky_light_factor": track(1.0, 0.62, "multiply"),
+            "minecraft:gameplay/sky_light_level": track(1.0, 0.45, "multiply"),
+            "minecraft:visual/sun_angle": {"ease": bezier, "keyframes": [{"ticks": 6000, "value": 360.0}, {"ticks": 6000, "value": 0.0}]},
+            "minecraft:visual/moon_angle": {"ease": bezier, "keyframes": [{"ticks": 6000, "value": 540.0}, {"ticks": 6000, "value": 180.0}]},
+        },
+    })
+    dt_path = D / "dimension_type/the_sift.json"
+    dt = json.loads(dt_path.read_text())
+    dt["timelines"] = ["entersift:sift_cycle"]
+    dt["attributes"]["minecraft:visual/sky_color"] = "#a4e4dc"
+    dt["attributes"]["minecraft:visual/fog_color"] = "#9ad6cf"
+    write(dt_path, dt)
+
+
 def main():
+    timeline()
     blocks_and_items()
     creature_functions()
     portal_functions()
