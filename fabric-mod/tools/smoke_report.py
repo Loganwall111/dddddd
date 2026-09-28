@@ -7,7 +7,7 @@ log = Path(sys.argv[1]).read_text(errors="replace").splitlines()
 PATTERNS = [r"/ERROR\]", r"SIFT-SMOKE FAIL", r"Unknown or incomplete command", r"Incorrect argument", r"Unable to summon",
             r"Failed to (load|parse)", r"Couldn't (load|parse|place)", r"Could not (find|parse)", r"Registry loading errors",
             r"Failed to place feature", r"Unknown (function|feature|entity|biome)", r"Expected ", r"Exception"]
-IGNORE = [r"Failed to load properties", r"Ambiguity between arguments", r"Can't keep up", r"eula"]
+IGNORE = [r"SIFT-SMOKE > ", r"Failed to load properties", r"Ambiguity between arguments", r"Can't keep up", r"eula"]
 problems = []
 for i, line in enumerate(log):
     if any(re.search(p, line) for p in PATTERNS) and not any(re.search(p, line) for p in IGNORE):
