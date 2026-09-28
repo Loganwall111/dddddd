@@ -160,12 +160,11 @@ def creature_functions():
 def portal_functions():
     # Panels start as a bare rim and pixelate inward through eight threshold stages.
     form = F / "portal/form.mcfunction"
-    write(form, form.read_text().replace('Name:\\"entersift:threshold\\"', 'Name:\\"entersift:threshold_stage_0\\"')
-          .replace('Name:"entersift:threshold"', 'Name:"entersift:threshold_stage_0"'))
+    write(form, form.read_text().replace('id:"entersift:threshold"', 'id:"entersift:threshold_stage_0"'))
     for k in range(8):
         path = F / f"portal/assemble_{k}.mcfunction"
         append_once(path, f"execute as @e[type=minecraft:block_display,tag=sift.forming,distance=..1] run data merge entity @s "
-                          f"{{block_state:{{Name:\"entersift:threshold_stage_{k}\"}}}}")
+                          f"{{block_state:{{id:\"entersift:threshold_stage_{k}\"}}}}")
         append_once(path, f"playsound minecraft:block.amethyst_block.chime ambient @a[distance=..32] ~ ~ ~ 1.5 {0.5 + k * 0.1:.1f}")
     rt = F / "ritual/tick.mcfunction"
     append_once(rt, "execute if score @s sift.age matches 240..349 run particle minecraft:electric_spark ~ ~2 ~ 1.6 2 0.3 0.4 10 normal")
@@ -196,7 +195,7 @@ def rift_functions():
     append_once(style, "execute store result score #look sift.roll run random value 0..5")
     for i, block in enumerate(["rift_pink", "rift_orange", "rift_yellow", "rift_red", "rift_olive", "rift_edge"]):
         append_once(style, f"execute if score #look sift.roll matches {i} as @e[type=minecraft:block_display,tag=sift.rift_visual,tag=!sift.membrane,distance=..4] "
-                           f"run data merge entity @s {{block_state:{{Name:\"entersift:{block}\"}}}}")
+                           f"run data merge entity @s {{block_state:{{id:\"entersift:{block}\"}}}}")
     append_once(F / "rift/tick.mcfunction", "execute if predicate {type:\"minecraft:random_chance\",chance:0.2} run particle minecraft:electric_spark ~ ~1.5 ~ 1 1.3 0.2 0.3 3 normal")
 
 
@@ -402,7 +401,17 @@ def timeline():
     write(dt_path, dt)
 
 
+def normalise_block_states():
+    """26.3 display NBT: block_state:{id:...,properties:{...}} (the old Name/Properties keys fail to decode)."""
+    for f in F.rglob("*.mcfunction"):
+        text = f.read_text()
+        new = text.replace("block_state:{Name:", "block_state:{id:").replace(",Properties:{", ",properties:{")
+        if new != text:
+            f.write_text(new)
+
+
 def main():
+    normalise_block_states()
     timeline()
     blocks_and_items()
     creature_functions()

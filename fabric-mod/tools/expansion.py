@@ -102,7 +102,7 @@ tellraw @a[distance=..48] {"text":"The Singer awakens. Tune eight blocks on Sono
     form=[]; finish=[]
     for i in range(8):
         # Data fields p0x/p0z etc are prepared by Java, so this works on both frame axes.
-        form.append(f'$summon minecraft:block_display ~ ~ ~ {{Tags:["sift.forming","sift.panel{i}"],block_state:{{Name:"entersift:threshold"}},brightness:{{block:15,sky:15}},transformation:{{translation:[$(p{i}x)f,0f,$(p{i}z)f],scale:[$(ax)f,$(sy)f,$(az)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}}}')
+        form.append(f'$summon minecraft:block_display ~ ~ ~ {{Tags:["sift.forming","sift.panel{i}"],block_state:{{id:"entersift:threshold"}},brightness:{{block:15,sky:15}},transformation:{{translation:[$(p{i}x)f,0f,$(p{i}z)f],scale:[$(ax)f,$(sy)f,$(az)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}}}')
         finish.append(f'$data merge entity @e[type=minecraft:block_display,tag=sift.panel{i},distance=..1,limit=1,sort=nearest] {{start_interpolation:0,interpolation_duration:80,transformation:{{translation:[$(p{i}x)f,0f,$(p{i}z)f],scale:[$(bx)f,$(sy)f,$(bz)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}}}')
     fn('portal/form','\n'.join(form))
     for stage,index in enumerate([0,7,1,6,2,5,3,4]):
@@ -126,7 +126,7 @@ execute if score #riftcycle sift.clock matches 12000.. run scoreboard players se
     # Every display has a local warp ID, so it can expand from a thin shard into its final shape.
     import re
     old=text('rift/create')
-    pattern=r'\{id:"minecraft:block_display",Tags:\[([^\]]+)\],block_state:\{Name:"([^"]+)"\},brightness:\{[^}]+\},transformation:(\{translation:\[[^\]]+\],scale:\[([^\]]+)\],left_rotation:\[[^\]]+\],right_rotation:\[[^\]]+\]\})\}'
+    pattern=r'\{id:"minecraft:block_display",Tags:\[([^\]]+)\],block_state:\{id:"([^"]+)"\},brightness:\{[^}]+\},transformation:(\{translation:\[[^\]]+\],scale:\[([^\]]+)\],left_rotation:\[[^\]]+\],right_rotation:\[[^\]]+\]\})\}'
     warp=[]
     def compress(m):
         i=len(warp); target=m.group(3)
@@ -138,7 +138,7 @@ execute if score #riftcycle sift.clock matches 12000.. run scoreboard players se
     assert len(warp)==27, 'Rift geometry changed; update warp authoring.'
     old=old.replace('tag @e[type=minecraft:marker,tag=sift.new_rift,distance=..1] remove sift.new_rift','execute as @e[type=minecraft:marker,tag=sift.new_rift,distance=..1] at @s run function entersift:rift/style\ntag @e[type=minecraft:marker,tag=sift.new_rift,distance=..1] remove sift.new_rift')
     fn('rift/create',old); fn('rift/warp','\n'.join(warp))
-    fn('rift/style','\n'.join(f'execute if score @s sift.target matches {i} as @e[type=minecraft:block_display,tag=sift.membrane,distance=..4] run data merge entity @s {{block_state:{{Name:"entersift:{block}"}}}}' for i,block in enumerate(['rift_overworld','rift_membrane','rift_end','rift_sift'])))
+    fn('rift/style','\n'.join(f'execute if score @s sift.target matches {i} as @e[type=minecraft:block_display,tag=sift.membrane,distance=..4] run data merge entity @s {{block_state:{{id:"entersift:{block}"}}}}' for i,block in enumerate(['rift_overworld','rift_membrane','rift_end','rift_sift'])))
     fn('rift/tick',text('rift/tick').replace('40..5990','50..5990')+'\nexecute if score @s sift.age matches 5 run function entersift:rift/warp')
     # Prototype creatures: vanilla AI + custom rigs, no undocumented fake custom entity IDs.
     def part(block,t,s,tag):return display('entersift:'+block,t,s,['sift.creature_part',tag],12)

@@ -159,7 +159,7 @@ playsound minecraft:block.sculk_shrieker.shriek ambient @a[distance=..32] ~ ~ ~ 
 # Block display rigs use custom textures and local transformations (no global vanilla texture replacement).
 def display(block, translation, scale, tags, light=12):
     def fl(v): return '['+','.join(f'{float(x)}f' for x in v)+']'
-    return '{id:"minecraft:block_display",Tags:['+','.join('"'+t+'"' for t in tags)+'],block_state:{Name:"'+block+'"},brightness:{block:'+str(light)+',sky:0},transformation:{translation:'+fl(translation)+',scale:'+fl(scale)+',left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}'
+    return '{id:"minecraft:block_display",Tags:['+','.join('"'+t+'"' for t in tags)+'],block_state:{id:"'+block+'"},brightness:{block:'+str(light)+',sky:0},transformation:{translation:'+fl(translation)+',scale:'+fl(scale)+',left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}'
 def summon_display(block, t, scale, tag):
     return 'summon minecraft:block_display ~ ~ ~ '+display(block,t,scale,[tag]).replace('id:"minecraft:block_display",','',1)
 fn('ritual/singer', '\n'.join([
@@ -188,7 +188,7 @@ tag @s remove sift.ritual
 tag @s add sift.portal
 playsound minecraft:block.end_portal.spawn ambient @a[distance=..48] ~ ~ ~ 0.7 0.7
 '''+'function entersift:portal/visual with entity @s data')
-fn('portal/visual', '$summon minecraft:block_display ~ ~ ~ {Tags:["sift.portal_visual"],block_state:{Name:"entersift:threshold"},brightness:{block:15,sky:0},transformation:{translation:[$(tx)f,0f,$(tz)f],scale:[$(sx)f,$(sy)f,$(sz)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}')
+fn('portal/visual', '$summon minecraft:block_display ~ ~ ~ {Tags:["sift.portal_visual"],block_state:{id:"entersift:threshold"},brightness:{block:15,sky:0},transformation:{translation:[$(tx)f,0f,$(tz)f],scale:[$(sx)f,$(sy)f,$(sz)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}')
 fn('portal/tick', '''
 particle minecraft:reverse_portal ~ ~2 ~ 1.5 2 0.1 0.025 5 normal
 function entersift:portal/cross with entity @s data

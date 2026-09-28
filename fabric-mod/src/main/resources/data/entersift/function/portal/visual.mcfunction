@@ -1,1 +1,1 @@
-$summon minecraft:block_display ~ ~ ~ {Tags:["sift.portal_visual"],block_state:{Name:"entersift:threshold"},brightness:{block:15,sky:0},transformation:{translation:[$(tx)f,0f,$(tz)f],scale:[$(sx)f,$(sy)f,$(sz)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
+$summon minecraft:block_display ~ ~ ~ {Tags:["sift.portal_visual"],block_state:{id:"entersift:threshold"},brightness:{block:15,sky:0},transformation:{translation:[$(tx)f,0f,$(tz)f],scale:[$(sx)f,$(sy)f,$(sz)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
