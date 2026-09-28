@@ -32,5 +32,12 @@ for p in (r/'data/entersift/worldgen/placed_feature').glob('*.json'):
     f=json.loads(p.read_text())['feature']
     if isinstance(f,str) and f.startswith('entersift:') and not (r/f'data/entersift/worldgen/feature/{f.split(":")[1]}.json').exists(): errors.append(f'{p}: missing feature {f}')
 if errors: print('\n'.join(errors)); sys.exit(1)
+
+# 26.3 caps offset placement values at 16 per axis (the server refuses to load the pack otherwise).
+for _f in (r/'data/entersift/worldgen/feature').glob('*.json'):
+    for _e in json.loads(_f.read_text()).get('features', []):
+        for _pl in _e.get('placement', []):
+            if _pl.get('type') == 'minecraft:offset':
+                assert max(abs(_pl['x']), abs(_pl['y']), abs(_pl['z'])) <= 16, f'{_f.name}: offset > 16'
 print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper and nine biomes.')
 print('Minecraft 26.3 compilation, registry codecs, command parsing and in-game behavior still require Gradle/client/server tests.')
