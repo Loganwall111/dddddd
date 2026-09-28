@@ -12,3 +12,8 @@ for j in "${JARS[@]}"; do case "$j" in *.jar) unzip -Z1 "$j" 2>/dev/null | grep 
 # Asset listing from the client jar (vanilla texture paths for reference only; no assets are copied).
 for j in "${JARS[@]}"; do case "$j" in *clientOnly*|*client*26.3*) unzip -Z1 "$j" 2>/dev/null | grep -E '^assets/minecraft/(textures/entity/warden|shaders/core|textures/environment)' ;; esac; done | sort -u > $OUT/assets.txt
 wc -l $OUT/*
+# 0.9: exact pipeline flags (depth test / blend / shader) for fog-free sky geometry, plus core shader sources.
+javap -c -p -cp "$CP" net.minecraft.client.renderer.RenderPipelines 2>&1 | grep -n -E "DEBUG_QUADS|LIGHTNING|withDepthTestFunction|withBlend|withLocation|withVertexShader|withFragmentShader|withDepthWrite|withCull|putstatic" | head -400 > $OUT/pipelines.txt
+for j in "${JARS[@]}"; do case "$j" in *clientOnly*|*client*26.3*)
+  for s in position_color.fsh position_color.vsh rendertype_lightning.fsh rendertype_lightning.vsh; do
+    echo "===== $s"; unzip -p "$j" "assets/minecraft/shaders/core/$s" 2>/dev/null; done ;; esac; done > $OUT/shaders.txt

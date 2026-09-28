@@ -62,3 +62,12 @@ net.minecraft.world.level.block.RenderShape
 net.minecraft.client.renderer.rendertype.RenderTypes
 net.minecraft.client.DeltaTracker
 net.minecraft.client.Minecraft
+net.minecraft.client.renderer.RenderPipelines
+com.mojang.blaze3d.pipeline.RenderPipeline
+-protected net.minecraft.client.renderer.SkyRenderer
+net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler
+net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler
+net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderingRegistry
+net.minecraft.client.renderer.fog.FogRenderer
+net.minecraft.client.renderer.rendertype.RenderType
+net.minecraft.client.Options
