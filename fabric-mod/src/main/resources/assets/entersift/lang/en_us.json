@@ -73,5 +73,6 @@
   "item.entersift.overseer_spawn_egg": "Overseer Spawn Egg",
   "entity.entersift.overseer": "Overseer",
   "entity.entersift.twisted_warden": "Twisted Warden",
-  "entity.entersift.singer": "The Singer"
+  "entity.entersift.singer": "The Singer",
+  "block.entersift.rift_anchor": "Rift"
 }

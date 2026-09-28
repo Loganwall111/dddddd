@@ -85,6 +85,9 @@ public final class SiftContent {
     public static final Block RIFT_OLIVE = block("rift_olive", Blocks.AMETHYST_BLOCK, 15);
     public static final Block[] THRESHOLD_STAGES = new Block[8];
     static { for (int i = 0; i < 8; i++) THRESHOLD_STAGES[i] = see("threshold_stage_" + i, Blocks.AMETHYST_BLOCK, 15); }
+    /** Invisible display anchor for client-rendered rifts and portals (no item, never placed). */
+    public static final Block RIFT_ANCHOR = Registry.register(BuiltInRegistries.BLOCK, blockKey("rift_anchor"),
+        new RiftAnchorBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BARRIER).setId(blockKey("rift_anchor")).noOcclusion()));
     public static final IchorFluid ICHOR = Registry.register(BuiltInRegistries.FLUID, id("ichor"), new IchorFluid.Still());
     public static final IchorFluid FLOWING_ICHOR = Registry.register(BuiltInRegistries.FLUID, id("flowing_ichor"), new IchorFluid.Flowing());
     public static final LiquidBlock ICHOR_BLOCK = Registry.register(BuiltInRegistries.BLOCK, blockKey("ichor"),

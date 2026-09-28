@@ -52,3 +52,26 @@ For the cinematic presentation, choose **Lumital Cinematic** in Settings. The ap
 - Sliders: Clouds, Cloud steps, Blockiness, Shafts, Depth of field and Waterfall foam.
 
 **Waterfalls:** extra cliff springs across the overworld, many more in mountain, cherry and badlands biomes (`entersift:cliff_waterfall`, `mountain_waterfall`).
+
+## 0.7.0-alpha — shader-like rifts & portal, real shadows, god rays, reflections
+
+**Rifts and the portal are openings, not blocks.** Each rift, ritual portal and Sift return gate is now one invisible anchor display (`entersift:rift_anchor`). The client `RiftRenderer` draws the opening as it appears in the reference footage:
+- A blocky "pixel cross" silhouette with glowing white outlines on the front and back rim.
+- A recessed window into another world, with parallax and drifting pixel clouds. The scene textures are pixelated crops of the reference interiors (`tools/rift_scenes.py`).
+- Floating hollow outline cubes, lightning arcs and sparkles.
+- Rifts tear open from the centre as white-hot cells; the ritual portal pixelates inward over about 5 seconds.
+- Styles follow the destination: overworld gold-green, Sift peach, Sift night pink, End violet, Nether red, and the portal's cyan mosaic.
+- Anchor fields: `glow_color_override` is the style, `width`/`height` the size, and yaw the facing (`tools/phase6.py`).
+
+**Shaderpack `Sift-Cinematic-0.7`** (the file name now changes with each version, so updates actually install):
+- Sun and moon shadow map with soft shadows: cool blue shade and warm sunlight.
+- Volumetric god rays raymarched through the shadow map.
+- Water reflections: Fresnel sky reflection and a sun glint.
+- Soft highlight rolloff, so snow and clouds keep their detail instead of blowing out to white.
+- Bright blue distance haze, and vanilla clouds turned off so the volumetric clouds show.
+- New "Dungeons II Overworld" settings page.
+- CI compile-checks every shader program with glslang (`tools/check_shaders.py`).
+
+**Fixed flooding and flicker.** 0.6's extra waterfall springs could spawn in dirt, grass and snow on plains, flooding flat land and causing constant water updates. They are now a few springs in stone cliffs of mountain biomes only. Chunks generated with 0.6 stay as they are.
+
+Generator run order: … → phase5 → `rift_scenes.py` → `phase6.py`.

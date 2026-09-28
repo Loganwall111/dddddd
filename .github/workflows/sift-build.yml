@@ -22,6 +22,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: python3 tools/validate.py
       - run: python3 tools/test_data.py
+      - name: Compile-check shaderpack (glslang)
+        run: |
+          curl -sSL -o /tmp/glslang.tgz https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-linux-x86_64-release.tar.gz
+          mkdir -p /tmp/glslang && tar xzf /tmp/glslang.tgz -C /tmp/glslang
+          python3 tools/check_shaders.py "$(find /tmp/glslang -name glslangValidator -type f | head -1)"
       - name: Compile mod and report diagnostics
         shell: bash
         run: |

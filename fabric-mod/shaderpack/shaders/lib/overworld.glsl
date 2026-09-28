@@ -2,7 +2,6 @@
 // Clouds are built from chunky 8-block voxel columns with soft noise, like the chunky puffy
 // clouds in the Dungeons II footage: warm sunlit tops, blue-grey undersides, silver linings.
 #define SIFT_CLOUDS 0.85 // [0.0 0.35 0.65 0.85 1.0]
-#define SIFT_SHAFTS 0.3 // [0.0 0.15 0.25 0.3 0.4]
 #define SIFT_CLOUD_STEPS 28 // [16 20 28 40]
 #define SIFT_CLOUD_BLOCKINESS 0.7 // [0.0 0.35 0.7 1.0]
 uniform vec3 cameraPosition;
@@ -88,11 +87,12 @@ vec3 overworldClouds(vec3 original, vec3 dir, float t, float dayTicks) {
     return mix(original, cloud, amount);
 }
 
-// Cinematic grade: saturated greens/blues, warm highlights, cool shadows.
+// Cinematic grade: richer greens/blues, cool shadows, warm (not brighter) highlights.
 vec3 dungeonsGrade(vec3 c) {
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-    c = mix(vec3(l), c, 1.2);
-    c = mix(c * vec3(0.93, 0.98, 1.08), c * vec3(1.06, 1.02, 0.94), smoothstep(0.2, 0.8, l));
-    c = c * c * (3.0 - 2.0 * c) * 0.25 + c * 0.75; // gentle S-curve
-    return c;
+    c = mix(vec3(l), c, 1.14);
+    c = mix(c * vec3(0.94, 0.99, 1.07), c * vec3(1.03, 1.0, 0.95), smoothstep(0.15, 0.8, l));
+    // Gentle contrast around mid grey; highlights are handled by softClip.
+    c = (c - 0.45) * 1.06 + 0.45;
+    return max(c, 0.0);
 }

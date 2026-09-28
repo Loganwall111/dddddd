@@ -131,7 +131,7 @@ public final class EnterTheSift implements ModInitializer {
                 }
                 runAt(level,f,"function entersift:ritual/begin");
                 double sx=f.alongX()?f.width()-1:.07, sz=f.alongX()?.07:f.width()-1;
-                runAt(level,f,String.format(Locale.ROOT,"data merge entity @e[type=minecraft:marker,tag=sift.ritual,distance=..1,limit=1,sort=nearest] {data:{sx:%ff,sy:%ff,sz:%ff,tx:%ff,tz:%ff}}",sx,(double)f.height()-1,sz,-sx/2,-sz/2));
+                runAt(level,f,String.format(Locale.ROOT,"data merge entity @e[type=minecraft:marker,tag=sift.ritual,distance=..1,limit=1,sort=nearest] {data:{sx:%ff,sy:%ff,sz:%ff,tx:%ff,tz:%ff,pw:%ff,yaw:%ff}}",sx,(double)f.height()-1,sz,-sx/2,-sz/2,(double)f.width()-1,f.alongX()?0.0:90.0));
                 StringBuilder panels=new StringBuilder("data merge entity @e[type=minecraft:marker,tag=sift.ritual,distance=..1,limit=1,sort=nearest] {data:{");
                 panels.append("ax:0.015f,az:0.015f,bx:").append(sx/ (f.alongX()?8:1)).append("f,bz:").append(sz/(f.alongX()?1:8)).append('f');
                 for(int i=0;i<8;i++) {

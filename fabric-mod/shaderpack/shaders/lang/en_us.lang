@@ -9,9 +9,16 @@ option.SIFT_GRAIN=Film grain
 option.SIFT_CURTAIN_DRIFT=Aurora curtain drift
 
 option.SIFT_SKY_RIFTS=Distant sky rift
-option.SIFT_SHAFTS=Overworld sun shafts
+option.SIFT_SHAFTS=Sift sun shafts
 option.SIFT_CLOUD_STEPS=Cloud quality (raymarch steps)
 option.SIFT_CLOUD_BLOCKINESS=Chunky Dungeons clouds
 option.SIFT_DOF=Cinematic distance blur
 option.SIFT_WATERFALL_FOAM=Waterfall foam
 option.SIFT_CLOUDS=Volumetric clouds
+screen.OVERWORLD=Dungeons II Overworld
+option.SIFT_SHADOWS=Sun shadows
+option.SIFT_SHADOW_STRENGTH=Shadow depth
+option.shadowMapResolution=Shadow quality
+option.shadowDistance=Shadow distance
+option.SIFT_GODRAYS=Volumetric god rays
+option.SIFT_REFLECTIONS=Water reflections

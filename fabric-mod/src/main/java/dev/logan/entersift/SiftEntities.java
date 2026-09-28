@@ -76,13 +76,11 @@ public final class SiftEntities {
         waterfalls();
     }
 
-    /** Dungeons II overworld: extra waterfalls spilling out of cliffs, lots of them in the mountains. */
+    /** Dungeons II overworld: extra waterfalls spilling out of cliffs, only in stone cliffs of mountain biomes (never plains: flowing water floods flat land). */
     private static void waterfalls() {
-        var cliff = ResourceKey.create(Registries.PLACED_FEATURE, SiftContent.id("cliff_waterfall"));
         var mountain = ResourceKey.create(Registries.PLACED_FEATURE, SiftContent.id("mountain_waterfall"));
-        BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.FLUID_SPRINGS, cliff);
         ResourceKey<Biome>[] peaks = mc("windswept_hills", "windswept_gravelly_hills", "windswept_forest", "windswept_savanna",
-            "meadow", "grove", "cherry_grove", "stony_peaks", "jagged_peaks", "badlands", "wooded_badlands", "stony_shore", "old_growth_pine_taiga");
+            "stony_peaks", "jagged_peaks", "cherry_grove");
         BiomeModifications.addFeature(BiomeSelectors.includeByKey(peaks), GenerationStep.Decoration.FLUID_SPRINGS, mountain);
     }
 

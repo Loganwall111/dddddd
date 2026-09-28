@@ -1,1 +1,1 @@
-$summon minecraft:block_display ~ ~ ~ {Tags:["sift.portal_visual"],block_state:{id:"entersift:threshold"},brightness:{block:15,sky:0},transformation:{translation:[$(tx)f,0f,$(tz)f],scale:[$(sx)f,$(sy)f,$(sz)f],left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f]}}
+$execute unless entity @e[type=minecraft:block_display,tag=sift.portal_anchor,distance=..1] run summon minecraft:block_display ~ ~ ~ {Tags:["sift.portal_visual","sift.portal_anchor"],block_state:{id:"entersift:rift_anchor"},view_range:4f,glow_color_override:5,width:$(pw)f,height:$(sy)f,Rotation:[$(yaw)f,0f]}

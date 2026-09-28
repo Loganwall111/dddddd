@@ -6,7 +6,7 @@
       "falling": "true"
     }
   },
-  "requires_block_below": false,
+  "requires_block_below": true,
   "rock_count": 4,
   "hole_count": 1,
   "valid_blocks": [
@@ -16,11 +16,6 @@
     "minecraft:andesite",
     "minecraft:tuff",
     "minecraft:calcite",
-    "minecraft:dirt",
-    "minecraft:grass_block",
-    "minecraft:terracotta",
-    "minecraft:red_sandstone",
-    "minecraft:sandstone",
-    "minecraft:snow_block"
+    "minecraft:deepslate"
   ]
 }

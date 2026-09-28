@@ -85,9 +85,10 @@ class DataContracts(unittest.TestCase):
             self.assertNotIn('setblock',path.read_text())
             self.assertNotIn('fill ',path.read_text())
     def test_rift_has_bounded_geometry_and_animated_shards(self):
-        self.assertEqual(fn('rift/create').count('id:"minecraft:block_display"'),27)
-        for phase in [0,20,40,60]:
-            self.assertEqual(fn(f'rift/pose_{phase}').count('interpolation_duration:20'),4)
+        self.assertNotIn('id:"minecraft:block_display"',fn('rift/create'))  # no solid block rig
+        self.assertIn('sift.rift_visual',fn('rift/anchor'))
+        client=(ROOT/'src/client/java/dev/logan/entersift/client/RiftRenderer.java').read_text()
+        self.assertIn('RIFT_ANCHOR',client)
         self.assertIn('tag=sift.rift_visual',fn('world/tick'))
     def test_portal_and_rift_have_different_textures(self):
         tex=R/'assets/entersift/textures/block'
@@ -109,7 +110,7 @@ class DataContracts(unittest.TestCase):
         self.assertEqual(rule[-2]['then_run']['result_state'],'entersift:salt')
     def test_shader_upgrade_is_non_destructive(self):
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
-        self.assertIn('Sift-Cinematic-0.3.zip',code)
+        self.assertIn('Sift-Cinematic-0.7.zip',code)
         self.assertIn('!Files.exists(target)',code)
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
@@ -165,12 +166,16 @@ class DataContracts(unittest.TestCase):
         self.assertIn('unless entity @s[gamemode=creative] if score',fn('rift/punch'))
         self.assertIn('unless entity @s[gamemode=creative] run scoreboard players remove',fn('rift/punch'))
     def test_rift_expansion_has_real_target_transforms(self):
-        self.assertEqual(fn('rift/warp').count('interpolation_duration:40'),27)
-        self.assertIn('scale:[0.012f,0.15f,0.012f]',fn('rift/create'))
-        self.assertIn('matches 5 run function entersift:rift/warp',fn('rift/tick'))
+        # Rifts are one invisible anchor display; the client draws the opening + warp animation.
+        self.assertIn('function entersift:rift/style',fn('rift/create'))
+        self.assertIn('function entersift:rift/anchor with storage entersift:rift',fn('rift/style'))
+        self.assertIn('glow_color_override:$(style),width:$(w)f,height:$(h)f',fn('rift/anchor'))
+        self.assertNotIn('rift/warp',fn('rift/tick'))
     def test_portal_assembly_and_simultaneous_resonance(self):
         self.assertEqual(fn('ritual/tick').count('matches 1 run function entersift:ritual/note_'),8)
-        self.assertEqual(fn('portal/form').count('summon minecraft:block_display'),8)
+        # One client-rendered anchor that pixelates inward (style 5 = portal), sized from the frame.
+        self.assertIn('entersift:rift_anchor',fn('portal/form'))
+        self.assertIn('glow_color_override:5,width:$(pw)f,height:$(sy)f',fn('portal/form'))
         self.assertEqual(sum(fn(f'portal/assemble_{i}').count('interpolation_duration:40') for i in range(8)),8)
     def test_natural_rift_cycle_is_ten_minutes_total(self):
         self.assertIn('#riftcycle sift.clock matches 12000..',fn('tick'))
