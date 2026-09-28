@@ -1,0 +1,42 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:twisted_warden_spawn_egg"
+    },
+    "title": {
+      "text": "Twisted Guardian"
+    },
+    "description": {
+      "text": "Defeat the Twisted Warden that guards the ancient city's threshold"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kill": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "entersift:twisted_warden"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "kill"
+    ]
+  ],
+  "parent": "entersift:root",
+  "rewards": {
+    "experience": 200
+  }
+}

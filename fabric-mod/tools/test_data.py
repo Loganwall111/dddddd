@@ -121,6 +121,17 @@ class DataContracts(unittest.TestCase):
             self.assertTrue((R/f'assets/entersift/items/{name}_spawn_egg.json').exists())
             self.assertTrue((R/f'assets/entersift/textures/entity/{name}.png').exists())
             self.assertTrue((R/f'assets/entersift/textures/entity/{name}_glow.png').exists())
+    def test_survival_integration(self):
+        import json
+        for k in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','singer']:
+            self.assertTrue((D/f'loot_table/entities/{k}.json').exists())
+        self.assertIn('entersift:rift_gauntlet',(D/'loot_table/entities/twisted_warden.json').read_text())
+        for r in ['spire_bricks','teal_path','reef_stone','sift_mosaic','glow_bulb','rift_pink']:
+            self.assertTrue((D/f'recipe/{r}.json').exists())
+        root=json.loads((D/'advancement/root.json').read_text())
+        self.assertNotIn('parent',root)
+        carto=json.loads((D/'advancement/cartographer.json').read_text())
+        self.assertEqual(len(carto['requirements']),6)  # every biome required
     def test_new_biomes_are_in_the_dimension_and_surface_rule(self):
         import json
         dim=json.loads((D/'dimension/the_sift.json').read_text())['generator']['biome_source']['biomes']

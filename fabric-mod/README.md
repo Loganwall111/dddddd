@@ -124,6 +124,7 @@ python3 tools/extract_textures.py  # Terrain/portal/rift textures sampled from t
 python3 tools/creatures.py      # 9 creature models (SiftModelDefs.java), entity textures, spawn eggs
 python3 tools/paint_skies.py    # Day (peach/rose + crimson pillars) and night (luminous teal + aurora curtains) panoramas
 python3 tools/phase4.py         # Entities in data, new blocks, 3 new biomes, staged portal, rift waves, sky textures
+python3 tools/phase5.py         # Mob loot, recipes for new blocks, 'Enter the Sift' advancement tab
 python3 tools/preview_creatures.py  # Software render of every model -> docs/creature-preview.png
 python3 tools/validate.py       # JSON, function references, model/texture integrity
 python3 tools/test_data.py      # offline data-contract tests
@@ -171,3 +172,13 @@ The fluid implementation adapts Fabric's Apache-licensed fluid test example. See
 
 ![Sift day and night panoramas](art/sift-day-sky.png)
 ![](art/sift-night-sky.png)
+
+## Phase 5 (0.5): survival integration
+
+- **Mob drops**: every creature has a loot table (Looting-aware). Blubs drop slime and Blub Jelly, Sculkers sculk and
+  rare echo shards, Drift Jellies glow ink, Overseers echo shards / pearls / Soul Potions, and the **Twisted Warden drops
+  a Rift Gauntlet**, a sculk catalyst, echo shards and soul lantern stone.
+- **Recipes** for all new blocks (spire bricks, paths, reef stone, pale canopy, mosaic, glow bulbs, coloured rift blocks;
+  stonecutter variants for rose spire).
+- **Advancement tab "Enter the Sift"**: Sonorous Deepslate → Twisted Guardian → Beyond the Threshold → Sift
+  Cartographer (all six biomes), Close Your Eyes, Liquid Light, Tear the Veil → Red Handed, plus a hidden one.

@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:sonorous_deepslate"
+    },
+    "title": {
+      "text": "Enter the Sift"
+    },
+    "description": {
+      "text": "Craft Sonorous Deepslate: stone that remembers a song"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "minecraft:gui/advancements/backgrounds/stone"
+  },
+  "criteria": {
+    "deepslate": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "entersift:sonorous_deepslate"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "deepslate"
+    ]
+  ]
+}

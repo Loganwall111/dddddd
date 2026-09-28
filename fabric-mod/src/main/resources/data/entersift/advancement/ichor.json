@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:ichor_bucket"
+    },
+    "title": {
+      "text": "Liquid Light"
+    },
+    "description": {
+      "text": "Collect a bucket of Ichor"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "ichor": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "entersift:ichor_bucket"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "ichor"
+    ]
+  ],
+  "parent": "entersift:enter"
+}

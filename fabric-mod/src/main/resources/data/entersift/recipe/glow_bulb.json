@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "entersift:sift_grass",
+    "minecraft:glow_berries"
+  ],
+  "result": {
+    "id": "entersift:glow_bulb",
+    "count": 1
+  }
+}

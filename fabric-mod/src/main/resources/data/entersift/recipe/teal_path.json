@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "entersift:singer_moss",
+    "minecraft:gravel"
+  ],
+  "result": {
+    "id": "entersift:teal_path",
+    "count": 2
+  }
+}

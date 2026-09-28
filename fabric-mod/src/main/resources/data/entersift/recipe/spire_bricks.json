@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RR",
+    "RR"
+  ],
+  "key": {
+    "R": "entersift:rose_spire"
+  },
+  "result": {
+    "id": "entersift:spire_bricks",
+    "count": 4
+  }
+}

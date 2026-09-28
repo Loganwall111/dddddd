@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "entersift:sift_coral_red",
+    "minecraft:yellow_dye"
+  ],
+  "result": {
+    "id": "entersift:sift_coral_yellow",
+    "count": 1
+  }
+}

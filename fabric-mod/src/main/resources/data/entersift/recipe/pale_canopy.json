@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "entersift:soul_canopy",
+    "minecraft:white_dye"
+  ],
+  "result": {
+    "id": "entersift:pale_canopy",
+    "count": 1
+  }
+}

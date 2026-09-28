@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:red_rift_gauntlet"
+    },
+    "title": {
+      "text": "Red Handed"
+    },
+    "description": {
+      "text": "Dye your Rift Gauntlet red"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "red": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "entersift:red_rift_gauntlet"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "red"
+    ]
+  ],
+  "parent": "entersift:gauntlet"
+}
