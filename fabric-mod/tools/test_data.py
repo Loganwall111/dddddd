@@ -13,9 +13,16 @@ class DataContracts(unittest.TestCase):
         for i in range(4):
             text=fn(f'travel/destination_{i}')
             self.assertIn('unless loaded',text)
-            self.assertIn('unless block ~ ~ ~ minecraft:air run return 0',text)
+            if i == 3:  # the Sift: surface arrival next to the return portal (0.9)
+                self.assertIn('positioned over motion_blocking_no_leaves',text)
+            else:
+                self.assertIn('unless block ~ ~ ~ minecraft:air run return 0',text)
             self.assertIn('unless score @s sift.return matches 1',text)
             self.assertIn('sift.cooldown 100',text)
+    def test_sift_arrival_has_visible_return_portal(self):
+        self.assertIn('summon minecraft:marker ~3 ~ ~ {Tags:["sift.return_gate"]}',fn('travel/plaza'))
+        self.assertIn('glow_color_override:5,width:3f,height:4f',fn('portal/return_tick'))
+        self.assertIn('travel/arrive',fn('travel/sift'))
     def test_travel_returns_to_original_dimension(self):
         text=fn('travel/return')
         for dim in ['minecraft:overworld','minecraft:the_nether','minecraft:the_end','entersift:the_sift']:

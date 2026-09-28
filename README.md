@@ -1,6 +1,6 @@
 # Enter the Sift — Fabric mod project
 
-The requested Minecraft mod is in **[`fabric-mod/`](fabric-mod/README.md)**. It targets **Minecraft Java 26.3 / Fabric / JDK 25** and includes source, original animated textures, dimension/worldgen data, gameplay functions, an optional Iris shader pack, tests and a GitHub Actions build workflow.
+The requested Minecraft mod is in **[`fabric-mod/`](fabric-mod/README.md)**. It targets **Minecraft Java 26.3 / Fabric / JDK 25** and includes source, original animated textures, dimension/worldgen data, gameplay functions, vanilla-Java rendering (no shader pack), tests and a GitHub Actions build workflow.
 
 **Status: experimental, uncompiled source alpha.** Offline integrity checks and 20 data tests pass; Minecraft compilation and playtesting are blocked in this workspace by unavailable Java/dependency downloads. No installable JAR is being claimed. Read the [mod guide](fabric-mod/README.md) and [verification record](fabric-mod/docs/BUILD_STATUS.md) before building or testing.
 
@@ -120,3 +120,47 @@ Generator run order: … → phase5 → `rift_scenes.py` → `phase6.py`.
 - None of the visuals can be screenshot-tested in CI, only compiled and smoke-tested on a server.
 
 Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` → `creatures.py` → `item_art.py` → `phase9.py`.
+
+## 0.9.0-alpha — clean slate: Java lava-lamp sky, true 3D rift windows, swimmable ichor
+
+**The old sky is deleted.** The floating blue panes and shards, the overhead portal mosaic, the horizon bands, the panorama images and their generators (`sky_panorama.py`, `paint_skies.py`) are all gone. So is the **Iris shader pack**: no zip is bundled or installed, and the mod deletes the `Sift-Cinematic-*.zip` files that older versions copied into `shaderpacks/`. This also removes the warping effect and every non-sun god ray. Vanilla clouds are made invisible in the Sift (cloud alpha 0).
+
+**Lava-lamp sky (`client/SiftSky.java`, pure Java):**
+- Drifting, merging colour blobs from domain-warped 3D Perlin noise, recomputed every frame on a 72×36 sphere with per-vertex colours.
+- **Four stages on the world clock:**
+  - **Day:** pale cyan-teal.
+  - **Noon:** neon mint and pearl white.
+  - **Evening:** magenta, dusty rose and crimson.
+  - **Night:** heavy amber-gold with soft crimson vertical pillars.
+  - Preview: `fabric-mod/art/sky/lava_lamp_stages.png`, made by `tools/preview_sky.py`, which uses the same maths.
+- **How it's drawn.** Fabric 26.3 has no sky hook, so the sphere is submitted with `RenderTypes.debugQuads()`. The CI probe showed this uses the core `position_color` shader, which has no fog and depth-tests normally. The sphere sits beyond the last chunk and inside the far plane, so terrain always stays in front.
+- **No horizon seam.** The lowest band fades to exactly the timeline's fog colour. A test checks that the Java keyframes match the timeline.
+- **Sun and rays.** The sun has a corona and 14 slowly turning rays. These are the only god rays in the Sift.
+
+**Ground and ichor follow the sky.** The same stages drive `sky_light_color` in `timeline/sift_cycle.json`, so the lightmap tints the ground and ichor cyan → mint → rose → amber. `water_fog_color` does the same for the fog inside ichor. Per-biome sky and fog colours were removed so the whole dimension shares one sky.
+
+**Rifts and portal: interior mapping.**
+- **The window.** For every window vertex, a ray from the camera is cast through it onto a virtual plane 16 blocks behind the rift, and the hit point becomes the texture coordinate. The view inside is one continuous, non-repeating image with real 3D parallax.
+- **Clouds.** A nearer cloud layer 6 blocks back parallaxes faster.
+- **Rim.** The rim is a thick extruded, glowing white frame with two bloom layers. The lightning arcs and floating hollow cubes remain.
+- Blaze3D 26.x doesn't let mods use a stencil buffer; interior mapping gives the same visual result.
+
+**Return portal.** You now land on the real surface at 0,0, on a teal plaza, facing a 3×4 cyan-mosaic return portal 3 blocks east. Previously you landed on a pad at y=300 and drifted away from its small gate. The old pad and gate are cleaned up automatically.
+
+**Ichor:**
+- It's in `#minecraft:water`, so you can swim and float in it, and it has underwater fog.
+- New textures are torus-periodic noise in pastel lava-lamp colours, so there's no seam at block edges and the animation loops without a jump. The flow sprite repeats every half-sprite because the fluid renderer samples half-sprite windows.
+
+**World:**
+- **Trees.** Pale trees are now 18 tall with 9-radius drooping white canopies and hanging teal strands. Weeping soul trees are 14 tall with teal canopies.
+- **Rose spires.** These are now 32-block banded red-brick mesa towers with flat 7-radius caps, grass, and a pale tree on top.
+- **Floors.** The olive moss and khaki salt floors are now a bluish flagstone `teal_path`.
+- Preview: `fabric-mod/art/feature_preview.png`.
+
+**Known limits (honest):**
+- Vanilla fluids are always drawn one sprite per block. The ichor is seamless and low-frequency, so no cut is visible, but it can't be one giant non-tiling image.
+- If a future Fabric/MC build makes `debugQuads` skip depth testing, the sky sphere would cover terrain. The client logs `[Sift] lava-lamp sky radius N blocks` when it's active.
+- None of this can be screenshot-tested in CI. It's compiled and server smoke-tested only.
+
+Generator run order: … → `phase9.py` → `phase10.py` (then `preview_sky.py` / `preview_features.py` for previews).
+
