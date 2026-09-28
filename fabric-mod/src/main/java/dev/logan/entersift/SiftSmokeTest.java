@@ -52,6 +52,8 @@ final class SiftSmokeTest {
     private static void stageTwo(MinecraftServer server) {
         int x = -40;
         for (String feature : FEATURES) {
+            // Plants need soil, like in real terrain: give every feature a little grass pad.
+            run(server, "execute in entersift:the_sift run fill " + (x - 2) + " 199 18 " + (x + 2) + " 199 22 minecraft:grass_block");
             run(server, "execute in entersift:the_sift run place feature entersift:" + feature + " " + x + " 200 20");
             x += 6;
         }
