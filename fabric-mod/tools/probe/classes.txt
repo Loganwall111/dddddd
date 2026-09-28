@@ -71,3 +71,14 @@ net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderingRegistry
 net.minecraft.client.renderer.fog.FogRenderer
 net.minecraft.client.renderer.rendertype.RenderType
 net.minecraft.client.Options
+-protected net.minecraft.world.entity.Entity
+-protected net.minecraft.client.renderer.entity.EntityRenderer
+net.minecraft.client.renderer.entity.state.EntityRenderState
+net.minecraft.client.renderer.entity.EntityRendererProvider$Context
+net.minecraft.world.level.storage.ValueInput
+net.minecraft.world.level.storage.ValueOutput
+net.minecraft.network.syncher.SynchedEntityData$Builder
+net.minecraft.network.syncher.SynchedEntityData
+net.minecraft.network.syncher.EntityDataSerializers
+net.minecraft.world.entity.EntityType$Builder
+net.minecraft.world.entity.EntityDimensions
