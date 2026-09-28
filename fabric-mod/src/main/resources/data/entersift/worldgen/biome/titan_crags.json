@@ -1,0 +1,50 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#4fa0a8"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#8fa7a6",
+    "minecraft:visual/sky_color": "#a3c4c2",
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.003
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    }
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:titan_crag",
+      "entersift:crag_spire",
+      "entersift:crag_boulder",
+      "entersift:crag_tree",
+      "entersift:sift_grass"
+    ],
+    []
+  ]
+}

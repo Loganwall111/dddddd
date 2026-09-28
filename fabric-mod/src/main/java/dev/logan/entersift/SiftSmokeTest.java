@@ -14,8 +14,9 @@ final class SiftSmokeTest {
     private static int ticks = -1;
 
     private static final String[] FEATURES = {"rose_spire", "rose_arch", "pale_tree", "reef_boulder", "weeping_soul_tree",
-        "ruined_arch", "ribcage", "crystals", "soul_salt", "flowers", "sift_grass", "glow_bulb", "sift_coral_red", "sift_coral_yellow"};
-    private static final String[] BIOMES = {"carapace", "singer_meadow", "saltwound_expanse", "rose_spires", "pale_grove", "tidepool_reef"};
+        "ruined_arch", "ribcage", "crystals", "soul_salt", "flowers", "sift_grass", "glow_bulb", "sift_coral_red", "sift_coral_yellow",
+        "giant_skull", "bone_tusk", "coral_tree", "titan_crag", "crag_spire", "crag_boulder", "crag_tree"};
+    private static final String[] BIOMES = {"carapace", "singer_meadow", "saltwound_expanse", "rose_spires", "pale_grove", "tidepool_reef", "boneyard", "coral_expanse", "titan_crags"};
 
     static void register() {
         if (!"1".equals(System.getenv("SIFT_SMOKE"))) return;

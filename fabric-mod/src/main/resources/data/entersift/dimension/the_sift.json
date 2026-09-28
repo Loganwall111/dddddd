@@ -11,7 +11,10 @@
         "entersift:saltwound_expanse",
         "entersift:rose_spires",
         "entersift:pale_grove",
-        "entersift:tidepool_reef"
+        "entersift:tidepool_reef",
+        "entersift:boneyard",
+        "entersift:coral_expanse",
+        "entersift:titan_crags"
       ],
       "scale": 4
     }

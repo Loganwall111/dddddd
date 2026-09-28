@@ -61,7 +61,12 @@ public final class SiftEntities {
         }
         // Natural spawning in the Sift's biomes (the Singer and the Twisted Warden are event-only).
         spawn("singer_meadow", MobCategory.CREATURE, SiftKind.BLUB, 18, 2, 4);
-        for (String biome : new String[]{"singer_meadow", "pale_grove", "rose_spires", "tidepool_reef", "carapace", "saltwound_expanse"})
+        spawn("coral_expanse", MobCategory.CREATURE, SiftKind.BLUB, 12, 2, 4);
+        spawn("coral_expanse", MobCategory.CREATURE, SiftKind.DRIFT_JELLY, 6, 1, 2);
+        spawn("titan_crags", MobCategory.CREATURE, SiftKind.ANTLERLING, 12, 1, 3);
+        spawn("boneyard", MobCategory.MONSTER, SiftKind.SCULKER, 20, 1, 3);
+        spawn("boneyard", MobCategory.MONSTER, SiftKind.OVERSEER, 4, 1, 1);
+        for (String biome : new String[]{"singer_meadow", "pale_grove", "rose_spires", "tidepool_reef", "carapace", "saltwound_expanse", "coral_expanse", "titan_crags"})
             spawn(biome, MobCategory.CREATURE, SiftKind.NOTE_BIRD, 10, 2, 4);
         spawn("singer_meadow", MobCategory.CREATURE, SiftKind.ANTLERLING, 8, 1, 2);
         spawn("pale_grove", MobCategory.CREATURE, SiftKind.BLUB, 14, 2, 4);
