@@ -11,14 +11,14 @@ def write(p, data):
     p.write_text(json.dumps(data, indent=2) + "\n")
 
 def offsets(x, y, z):
-    """26.3 caps each offset at 16 blocks per axis; offsets chain additively, so split larger ones."""
-    def split(v):
-        a = max(-16, min(16, v)); return a, v - a
-    (x1, x2), (y1, y2), (z1, z2) = split(x), split(y), split(z)
-    out = [{"type": "minecraft:offset", "x": x1, "y": y1, "z": z1}]
-    if x2 or y2 or z2:
-        out.append({"type": "minecraft:offset", "x": x2, "y": y2, "z": z2})
-    return out
+    """26.3 caps each offset at 16 blocks per axis; offsets chain additively, so emit as many as needed."""
+    out, rest = [], [x, y, z]
+    while True:
+        step = [max(-16, min(16, v)) for v in rest]
+        out.append({"type": "minecraft:offset", "x": step[0], "y": step[1], "z": step[2]})
+        rest = [v - s_ for v, s_ in zip(rest, step)]
+        if not any(rest):
+            return out
 
 def overlay(points):
     seen, feats = set(), []
