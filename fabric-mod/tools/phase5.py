@@ -113,8 +113,8 @@ def has_item(item):
 
 
 def killed(kind):
-    return {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": [
-        {"condition": "minecraft:entity_properties", "entity": "this", "predicate": {"type": f"entersift:{kind}"}}]}}
+    # 26.3: "entity" must be a single entity predicate object (a list of loot conditions fails to parse).
+    return {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": {"type": f"entersift:{kind}"}}}
 
 
 def in_biome(biome):

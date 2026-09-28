@@ -43,3 +43,12 @@ jobs:
           path: |
             fabric-mod/build/libs/*.jar
             fabric-mod/build/generated/sift-shaders/assets/entersift/shaderpacks/*.zip
+      - name: Server smoke test (real 26.3 server loads data pack, worldgen, creatures)
+        shell: bash
+        run: |
+          mkdir -p run
+          echo 'eula=true' > run/eula.txt
+          printf 'online-mode=false\nlevel-seed=20260927\nspawn-protection=0\nsync-chunk-writes=false\n' > run/server.properties
+          SIFT_SMOKE=1 timeout 1200 ./gradlew --no-daemon runServer --args=nogui 2>&1 | tee "$RUNNER_TEMP/server.log" || true
+          python3 tools/smoke_report.py "$RUNNER_TEMP/server.log"
+
