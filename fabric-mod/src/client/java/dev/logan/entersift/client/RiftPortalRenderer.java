@@ -205,7 +205,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         Vector3f cam = new Vector3f((float) (camera.pos.x - s.ex), (float) (camera.pos.y - s.ey), (float) (camera.pos.z - s.ez))
             .rotateY((float) Math.toRadians(s.yaw));
         pose.pushPose();
-        pose.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
+        pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
         float age = s.age;
         if (age < RIPPLE_END + 8) {
             // PHASE 1: shockwave rings, grown with PoseStack.scale from 0 % to 100 %.
@@ -333,7 +333,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float[] core = {1f, 0.99f, 0.97f};
         float stable = Math.min(1f, Math.max(0f, (age - GROWN) / 10f));
         // Bloom halo behind the whole cluster.
-        halo(p, vc, 0, sh.cy(), 0.02f, Math.max(sh.w(), sh.h()) * 0.85f * (0.4f + 0.6f * Math.min(1f, (age - CLUSTER_START) / 29f)), edge, 0.22f);
+        halo(p, vc, 0, sh.cy(), 0.02f, Math.max(sh.w(), sh.h()) * 0.85f * (0.4f + 0.6f * Math.min(1f, (age - CLUSTER_START) / 29f)), edge, 0.12f);
         for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
             if (!sh.on(i, j)) continue;
             float at = appearAt(sh.tier()[i][j]), k = pop(age, at);
@@ -381,8 +381,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                             float[] core, float[] edge, float hot) {
         float[] a = {xa, ya, zf}, b = {xb, yb, zf};
         ribbon(p, vc, cam, a, b, 0.13f + 0.1f * hot, core, 1f);
-        ribbon(p, vc, cam, a, b, 0.42f, edge, 0.34f + 0.3f * hot);
-        ribbon(p, vc, cam, a, b, 1.0f, edge, 0.1f);
+        ribbon(p, vc, cam, a, b, 0.32f, edge, 0.3f + 0.3f * hot);
+        ribbon(p, vc, cam, a, b, 0.7f, edge, 0.07f);
         ribbon(p, vc, cam, new float[]{xa, ya, zb}, new float[]{xb, yb, zb}, 0.07f, core, 0.65f);
     }
 
