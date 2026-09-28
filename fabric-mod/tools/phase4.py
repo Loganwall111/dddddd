@@ -293,6 +293,16 @@ def biomes():
                 data["features"][9].append(f)
         write(p, data)
 
+    # One global feature order for every Sift biome: Minecraft crashes chunk generation with a
+    # "Feature order cycle" if two biomes list shared features in conflicting orders.
+    order = ["bones", "soul_salt", "crystals", "ribcage", "ruined_arch", "rose_spire", "rose_arch", "reef_boulder",
+             "weeping_soul_tree", "pale_tree", "flowers", "sift_grass", "sift_coral_red", "sift_coral_yellow", "glow_bulb"]
+    rank = {f"entersift:{n}": i for i, n in enumerate(order)}
+    for p in (D / "worldgen/biome").glob("*.json"):
+        data = json.loads(p.read_text())
+        data["features"] = [sorted(step, key=lambda f: (rank.get(f, 999), f)) for step in data["features"]]
+        write(p, data)
+
     rule_path = D / "worldgen/material_rule/the_sift.json"
     rule = json.loads(rule_path.read_text())
     seq = rule["sequence"]

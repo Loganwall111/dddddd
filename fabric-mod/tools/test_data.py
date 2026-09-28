@@ -121,6 +121,24 @@ class DataContracts(unittest.TestCase):
             self.assertTrue((R/f'assets/entersift/items/{name}_spawn_egg.json').exists())
             self.assertTrue((R/f'assets/entersift/textures/entity/{name}.png').exists())
             self.assertTrue((R/f'assets/entersift/textures/entity/{name}_glow.png').exists())
+    def test_no_feature_order_cycle_between_biomes(self):
+        import json, itertools
+        edges = {}
+        for f in (D/'worldgen/biome').glob('*.json'):
+            steps = json.loads(f.read_text())['features']
+            for s, step in enumerate(steps):
+                for a, b in itertools.combinations(step, 2):
+                    edges.setdefault((s, a), set()).add((s, b))
+        # Cycle detection (DFS) over the per-step precedence graph.
+        state = {}
+        def visit(n):
+            state[n] = 1
+            for m in edges.get(n, ()):
+                if state.get(m) == 1: self.fail(f'feature order cycle via {n} -> {m}')
+                if m not in state: visit(m)
+            state[n] = 2
+        for n in list(edges):
+            if n not in state: visit(n)
     def test_survival_integration(self):
         import json
         for k in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','singer']:
