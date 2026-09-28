@@ -18,6 +18,7 @@ import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 /** Registers the nine Sift creatures as real entity types with attributes and natural spawns. */
@@ -72,6 +73,24 @@ public final class SiftEntities {
         spawn("carapace", MobCategory.MONSTER, SiftKind.OVERSEER, 3, 1, 1);
         spawn("saltwound_expanse", MobCategory.MONSTER, SiftKind.LICKER, 12, 1, 2);
         spawn("saltwound_expanse", MobCategory.CREATURE, SiftKind.ANTLERLING, 6, 1, 1);
+        waterfalls();
+    }
+
+    /** Dungeons II overworld: extra waterfalls spilling out of cliffs, lots of them in the mountains. */
+    private static void waterfalls() {
+        var cliff = ResourceKey.create(Registries.PLACED_FEATURE, SiftContent.id("cliff_waterfall"));
+        var mountain = ResourceKey.create(Registries.PLACED_FEATURE, SiftContent.id("mountain_waterfall"));
+        BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.FLUID_SPRINGS, cliff);
+        ResourceKey<Biome>[] peaks = mc("windswept_hills", "windswept_gravelly_hills", "windswept_forest", "windswept_savanna",
+            "meadow", "grove", "cherry_grove", "stony_peaks", "jagged_peaks", "badlands", "wooded_badlands", "stony_shore", "old_growth_pine_taiga");
+        BiomeModifications.addFeature(BiomeSelectors.includeByKey(peaks), GenerationStep.Decoration.FLUID_SPRINGS, mountain);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ResourceKey<Biome>[] mc(String... names) {
+        ResourceKey<Biome>[] keys = new ResourceKey[names.length];
+        for (int i = 0; i < names.length; i++) keys[i] = ResourceKey.create(Registries.BIOME, net.minecraft.resources.Identifier.fromNamespaceAndPath("minecraft", names[i]));
+        return keys;
     }
 
     private static void spawn(String biome, MobCategory category, SiftKind kind, int weight, int min, int max) {

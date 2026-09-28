@@ -7,9 +7,9 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:sculk_vein",
-          "functions": [
+          "modifier": [
             {
-              "function": "minecraft:set_count",
+              "type": "minecraft:set_count",
               "count": {
                 "type": "minecraft:uniform",
                 "min": 0,
@@ -17,7 +17,7 @@
               }
             },
             {
-              "function": "minecraft:enchanted_count_increase",
+              "type": "minecraft:enchanted_count_increase",
               "enchantment": "minecraft:looting",
               "count": {
                 "type": "minecraft:uniform",
@@ -37,12 +37,10 @@
           "name": "entersift:glow_bulb"
         }
       ],
-      "conditions": [
-        {
-          "condition": "minecraft:random_chance",
-          "chance": 0.25
-        }
-      ]
+      "condition": {
+        "type": "minecraft:random_chance",
+        "chance": 0.25
+      }
     }
   ]
 }

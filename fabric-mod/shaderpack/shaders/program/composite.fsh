@@ -28,6 +28,7 @@ uniform mat4 gbufferProjection;
 uniform vec3 sunPosition;
 #endif
 #if SIFT_OVERWORLD == 1
+#define SIFT_DOF 0.6 // [0.0 0.3 0.6 1.0]
 #include "/lib/overworld.glsl"
 #endif
 vec3 sampleColor(vec2 uv) { return texture2D(colortex0, clamp(uv, vec2(0.001), vec2(0.999))).rgb; }
@@ -69,6 +70,21 @@ void main() {
     }
 #endif
     vec2 pixel = 1.0 / vec2(viewWidth, viewHeight);
+#if SIFT_OVERWORLD == 1
+    // Soft cinematic depth of field: far terrain gently melts (Dungeons II trailer look).
+    if (SIFT_DOF > 0.0 && depth < 0.999999) {
+        float lin = (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
+        float blur = smoothstep(70.0, 220.0, lin) * SIFT_DOF;
+        if (blur > 0.01) {
+            vec3 acc = color;
+            for (int i = 0; i < 8; i++) {
+                float a = float(i) * 0.7853982;
+                acc += sampleColor(texcoord + vec2(cos(a), sin(a)) * pixel * 2.5 * blur);
+            }
+            color = mix(color, acc / 9.0, blur);
+        }
+    }
+#endif
     vec3 bloom = vec3(0.0);
     // Bounded 12-tap glow: bright soul salt and fluid bleed gently into the fog.
     for (int i = 0; i < 12; i++) {
@@ -98,6 +114,9 @@ void main() {
     vec3 shadowTone = vec3(0.78, 0.94, 1.12);
     vec3 highlightTone = vec3(1.08, 1.02, 0.91);
     color *= mix(shadowTone, highlightTone, smoothstep(0.1, 0.85, light));
+#if SIFT_OVERWORLD == 1
+    color = dungeonsGrade(clamp(color, 0.0, 1.0));
+#endif
     color *= SIFT_EXPOSURE;
     vec2 centered = texcoord * 2.0 - 1.0;
     color *= 1.0 - 0.16 * pow(clamp(dot(centered, centered) * 0.5, 0.0, 1.0), 1.4);

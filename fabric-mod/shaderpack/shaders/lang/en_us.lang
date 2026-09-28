@@ -9,5 +9,9 @@ option.SIFT_GRAIN=Film grain
 option.SIFT_CURTAIN_DRIFT=Aurora curtain drift
 
 option.SIFT_SKY_RIFTS=Distant sky rift
-option.SIFT_CLOUDS=Overworld soft clouds
 option.SIFT_SHAFTS=Overworld sun shafts
+option.SIFT_CLOUD_STEPS=Cloud quality (raymarch steps)
+option.SIFT_CLOUD_BLOCKINESS=Chunky Dungeons clouds
+option.SIFT_DOF=Cinematic distance blur
+option.SIFT_WATERFALL_FOAM=Waterfall foam
+option.SIFT_CLOUDS=Volumetric clouds

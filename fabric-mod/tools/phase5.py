@@ -114,7 +114,8 @@ def has_item(item):
 
 def killed(kind):
     # 26.3: "entity" must be a single entity predicate object (a list of loot conditions fails to parse).
-    return {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": {"type": f"entersift:{kind}"}}}
+    return {"trigger": "minecraft:player_killed_entity", "conditions": {"entity": {
+        "type": "minecraft:entity_properties", "entity": "this", "predicate": {"minecraft:entity_type": f"entersift:{kind}"}}}}
 
 
 def in_biome(biome):
@@ -145,8 +146,37 @@ def advancements():
     adv("ichor", "enter", "entersift:ichor_bucket", "Liquid Light", "Collect a bucket of Ichor", {"ichor": has_item("entersift:ichor_bucket")})
 
 
+def modernise_loot(node):
+    """Convert pre-26 loot syntax to 26.3: conditions[] -> condition{type}, functions[] -> modifier[{type}]."""
+    if isinstance(node, list):
+        return [modernise_loot(n) for n in node]
+    if not isinstance(node, dict):
+        return node
+    out = {}
+    for key, value in node.items():
+        if key == "conditions" and isinstance(value, list):
+            conds = [modernise_loot(c) for c in value]
+            out["condition"] = conds[0] if len(conds) == 1 else {"type": "minecraft:all_of", "terms": conds}
+        elif key == "functions" and isinstance(value, list):
+            out["modifier"] = [modernise_loot(f) for f in value]
+        elif key in ("condition", "function") and isinstance(value, str):
+            out["type"] = value
+        else:
+            out[key] = modernise_loot(value)
+    return out
+
+
+def modernise_all_loot():
+    for f in sorted((D / "loot_table").rglob("*.json")):
+        data = json.loads(f.read_text())
+        new = modernise_loot(data)
+        if new != data:
+            write(f, new)
+
+
 def main():
     loot()
+    modernise_all_loot()
     recipes()
     advancements()
     print("phase5: done")

@@ -52,7 +52,7 @@ final class SiftSmokeTest {
     private static void stageTwo(MinecraftServer server) {
         int x = -40;
         for (String feature : FEATURES) {
-            run(server, "execute in entersift:the_sift run place feature entersift:" + feature + " " + x + " 90 20");
+            run(server, "execute in entersift:the_sift run place feature entersift:" + feature + " " + x + " 200 20");
             x += 6;
         }
         x = -40;

@@ -7,9 +7,9 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:sculk",
-          "functions": [
+          "modifier": [
             {
-              "function": "minecraft:set_count",
+              "type": "minecraft:set_count",
               "count": {
                 "type": "minecraft:uniform",
                 "min": 1,
@@ -17,7 +17,7 @@
               }
             },
             {
-              "function": "minecraft:enchanted_count_increase",
+              "type": "minecraft:enchanted_count_increase",
               "enchantment": "minecraft:looting",
               "count": {
                 "type": "minecraft:uniform",
@@ -37,12 +37,10 @@
           "name": "minecraft:echo_shard"
         }
       ],
-      "conditions": [
-        {
-          "condition": "minecraft:random_chance",
-          "chance": 0.12
-        }
-      ]
+      "condition": {
+        "type": "minecraft:random_chance",
+        "chance": 0.12
+      }
     }
   ]
 }

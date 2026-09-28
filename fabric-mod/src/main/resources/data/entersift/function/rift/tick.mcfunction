@@ -15,4 +15,4 @@ execute if score @s sift.age matches 6000.. run function entersift:rift/close
 execute if entity @s[tag=sift.natural] if score #riftcycle sift.clock matches 6000.. run function entersift:rift/close
 
 execute if score @s sift.age matches 5 run function entersift:rift/warp
-execute if predicate {condition:"minecraft:random_chance",chance:0.2} run particle minecraft:electric_spark ~ ~1.5 ~ 1 1.3 0.2 0.3 3 normal
+execute if predicate {type:"minecraft:random_chance",chance:0.2} run particle minecraft:electric_spark ~ ~1.5 ~ 1 1.3 0.2 0.3 3 normal

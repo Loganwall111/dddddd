@@ -171,7 +171,7 @@ def portal_functions():
     append_once(rt, "execute if score @s sift.age matches 240..349 run particle minecraft:electric_spark ~ ~2 ~ 1.6 2 0.3 0.4 10 normal")
     append_once(rt, "execute if score @s sift.age matches 240..349 run particle minecraft:end_rod ~ ~2 ~ 1.4 2 0.2 0.02 4 normal")
     append_once(rt, "execute if score @s sift.age matches 240 run playsound minecraft:block.beacon.activate ambient @a[distance=..48] ~ ~ ~ 2 0.6")
-    append_once(F / "portal/tick.mcfunction", "execute if predicate {condition:\"minecraft:random_chance\",chance:0.15} run particle minecraft:electric_spark ~ ~2 ~ 1.5 2 0.1 0.3 4 normal")
+    append_once(F / "portal/tick.mcfunction", "execute if predicate {type:\"minecraft:random_chance\",chance:0.15} run particle minecraft:electric_spark ~ ~2 ~ 1.5 2 0.1 0.3 4 normal")
     # Beacon-like note beams: tall, thicker, longer-lived.
     for beam in (F / "notes").glob("beam_*.mcfunction"):
         text = beam.read_text().replace("~0.48 ~1 ~0.48", "~0.42 ~1 ~0.42").replace("scale:[0.04f,9.0f,0.04f]", "scale:[0.16f,40.0f,0.16f]")
@@ -197,7 +197,7 @@ def rift_functions():
     for i, block in enumerate(["rift_pink", "rift_orange", "rift_yellow", "rift_red", "rift_olive", "rift_edge"]):
         append_once(style, f"execute if score #look sift.roll matches {i} as @e[type=minecraft:block_display,tag=sift.rift_visual,tag=!sift.membrane,distance=..4] "
                            f"run data merge entity @s {{block_state:{{Name:\"entersift:{block}\"}}}}")
-    append_once(F / "rift/tick.mcfunction", "execute if predicate {condition:\"minecraft:random_chance\",chance:0.2} run particle minecraft:electric_spark ~ ~1.5 ~ 1 1.3 0.2 0.3 3 normal")
+    append_once(F / "rift/tick.mcfunction", "execute if predicate {type:\"minecraft:random_chance\",chance:0.2} run particle minecraft:electric_spark ~ ~1.5 ~ 1 1.3 0.2 0.3 3 normal")
 
 
 # --------------------------------------------------------------------------- biomes

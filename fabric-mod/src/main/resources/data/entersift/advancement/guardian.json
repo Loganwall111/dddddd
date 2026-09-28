@@ -19,7 +19,11 @@
       "trigger": "minecraft:player_killed_entity",
       "conditions": {
         "entity": {
-          "type": "entersift:twisted_warden"
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:entity_type": "entersift:twisted_warden"
+          }
         }
       }
     }

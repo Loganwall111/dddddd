@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:spring_feature",
+  "state": {
+    "id": "minecraft:water",
+    "properties": {
+      "falling": "true"
+    }
+  },
+  "requires_block_below": false,
+  "rock_count": 4,
+  "hole_count": 1,
+  "valid_blocks": [
+    "minecraft:stone",
+    "minecraft:granite",
+    "minecraft:diorite",
+    "minecraft:andesite",
+    "minecraft:tuff",
+    "minecraft:calcite",
+    "minecraft:dirt",
+    "minecraft:grass_block",
+    "minecraft:terracotta",
+    "minecraft:red_sandstone",
+    "minecraft:sandstone",
+    "minecraft:snow_block"
+  ]
+}
