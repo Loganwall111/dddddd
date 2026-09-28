@@ -11466,31 +11466,14 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 17,
+          "y": 16,
           "z": 1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 17,
-          "z": -1
+          "y": 1,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -11512,7 +11495,42 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 17,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 1,
           "z": 0
         },
         {
@@ -11535,8 +11553,14 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 17,
+          "y": 16,
           "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 1,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -11558,7 +11582,13 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 17,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 1,
           "z": 0
         },
         {
@@ -11581,7 +11611,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 18,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 2,
           "z": 0
         },
         {
@@ -11604,53 +11640,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 18,
+          "y": 16,
           "z": 1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 18,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 0,
-          "y": 18,
+          "y": 2,
           "z": 0
         },
         {
@@ -11673,33 +11669,74 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 18,
-          "z": 1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 1,
-          "y": 18,
+          "y": 16,
           "z": -1
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 2,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 2,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 2,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -11719,7 +11756,42 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 18,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 2,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 2,
           "z": 0
         },
         {
@@ -11742,30 +11814,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 19,
+          "y": 16,
           "z": -1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -1,
-          "y": 19,
+          "x": 0,
+          "y": 3,
           "z": 0
         },
         {
@@ -11788,53 +11843,42 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 19,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 3,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
           "z": 1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 19,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 0,
-          "y": 19,
+          "y": 3,
           "z": 0
         },
         {
@@ -11857,33 +11901,16 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 19,
-          "z": 1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:calcite"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 1,
-          "y": 19,
+          "y": 16,
           "z": -1
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 3,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -11902,8 +11929,43 @@
       "placement": [
         {
           "type": "minecraft:offset",
-          "x": 1,
-          "y": 19,
+          "x": 0,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 3,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 3,
           "z": 0
         },
         {
@@ -11926,8 +11988,72 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 19,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 3,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 3,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:calcite"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
           "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 3,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -11949,7 +12075,13 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 20,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
           "z": 0
         },
         {
@@ -11972,30 +12104,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 20,
+          "y": 16,
           "z": -1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:moss_block"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -1,
-          "y": 20,
+          "x": 0,
+          "y": 4,
           "z": 0
         },
         {
@@ -12018,8 +12133,43 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 20,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:moss_block"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
           "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12041,53 +12191,13 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 20,
+          "y": 16,
           "z": -2
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:moss_block"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 20,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:moss_block"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 0,
-          "y": 20,
+          "y": 4,
           "z": 0
         },
         {
@@ -12110,8 +12220,14 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 20,
-          "z": 1
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12133,53 +12249,71 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 20,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:moss_block"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:moss_block"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
           "z": 2
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:moss_block"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": 1,
-          "y": 20,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "minecraft:moss_block"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 1,
-          "y": 20,
+          "x": 0,
+          "y": 4,
           "z": 0
         },
         {
@@ -12202,8 +12336,72 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 20,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:moss_block"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "minecraft:moss_block"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
           "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12225,7 +12423,13 @@
         {
           "type": "minecraft:offset",
           "x": 2,
-          "y": 20,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 4,
           "z": 0
         },
         {
@@ -12248,7 +12452,13 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 21,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 5,
           "z": 0
         },
         {
@@ -12271,7 +12481,13 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 22,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 6,
           "z": 0
         },
         {
@@ -12294,7 +12510,13 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 23,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 7,
           "z": 0
         },
         {
@@ -12317,7 +12539,13 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 24,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 8,
           "z": 0
         },
         {
@@ -12340,7 +12568,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 25,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 9,
           "z": 0
         },
         {
@@ -12363,7 +12597,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 26,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
           "z": 0
         },
         {
@@ -12386,7 +12626,13 @@
         {
           "type": "minecraft:offset",
           "x": -5,
-          "y": 27,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -12409,7 +12655,13 @@
         {
           "type": "minecraft:offset",
           "x": -5,
-          "y": 26,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
           "z": 0
         },
         {
@@ -12432,7 +12684,13 @@
         {
           "type": "minecraft:offset",
           "x": -5,
-          "y": 25,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 9,
           "z": 0
         },
         {
@@ -12455,31 +12713,14 @@
         {
           "type": "minecraft:offset",
           "x": -4,
-          "y": 27,
+          "y": 16,
           "z": -2
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -4,
-          "y": 26,
-          "z": -2
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12501,30 +12742,42 @@
         {
           "type": "minecraft:offset",
           "x": -4,
-          "y": 27,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -4,
+          "y": 16,
           "z": -1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -4,
-          "y": 27,
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -12547,31 +12800,43 @@
         {
           "type": "minecraft:offset",
           "x": -4,
-          "y": 27,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -4,
+          "y": 16,
           "z": 1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -4,
-          "y": 27,
-          "z": 2
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12593,8 +12858,14 @@
         {
           "type": "minecraft:offset",
           "x": -4,
-          "y": 26,
+          "y": 16,
           "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12616,8 +12887,43 @@
         {
           "type": "minecraft:offset",
           "x": -4,
-          "y": 25,
+          "y": 16,
           "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -4,
+          "y": 16,
+          "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 9,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12639,10 +12945,16 @@
         {
           "type": "minecraft:offset",
           "x": -3,
-          "y": 27,
+          "y": 16,
           "z": -3
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -12662,76 +12974,13 @@
         {
           "type": "minecraft:offset",
           "x": -3,
-          "y": 27,
+          "y": 16,
           "z": -2
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -3,
-          "y": 27,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -3,
-          "y": 28,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -3,
-          "y": 27,
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -12754,7 +13003,13 @@
         {
           "type": "minecraft:offset",
           "x": -3,
-          "y": 28,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -12777,8 +13032,14 @@
         {
           "type": "minecraft:offset",
           "x": -3,
-          "y": 27,
-          "z": 1
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12800,8 +13061,14 @@
         {
           "type": "minecraft:offset",
           "x": -3,
-          "y": 28,
-          "z": 1
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12823,31 +13090,101 @@
         {
           "type": "minecraft:offset",
           "x": -3,
-          "y": 27,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -3,
+          "y": 16,
+          "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -3,
+          "y": 16,
+          "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -3,
+          "y": 16,
           "z": 2
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -3,
-          "y": 27,
-          "z": 3
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12869,8 +13206,43 @@
         {
           "type": "minecraft:offset",
           "x": -3,
-          "y": 26,
+          "y": 16,
           "z": 3
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -3,
+          "y": 16,
+          "z": 3
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -12892,122 +13264,13 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 27,
+          "y": 16,
           "z": -3
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -2,
-          "y": 27,
-          "z": -2
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -2,
-          "y": 28,
-          "z": -2
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -2,
-          "y": 27,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -2,
-          "y": 28,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -2,
-          "y": 27,
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -13030,7 +13293,13 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 28,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -13053,10 +13322,161 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 27,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -2,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -2,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -2,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -2,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -2,
+          "y": 16,
           "z": 1
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13076,10 +13496,16 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 28,
+          "y": 16,
           "z": 1
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13099,10 +13525,16 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 27,
+          "y": 16,
           "z": 2
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13122,31 +13554,14 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 28,
+          "y": 16,
           "z": 2
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -2,
-          "y": 27,
-          "z": 3
+          "x": 0,
+          "y": 12,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13168,8 +13583,14 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 26,
+          "y": 16,
           "z": 3
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13191,8 +13612,14 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 25,
+          "y": 16,
           "z": 3
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13214,8 +13641,43 @@
         {
           "type": "minecraft:offset",
           "x": -2,
-          "y": 24,
+          "y": 16,
           "z": 3
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 9,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -2,
+          "y": 16,
+          "z": 3
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 8,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13237,10 +13699,16 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 27,
+          "y": 16,
           "z": -4
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13260,122 +13728,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 27,
+          "y": 16,
           "z": -3
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -1,
-          "y": 27,
-          "z": -2
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -1,
-          "y": 28,
-          "z": -2
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -1,
-          "y": 27,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -1,
-          "y": 28,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": -1,
-          "y": 27,
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -13398,7 +13757,13 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 28,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -13421,10 +13786,161 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 27,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
           "z": 1
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13444,31 +13960,14 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 28,
+          "y": 16,
           "z": 1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": -1,
-          "y": 27,
-          "z": 2
+          "x": 0,
+          "y": 12,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13490,8 +13989,14 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 28,
+          "y": 16,
           "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13513,10 +14018,45 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 27,
+          "y": 16,
+          "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": -1,
+          "y": 16,
           "z": 3
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13536,10 +14076,16 @@
         {
           "type": "minecraft:offset",
           "x": -1,
-          "y": 27,
+          "y": 16,
           "z": 4
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13559,122 +14105,13 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 27,
+          "y": 16,
           "z": -3
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 27,
-          "z": -2
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 0,
-          "y": 28,
-          "z": -2
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 0,
-          "y": 27,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 0,
-          "y": 28,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 0,
-          "y": 27,
+          "y": 11,
           "z": 0
         },
         {
@@ -13697,7 +14134,13 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 28,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -13720,10 +14163,161 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 27,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
           "z": 1
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13743,31 +14337,14 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 28,
+          "y": 16,
           "z": 1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 27,
-          "z": 2
+          "y": 12,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13789,8 +14366,14 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 28,
+          "y": 16,
           "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13812,8 +14395,43 @@
         {
           "type": "minecraft:offset",
           "x": 0,
-          "y": 27,
+          "y": 16,
+          "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 16,
           "z": 3
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13835,10 +14453,16 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 27,
+          "y": 16,
           "z": -3
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -13858,76 +14482,13 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 27,
+          "y": 16,
           "z": -2
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": 1,
-          "y": 27,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 1,
-          "y": 28,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 1,
-          "y": 27,
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -13950,7 +14511,13 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 28,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -13973,8 +14540,14 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 27,
-          "z": 1
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -13996,8 +14569,14 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 28,
-          "z": 1
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -14019,10 +14598,103 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 27,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
+          "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
+          "z": 1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 1,
+          "y": 16,
           "z": 2
         },
         {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
           "type": "minecraft:block_predicate_filter",
           "predicate": {
             "type": "minecraft:matching_block_tag",
@@ -14042,76 +14714,13 @@
         {
           "type": "minecraft:offset",
           "x": 1,
-          "y": 27,
+          "y": 16,
           "z": 3
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": 2,
-          "y": 27,
-          "z": -2
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 2,
-          "y": 27,
-          "z": -1
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
-          "type": "minecraft:offset",
-          "x": 2,
-          "y": 27,
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -14134,31 +14743,101 @@
         {
           "type": "minecraft:offset",
           "x": 2,
-          "y": 27,
+          "y": 16,
+          "z": -2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 2,
+          "y": 16,
+          "z": -1
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 2,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 2,
+          "y": 16,
           "z": 1
         },
         {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_block_tag",
-            "tag": "minecraft:air"
-          }
-        }
-      ]
-    },
-    {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "to_place": {
-          "id": "entersift:pale_canopy"
-        }
-      },
-      "placement": [
-        {
           "type": "minecraft:offset",
-          "x": 2,
-          "y": 27,
-          "z": 2
+          "x": 0,
+          "y": 11,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -14180,8 +14859,43 @@
         {
           "type": "minecraft:offset",
           "x": 2,
-          "y": 26,
+          "y": 16,
           "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
+          "z": 0
+        },
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:air"
+          }
+        }
+      ]
+    },
+    {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "to_place": {
+          "id": "entersift:pale_canopy"
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:offset",
+          "x": 2,
+          "y": 16,
+          "z": 2
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
+          "z": 0
         },
         {
           "type": "minecraft:block_predicate_filter",
@@ -14203,7 +14917,13 @@
         {
           "type": "minecraft:offset",
           "x": 3,
-          "y": 27,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 11,
           "z": 0
         },
         {
@@ -14226,7 +14946,13 @@
         {
           "type": "minecraft:offset",
           "x": 3,
-          "y": 26,
+          "y": 16,
+          "z": 0
+        },
+        {
+          "type": "minecraft:offset",
+          "x": 0,
+          "y": 10,
           "z": 0
         },
         {

@@ -10,6 +10,16 @@ def write(p, data):
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(data, indent=2) + "\n")
 
+def offsets(x, y, z):
+    """26.3 caps each offset at 16 blocks per axis; offsets chain additively, so split larger ones."""
+    def split(v):
+        a = max(-16, min(16, v)); return a, v - a
+    (x1, x2), (y1, y2), (z1, z2) = split(x), split(y), split(z)
+    out = [{"type": "minecraft:offset", "x": x1, "y": y1, "z": z1}]
+    if x2 or y2 or z2:
+        out.append({"type": "minecraft:offset", "x": x2, "y": y2, "z": z2})
+    return out
+
 def overlay(points):
     seen, feats = set(), []
     for (x, y, z, b) in points:
@@ -17,7 +27,7 @@ def overlay(points):
         seen.add((x, y, z))
         bid = b if ":" in b else f"entersift:{b}"
         feats.append({"feature": {"type": "minecraft:simple_block", "to_place": {"id": bid}},
-                      "placement": [{"type": "minecraft:offset", "x": x, "y": y, "z": z},
+                      "placement": offsets(x, y, z) + [
                                     {"type": "minecraft:block_predicate_filter", "predicate": {"type": "minecraft:matching_block_tag", "tag": "minecraft:air"}}]})
     return {"type": "minecraft:overlay", "features": feats}
 
