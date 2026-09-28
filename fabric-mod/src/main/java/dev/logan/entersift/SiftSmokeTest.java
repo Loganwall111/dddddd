@@ -68,9 +68,9 @@ final class SiftSmokeTest {
         run(server, "execute in entersift:the_sift positioned 10 140 -20 run function entersift:rift/natural");
         run(server, "execute in entersift:the_sift run function entersift:world/tick");
         // Client-rendered rifts/portals: the invisible anchor display must actually spawn.
-        run(server, "execute in entersift:the_sift unless entity @e[type=minecraft:block_display,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL rift anchor missing");
+        run(server, "execute in entersift:the_sift unless entity @e[type=entersift:rift_portal,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL rift anchor missing");
         run(server, "execute in entersift:the_sift positioned 30 140 -20 run function entersift:portal/visual {sx:4.0f,sy:4.0f,sz:0.07f,tx:-2.0f,tz:-0.035f,pw:4.0f,yaw:0.0f}");
-        run(server, "execute in entersift:the_sift positioned 30 140 -20 unless entity @e[type=minecraft:block_display,tag=sift.portal_anchor,distance=..1] run say SIFT-SMOKE FAIL portal anchor missing");
+        run(server, "execute in entersift:the_sift positioned 30 140 -20 unless entity @e[type=entersift:rift_portal,tag=sift.portal_anchor,distance=..1] run say SIFT-SMOKE FAIL portal anchor missing");
         for (SiftKind kind : SiftKind.values())
             run(server, "execute in entersift:the_sift store result score #smoke_" + kind.id + " sift.clock if entity @e[type=entersift:" + kind.id + "]");
         run(server, "scoreboard players list");
