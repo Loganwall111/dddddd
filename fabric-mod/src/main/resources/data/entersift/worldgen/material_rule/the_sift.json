@@ -28,7 +28,7 @@
         "if_true": "minecraft:on_floor",
         "then_run": {
           "type": "minecraft:block",
-          "result_state": "entersift:singer_moss"
+          "result_state": "entersift:teal_path"
         }
       }
     },
@@ -127,7 +127,7 @@
       "if_true": "minecraft:on_floor",
       "then_run": {
         "type": "minecraft:block",
-        "result_state": "entersift:salt"
+        "result_state": "entersift:teal_path"
       }
     },
     {

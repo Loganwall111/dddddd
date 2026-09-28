@@ -6,8 +6,6 @@
     "water_color": "#7ad6cf"
   },
   "attributes": {
-    "minecraft:visual/fog_color": "#8fc4c2",
-    "minecraft:visual/sky_color": "#a6dde0",
     "minecraft:visual/ambient_particles": {
       "modifier": "append",
       "argument": [

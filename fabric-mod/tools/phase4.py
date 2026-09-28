@@ -412,14 +412,14 @@ def normalise_block_states():
 
 def main():
     normalise_block_states()
-    timeline()
+    # timeline()  # superseded in 0.9 by tools/phase10.py (lava-lamp sky, no sky textures)
     blocks_and_items()
     creature_functions()
     portal_functions()
     rift_functions()
     features()
     biomes()
-    sky_textures()
+    # sky_textures()  # superseded in 0.9 by tools/phase10.py (lava-lamp sky, no sky textures)
     print("phase4: done")
 
 

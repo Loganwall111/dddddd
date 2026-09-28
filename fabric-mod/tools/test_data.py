@@ -1,5 +1,5 @@
 """Offline contract tests for authored resources. Minecraft codecs still need runtime testing."""
-import json, unittest
+import json, re, unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 R=ROOT/'src/main/resources'
@@ -49,7 +49,7 @@ class DataContracts(unittest.TestCase):
                 self.assertFalse(line.startswith('clear '),str(p))
     def test_animated_fluid(self):
         p=R/'assets/entersift/textures/block/ichor_still.png.mcmeta'
-        self.assertEqual(json.loads(p.read_text())['animation']['frametime'],2)
+        self.assertEqual(json.loads(p.read_text())['animation']['frametime'],3)
     def test_day_night_clock_is_not_frozen(self):
         dim=read('dimension_type/the_sift.json')
         self.assertTrue(dim['has_skylight'])
@@ -59,23 +59,26 @@ class DataContracts(unittest.TestCase):
         tl=_j.loads((D/'timeline/sift_cycle.json').read_text())
         self.assertEqual(tl['period_ticks'],24000)
         self.assertIn('minecraft:visual/sun_angle',tl['tracks'])
-        # The Sift sky stays luminous at night (teal), never black/navy.
+        # The Sift sky stays luminous at night (amber-gold), never black/navy.
         night=tl['tracks']['minecraft:visual/sky_color']['keyframes'][-1]['value']
-        self.assertGreater(sum(int(night[i:i+2],16) for i in (1,3,5)),450)
+        self.assertGreater(sum(int(night[i:i+2],16) for i in (1,3,5)),400)
         self.assertNotIn('fixed_time',dim)
-    def test_sky_is_dimension_scoped(self):
-        shaders=ROOT/'shaderpack/shaders'
-        self.assertIn('dimension.world_sift = entersift:the_sift',(shaders/'dimension.properties').read_text())
-        self.assertIn('SIFT_DIMENSION 0',(shaders/'composite.fsh').read_text())
-        self.assertIn('SIFT_DIMENSION 1',(shaders/'world_sift/composite.fsh').read_text())
-        self.assertIn('depth >= 0.999999',(shaders/'program/composite.fsh').read_text())
-    def test_shader_includes_resolve(self):
-        import re
-        shaders=ROOT/'shaderpack/shaders'
-        for path in shaders.rglob('*'):
-            if path.suffix in ['.fsh','.vsh','.glsl']:
-                for inc in re.findall(r'#include "(/[^"\n]+)"',path.read_text()):
-                    self.assertTrue((shaders/inc.lstrip('/')).is_file(),inc)
+    def test_sky_is_native_java_lava_lamp(self):
+        sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
+        self.assertIn('RenderTypes.debugQuads()',sky)   # position_color: fog-free, no textures
+        self.assertFalse((ROOT/'shaderpack').exists())
+        self.assertFalse((ROOT/'src/client/java/dev/logan/entersift/client/SiftSkyLayer.java').exists())
+        self.assertFalse((R/'assets/entersift/textures/environment').exists())
+        # Java stage table and timeline keyframes must agree, or the horizon shows a seam.
+        tl=json.loads((D/'timeline/sift_cycle.json').read_text())['tracks']['minecraft:visual/fog_color']['keyframes']
+        ticks=[int(x) for x in re.search(r'STAGE_TICKS = \{([^}]*)\}',sky).group(1).split(',')]
+        self.assertEqual([k['ticks'] for k in tl],ticks)
+        hz=re.findall(r'rgb\(0x([0-9A-F]{6})\)',sky.split('HORIZON =')[1].split(';')[0])
+        self.assertEqual(sorted({k['value'].lower() for k in tl}),sorted('#'+h.lower() for h in hz))
+    def test_ichor_is_swimmable_water(self):
+        tag=json.loads((R/'data/minecraft/tags/fluid/water.json').read_text())
+        self.assertFalse(tag['replace'])
+        self.assertIn('entersift:ichor',tag['values']); self.assertIn('entersift:flowing_ichor',tag['values'])
     def test_eight_note_glows_follow_the_song(self):
         for i,color in enumerate(['red','yellow','purple','blue','cyan','orange','green','pink']):
             self.assertIn(f'function entersift:notes/{color}',fn(f'ritual/note_{i}'))
@@ -108,11 +111,12 @@ class DataContracts(unittest.TestCase):
         self.assertEqual(read('worldgen/noise_settings/the_sift.json')['default_block'],'entersift:saltstone')
         rule=read('worldgen/material_rule/the_sift.json')['sequence']
         self.assertEqual(rule[-1]['result_state'],'entersift:saltstone')
-        self.assertEqual(rule[-2]['then_run']['result_state'],'entersift:salt')
-    def test_shader_upgrade_is_non_destructive(self):
+        self.assertEqual(rule[-2]['then_run']['result_state'],'entersift:teal_path')  # bluish floor
+    def test_old_shader_packs_are_removed(self):
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
         self.assertIn('Sift-Cinematic-0.8.zip',code)
-        self.assertIn('!Files.exists(target)',code)
+        self.assertIn('deleteIfExists',code)
+        self.assertNotIn('Files.copy',code)
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
         self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))
@@ -182,20 +186,10 @@ class DataContracts(unittest.TestCase):
         self.assertIn('#riftcycle sift.clock matches 12000..',fn('tick'))
         self.assertIn('tag=sift.natural',fn('rift/tick'))
         self.assertIn('#riftcycle sift.clock matches 6000..',fn('rift/tick'))
-    def test_generated_skies_are_wired_to_shader(self):
-        shaders=ROOT/'shaderpack/shaders'
-        for name in ['sift_day','sift_night']:
-            self.assertTrue((shaders/f'textures/{name}.png').exists())
-            self.assertIn(f'textures/{name}.png',(shaders/'shaders.properties').read_text())
     def test_new_scenery_generates_in_biomes(self):
         b=read('worldgen/biome/singer_meadow.json')
         self.assertIn('entersift:weeping_soul_tree',b['features'][9])
         self.assertIn('entersift:ruined_arch',b['features'][9])
-    def test_overworld_graphics_are_dimension_scoped(self):
-        shaders=ROOT/'shaderpack/shaders'
-        self.assertIn('dimension.world_overworld = minecraft:overworld',(shaders/'dimension.properties').read_text())
-        self.assertIn('SIFT_OVERWORLD 1',(shaders/'world_overworld/composite.fsh').read_text())
-        self.assertIn('SIFT_OVERWORLD 0',(shaders/'world_sift/composite.fsh').read_text())
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

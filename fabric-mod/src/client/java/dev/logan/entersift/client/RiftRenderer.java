@@ -126,46 +126,78 @@ public final class RiftRenderer {
         }
         Vector3f local = new Vector3f((float) (cam.x - d.getX()), (float) (cam.y - d.getY()), (float) (cam.z - d.getZ()))
             .rotateY((float) Math.toRadians(d.getYRot()));
-        return new Rift(style, w, h, portal ? 0f : 0.35f, portal ? 0.3f : 0.55f, cols, rows, mask, heat, progress, age, seed, local);
+        return new Rift(style, w, h, portal ? 0f : 0.35f, portal ? 0.5f : 0.9f, cols, rows, mask, heat, progress, age, seed, local);
     }
 
     // ---------------------------------------------------------------- the window into another world
 
+    /** Distance of the virtual "other world" plane behind the opening, and of the drifting cloud layer. */
+    private static final float FAR = 16f, CLOUD_FAR = 6f;
+
+    /**
+     * Interior mapping (the stencil-window technique without a stencil buffer, which Blaze3D 26.x does
+     * not expose to mods): for a point on the opening, cast the ray from the camera through it and
+     * intersect a virtual plane {@code far} blocks behind the rift. The hit position becomes the UV.
+     * Every vertex that is shared between cells gets the same UV, so the view is one continuous,
+     * non-repeating image, and it shifts with true 3D parallax as the camera moves.
+     * Returns {u, v}.
+     */
+    private static float[] project(Rift r, float x, float y, float z, float far, float span, float du, float dv) {
+        float side = r.cam.z >= 0 ? -1f : 1f;               // looking from the back: the world is on the other side
+        float plane = side * far;
+        float dz = z - r.cam.z;
+        float k = Math.abs(dz) < 1e-3f ? 1e3f : (plane - r.cam.z) / dz;
+        k = Math.max(0f, Math.min(k, 1e3f));
+        float hx = r.cam.x + (x - r.cam.x) * k, hy = r.cam.y + (y - r.cam.y) * k;
+        float cy = r.base + r.h / 2;
+        float u = 0.5f + side * -1f * hx / span + du, v = 0.5f - (hy - cy) / span + dv;
+        return new float[]{clamp(u, 0.004f, 0.996f), clamp(v, 0.004f, 0.996f)};
+    }
+
+    private static float span(Rift r, float far) { return far * 2.6f + Math.max(r.w, r.h); }
+
     private static void window(PoseStack.Pose p, VertexConsumer vc, Rift r, float t) {
-        float px = clamp(-r.cam.x / Math.max(4f, r.cam.length()) * 0.1f, -0.1f, 0.1f);
-        float py = clamp(-(r.cam.y - r.base - r.h / 2) / Math.max(4f, r.cam.length()) * 0.1f, -0.1f, 0.1f);
-        float drift = 0.03f * (float) Math.sin(t * 0.21f + r.seed % 7);
-        float z = -r.depth;
+        float z = -r.depth, span = span(r, FAR);
+        float du = 0.012f * (float) Math.sin(t * 0.05f + r.seed % 7), dv = 0.008f * (float) Math.cos(t * 0.04f);
+        // Sub-cells keep the projective UV mapping accurate (UVs are interpolated linearly per quad).
+        int sub = 2;
         for (int i = 0; i < r.cols; i++) for (int j = 0; j < r.rows; j++) {
             if (!r.on(i, j)) continue;
-            float x0 = r.x(i), x1 = x0 + r.cw(), y0 = r.y(j), y1 = y0 + r.ch();
-            float u0 = uv(i, r.cols, px + drift), u1 = uv(i + 1, r.cols, px + drift);
-            float v0 = uv(r.rows - j, r.rows, -py), v1 = uv(r.rows - j - 1, r.rows, -py);
-            // Back panel (the far world), both windings.
-            quad(p, vc, x0, y0, z, x1, y0, z, x1, y1, z, x0, y1, z, u0, v0, u1, v1, 1f, 0, 0, 1);
-            // Inner walls where the opening meets the outside: give it real depth.
-            float s = 0.78f;
-            if (!r.on(i - 1, j)) quad(p, vc, x0, y0, 0, x0, y0, z, x0, y1, z, x0, y1, 0, u0, v0, u0 + 0.02f, v1, s, 1, 0, 0);
-            if (!r.on(i + 1, j)) quad(p, vc, x1, y0, z, x1, y0, 0, x1, y1, 0, x1, y1, z, u1 - 0.02f, v0, u1, v1, s, -1, 0, 0);
-            if (!r.on(i, j - 1)) quad(p, vc, x0, y0, 0, x1, y0, 0, x1, y0, z, x0, y0, z, u0, v0, u1, v0 - 0.02f, s * 1.1f, 0, 1, 0);
-            if (!r.on(i, j + 1)) quad(p, vc, x0, y1, z, x1, y1, z, x1, y1, 0, x0, y1, 0, u0, v1 + 0.02f, u1, v1, s * 0.9f, 0, -1, 0);
+            for (int a = 0; a < sub; a++) for (int b = 0; b < sub; b++) {
+                float x0 = r.x(i) + r.cw() * a / sub, x1 = r.x(i) + r.cw() * (a + 1) / sub;
+                float y0 = r.y(j) + r.ch() * b / sub, y1 = r.y(j) + r.ch() * (b + 1) / sub;
+                float[] q0 = project(r, x0, y0, z, FAR, span, du, dv), q1 = project(r, x1, y0, z, FAR, span, du, dv);
+                float[] q2 = project(r, x1, y1, z, FAR, span, du, dv), q3 = project(r, x0, y1, z, FAR, span, du, dv);
+                both(p, vc, x0, y0, z, q0, x1, y0, z, q1, x1, y1, z, q2, x0, y1, z, q3, 1f, 1f);
+            }
         }
     }
 
     private static void clouds(PoseStack.Pose p, VertexConsumer vc, Rift r, float t) {
         if (r.style == 5) return; // the portal mosaic has its own pixel shimmer
-        float ou = 0.25f + 0.25f * (float) Math.sin(t * 0.06f + r.seed % 5), ov = 0.25f + 0.25f * (float) Math.cos(t * 0.045f);
-        float z = -r.depth + 0.03f;
+        // A nearer, drifting layer: parallaxes faster than the far scene, which sells the depth.
+        float z = -r.depth + 0.03f, span = span(r, CLOUD_FAR) * 1.6f;
+        float du = 0.25f * (float) Math.sin(t * 0.03f + r.seed % 5), dv = 0.1f * (float) Math.cos(t * 0.025f);
         for (int i = 0; i < r.cols; i++) for (int j = 0; j < r.rows; j++) {
             if (!r.on(i, j)) continue;
             float x0 = r.x(i), x1 = x0 + r.cw(), y0 = r.y(j), y1 = y0 + r.ch();
-            float u0 = ou + 0.5f * i / r.cols, u1 = ou + 0.5f * (i + 1) / r.cols;
-            float v0 = ov + 0.5f * (r.rows - j) / r.rows, v1 = ov + 0.5f * (r.rows - j - 1) / r.rows;
-            emit(p, vc, x0, y0, z, u0, v0, 1, 1, 1, 0.75f, 0, 0, 1);
-            emit(p, vc, x1, y0, z, u1, v0, 1, 1, 1, 0.75f, 0, 0, 1);
-            emit(p, vc, x1, y1, z, u1, v1, 1, 1, 1, 0.75f, 0, 0, 1);
-            emit(p, vc, x0, y1, z, u0, v1, 1, 1, 1, 0.75f, 0, 0, 1);
+            float[] q0 = project(r, x0, y0, z, CLOUD_FAR, span, du, dv), q1 = project(r, x1, y0, z, CLOUD_FAR, span, du, dv);
+            float[] q2 = project(r, x1, y1, z, CLOUD_FAR, span, du, dv), q3 = project(r, x0, y1, z, CLOUD_FAR, span, du, dv);
+            both(p, vc, x0, y0, z, q0, x1, y0, z, q1, x1, y1, z, q2, x0, y1, z, q3, 1f, 0.7f);
         }
+    }
+
+    /** Double-sided textured quad with per-vertex UVs. */
+    private static void both(PoseStack.Pose p, VertexConsumer vc, float ax, float ay, float az, float[] qa, float bx, float by, float bz, float[] qb,
+                             float cx, float cy, float cz, float[] qc, float dx, float dy, float dz, float[] qd, float shade, float alpha) {
+        emit(p, vc, ax, ay, az, qa[0], qa[1], shade, shade, shade, alpha, 0, 0, 1);
+        emit(p, vc, bx, by, bz, qb[0], qb[1], shade, shade, shade, alpha, 0, 0, 1);
+        emit(p, vc, cx, cy, cz, qc[0], qc[1], shade, shade, shade, alpha, 0, 0, 1);
+        emit(p, vc, dx, dy, dz, qd[0], qd[1], shade, shade, shade, alpha, 0, 0, 1);
+        emit(p, vc, dx, dy, dz, qd[0], qd[1], shade, shade, shade, alpha, 0, 0, -1);
+        emit(p, vc, cx, cy, cz, qc[0], qc[1], shade, shade, shade, alpha, 0, 0, -1);
+        emit(p, vc, bx, by, bz, qb[0], qb[1], shade, shade, shade, alpha, 0, 0, -1);
+        emit(p, vc, ax, ay, az, qa[0], qa[1], shade, shade, shade, alpha, 0, 0, -1);
     }
 
     // ---------------------------------------------------------------- floating hollow cubes
@@ -236,10 +268,18 @@ public final class RiftRenderer {
     }
 
     private static void edge(PoseStack.Pose p, VertexConsumer vc, Rift r, float[] g, float xa, float ya, float xb, float yb, float zBack) {
-        float[] a = {xa, ya, 0.01f}, b = {xb, yb, 0.01f};
-        ribbon(p, vc, r.cam, a, b, 0.07f, 1f, 0.98f, 0.95f, 0.95f);
-        ribbon(p, vc, r.cam, a, b, 0.32f, g[0], g[1], g[2], 0.22f);
-        ribbon(p, vc, r.cam, new float[]{xa, ya, zBack}, new float[]{xb, yb, zBack}, 0.045f, 1f, 0.97f, 0.94f, 0.55f);
+        float[] a = {xa, ya, 0.02f}, b = {xb, yb, 0.02f};
+        // Extruded frame: a glowing white wall from the front rim back to the window, both windings.
+        float f = 0.95f, k = 0.45f;
+        col(p, vc, xa, ya, 0.02f, 1f, 0.99f, 0.97f, f); col(p, vc, xb, yb, 0.02f, 1f, 0.99f, 0.97f, f);
+        col(p, vc, xb, yb, zBack, g[0], g[1], g[2], k); col(p, vc, xa, ya, zBack, g[0], g[1], g[2], k);
+        col(p, vc, xa, ya, zBack, g[0], g[1], g[2], k); col(p, vc, xb, yb, zBack, g[0], g[1], g[2], k);
+        col(p, vc, xb, yb, 0.02f, 1f, 0.99f, 0.97f, f); col(p, vc, xa, ya, 0.02f, 1f, 0.99f, 0.97f, f);
+        // Thick white core on the front rim, then two bloom layers.
+        ribbon(p, vc, r.cam, a, b, 0.16f, 1f, 0.99f, 0.97f, 1f);
+        ribbon(p, vc, r.cam, a, b, 0.45f, g[0], g[1], g[2], 0.3f);
+        ribbon(p, vc, r.cam, a, b, 1.1f, g[0], g[1], g[2], 0.1f);
+        ribbon(p, vc, r.cam, new float[]{xa, ya, zBack}, new float[]{xb, yb, zBack}, 0.08f, 1f, 0.97f, 0.94f, 0.7f);
     }
 
     /** Jagged lightning arcs leaping off the rim: constant while tearing open, then in bursts. */
@@ -284,7 +324,6 @@ public final class RiftRenderer {
 
     // ---------------------------------------------------------------- geometry helpers
 
-    private static float uv(int k, int n, float offset) { return clamp(0.12f + 0.76f * k / n + offset, 0f, 1f); }
 
     private static float clamp(float v, float lo, float hi) { return Math.max(lo, Math.min(hi, v)); }
 
