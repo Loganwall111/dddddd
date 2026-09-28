@@ -49,3 +49,16 @@ net.minecraft.world.entity.player.Player
 net.minecraft.world.item.SpawnEggItem
 net.fabricmc.fabric.api.biome.v1.BiomeModifications
 net.fabricmc.fabric.api.biome.v1.BiomeSelectors
+net.minecraft.client.renderer.state.level.LevelRenderState
+net.minecraft.world.entity.Display$BlockDisplay
+-protected net.minecraft.world.entity.Display
+net.minecraft.world.level.block.state.properties.IntegerProperty
+net.minecraft.world.level.block.state.properties.BooleanProperty
+net.minecraft.world.level.block.state.properties.BlockStateProperties
+net.minecraft.world.level.block.state.StateDefinition$Builder
+-protected net.minecraft.world.level.block.Block
+-protected net.minecraft.world.level.block.state.BlockBehaviour
+net.minecraft.world.level.block.RenderShape
+net.minecraft.client.renderer.rendertype.RenderTypes
+net.minecraft.client.DeltaTracker
+net.minecraft.client.Minecraft
