@@ -21,7 +21,7 @@ class DataContracts(unittest.TestCase):
             self.assertIn('sift.cooldown 100',text)
     def test_sift_arrival_has_visible_return_portal(self):
         self.assertIn('summon minecraft:marker ~3 ~ ~ {Tags:["sift.return_gate"]}',fn('travel/plaza'))
-        self.assertIn('glow_color_override:5,width:3f,height:4f',fn('portal/return_tick'))
+        self.assertIn('summon entersift:rift_portal ~ ~ ~ {Tags:["sift.return_anchor"],RiftType:0',fn('portal/return_tick'))
         self.assertIn('travel/arrive',fn('travel/sift'))
     def test_travel_returns_to_original_dimension(self):
         text=fn('travel/return')
@@ -39,7 +39,7 @@ class DataContracts(unittest.TestCase):
         self.assertLess(text.index('#entersift:rift_passable'),text.index('remove @s sift.souls 10'))
         self.assertIn('sift.cooldown 60',text)
     def test_rift_expires(self):
-        self.assertIn('matches 6000.. run function entersift:rift/close',fn('rift/tick'))
+        self.assertIn('sift.age matches 6000.. run function entersift:rift/close',fn('rift/tick'))
         self.assertIn('kill @s',fn('rift/close'))
         self.assertIn('tag=sift.rift_visual',fn('rift/close'))
     def test_haunting_is_opt_in(self):
@@ -98,8 +98,10 @@ class DataContracts(unittest.TestCase):
     def test_rift_has_bounded_geometry_and_animated_shards(self):
         self.assertNotIn('id:"minecraft:block_display"',fn('rift/create'))  # no solid block rig
         self.assertIn('sift.rift_visual',fn('rift/anchor'))
-        client=(ROOT/'src/client/java/dev/logan/entersift/client/RiftRenderer.java').read_text()
-        self.assertIn('RIFT_ANCHOR',client)
+        client=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('submitCustomGeometry',client)
+        self.assertIn('Math.sin(s.ageInTicks * 0.4f) * 0.05f',client)  # lens jitter shell
+        self.assertFalse((ROOT/'src/client/java/dev/logan/entersift/client/RiftRenderer.java').exists())
         self.assertIn('tag=sift.rift_visual',fn('world/tick'))
     def test_portal_and_rift_have_different_textures(self):
         tex=R/'assets/entersift/textures/block'
@@ -181,18 +183,35 @@ class DataContracts(unittest.TestCase):
         # Rifts are one invisible anchor display; the client draws the opening + warp animation.
         self.assertIn('function entersift:rift/style',fn('rift/create'))
         self.assertIn('function entersift:rift/anchor with storage entersift:rift',fn('rift/style'))
-        self.assertIn('glow_color_override:$(style),width:$(w)f,height:$(h)f',fn('rift/anchor'))
+        self.assertIn('summon entersift:rift_portal',fn('rift/anchor'))
+        self.assertIn('RiftType:$(style),Width:$(w)f,Height:$(h)f',fn('rift/anchor'))
         self.assertNotIn('rift/warp',fn('rift/tick'))
     def test_portal_assembly_and_simultaneous_resonance(self):
         self.assertEqual(fn('ritual/tick').count('matches 1 run function entersift:ritual/note_'),8)
         # One client-rendered anchor that pixelates inward (style 5 = portal), sized from the frame.
-        self.assertIn('entersift:rift_anchor',fn('portal/form'))
-        self.assertIn('glow_color_override:5,width:$(pw)f,height:$(sy)f',fn('portal/form'))
+        self.assertIn('summon entersift:rift_portal',fn('portal/form'))
+        self.assertIn('RiftType:4,Width:$(pw)f,Height:$(sy)f',fn('portal/form'))
         self.assertEqual(sum(fn(f'portal/assemble_{i}').count('interpolation_duration:40') for i in range(8)),8)
-    def test_natural_rift_cycle_is_ten_minutes_total(self):
-        self.assertIn('#riftcycle sift.clock matches 12000..',fn('tick'))
+    def test_natural_rift_cycle_is_five_minutes_and_gated(self):
+        self.assertIn('#riftcycle sift.clock matches 6000..',fn('tick'))
+        self.assertIn('tag=sift.awakened] at @s run function entersift:rift/wave_player',fn('tick'))
         self.assertIn('tag=sift.natural',fn('rift/tick'))
-        self.assertIn('#riftcycle sift.clock matches 6000..',fn('rift/tick'))
+        self.assertIn('#riftcycle sift.clock matches 2400..',fn('rift/tick'))
+        self.assertIn('tag @s add sift.awakened',fn('rift/punch'))
+        self.assertIn('@s[tag=sift.awakened]',fn('world/roll'))
+        self.assertIn('if dimension minecraft:the_nether',fn('rift/wave_player'))
+    def test_rifts_are_entities_everywhere(self):
+        import glob
+        for path in (D/'function').rglob('*.mcfunction'):
+            text=path.read_text()
+            for tag in ['sift.rift_visual','sift.portal_anchor','sift.return_anchor']:
+                for line in text.splitlines():
+                    if tag in line and 'summon' in line:
+                        self.assertIn('entersift:rift_portal',line,f'{path.name}: {line}')
+        self.assertIn('matches 0 run scoreboard players set @s sift.target 3',fn('rift/create'))
+        for t in ['overworld','nether','end','sift','portal']:
+            self.assertTrue((R/f'assets/entersift/textures/rift/interior_{t}.png').exists())
+        self.assertIn('RIFT_PORTAL',(ROOT/'src/main/java/dev/logan/entersift/SiftEntities.java').read_text())
     def test_new_scenery_generates_in_biomes(self):
         b=read('worldgen/biome/singer_meadow.json')
         self.assertIn('entersift:weeping_soul_tree',b['features'][9])

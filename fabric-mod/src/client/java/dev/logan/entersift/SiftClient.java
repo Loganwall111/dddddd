@@ -9,7 +9,7 @@ import net.minecraft.client.resources.model.sprite.Material;
 import dev.logan.entersift.client.SiftCreatureRenderer;
 import dev.logan.entersift.client.SiftModelDefs;
 import dev.logan.entersift.client.SiftSky;
-import dev.logan.entersift.client.RiftRenderer;
+import dev.logan.entersift.client.RiftPortalRenderer;
 import java.util.function.Supplier;
 import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -35,7 +35,8 @@ public final class SiftClient implements ClientModInitializer {
         creature(SiftKind.TWISTED_WARDEN, SiftModelDefs::twistedWarden, SiftModelDefs.TWISTED_WARDEN_PARTS);
         creature(SiftKind.SINGER, SiftModelDefs::singer, SiftModelDefs.SINGER_PARTS);
         SiftSky.register();
-        RiftRenderer.register();
+        // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
+        EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,
             new FluidModel.Unbaked(
                 new Material(SiftContent.id("block/ichor_still")),

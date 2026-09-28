@@ -76,19 +76,18 @@ final class SiftSmokeTest {
         run(server, "scoreboard players list");
     }
 
-    /** The client renderer only draws block displays whose state really is entersift:rift_anchor. */
+    /** Rifts and portals are RiftPortalEntity instances (0.10); they must exist with the right variant. */
     private static void checkAnchors(MinecraftServer server) {
         int rifts = 0, portals = 0, wrong = 0;
         for (net.minecraft.server.level.ServerLevel level : server.getAllLevels())
             for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
-                if (!(e instanceof net.minecraft.world.entity.Display.BlockDisplay d)) continue;
-                boolean anchor = d.getBlockState().is(SiftContent.RIFT_ANCHOR);
-                if (e.entityTags().contains("sift.rift_anchor")) { if (anchor) rifts++; else wrong++; }
-                if (e.entityTags().contains("sift.portal_anchor")) { if (anchor) portals++; else wrong++; }
+                if (!(e instanceof RiftPortalEntity rift)) continue;
+                if (e.entityTags().contains("sift.rift_anchor")) { if (rift.riftType() != RiftType.PORTAL) rifts++; else wrong++; }
+                if (e.entityTags().contains("sift.portal_anchor")) { if (rift.riftType() == RiftType.PORTAL) portals++; else wrong++; }
             }
-        EnterTheSift.LOGGER.info("SIFT-SMOKE anchors: rifts={} portals={} wrongState={}", rifts, portals, wrong);
+        EnterTheSift.LOGGER.info("SIFT-SMOKE anchors: rifts={} portals={} wrongType={}", rifts, portals, wrong);
         if (rifts == 0 || portals == 0 || wrong > 0)
-            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL anchor block state: rifts={} portals={} wrongState={}", rifts, portals, wrong);
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL rift_portal entities: rifts={} portals={} wrongType={}", rifts, portals, wrong);
     }
 
     private SiftSmokeTest() {}

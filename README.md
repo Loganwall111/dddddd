@@ -121,6 +121,39 @@ Generator run order: … → phase5 → `rift_scenes.py` → `phase6.py`.
 
 Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` → `creatures.py` → `item_art.py` → `phase9.py`.
 
+## 0.10.0-alpha: rifts become entities (Dungeons II trailer pipeline), rift waves every 5 minutes, Blub and Singer remade
+
+**Rifts are a real entity now.** Every rift, the ritual portal and the Sift return gate are `entersift:rift_portal`
+(`RiftPortalEntity`): a hollow volume with no collision, drawn only by `RiftPortalRenderer` using vanilla client rendering.
+No shader pack, no stencil and no world see-through. The old block_display anchors are removed automatically.
+
+| RiftType | Leads to | Edge colour | Cluster shape |
+|---|---|---|---|
+| 0 OVERWORLD | overworld | gold | stepped staircase |
+| 1 NETHER | Nether | #FF3333 | chaotic overlapping squares |
+| 2 END | the End | violet | tall offset stack |
+| 3 SIFT | the Sift | #FFBFE0 | wide jagged puzzle cross |
+| 4 PORTAL | ritual portal | cyan | pixel-mosaic frame |
+
+**Growth timeline (80 ticks):**
+- 0–20: a puddle ripple of shockwave rings.
+- 21–50: a white-hot incubation seed with erratic lightning that snaps to nearby blocks.
+- 51–80: the voxel cluster snaps in tier by tier, each cell popping in with a white flash; satellites arrive last.
+
+**Once grown:**
+- A flat destination canvas scrolls slowly behind cream walls, with thick emissive edges and bloom.
+- Around the rim: a lens-jitter shell (`sin(t*0.4)*0.05`), floating hollow cubes, rising sparkles and arcs.
+- You can only pass through once the rift is fully assembled.
+
+**Rift waves:** these start once you first use the Rift gauntlet (tag `sift.awakened`).
+- A wave hits every 5 minutes, and the rifts seal after 2 minutes.
+- Waves happen in every dimension, including the Nether, where rifts open at your own level.
+- A rift never leads to the dimension it opened in, and any rift may lead to the End.
+
+**Creatures:**
+- Blub is all blue, with navy bar eyes and mouth. The pink ears and purple are gone.
+- Singer is rebuilt from the MCD2 art: scaled teal robe, pale ridged mask, cream antlers, wide teal wing-arms and a peach chest flower.
+
 ## 0.9.0-alpha — clean slate: Java lava-lamp sky, true 3D rift windows, swimmable ichor
 
 **The old sky is deleted.** The floating blue panes and shards, the overhead portal mosaic, the horizon bands, the panorama images and their generators (`sky_panorama.py`, `paint_skies.py`) are all gone. So is the **Iris shader pack**: no zip is bundled or installed, and the mod deletes the `Sift-Cinematic-*.zip` files that older versions copied into `shaderpacks/`. This also removes the warping effect and every non-sun god ray. Vanilla clouds are made invisible in the Sift (cloud alpha 0).

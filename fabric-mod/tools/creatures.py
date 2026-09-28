@@ -35,21 +35,23 @@ BLUE = (156, 214, 232)
 RED_EYE = (224, 44, 62)
 SPECS: dict[str, dict] = {}
 
-# Blub — pale-blue jelly bunny (MCD2 ambience ref): dark indigo eyes, purple nose, pink mouth ledge,
-# long floppy ears with pink insides, four stubby legs.
-BLUB_EYE, BLUB_NOSE, BLUB_MOUTH, EAR_PINK = (58, 46, 120), (120, 70, 140), (236, 168, 180), (242, 158, 190)
-SPECS["blub"] = dict(tex=64, egg=(BLUE, EAR_PINK), parts=[
-    P("body", (0, 21, 0), [B(-5, -8, -5, 10, 8, 10, BLUE, "speckle", faces={"north": [
-        (1, 3, 3, 1, BLUB_EYE, False), (6, 3, 3, 1, BLUB_EYE, False), (4, 5, 2, 1, BLUB_NOSE, False)]}),
-        B(-3, -1, -6, 6, 1, 1, BLUB_MOUTH, "plain")]),
-    P("ear_l", (-3, 13, 1), [B(-1.5, -8, -0.5, 3, 8, 1, (168, 220, 240), faces={"north": [(1, 1, 1, 6, EAR_PINK, False)],
-        "south": [(0, 0, 3, 2, (150, 206, 232), False)]})], parent="body", rot=(0.35, 0, -0.45)),
-    P("ear_r", (3, 13, 1), [B(-1.5, -8, -0.5, 3, 8, 1, (168, 220, 240), faces={"north": [(1, 1, 1, 6, EAR_PINK, False)],
-        "south": [(0, 0, 3, 2, (150, 206, 232), False)]})], parent="body", rot=(0.35, 0, 0.45)),
-    P("leg_0", (-3, 21, -3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
-    P("leg_1", (3, 21, -3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
-    P("leg_2", (-3, 21, 3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
-    P("leg_3", (3, 21, 3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
+# Blub — (0.9 ref crop) an all-blue jelly bunny: sky-blue cube body, dark navy bar eyes and a small dark
+# mouth, upright ears in the same blue (slightly lighter inside). No pink, no purple.
+BLUB_EYE, BLUB_MOUTH = (30, 38, 86), (40, 52, 104)
+BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (150, 206, 244), (112, 176, 232), (140, 198, 244), (92, 150, 206)
+BLUB_BLUE = (118, 182, 236)
+SPECS["blub"] = dict(tex=64, egg=(BLUB_BLUE, BLUB_EYE), parts=[
+    P("body", (0, 21, 0), [B(-5, -8, -5, 10, 8, 10, BLUB_BLUE, "speckle", faces={
+        "north": [(1, 3, 3, 1, BLUB_EYE, False), (6, 3, 3, 1, BLUB_EYE, False), (4, 5, 2, 1, BLUB_MOUTH, False)],
+        "top": [(0, 0, 10, 10, BLUB_TOP, False)]})]),
+    P("ear_l", (-3, 13, 1), [B(-1.5, -7, -0.5, 3, 7, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 5, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.2, 0, -0.25)),
+    P("ear_r", (3, 13, 1), [B(-1.5, -7, -0.5, 3, 7, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 5, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.2, 0, 0.25)),
+    P("leg_0", (-3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
+    P("leg_1", (3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
+    P("leg_2", (-3, 21, 3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
+    P("leg_3", (3, 21, 3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
 ])
 
 # Sculker — slate-blue gaper with a huge tan mouth, whiskers and antler sprouts (sculkers render).
@@ -162,15 +164,32 @@ SPECS["note_bird"] = dict(tex=64, egg=(NB, (255, 120, 180)), parts=[
     P("leg_1", (1, 18, 0), [B(-0.5, 0, -0.5, 1, 2, 1, (250, 190, 90), "plain")]),
 ])
 
-# Singer — tall backlit figure with a wide hammer-cap head, one arm raised (26_200013).
-SG, SGL = (84, 26, 58), (255, 132, 196)
-SPECS["singer"] = dict(tex=64, egg=(SG, SGL), parts=[
-    P("leg_0", (-1.5, 10, 0), [B(-1, 0, -1, 2, 14, 2, SG)]),
-    P("leg_1", (1.5, 10, 0), [B(-1, 0, -1, 2, 14, 2, SG)]),
-    P("body", (0, 10, 0), [B(-3, -14, -2, 6, 14, 4, SG, "noise", faces={"north": [(2, 3, 2, 2, SGL, True)]})]),
-    P("head", (0, -4, 0), [B(-1.5, -5, -1.5, 3, 5, 3, SG), B(-7, -8, -3, 14, 3, 6, (104, 36, 74), faces={"north": [(3, 1, 2, 1, SGL, True), (9, 1, 2, 1, SGL, True)], "top": [(0, 0, 14, 1, SGL, True)]})], parent="body"),
-    P("arm_l", (-3, -3, 0), [B(-2, 0, -1, 2, 15, 2, SG, faces={"north": [(0, 13, 2, 2, SGL, True)]})], parent="body"),
-    P("arm_r", (3, -3, 0), [B(0, 0, -1, 2, 15, 2, SG, faces={"north": [(0, 13, 2, 2, SGL, True)]})], parent="body", rot=(0, 0, -2.4)),
+# Singer — (0.9, MCD2 appearance art) tall sea-green figure: scaled teal robe, pale ridged mask face,
+# branching cream antlers, wide teal feathered wing-arms spread downward, a peach flower on the chest.
+SG, SGD, SGL = (104, 196, 176), (66, 146, 136), (164, 232, 212)
+MASK, MASKD, ANT = (214, 240, 226), (160, 206, 192), (242, 234, 212)
+PEACH, ORANGE, PETAL = (244, 196, 160), (232, 146, 104), (252, 236, 222)
+SPECS["singer"] = dict(tex=128, egg=(SG, PEACH), parts=[
+    P("body", (0, 24, 0), [
+        B(-4, -22, -3, 8, 22, 6, SG, "speckle", faces={"north": [
+            (0, 11, 8, 1, SGD, False), (0, 16, 8, 1, SGD, False), (3, 6, 1, 16, SGD, False),
+            (2, 3, 4, 3, PEACH, True), (3, 4, 2, 1, ORANGE, True), (1, 4, 1, 1, PETAL, True), (6, 4, 1, 1, PETAL, True),
+            (3, 2, 2, 1, PETAL, True)],
+            "south": [(0, 8, 8, 1, SGD, False), (0, 14, 8, 1, SGD, False)]}),
+        B(-5, -7, -4, 10, 7, 8, SGD, "speckle", faces={"north": [(0, 0, 10, 1, SGL, False)]})]),
+    P("head", (0, 2, 0), [B(-3, -8, -3, 6, 8, 6, MASK, "plain", faces={"north": [
+        (1, 1, 1, 6, MASKD, False), (4, 1, 1, 6, MASKD, False), (2, 7, 2, 1, MASKD, False),
+        (2, 3, 1, 1, (70, 200, 186), True), (3, 3, 1, 1, (70, 200, 186), True)]})], parent="body"),
+    P("antler_l", (-2, -5, 0), [B(-0.5, -9, -0.5, 1, 9, 1, ANT, "plain"), B(-3.5, -6, -0.5, 3, 1, 1, ANT, "plain"),
+        B(-3.5, -9, -0.5, 1, 3, 1, ANT, "plain"), B(0.5, -8, -0.5, 2, 1, 1, ANT, "plain")], parent="head", rot=(0, 0, -0.45)),
+    P("antler_r", (2, -5, 0), [B(-0.5, -9, -0.5, 1, 9, 1, ANT, "plain"), B(0.5, -6, -0.5, 3, 1, 1, ANT, "plain"),
+        B(2.5, -9, -0.5, 1, 3, 1, ANT, "plain"), B(-2.5, -8, -0.5, 2, 1, 1, ANT, "plain")], parent="head", rot=(0, 0, 0.45)),
+    P("arm_l", (-4, 4, 0), [B(-2, 0, -4, 2, 16, 8, SG, "speckle", faces={
+        "west": [(0, 4, 8, 1, SGL, False), (0, 8, 8, 1, SGL, False), (0, 12, 8, 1, SGL, False)],
+        "east": [(0, 4, 8, 1, SGD, False), (0, 10, 8, 1, SGD, False)]})], parent="body", rot=(0, 0, 0.55)),
+    P("arm_r", (4, 4, 0), [B(0, 0, -4, 2, 16, 8, SG, "speckle", faces={
+        "east": [(0, 4, 8, 1, SGL, False), (0, 8, 8, 1, SGL, False), (0, 12, 8, 1, SGL, False)],
+        "west": [(0, 4, 8, 1, SGD, False), (0, 10, 8, 1, SGD, False)]})], parent="body", rot=(0, 0, -0.55)),
 ])
 
 

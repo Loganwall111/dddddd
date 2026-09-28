@@ -31,6 +31,13 @@ public final class SiftEntities {
 
     private static ResourceKey<Biome> biome(String name) { return ResourceKey.create(Registries.BIOME, SiftContent.id(name)); }
 
+    /** The rift/portal opening: hollow, invisible volume drawn by the client RiftPortalRenderer. */
+    public static final EntityType<RiftPortalEntity> RIFT_PORTAL = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+        ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("rift_portal")),
+        EntityType.Builder.<RiftPortalEntity>of(RiftPortalEntity::new, MobCategory.MISC).sized(1f, 1f).fireImmune()
+            .clientTrackingRange(12).updateInterval(20)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("rift_portal"))));
+
     public static void initialize() {
         for (SiftKind kind : SiftKind.values()) {
             var key = ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id(kind.id));

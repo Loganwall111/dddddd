@@ -11,8 +11,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Creative "rift" blocks are seeds, not decoration: placing one removes the block and tears a real
- * client-rendered rift (an invisible anchor display + transport marker) facing the player.
- * style = RiftRenderer look, target = travel destination (0 overworld, 1 sift, 2 end, 3 nether).
+ * rift (a RiftPortalEntity + transport marker) facing the player. The rift's colour/shape (RiftType)
+ * follows its target = travel destination (0 overworld, 1 nether, 2 end, 3 sift).
  */
 public class RiftSeedBlock extends Block {
     private final int style, target;

@@ -1,1 +1,1 @@
-$summon minecraft:block_display ~ ~ ~ {Tags:["sift.rift_visual","sift.rift_anchor"],block_state:{id:"entersift:rift_anchor"},view_range:4f,glow_color_override:$(style),width:$(w)f,height:$(h)f,Rotation:[$(yaw)f,0f]}
+$summon entersift:rift_portal ~ ~ ~ {Tags:["sift.rift_visual","sift.rift_anchor"],RiftType:$(style),Width:$(w)f,Height:$(h)f,Rotation:[$(yaw)f,0f]}
