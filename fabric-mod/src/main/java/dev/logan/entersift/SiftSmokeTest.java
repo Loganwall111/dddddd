@@ -26,6 +26,7 @@ final class SiftSmokeTest {
             ticks++;
             if (ticks == 20) stageOne(server);
             if (ticks == 120) stageTwo(server);
+            if (ticks == 140) checkAnchors(server);
             if (ticks == 260) {
                 EnterTheSift.LOGGER.info("SIFT-SMOKE DONE");
                 server.halt(false);
@@ -72,6 +73,21 @@ final class SiftSmokeTest {
         for (SiftKind kind : SiftKind.values())
             run(server, "execute in entersift:the_sift store result score #smoke_" + kind.id + " sift.clock if entity @e[type=entersift:" + kind.id + "]");
         run(server, "scoreboard players list");
+    }
+
+    /** The client renderer only draws block displays whose state really is entersift:rift_anchor. */
+    private static void checkAnchors(MinecraftServer server) {
+        int rifts = 0, portals = 0, wrong = 0;
+        for (net.minecraft.server.level.ServerLevel level : server.getAllLevels())
+            for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
+                if (!(e instanceof net.minecraft.world.entity.Display.BlockDisplay d)) continue;
+                boolean anchor = d.getBlockState().is(SiftContent.RIFT_ANCHOR);
+                if (e.entityTags().contains("sift.rift_anchor")) { if (anchor) rifts++; else wrong++; }
+                if (e.entityTags().contains("sift.portal_anchor")) { if (anchor) portals++; else wrong++; }
+            }
+        EnterTheSift.LOGGER.info("SIFT-SMOKE anchors: rifts={} portals={} wrongState={}", rifts, portals, wrong);
+        if (rifts == 0 || portals == 0 || wrong > 0)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL anchor block state: rifts={} portals={} wrongState={}", rifts, portals, wrong);
     }
 
     private SiftSmokeTest() {}

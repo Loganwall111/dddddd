@@ -13,3 +13,6 @@ fabric-mod/.idea/
 # Python authoring tools
 __pycache__/
 *.pyc
+
+# Encoded in CI from fabric-mod/art/audio/*.wav (tools: oggenc)
+fabric-mod/src/main/resources/assets/entersift/sounds/ritual/

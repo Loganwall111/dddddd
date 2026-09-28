@@ -6,19 +6,27 @@
       "keyframes": [
         {
           "ticks": 500,
-          "value": "#f3b09a"
+          "value": "#5bbfb7"
         },
         {
           "ticks": 11500,
-          "value": "#f3b09a"
+          "value": "#5bbfb7"
+        },
+        {
+          "ticks": 12400,
+          "value": "#c9909a"
         },
         {
           "ticks": 13500,
-          "value": "#a4e4dc"
+          "value": "#d9776f"
         },
         {
           "ticks": 22500,
-          "value": "#a4e4dc"
+          "value": "#d9776f"
+        },
+        {
+          "ticks": 23400,
+          "value": "#c9909a"
         }
       ]
     },
@@ -26,19 +34,27 @@
       "keyframes": [
         {
           "ticks": 500,
-          "value": "#eab7a2"
+          "value": "#5bbfb7"
         },
         {
           "ticks": 11500,
-          "value": "#eab7a2"
+          "value": "#5bbfb7"
+        },
+        {
+          "ticks": 12400,
+          "value": "#c9909a"
         },
         {
           "ticks": 13500,
-          "value": "#9ad6cf"
+          "value": "#d9776f"
         },
         {
           "ticks": 22500,
-          "value": "#9ad6cf"
+          "value": "#d9776f"
+        },
+        {
+          "ticks": 23400,
+          "value": "#c9909a"
         }
       ]
     },
@@ -46,19 +62,27 @@
       "keyframes": [
         {
           "ticks": 500,
-          "value": "#fff0e8ff"
+          "value": "#f2fffcff"
         },
         {
           "ticks": 11500,
-          "value": "#fff0e8ff"
+          "value": "#f2fffcff"
+        },
+        {
+          "ticks": 12400,
+          "value": "#ffe8f0ff"
         },
         {
           "ticks": 13500,
-          "value": "#e6fff8ff"
+          "value": "#ffd9c8ff"
         },
         {
           "ticks": 22500,
-          "value": "#e6fff8ff"
+          "value": "#ffd9c8ff"
+        },
+        {
+          "ticks": 23400,
+          "value": "#ffe8f0ff"
         }
       ]
     },
@@ -66,19 +90,27 @@
       "keyframes": [
         {
           "ticks": 500,
-          "value": "#ffe6dc"
+          "value": "#e6fffa"
         },
         {
           "ticks": 11500,
-          "value": "#ffe6dc"
+          "value": "#e6fffa"
+        },
+        {
+          "ticks": 12400,
+          "value": "#ffe0ea"
         },
         {
           "ticks": 13500,
-          "value": "#b8fff2"
+          "value": "#ffd2bc"
         },
         {
           "ticks": 22500,
-          "value": "#b8fff2"
+          "value": "#ffd2bc"
+        },
+        {
+          "ticks": 23400,
+          "value": "#ffe0ea"
         }
       ],
       "modifier": "multiply"
@@ -95,11 +127,11 @@
         },
         {
           "ticks": 13500,
-          "value": 0.62
+          "value": 0.72
         },
         {
           "ticks": 22500,
-          "value": 0.62
+          "value": 0.72
         }
       ],
       "modifier": "multiply"
@@ -116,11 +148,11 @@
         },
         {
           "ticks": 13500,
-          "value": 0.45
+          "value": 0.55
         },
         {
           "ticks": 22500,
-          "value": 0.45
+          "value": 0.55
         }
       ],
       "modifier": "multiply"

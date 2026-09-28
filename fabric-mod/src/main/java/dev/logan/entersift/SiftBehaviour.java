@@ -29,7 +29,7 @@ final class SiftBehaviour {
         int gap = 0;
         BlockPos p = mob.blockPosition();
         while (gap < 8 && mob.level().getBlockState(p.below(gap + 1)).isAir()) gap++;
-        double want = kind == SiftKind.SINGER ? 0.0 : (kind == SiftKind.OVERSEER ? 4.0 : 2.5);
+        double want = kind == SiftKind.SINGER ? 0.0 : (kind == SiftKind.OVERSEER ? 4.0 : (kind == SiftKind.NOTE_BIRD ? 7.0 : 2.5));
         var v = mob.getDeltaMovement();
         double lift = kind == SiftKind.SINGER ? -v.y * 0.5 : (gap < want ? 0.03 : (gap > want + 1 ? -0.03 : 0.0));
         double bob = Math.sin(mob.tickCount * 0.08) * 0.004;
@@ -44,6 +44,17 @@ final class SiftBehaviour {
             vx += (mob.getRandom().nextDouble() - 0.5) * 0.12;
             vz += (mob.getRandom().nextDouble() - 0.5) * 0.12;
         }
+        if (kind == SiftKind.NOTE_BIRD) { // songbird: swoops in long arcs and faces where it flies
+            if (mob.tickCount % 40 == 0 || vx * vx + vz * vz < 0.004) {
+                double a = mob.getRandom().nextDouble() * Math.PI * 2;
+                vx += Math.cos(a) * 0.22; vz += Math.sin(a) * 0.22;
+            }
+            vx *= 1.06; vz *= 1.06;
+            float yaw = (float) Math.toDegrees(Math.atan2(-vx, vz));
+            mob.setYRot(yaw); mob.yBodyRot = yaw; mob.yHeadRot = yaw;
+            lift *= 2;
+            if (gap >= 8) lift -= 0.01;
+        }
         mob.setDeltaMovement(vx, v.y * 0.9 + lift + bob, vz);
     }
 
@@ -54,6 +65,22 @@ final class SiftBehaviour {
             case BLUB -> {
                 if (mob.onGround() && mob.getDeltaMovement().horizontalDistanceSqr() > 0.0004 && mob.getRandom().nextInt(12) == 0) mob.getJumpControl().jump();
                 if (t % 40 == 0) level.sendParticles(ParticleTypes.ITEM_SLIME, mob.getX(), mob.getY() + 0.2, mob.getZ(), 1, 0.2, 0.1, 0.2, 0);
+                // Blub voice: squishy boings and a bunny squeak.
+                if (t % 100 == 0 && mob.getRandom().nextInt(2) == 0)
+                    command(level, at(mob, mob.getRandom().nextBoolean()
+                        ? "playsound minecraft:entity.slime.squish_small neutral @a[distance=..16] ~ ~ ~ 0.7 1.7"
+                        : "playsound minecraft:entity.rabbit.ambient neutral @a[distance=..16] ~ ~ ~ 0.8 1.4"));
+                if (mob.onGround() && mob.getDeltaMovement().y > 0.2 && t % 4 == 0)
+                    command(level, at(mob, "playsound minecraft:block.honey_block.step neutral @a[distance=..12] ~ ~ ~ 0.4 1.8"));
+            }
+            case NOTE_BIRD -> {
+                if (t % 90 == 0 && mob.getRandom().nextInt(3) == 0) {
+                    String[] songs = {"flute", "bell", "chime", "xylophone"};
+                    String note = songs[mob.getRandom().nextInt(songs.length)];
+                    float pitch = (float) Math.pow(2, (mob.getRandom().nextInt(13) - 6) / 12.0);
+                    command(level, at(mob, String.format(Locale.ROOT, "playsound minecraft:block.note_block.%s neutral @a[distance=..24] ~ ~ ~ 0.5 %.3f", note, pitch)));
+                    level.sendParticles(ParticleTypes.NOTE, mob.getX(), mob.getY() + 0.6, mob.getZ(), 1, 0, 0, 0, mob.getRandom().nextDouble());
+                }
             }
             case DRIFT_JELLY -> { if (t % 6 == 0) level.sendParticles(ParticleTypes.SOUL, mob.getX(), mob.getY() + 0.1, mob.getZ(), 1, 0.2, 0.1, 0.2, 0.002); }
             case SINGER -> {

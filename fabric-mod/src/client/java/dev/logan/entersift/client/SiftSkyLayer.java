@@ -22,7 +22,7 @@ public final class SiftSkyLayer {
     private static final Identifier PILLAR = SiftContent.id("textures/environment/sky_pillar.png");
     private static final int SHARDS = 112;
     private static final float[][] PALETTE = {
-        {0.55f, 1.0f, 0.85f}, {0.62f, 0.93f, 1.0f}, {0.95f, 1.0f, 1.0f}, {0.52f, 0.95f, 0.72f}, {1.0f, 0.62f, 0.82f}};
+        {0.0f, 0.95f, 1.0f}, {0.62f, 0.93f, 1.0f}, {0.96f, 1.0f, 0.98f}, {0.5f, 1.0f, 0.9f}, {1.0f, 0.75f, 0.88f}};
     private static final float[][] SEEDS = new float[SHARDS][6];
 
     static {
@@ -32,11 +32,41 @@ public final class SiftSkyLayer {
 
     private SiftSkyLayer() {}
 
+    /** 1 = Sift day (mint-cyan, cyan/pearl aurora, pink-pearl rays), 0 = night (amber, crimson pillars). */
+    private static float daylight = 1f;
+    private static long irisCheckedAt;
+    private static boolean irisActive;
+    private static final float[][] NIGHT_PALETTE = {
+        {1.0f, 0.72f, 0.45f}, {1.0f, 0.62f, 0.55f}, {1.0f, 0.86f, 0.7f}, {0.95f, 0.5f, 0.5f}, {0.85f, 0.35f, 0.45f}};
+
+    /** Iris shaderpack in use? Reflection, so Iris stays an optional dependency. Checked once a second. */
+    private static boolean shaderPackActive() {
+        long now = System.currentTimeMillis();
+        if (now - irisCheckedAt < 1000) return irisActive;
+        irisCheckedAt = now;
+        try {
+            Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+            Object instance = api.getMethod("getInstance").invoke(null);
+            irisActive = (Boolean) api.getMethod("isShaderPackInUse").invoke(instance);
+        } catch (Throwable ignored) {
+            irisActive = false;
+        }
+        return irisActive;
+    }
+
+    private static float[] tint(int i) {
+        float[] d = PALETTE[i], n = NIGHT_PALETTE[i];
+        return new float[]{n[0] + (d[0] - n[0]) * daylight, n[1] + (d[1] - n[1]) * daylight, n[2] + (d[2] - n[2]) * daylight};
+    }
+
     public static void register() {
         LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null || !mc.level.dimension().identifier().equals(SiftContent.id("the_sift"))) return;
+            if (shaderPackActive()) return; // the shaderpack paints the full panorama sky itself
             float t = (float) ((System.nanoTime() / 1.0e9) % 100000.0);
+            long clock = mc.level.getOverworldClockTime() % 24000L;
+            daylight = (float) Math.max(0, Math.min(1, (Math.cos((clock - 6000) / 24000.0 * Math.PI * 2) + 0.25) / 0.7));
             PoseStack pose = context.poseStack();
             RenderType shards = RenderTypes.entityTranslucentEmissive(SHARD);
             context.submitNodeCollector().submitCustomGeometry(pose, shards, (p, vc) -> drawShards(p, vc, t));
@@ -65,12 +95,12 @@ public final class SiftSkyLayer {
             float h = 9f + curtain * 1.5f + s[4] * 2.5f;
             float slope = (float) Math.atan(0.09f * 2 * Math.cos(az * 2 + curtain * 1.9 + t * 0.03) / Math.cos(el));
             float alpha = 0.22f + 0.22f * (0.5f + 0.5f * (float) Math.sin(t * 0.6f - slot * 0.45f + curtain));
-            float[] c = PALETTE[curtain % 4];
+            float[] c = tint(curtain % 4);
             quad(pose, vc, cx, cy, cz, w, h, slope, c[0], c[1], c[2], alpha, 0, 0, 1, 1);
         }
     }
 
-    /** Hazy crimson vertical pillars across the upper sky, as in the reference footage. */
+    /** Hazy vertical ray pillars (crimson at night, pink-pearl by day) across the upper sky, as in the reference footage. */
     private static void drawPillars(PoseStack.Pose pose, VertexConsumer vc, float t) {
         final float radius = 66f;
         for (int i = 0; i < 12; i++) {
@@ -79,7 +109,12 @@ public final class SiftSkyLayer {
             float el = 0.95f + s[2] * 0.2f;
             float cx = (float) (Math.cos(el) * Math.cos(az)) * radius, cy = (float) Math.sin(el) * radius, cz = (float) (Math.cos(el) * Math.sin(az)) * radius;
             float a = 0.16f + 0.1f * (float) Math.sin(t * 0.15f + i * 1.7f);
-            quad(pose, vc, cx, cy, cz, 7f + s[3] * 9f, 46f, 0f, 0.92f, 0.2f, 0.3f, a, 0, 0, 1, 1);
+            // Night: crimson #B8506D / dusty rose #A64B56 pillars. Day: soft pink-pearl god rays.
+            float[] night = i % 2 == 0 ? new float[]{0.72f, 0.31f, 0.43f} : new float[]{0.65f, 0.29f, 0.34f};
+            float[] day = {1.0f, 0.85f, 0.92f};
+            float k = daylight;
+            quad(pose, vc, cx, cy, cz, 7f + s[3] * 9f, 46f, 0f, night[0] + (day[0] - night[0]) * k, night[1] + (day[1] - night[1]) * k,
+                night[2] + (day[2] - night[2]) * k, a * (1.2f - 0.5f * k), 0, 0, 1, 1);
         }
     }
 

@@ -20,6 +20,12 @@ jobs:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Encode ritual music (wav -> ogg vorbis)
+        run: |
+          command -v oggenc || (sudo apt-get update -qq && sudo apt-get install -y -qq vorbis-tools)
+          mkdir -p src/main/resources/assets/entersift/sounds/ritual
+          oggenc -Q -q 5 -o src/main/resources/assets/entersift/sounds/ritual/song.ogg art/audio/ritual_song.wav
+          test -s src/main/resources/assets/entersift/sounds/ritual/song.ogg
       - run: python3 tools/validate.py
       - run: python3 tools/test_data.py
       - name: Compile-check shaderpack (glslang)

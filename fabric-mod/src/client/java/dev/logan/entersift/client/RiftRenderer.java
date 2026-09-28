@@ -39,6 +39,7 @@ public final class RiftRenderer {
         {1.0f, 0.62f, 0.9f}, {1.0f, 0.55f, 0.35f}, {0.55f, 1.0f, 1.0f}};
     private static final Map<Integer, Long> FIRST_SEEN = new HashMap<>();
     private static final float CELL = 0.5f;
+    private static int lastLogged = -1;
 
     static { for (int i = 0; i < STYLES; i++) SCENES[i] = SiftContent.id("textures/rift/scene_" + i + ".png"); }
 
@@ -80,6 +81,10 @@ public final class RiftRenderer {
                 pose.popPose();
             }
             FIRST_SEEN.keySet().retainAll(alive);
+            if (alive.size() != lastLogged) {
+                lastLogged = alive.size();
+                org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] RiftRenderer: drawing {} rift/portal opening(s)", lastLogged);
+            }
         });
     }
 

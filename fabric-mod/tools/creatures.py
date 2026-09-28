@@ -35,16 +35,21 @@ BLUE = (156, 214, 232)
 RED_EYE = (224, 44, 62)
 SPECS: dict[str, dict] = {}
 
-# Blub — pale-blue jelly bunny with red eyes (MCD2 ambience, 26_195906).
-SPECS["blub"] = dict(tex=64, egg=(BLUE, RED_EYE), parts=[
-    P("body", (0, 24, 0), [B(-5, -8, -5, 10, 8, 10, BLUE, "speckle", faces={"north": [
-        (2, 3, 2, 2, RED_EYE, True), (6, 3, 2, 2, RED_EYE, True), (4, 6, 2, 1, (44, 62, 88), False)]})]),
-    P("ear_l", (-3, 16, 0), [B(-1, -5, -1, 2, 5, 2, (176, 226, 240), faces={"north": [(0, 1, 2, 3, (236, 170, 190), False)]})], parent="body"),
-    P("ear_r", (3, 16, 0), [B(-1, -5, -1, 2, 5, 2, (176, 226, 240), faces={"north": [(0, 1, 2, 3, (236, 170, 190), False)]})], parent="body"),
-    P("leg_0", (-3, 22, -3), [B(-1.5, 0, -1.5, 3, 2, 3, (132, 196, 218))]),
-    P("leg_1", (3, 22, -3), [B(-1.5, 0, -1.5, 3, 2, 3, (132, 196, 218))]),
-    P("leg_2", (-3, 22, 3), [B(-1.5, 0, -1.5, 3, 2, 3, (132, 196, 218))]),
-    P("leg_3", (3, 22, 3), [B(-1.5, 0, -1.5, 3, 2, 3, (132, 196, 218))]),
+# Blub — pale-blue jelly bunny (MCD2 ambience ref): dark indigo eyes, purple nose, pink mouth ledge,
+# long floppy ears with pink insides, four stubby legs.
+BLUB_EYE, BLUB_NOSE, BLUB_MOUTH, EAR_PINK = (58, 46, 120), (120, 70, 140), (236, 168, 180), (242, 158, 190)
+SPECS["blub"] = dict(tex=64, egg=(BLUE, EAR_PINK), parts=[
+    P("body", (0, 21, 0), [B(-5, -8, -5, 10, 8, 10, BLUE, "speckle", faces={"north": [
+        (1, 3, 3, 1, BLUB_EYE, False), (6, 3, 3, 1, BLUB_EYE, False), (4, 5, 2, 1, BLUB_NOSE, False)]}),
+        B(-3, -1, -6, 6, 1, 1, BLUB_MOUTH, "plain")]),
+    P("ear_l", (-3, 13, 1), [B(-1.5, -8, -0.5, 3, 8, 1, (168, 220, 240), faces={"north": [(1, 1, 1, 6, EAR_PINK, False)],
+        "south": [(0, 0, 3, 2, (150, 206, 232), False)]})], parent="body", rot=(0.35, 0, -0.45)),
+    P("ear_r", (3, 13, 1), [B(-1.5, -8, -0.5, 3, 8, 1, (168, 220, 240), faces={"north": [(1, 1, 1, 6, EAR_PINK, False)],
+        "south": [(0, 0, 3, 2, (150, 206, 232), False)]})], parent="body", rot=(0.35, 0, 0.45)),
+    P("leg_0", (-3, 21, -3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
+    P("leg_1", (3, 21, -3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
+    P("leg_2", (-3, 21, 3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
+    P("leg_3", (3, 21, 3), [B(-1, 0, -1, 2, 3, 2, (132, 190, 216))]),
 ])
 
 # Sculker — slate-blue gaper with a huge tan mouth, whiskers and antler sprouts (sculkers render).
@@ -92,9 +97,9 @@ SPECS["antlerling"] = dict(tex=64, egg=(ROBE, BONE), parts=[
 # Drift jelly — cube-headed jellyfish with a single square eye (sculkers render, top right).
 JHEAD, JRIM, JEYE = (64, 84, 164), (224, 204, 172), (206, 240, 255)
 SPECS["drift_jelly"] = dict(tex=64, egg=(JHEAD, JEYE), parts=[
-    P("head", (0, -2, 0), [B(-5, -8, -5, 10, 8, 10, JHEAD, "speckle", faces={"north": [(3, 2, 4, 4, JEYE, True), (4, 3, 2, 2, (30, 40, 96), False)]}),
+    P("head", (0, -14, 0), [B(-5, -8, -5, 10, 8, 10, JHEAD, "speckle", faces={"north": [(3, 2, 4, 4, JEYE, True), (4, 3, 2, 2, (30, 40, 96), False)]}),
                           B(-5, 0, -5, 10, 2, 10, JRIM, "noise")]),
-] + [P(f"tentacle_{i}", (x, 0, z), [B(-0.5, 0, -0.5, 1, 14, 1, (52, 66, 140), "plain", faces={"north": [(0, 10, 1, 4, (110, 130, 220), True)]})], parent="head")
+] + [P(f"tentacle_{i}", (x, -12, z), [B(-0.5, 0, -0.5, 1, 14, 1, (52, 66, 140), "plain", faces={"north": [(0, 10, 1, 4, (110, 130, 220), True)]})], parent="head")
      for i, (x, z) in enumerate([(-3.5, -3.5), (0, -3.5), (3.5, -3.5), (-3.5, 3.5), (0, 3.5), (3.5, 3.5), (-3.5, 0), (3.5, 0)])])
 
 # Licker — sage-green head-creature with a long pink tongue (Licker reference).
@@ -122,19 +127,39 @@ SPECS["overseer"] = dict(tex=128, egg=(OV, OVE), parts=[
 ] + [P(f"tentacle_{i}", (x, 4, z), [B(-0.5, 0, -0.5, 1, 18, 1, (62, 46, 84), "plain", faces={"north": [(0, 14, 1, 4, (170, 110, 220), True)]})])
      for i, (x, z) in enumerate([(-1.5, -1.5), (1.5, -1.5), (-1.5, 1.5), (1.5, 1.5), (0, 0)])])
 
-# Twisted Warden — void-dark warden whose chest splits open on a glowing cyan maw (frame0).
-TW, TWL, TWG, FANG = (20, 30, 46), (38, 54, 74), (70, 238, 236), (156, 146, 72)
+# Twisted Warden — matches the MCD2 "work in progress" ref: void-dark cube body with faint cyan
+# fissures, glowing cyan bracket antlers, a brass-toothed chest maw with a cyan glow inside, brass knuckles.
+TW, TWL, TWG, BRASS, HOLLOW = (22, 32, 44), (34, 50, 64), (80, 244, 236), (184, 156, 72), (6, 10, 14)
+def antler(side):
+    s_ = -1 if side == "l" else 1
+    def bx(x, y, w, h):  # mirror boxes for the right antler
+        return B(x if s_ < 0 else -x - w, y, -1, w, h, 2, TWG, "plain", glow=True)
+    return [bx(-1, -10, 2, 10), bx(-10, -10, 9, 2), bx(-10, -20, 2, 10), bx(-10, -20, 7, 2), bx(-5, -16, 2, 6), bx(-14, -15, 4, 2), bx(-14, -18, 2, 3)]
 SPECS["twisted_warden"] = dict(tex=128, egg=(TW, TWG), parts=[
     P("leg_0", (-5, 11, 0), [B(-3, 0, -3, 6, 13, 6, TW, "cracks", dark=TWG)]),
     P("leg_1", (5, 11, 0), [B(-3, 0, -3, 6, 13, 6, TW, "cracks", dark=TWG)]),
-    P("body", (0, 11, 0), [B(-9, -21, -5, 18, 21, 10, TW, "cracks", dark=TWG, faces={"north": [(3, 6, 12, 10, (30, 170, 176), True)]})]),
-    P("chest_upper", (0, -3, -5), [B(-7, 0, -2, 14, 5, 2, TWL, "noise", faces={"north": [(0, 4, 14, 1, FANG, False)], "bottom": [(1, 0, 12, 2, FANG, False)]})], parent="body"),
-    P("chest_lower", (0, 7, -5), [B(-7, -5, -2, 14, 5, 2, TWL, "noise", faces={"north": [(0, 0, 14, 1, FANG, False)], "top": [(1, 0, 12, 2, FANG, False)]})], parent="body"),
-    P("head", (0, -10, 0), [B(-8, -16, -5, 16, 16, 10, TW, "cracks", dark=TWG, faces={"north": [(3, 6, 3, 2, TWG, True), (10, 6, 3, 2, TWG, True)]})], parent="body"),
-    P("horn_l", (-8, -22, 0), [B(-2, -12, -1, 2, 12, 2, TWG, "plain", glow=True), B(-6, -14, -1, 6, 2, 2, TWG, "plain", glow=True), B(-6, -20, -1, 2, 6, 2, TWG, "plain", glow=True)], parent="head"),
-    P("horn_r", (8, -22, 0), [B(0, -12, -1, 2, 12, 2, TWG, "plain", glow=True), B(0, -14, -1, 6, 2, 2, TWG, "plain", glow=True), B(4, -20, -1, 2, 6, 2, TWG, "plain", glow=True)], parent="head"),
-    P("arm_l", (-13, -6, 1), [B(-4, 0, -4, 8, 28, 8, TW, "cracks", dark=TWG)], parent="body"),
-    P("arm_r", (13, -6, 1), [B(-4, 0, -4, 8, 28, 8, TW, "cracks", dark=TWG)], parent="body"),
+    P("body", (0, 11, 0), [B(-9, -21, -5, 18, 21, 10, TW, "cracks", dark=TWG, faces={"north": [(2, 5, 14, 12, (40, 206, 206), True), (4, 7, 10, 8, (150, 255, 250), True)]})]),
+    P("chest_upper", (0, -5, -5), [B(-8, 0, -2, 16, 3, 2, BRASS, "noise"), B(-7, 3, -2, 2, 2, 1, BRASS, "plain"), B(-3, 3, -2, 2, 2, 1, BRASS, "plain"),
+                                   B(1, 3, -2, 2, 2, 1, BRASS, "plain"), B(5, 3, -2, 2, 2, 1, BRASS, "plain")], parent="body"),
+    P("chest_lower", (0, 7, -5), [B(-8, -3, -2, 16, 3, 2, BRASS, "noise"), B(-5, -5, -2, 2, 2, 1, BRASS, "plain"), B(-1, -5, -2, 2, 2, 1, BRASS, "plain"),
+                                  B(3, -5, -2, 2, 2, 1, BRASS, "plain")], parent="body"),
+    P("head", (0, -10, 0), [B(-7, -12, -6, 14, 12, 12, TW, "cracks", dark=TWG, faces={"north": [(5, 4, 4, 4, HOLLOW, False), (6, 5, 2, 2, TWG, True)]})], parent="body"),
+    P("horn_l", (-4, -22, 0), antler("l"), parent="head"),
+    P("horn_r", (4, -22, 0), antler("r"), parent="head"),
+    P("arm_l", (-13, -6, 1), [B(-4, 0, -4, 8, 26, 8, TW, "cracks", dark=TWG), B(-5, 19, -5, 10, 3, 10, BRASS, "noise")], parent="body"),
+    P("arm_r", (13, -6, 1), [B(-4, 0, -4, 8, 26, 8, TW, "cracks", dark=TWG), B(-5, 19, -5, 10, 3, 10, BRASS, "noise")], parent="body"),
+])
+
+# Note bird — small mint songbird that flies over the Sift; glowing note-coloured wing tips.
+NB, NBW, NBH = (84, 196, 196), (236, 250, 246), (40, 70, 90)
+SPECS["note_bird"] = dict(tex=64, egg=(NB, (255, 120, 180)), parts=[
+    P("body", (0, 18, 0), [B(-2, -3, -3, 4, 3, 6, NB, "speckle"), B(-1.5, -2, 3, 3, 1, 3, NBW, "plain", faces={"top": [(0, 2, 3, 1, (255, 120, 180), True)]})]),
+    P("head", (0, 15, -2), [B(-1.5, -3, -2, 3, 3, 3, NBH, "noise", faces={"north": [(0, 1, 1, 1, (120, 255, 240), True), (2, 1, 1, 1, (120, 255, 240), True)]}),
+                            B(-0.5, -1.5, -3, 1, 1, 1, (250, 190, 90), "plain")], parent="body"),
+    P("wing_l", (-2, 16, 0), [B(-6, 0, -2, 6, 1, 4, NBW, "noise", faces={"top": [(0, 0, 2, 4, (255, 120, 180), True)], "bottom": [(4, 0, 2, 4, (255, 200, 90), True)]})], parent="body"),
+    P("wing_r", (2, 16, 0), [B(0, 0, -2, 6, 1, 4, NBW, "noise", faces={"top": [(4, 0, 2, 4, (120, 200, 255), True)], "bottom": [(0, 0, 2, 4, (170, 120, 255), True)]})], parent="body"),
+    P("leg_0", (-1, 18, 0), [B(-0.5, 0, -0.5, 1, 2, 1, (250, 190, 90), "plain")]),
+    P("leg_1", (1, 18, 0), [B(-0.5, 0, -0.5, 1, 2, 1, (250, 190, 90), "plain")]),
 ])
 
 # Singer — tall backlit figure with a wide hammer-cap head, one arm raised (26_200013).

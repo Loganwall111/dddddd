@@ -26,7 +26,9 @@ vec3 shadowCoord(vec3 worldRel) {
 float sunVisibility(vec3 worldRel, vec3 normal, float noise) {
     float dist = length(worldRel);
     // Push along the normal (bigger far away, where shadow texels are coarse) to kill acne.
-    vec3 sc = shadowCoord(worldRel + normal * (0.06 + dist * 0.004));
+    // Stronger normal offset + distance-scaled bias: removes the moire "z-fighting" shadow acne on flat ground.
+    vec3 sc = shadowCoord(worldRel + normal * (0.14 + dist * 0.009));
+    float bias = 0.00035 + dist * 0.000004;
     if (sc.x <= 0.0 || sc.x >= 1.0 || sc.y <= 0.0 || sc.y >= 1.0 || sc.z >= 1.0) return 1.0;
     float radius = 1.4 / float(shadowMapResolution);
     float lit = 0.0;
@@ -35,7 +37,7 @@ float sunVisibility(vec3 worldRel, vec3 normal, float noise) {
         float r = sqrt((float(i) + 0.5) / 12.0);
         float a = float(i) * 2.3999632 + noise * 6.2831853;
         float d = texture2D(shadowtex0, sc.xy + vec2(cos(a), sin(a)) * r * radius * 2.2).r;
-        lit += step(sc.z - 0.00012, d);
+        lit += step(sc.z - bias, d);
     }
     float fade = smoothstep(shadowDistance * 0.8, shadowDistance, dist);
     return mix(lit / 12.0, 1.0, fade);

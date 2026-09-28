@@ -38,9 +38,11 @@ public final class SiftCreatureModel extends EntityModel<LivingEntityRenderState
                 int i = n.charAt(n.length() - 1) - '0';
                 p.xRot += (float) Math.sin(age * 0.09f + i * 0.9f) * 0.22f;
                 p.zRot += (float) Math.cos(age * 0.07f + i * 1.3f) * 0.16f;
-            } else if (n.startsWith("ear_")) {
-                p.zRot += (n.endsWith("l") ? -1 : 1) * (0.12f + (float) Math.sin(age * 0.18f) * 0.1f);
-                p.xRot += speed * 0.6f;
+            } else if (n.startsWith("ear_")) { // floppy: flop outward on every hop, lazy sway at rest
+                float side = n.endsWith("l") ? -1 : 1;
+                float hop = Math.abs((float) Math.sin(pos * 0.6f)) * speed;
+                p.zRot += side * (0.08f + hop * 0.45f + (float) Math.sin(age * 0.12f + side) * 0.07f);
+                p.xRot += 0.25f * speed + (float) Math.sin(pos * 0.6f + 1.2f) * 0.35f * speed + (float) Math.sin(age * 0.09f) * 0.05f;
             } else if (n.startsWith("antenna_") || n.startsWith("whisker_")) {
                 p.zRot += (float) Math.sin(age * 0.2f + n.length()) * 0.08f;
             }
@@ -61,7 +63,8 @@ public final class SiftCreatureModel extends EntityModel<LivingEntityRenderState
                 head.y += (float) Math.sin(age * 0.1f) * 1.2f;
                 head.yRot += age * 0.01f;
                 float pulse = 1.0f + (float) Math.sin(age * 0.2f) * 0.05f;
-                head.xScale = pulse; head.zScale = pulse; head.yScale = 2.0f - pulse;
+                final float MASSIVE = 3.2f; // the drift jelly is a floating giant
+                head.xScale = pulse * MASSIVE; head.zScale = pulse * MASSIVE; head.yScale = (2.0f - pulse) * MASSIVE;
             }
             case "licker" -> {
                 ModelPart tongue = part("tongue");
@@ -92,6 +95,13 @@ public final class SiftCreatureModel extends EntityModel<LivingEntityRenderState
                 body.y += (float) Math.sin(age * 0.05f) * 1.0f;
                 part("arm_r").zRot += (float) Math.sin(age * 0.08f) * 0.15f;
                 part("arm_l").zRot -= 0.2f + (float) Math.sin(age * 0.06f) * 0.2f;
+            }
+            case "note_bird" -> {
+                float flap = (float) Math.sin(age * 0.9f) * 0.9f;
+                part("wing_l").zRot += flap;
+                part("wing_r").zRot -= flap;
+                part("body").y += (float) Math.sin(age * 0.9f + 1.5f) * 0.6f;
+                part("leg_0").xRot = 0.9f; part("leg_1").xRot = 0.9f; // tucked in flight
             }
             case "antlerling" -> {
                 part("antler_l").zRot += (float) Math.sin(age * 0.05f) * 0.03f;

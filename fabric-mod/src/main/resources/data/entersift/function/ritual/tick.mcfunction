@@ -36,3 +36,20 @@ execute if score @s sift.age matches 298 run function entersift:portal/assemble_
 execute if score @s sift.age matches 240..349 run particle minecraft:electric_spark ~ ~2 ~ 1.6 2 0.3 0.4 10 normal
 execute if score @s sift.age matches 240..349 run particle minecraft:end_rod ~ ~2 ~ 1.4 2 0.2 0.02 4 normal
 execute if score @s sift.age matches 240 run playsound minecraft:block.beacon.activate ambient @a[distance=..48] ~ ~ ~ 2 0.6
+execute if score @s sift.age matches 68 run function entersift:ritual/flicker_0 with entity @s data
+execute if score @s sift.age matches 76 run function entersift:ritual/flicker_0 with entity @s data
+execute if score @s sift.age matches 92 run function entersift:ritual/flicker_1 with entity @s data
+execute if score @s sift.age matches 100 run function entersift:ritual/flicker_1 with entity @s data
+execute if score @s sift.age matches 116 run function entersift:ritual/flicker_2 with entity @s data
+execute if score @s sift.age matches 124 run function entersift:ritual/flicker_2 with entity @s data
+execute if score @s sift.age matches 140 run function entersift:ritual/flicker_3 with entity @s data
+execute if score @s sift.age matches 148 run function entersift:ritual/flicker_3 with entity @s data
+execute if score @s sift.age matches 164 run function entersift:ritual/flicker_4 with entity @s data
+execute if score @s sift.age matches 172 run function entersift:ritual/flicker_4 with entity @s data
+execute if score @s sift.age matches 188 run function entersift:ritual/flicker_5 with entity @s data
+execute if score @s sift.age matches 196 run function entersift:ritual/flicker_5 with entity @s data
+execute if score @s sift.age matches 212 run function entersift:ritual/flicker_6 with entity @s data
+execute if score @s sift.age matches 220 run function entersift:ritual/flicker_6 with entity @s data
+execute if score @s sift.age matches 236 run function entersift:ritual/flicker_7 with entity @s data
+execute if score @s sift.age matches 244 run function entersift:ritual/flicker_7 with entity @s data
+execute if score @s sift.age matches 232 run function entersift:ritual/finale with entity @s data

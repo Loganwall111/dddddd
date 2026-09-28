@@ -27,8 +27,9 @@ class DataContracts(unittest.TestCase):
             self.assertIn(f'$(n{i}x)',fn(f'ritual/note_{i}'))
         self.assertIn('matches 350..',fn('ritual/tick'))
     def test_gauntlet_cost_and_cooldown(self):
-        text=fn('rift/punch')
-        self.assertLess(text.index('unless block'),text.index('remove @s sift.souls 10'))
+        text=fn('rift/punch')+fn('rift/punch_at')
+        # Placement is validated (open air) before any souls are spent.
+        self.assertLess(text.index('#entersift:rift_passable'),text.index('remove @s sift.souls 10'))
         self.assertIn('sift.cooldown 60',text)
     def test_rift_expires(self):
         self.assertIn('matches 6000.. run function entersift:rift/close',fn('rift/tick'))
@@ -110,7 +111,7 @@ class DataContracts(unittest.TestCase):
         self.assertEqual(rule[-2]['then_run']['result_state'],'entersift:salt')
     def test_shader_upgrade_is_non_destructive(self):
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
-        self.assertIn('Sift-Cinematic-0.7.zip',code)
+        self.assertIn('Sift-Cinematic-0.8.zip',code)
         self.assertIn('!Files.exists(target)',code)
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
@@ -164,7 +165,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('rift/wave_player',fn('tick'))
     def test_gauntlet_creative_use_does_not_require_souls(self):
         self.assertIn('unless entity @s[gamemode=creative] if score',fn('rift/punch'))
-        self.assertIn('unless entity @s[gamemode=creative] run scoreboard players remove',fn('rift/punch'))
+        self.assertIn('unless entity @s[gamemode=creative] run scoreboard players remove',fn('rift/punch_at'))
     def test_rift_expansion_has_real_target_transforms(self):
         # Rifts are one invisible anchor display; the client draws the opening + warp animation.
         self.assertIn('function entersift:rift/style',fn('rift/create'))

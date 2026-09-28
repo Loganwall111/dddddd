@@ -52,7 +52,11 @@ public final class EnterTheSift implements ModInitializer {
         return world.getBlockState(pos).is(Blocks.NOTE_BLOCK) && world.getBlockState(pos.below()).is(SiftContent.SONOROUS_DEEPSLATE);
     }
     private static void glow(ServerPlayer player, BlockPos pos, int pitch) {
-        runAs(player,"execute positioned "+pos.getX()+" "+pos.getY()+" "+pos.getZ()+" run function entersift:notes/"+RitualSequence.COLORS[pitch-1]);
+        // ".0" matters: integer x/z in "positioned" are block-centred (+0.5), which shifted every outline half a block.
+        runAs(player,"execute positioned "+pos.getX()+".0 "+pos.getY()+".0 "+pos.getZ()+".0 run function entersift:notes/"+RitualSequence.COLORS[pitch-1]);
+    }
+    private static void shaft(ServerPlayer player, BlockPos pos, int pitch) {
+        runAs(player,"execute positioned "+pos.getX()+".0 "+pos.getY()+".0 "+pos.getZ()+".0 run function entersift:notes/shaft_"+RitualSequence.COLORS[pitch-1]);
     }
     private static void ensureEncounter(ServerLevel level, AncientFrame f) {
         if (!hasTag(level,f,"sift.encounter")) runAt(level,f,"function entersift:guardian/begin");
@@ -93,6 +97,7 @@ public final class EnterTheSift implements ModInitializer {
                 int next=(world.getBlockState(pos).getValue(NoteBlock.NOTE)+1)%8;
                 world.setBlock(pos,world.getBlockState(pos).setValue(NoteBlock.NOTE,next),3);
                 glow(sp,pos,next+1);
+                shaft(sp,pos,next+1);
                 runAs(sp,"title @s actionbar {\"text\":\"Sift pitch "+(next+1)+" / 8\",\"color\":\"aqua\"}");
             }
             return InteractionResult.SUCCESS;
@@ -110,7 +115,10 @@ public final class EnterTheSift implements ModInitializer {
             runAs(sp,"playsound minecraft:block.note_block.chime block @a[distance=..24] ~ ~ ~ 1 "+Math.pow(2,(pitch-5)/12.0));
             if (!level.dimension().equals(Level.OVERWORLD)) return InteractionResult.SUCCESS;
             AncientFrame f=AncientFrame.find(level,pos);
-            if (f==null) return InteractionResult.SUCCESS;
+            if (f==null) {
+                runAs(sp,"title @s actionbar {\"text\":\"No ancient city frame (reinforced deepslate) within 24 blocks of this note.\",\"color\":\"gray\"}");
+                return InteractionResult.SUCCESS;
+            }
             ensureEncounter(level,f);
             if (!hasTag(level,f,"sift.ready")) {
                 runAs(sp,"title @s actionbar {\"text\":\"The Twisted Warden guards this song. Defeat it first.\",\"color\":\"red\"}");
@@ -130,6 +138,8 @@ public final class EnterTheSift implements ModInitializer {
                     }
                 }
                 runAt(level,f,"function entersift:ritual/begin");
+                runAt(level,f,"tellraw @a[distance=..64] {\"text\":\"The song is complete. The city sings it back...\",\"color\":\"aqua\"}");
+                LOGGER.info("Sift ritual complete at frame {} ({}x{}, alongX={})", f.key(), f.width(), f.height(), f.alongX());
                 double sx=f.alongX()?f.width()-1:.07, sz=f.alongX()?.07:f.width()-1;
                 runAt(level,f,String.format(Locale.ROOT,"data merge entity @e[type=minecraft:marker,tag=sift.ritual,distance=..1,limit=1,sort=nearest] {data:{sx:%ff,sy:%ff,sz:%ff,tx:%ff,tz:%ff,pw:%ff,yaw:%ff}}",sx,(double)f.height()-1,sz,-sx/2,-sz/2,(double)f.width()-1,f.alongX()?0.0:90.0));
                 StringBuilder panels=new StringBuilder("data merge entity @e[type=minecraft:marker,tag=sift.ritual,distance=..1,limit=1,sort=nearest] {data:{");

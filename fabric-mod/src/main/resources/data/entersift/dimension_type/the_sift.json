@@ -1,8 +1,8 @@
 {
   "ambient_light": 0.1,
   "attributes": {
-    "minecraft:visual/fog_color": "#9ad6cf",
-    "minecraft:visual/sky_color": "#a4e4dc",
+    "minecraft:visual/fog_color": "#5bbfb7",
+    "minecraft:visual/sky_color": "#5bbfb7",
     "minecraft:visual/ambient_light_color": "#203946",
     "minecraft:audio/ambient_sounds": {
       "loop": "minecraft:ambient.soul_sand_valley.loop"

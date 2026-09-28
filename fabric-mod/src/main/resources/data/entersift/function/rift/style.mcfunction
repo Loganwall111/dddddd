@@ -6,4 +6,5 @@ execute if dimension minecraft:the_nether run data modify storage entersift:rift
 execute store result storage entersift:rift w float 1 run random value 3..5
 execute store result storage entersift:rift h float 1 run random value 3..4
 execute store result storage entersift:rift yaw float 45 run random value 0..3
+execute if data storage entersift:rift punch_yaw run data modify storage entersift:rift yaw set from storage entersift:rift punch_yaw
 function entersift:rift/anchor with storage entersift:rift

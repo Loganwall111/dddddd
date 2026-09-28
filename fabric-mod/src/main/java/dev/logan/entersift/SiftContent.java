@@ -27,6 +27,13 @@ public final class SiftContent {
         Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
         return block;
     }
+    private static Block riftSeed(String name, int style, int target) {
+        var key = blockKey(name);
+        Block block = Registry.register(BuiltInRegistries.BLOCK, key,
+            new RiftSeedBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.AMETHYST_BLOCK).setId(key).lightLevel(state -> 15), style, target));
+        Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
+        return block;
+    }
     private static Block see(String name, Block base, int light) {
         var key = blockKey(name);
         Block block = Registry.register(BuiltInRegistries.BLOCK, key,
@@ -54,11 +61,11 @@ public final class SiftContent {
     public static final Block CARAPACE = block("carapace", Blocks.BONE_BLOCK, 0);
     public static final Block SINGER_MOSS = block("singer_moss", Blocks.MOSS_BLOCK, 3);
     public static final Block THRESHOLD = block("threshold", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_OVERWORLD = block("rift_overworld", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_END = block("rift_end", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_SIFT = block("rift_sift", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_MEMBRANE = block("rift_membrane", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_EDGE = block("rift_edge", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_OVERWORLD = riftSeed("rift_overworld", 0, 0);
+    public static final Block RIFT_END = riftSeed("rift_end", 2, 2);
+    public static final Block RIFT_SIFT = riftSeed("rift_sift", 1, 1);
+    public static final Block RIFT_MEMBRANE = riftSeed("rift_membrane", 3, 1);
+    public static final Block RIFT_EDGE = riftSeed("rift_edge", 5, 1);
     public static final Block RESONANCE_RED = block("resonance_red", Blocks.AMETHYST_BLOCK, 15);
     public static final Block RESONANCE_MAGENTA = block("resonance_magenta", Blocks.AMETHYST_BLOCK, 15);
     public static final Block RESONANCE_PINK = block("resonance_pink", Blocks.AMETHYST_BLOCK, 15);
@@ -78,11 +85,11 @@ public final class SiftContent {
     public static final Block GLOW_BULB = plant("glow_bulb", 12);
     public static final Block SIFT_CORAL_RED = plant("sift_coral_red", 4);
     public static final Block SIFT_CORAL_YELLOW = plant("sift_coral_yellow", 4);
-    public static final Block RIFT_PINK = block("rift_pink", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_ORANGE = block("rift_orange", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_YELLOW = block("rift_yellow", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_RED = block("rift_red", Blocks.AMETHYST_BLOCK, 15);
-    public static final Block RIFT_OLIVE = block("rift_olive", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_PINK = riftSeed("rift_pink", 3, 1);
+    public static final Block RIFT_ORANGE = riftSeed("rift_orange", 4, 3);
+    public static final Block RIFT_YELLOW = riftSeed("rift_yellow", 0, 0);
+    public static final Block RIFT_RED = riftSeed("rift_red", 4, 3);
+    public static final Block RIFT_OLIVE = riftSeed("rift_olive", 1, 1);
     public static final Block[] THRESHOLD_STAGES = new Block[8];
     static { for (int i = 0; i < 8; i++) THRESHOLD_STAGES[i] = see("threshold_stage_" + i, Blocks.AMETHYST_BLOCK, 15); }
     /** Invisible display anchor for client-rendered rifts and portals (no item, never placed). */
@@ -111,11 +118,12 @@ public final class SiftContent {
     public static final Item SCULKLING_EGG = egg("sculkling");
     public static final Item LICKER_EGG = egg("licker");
     public static final Item OVERSEER_EGG = egg("overseer");
+    public static final Item NOTE_BIRD_EGG = egg("note_bird");
     public static final Item SOUL_POTION = Registry.register(BuiltInRegistries.ITEM, id("soul_potion"),
         new SoulPotionItem(itemProperties("soul_potion").stacksTo(16)));
     public static void initialize() {
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.SPAWN_EGGS).register(output -> {
-            for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
+            for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,NOTE_BIRD_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
             output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);

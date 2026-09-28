@@ -74,5 +74,8 @@
   "entity.entersift.overseer": "Overseer",
   "entity.entersift.twisted_warden": "Twisted Warden",
   "entity.entersift.singer": "The Singer",
-  "block.entersift.rift_anchor": "Rift"
+  "block.entersift.rift_anchor": "Rift",
+  "item.entersift.note_bird_spawn_egg": "Note Bird Spawn Egg",
+  "entity.entersift.note_bird": "Note Bird",
+  "subtitles.entersift.ritual.song": "The ancient city sings"
 }

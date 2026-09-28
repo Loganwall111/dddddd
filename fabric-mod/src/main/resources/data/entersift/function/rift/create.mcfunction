@@ -1,4 +1,4 @@
-execute if entity @e[type=minecraft:marker,tag=sift.rift,distance=..12] run return 0
+execute if entity @e[type=minecraft:marker,tag=sift.rift,distance=..5] run return 0
 summon minecraft:marker ~ ~ ~ {Tags:["sift.rift","sift.new_rift"]}
 scoreboard players set @e[type=minecraft:marker,tag=sift.new_rift,distance=..1] sift.age 0
 execute as @e[type=minecraft:marker,tag=sift.new_rift,distance=..1] store result score @s sift.target run random value 0..3

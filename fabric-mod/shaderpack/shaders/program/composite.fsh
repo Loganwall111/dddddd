@@ -19,6 +19,7 @@ uniform int worldTime;
 #endif
 #if SIFT_DIMENSION == 1
 #include "/lib/sift_sky.glsl"
+#include "/lib/voxel_clouds.glsl"
 #ifndef SIFT_SHAFTS
 #define SIFT_SHAFTS 0.25 // [0.0 0.15 0.25 0.4]
 #endif
@@ -85,7 +86,13 @@ void main() {
     if (depth >= 0.999999) {
         vec4 view = gbufferProjectionInverse * vec4(texcoord * 2.0 - 1.0, 1.0, 1.0);
         vec3 direction = normalize(mat3(gbufferModelViewInverse) * (view.xyz / view.w));
-        color = siftSky(direction, float(worldTime), frameTimeCounter);
+        vec3 siftSun = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+        color = siftSky(direction, siftSun, float(worldTime), frameTimeCounter);
+        // Cubed clouds in the Sift too: pearl-mint by day, peach-gold at night.
+        float sd = siftDaylight(float(worldTime));
+        vec3 cLit = mix(vec3(1.0, 0.86, 0.72), vec3(0.95, 1.0, 0.98), sd);
+        vec3 cShade = mix(vec3(0.70, 0.40, 0.45), vec3(0.42, 0.70, 0.72), sd);
+        color = voxelClouds(color, direction, siftSun.y > 0.0 ? siftSun : -siftSun, frameTimeCounter, 205.0, cLit, cShade, cShade, 0.9, -0.03);
     }
 #endif
 #if SIFT_OVERWORLD == 1
@@ -154,9 +161,15 @@ void main() {
 #endif
 #if SIFT_DIMENSION == 1
     // Distant terrain dissolves into the luminous sky haze (peach by day, pale teal at night).
-    float siftDay = smoothstep(-0.25, 0.45, cos((mod(float(worldTime), 24000.0) - 6000.0) / 24000.0 * 6.2831853));
-    vec3 mistColor = mix(vec3(0.62, 0.86, 0.84), vec3(0.96, 0.76, 0.66), siftDay);
-    mist *= 2.2;
+    // Terrain dissolves into exactly the sky behind it: no seam at the horizon.
+    vec3 mistColor = siftHaze(float(worldTime));
+    if (depth < 0.999999 && depth > 0.56) {
+        vec4 mv = gbufferProjectionInverse * vec4(vec3(texcoord, depth) * 2.0 - 1.0, 1.0);
+        vec3 mdir = normalize(mat3(gbufferModelViewInverse) * (mv.xyz / mv.w));
+        mdir.y = max(mdir.y, 0.02);
+        mistColor = siftSky(normalize(mdir), normalize(mat3(gbufferModelViewInverse) * sunPosition), float(worldTime), frameTimeCounter);
+    }
+    mist = clamp(mist * 2.2 + smoothstep(far * 0.55, far * 0.98, distanceToCamera) * 0.9, 0.0, 1.0);
 #elif SIFT_OVERWORLD == 1
     // Bright blue atmospheric haze by day (Dungeons II distance look), deep blue at night.
     vec3 mistColor = mix(vec3(0.05, 0.08, 0.13), mix(vec3(0.68, 0.80, 0.95), vec3(0.95, 0.72, 0.55), owDusk * 0.6), owDay);

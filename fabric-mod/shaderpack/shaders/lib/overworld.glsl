@@ -4,14 +4,7 @@
 #define SIFT_CLOUDS 0.85 // [0.0 0.35 0.65 0.85 1.0]
 #define SIFT_CLOUD_STEPS 28 // [16 20 28 40]
 #define SIFT_CLOUD_BLOCKINESS 0.7 // [0.0 0.35 0.7 1.0]
-uniform vec3 cameraPosition;
-
-float cloudHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float cloudNoise(vec2 p) {
-    vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(cloudHash(i), cloudHash(i + vec2(1, 0)), f.x), mix(cloudHash(i + vec2(0, 1)), cloudHash(i + vec2(1, 1)), f.x), f.y);
-}
-float cloudFbm(vec2 p) { return cloudNoise(p) * 0.55 + cloudNoise(p * 2.03) * 0.28 + cloudNoise(p * 4.1) * 0.17; }
+#include "/lib/voxel_clouds.glsl"
 
 const float CLOUD_BASE = 190.0;
 const float CLOUD_TOP = 240.0;
@@ -48,43 +41,7 @@ vec3 overworldClouds(vec3 original, vec3 dir, float t, float dayTicks) {
     vec3 shadowCol = mix(vec3(0.05, 0.07, 0.13), vec3(0.50, 0.58, 0.74), day);
     vec3 skyAmb = mix(vec3(0.08, 0.1, 0.18), vec3(0.72, 0.82, 0.96), day);
 
-    vec3 eye = cameraPosition;
-    float t0 = max((CLOUD_BASE - eye.y) / dir.y, 0.0);
-    float t1 = (CLOUD_TOP - eye.y) / dir.y;
-    if (t1 <= 0.0) return original;
-    t1 = min(t1, t0 + 600.0);
-    float steps = float(SIFT_CLOUD_STEPS);
-    float stepLen = (t1 - t0) / steps;
-    float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
-    float cosTheta = dot(dir, lightDir);
-    // Henyey-Greenstein forward scatter (silver linings) + a little back scatter.
-    float g = 0.6;
-    float phase = mix((1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * cosTheta, 1.5), 1.0, 0.55) * 0.35;
-
-    float transmittance = 1.0;
-    vec3 scattered = vec3(0.0);
-    for (int i = 0; i < 40; i++) {
-        if (float(i) >= steps || transmittance < 0.03) break;
-        vec3 p = eye + dir * (t0 + (float(i) + jitter) * stepLen);
-        float d = cloudDensity(p, t);
-        if (d <= 0.001) continue;
-        float sigma = d * 0.045;
-        // Two-tap light march toward the sun for self shadowing.
-        float od = cloudDensity(p + lightDir * 7.0, t) * 7.0 + cloudDensity(p + lightDir * 18.0, t) * 11.0;
-        float lightT = exp(-od * 0.045 * 1.6);
-        float powder = 1.0 - exp(-d * 2.0);
-        float h = clamp((p.y - CLOUD_BASE) / (CLOUD_TOP - CLOUD_BASE), 0.0, 1.0);
-        vec3 ambient = mix(shadowCol, skyAmb, h);
-        vec3 lum = sunCol * lightT * phase * (0.6 + 0.8 * powder) * 2.2 + ambient * 0.85;
-        float absorb = 1.0 - exp(-sigma * stepLen);
-        scattered += transmittance * absorb * lum;
-        transmittance *= exp(-sigma * stepLen);
-    }
-    // Distant clouds melt into the horizon haze.
-    float fade = exp(-t0 / 2600.0) * smoothstep(0.015, 0.09, dir.y);
-    float amount = (1.0 - transmittance) * fade * SIFT_CLOUDS;
-    vec3 cloud = scattered / max(1.0 - transmittance, 1e-3);
-    return mix(original, cloud, amount);
+    return voxelClouds(original, dir, lightDir, t, CLOUD_BASE, sunCol * 0.8 + vec3(0.1), shadowCol * 1.1, skyAmb, SIFT_CLOUDS, 0.0);
 }
 
 // Cinematic grade: richer greens/blues, cool shadows, warm (not brighter) highlights.

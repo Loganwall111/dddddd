@@ -1,0 +1,6 @@
+{
+  "ritual.song": {
+    "subtitle": "subtitles.entersift.ritual.song",
+    "sounds": [{"name": "entersift:ritual/song", "stream": true, "attenuation_distance": 64}]
+  }
+}

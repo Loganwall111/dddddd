@@ -7,10 +7,11 @@ public enum SiftKind {
     SCULKER("sculker",           true,  false, false, 0.8f, 1.5f,  26, 0.25, 5,   0.5f),
     SCULKLING("sculkling",       false, false, false, 0.5f, 0.6f,  8,  0.3,  0,   0.3f),
     ANTLERLING("antlerling",     false, false, false, 0.6f, 1.6f,  16, 0.24, 0,   0.4f),
-    DRIFT_JELLY("drift_jelly",   false, false, true,  0.7f, 1.4f,  10, 0.12, 0,   0.0f),
+    DRIFT_JELLY("drift_jelly",   false, false, true,  3.0f, 4.2f,  40, 0.10, 0,   0.0f),   // massive (model x3.2)
     LICKER("licker",             true,  true,  false, 0.9f, 1.1f,  24, 0.27, 4,   0.6f),
     OVERSEER("overseer",         true,  true,  true,  1.0f, 2.6f,  60, 0.18, 6,   0.0f),
     TWISTED_WARDEN("twisted_warden", true, true, false, 1.2f, 3.1f, 300, 0.30, 18, 1.1f),
+    NOTE_BIRD("note_bird",       false, false, true,  0.5f, 0.5f,  6,  0.30, 0,   0.0f),
     SINGER("singer",             false, false, true,  0.6f, 2.6f,  80, 0.0,  0,   0.0f);
 
     public final String id;
