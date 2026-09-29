@@ -1,0 +1,14 @@
+  protected net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> getEquipSound(net.minecraft.world.entity.EquipmentSlot, net.minecraft.world.item.ItemStack, net.minecraft.world.item.equipment.Equippable);
+  protected void playHurtSound(net.minecraft.world.damagesource.DamageSource);
+  public void makeSound(net.minecraft.sounds.SoundEvent);
+  protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource);
+  protected net.minecraft.sounds.SoundEvent getDeathSound();
+  public net.minecraft.world.entity.LivingEntity$Fallsounds getFallSounds();
+  protected void playBlockFallSound();
+  protected float getSoundVolume();
+  protected void playAttackSound();
+  public int ambientSoundTime;
+  public int getAmbientSoundInterval();
+  public void playAmbientSound();
+  protected void playHurtSound(net.minecraft.world.damagesource.DamageSource);
+  protected net.minecraft.sounds.SoundEvent getAmbientSound();
