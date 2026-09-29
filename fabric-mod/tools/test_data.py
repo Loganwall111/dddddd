@@ -413,6 +413,14 @@ class DataContracts(unittest.TestCase):
             self.assertEqual(im.size,(256,128))
             px=list(im.getdata()); mean=sum(sum(p) for p in px)/len(px)/3
             self.assertGreater(mean,150,n)                       # luminous canvases, like the trailer
+    def test_v0181_destination_viewports_jitter_and_evening_columns(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
+        for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
+        self.assertIn('static int viewCode(State s)',rift); self.assertIn('(viewCode(s) + 0.5f) / 8f',rift)
+        self.assertIn('Math.sin(gameTime() * 0.4f',rift); self.assertIn(') * 0.05f',rift)   # edge jitter
+        self.assertIn('day >= 11500L && day <= 23300L',rift)                               # evening + night only
+        self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xFF3FD8)',rift)            # blue / magenta columns
     def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); types=(C/'SiftRenderTypes.java').read_text()

@@ -82,6 +82,17 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         };
     }
 
+    /**
+     * 0.18.1 destination viewport for the GPU interior (the rift type IS the destination):
+     * 0 Overworld = radiant peach-to-pink canvas with soft horizon clouds, 1 Nether = burning crimson
+     * and fiery smoke, 2 End = deep cosmic purple starlight, 3 Sift = pale mint-cyan sky with vertical
+     * pillars, 4 portal = cyan mosaic, 5 = the Overworld seen from inside the Sift (golden, white-hot core).
+     */
+    static int viewCode(State s) {
+        if (s.inSift && (s.type == RiftType.SIFT || s.type == RiftType.OVERWORLD)) return 5;
+        return s.type.id;
+    }
+
     /** Frame colour: rifts that show the Overworld from inside the Sift get the yellow frame of the footage. */
     static int frame(RiftType type, boolean inSift) {
         return inSift && type == RiftType.SIFT ? RiftType.OVERWORLD.edge : type.edge;
@@ -130,7 +141,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         var level = net.minecraft.client.Minecraft.getInstance().level;
         s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
         long day = level == null ? 0L : level.getOverworldClockTime() % 24000L;
-        s.night = day >= 12800L && day <= 23200L; // 0.17: aura glow only at night
+        s.night = day >= 11500L && day <= 23300L; // 0.18.1: neon columns from evening through midnight only, never by day
         s.view = view(s.type, s.inSift);
         s.frame = frame(s.type, s.inSift);
     }
@@ -341,7 +352,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             // fake lens), unless it is switched off or an Iris shader pack replaces pipelines.
             if (gpu) {
                 float fade = Math.min(1f, (age - CLUSTER_START) / 20f);
-                float[] code = {0f, 0f, 0f, (s.type.id + 0.5f) / 8f}; // length 4 = GPU mode for canvas()
+                float[] code = {0f, 0f, 0f, (viewCode(s) + 0.5f) / 8f}; // length 4 = GPU mode for canvas()
                 collector.submitCustomGeometry(pose, SiftRenderTypes.RIFT, (p, vc) -> interior(p, vc, sh, s, age, 1f, 0f, 0f, 0f, 0f, code, fade));
                 // 0.18 REAL gravitational lens: the scene behind and around the rift is bent by a point mass.
                 SiftLens.want();
@@ -449,6 +460,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     private static void gv(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v, float code, float fade) {
         if (!SiftBudget.take(vc)) return;
+        { float ox = x; x = jx(x, y, z); y = jy(ox, y, z); }
         if (!Float.isFinite(x + y + z + u + v)) { x = 0f; y = 0f; z = 0f; u = 0f; v = 0f; }
         vc.addVertex(p, x, y, z).setColor(u, v, code, clamp(fade, 0f, 1f));
     }
@@ -467,18 +479,20 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /** 0.17 night aura: soft coloured columns rising behind the rift (teal, purple, magenta, pink). */
-    private static final float[][] AURA = {rgb(0x4FF0D8), rgb(0x9A6CFF), rgb(0xFF4FD0), rgb(0xFF8FC0), rgb(0x5FD8FF)};
+    private static final float[][] AURA = {rgb(0x2F6BFF), rgb(0x3FF6FF), rgb(0xFF3FD8), rgb(0x5F8CFF), rgb(0x2FE0FF), rgb(0xE040FF)}; // electric blue, cyan, magenta
 
     private static void nightAura(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, Vector3f cam) {
-        int n = 5;
+        // 0.18.1: massive neon columns on the rift's flanks (three each side), fading in over the evening.
+        int n = 6;
         for (int k = 0; k < n; k++) {
             float hx = hash(s.seed, k, 71), hz = hash(s.seed, k, 72), hh = hash(s.seed, k, 73);
-            float x = (-0.5f + (k + 0.2f + 0.6f * hx) / n) * (sh.w() + 3f);
-            float z = -DEPTH - 0.6f - 1.4f * hz;
-            float height = sh.h() * 2.2f + 6f + 6f * hh;
+            float side = k % 2 == 0 ? -1f : 1f, rank = k / 2;
+            float x = side * (sh.w() * 0.5f - 0.6f + rank * 1.5f + hx * 0.8f);
+            float z = -DEPTH - 0.8f - 1.8f * hz;
+            float height = sh.h() * 3f + 12f + 10f * hh;
             float[] c = AURA[(k + (int) (s.seed & 3)) % AURA.length];
-            float[] top = mix(c, AURA[(k + 2) % AURA.length], 0.45f);
-            AuraColumns.column(p, vc, x, -0.6f, z, height, 0.45f + 0.35f * hh, c, top, 0.42f, cam.x, cam.z, s.time, hx * 7f + k);
+            float[] top = mix(c, AURA[(k + 3) % AURA.length], 0.5f);
+            AuraColumns.column(p, vc, x, -0.6f, z, height, 0.8f + 0.6f * hh, c, top, 0.5f, cam.x, cam.z, s.time, hx * 7f + k);
         }
     }
 
@@ -492,6 +506,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     private static void emit(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v, float nx, float ny, float nz, float[] c, float a) {
         if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
+        { float ox = x; x = jx(x, y, z); y = jy(ox, y, z); }
         if (!Float.isFinite(x + y + z + u + v)) { x = 0f; y = 0f; z = 0f; u = 0f; v = 0f; } // 0.13: never emit NaN streaks
         vc.addVertex(p, x, y, z).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LIGHT).setNormal(p, nx, ny, nz);
     }
@@ -777,8 +792,19 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         return new float[]{a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
     }
 
+    /**
+     * 0.18.1 portal edge jitter: every rift vertex trembles by {@code Math.sin(gameTime * 0.4f) * 0.05f},
+     * phase-shifted by its position, so the whole voxel silhouette waves like an active reality tear.
+     * Shared corners get the same offset, so walls, rims and interior never crack apart.
+     */
+    static float gameTime() { return (float) ((System.nanoTime() / 5.0e7) % 1.0e6); } // ticks (20 per second)
+
+    private static float jx(float x, float y, float z) { return x + (float) Math.sin(gameTime() * 0.4f + y * 1.9f + z * 0.7f) * 0.05f; }
+    private static float jy(float x, float y, float z) { return y + (float) Math.sin(gameTime() * 0.4f * 1.13f + x * 1.7f + 2.1f) * 0.05f; }
+
     private static void col(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
         if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
+        { float ox = x; x = jx(x, y, z); y = jy(ox, y, z); }
         if (!Float.isFinite(x + y + z)) { x = 0f; y = 0f; z = 0f; a = 0f; } // 0.13: collapse, keep the quad count intact
         vc.addVertex(p, x, y, z).setColor(c[0], c[1], c[2], a);
     }

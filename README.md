@@ -123,6 +123,18 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.18.1
+
+- **A different window for each destination.** In GPU mode the rift interior now shows the world it leads to, with camera parallax across several depth layers:
+  - Overworld: a radiant peach-to-pink sky with soft, blocky horizon clouds.
+  - Nether: burning dark crimson with rising fiery smoke, a lava glow and flickering embers.
+  - End: a deep cosmic purple starlight sheet with a slow nebula.
+  - Sift: a pale mint-cyan sky with rows of vertical pillars and soft panels.
+  - Overworld rifts seen from inside the Sift turn golden, with a white-hot core, as in the trailer.
+  - Soft bokeh lights drift up through every window.
+- **Edge jitter.** The whole voxel cluster (walls, rims, interior and satellites) trembles gently. Every vertex moves by `Math.sin(gameTime * 0.4) * 0.05`, phase-shifted by its position, so the silhouette waves like an active reality tear.
+- **Evening and night neon columns.** Massive electric blue, cyan and magenta columns stand on the rift's flanks, three on each side and taller than before. They appear only from evening (clock time 11500) through midnight to just before dawn, and never show during the day.
+
 ### 0.18.0
 
 - **The whole rift is a shader.** In GPU mode every part of a rift is drawn by the rift GLSL program: the interior, the cream box walls, the white rims and glow, and the lens. The rift is now a large plus-shaped cluster of deep hollow boxes (about one block per box, 1 block deep). Natural rifts are 6-9 blocks wide and 4-6 tall. They have crisp white rims, a pink/orange marble interior with a big white centre glow, and larger floating hollow cubes. The halo blobs and ring bands that made rifts look like a white blob are gone.
