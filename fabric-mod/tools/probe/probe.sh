@@ -128,3 +128,5 @@ echo "=== FAKE / static tail"; javap -c -p -cp "$ICP" net.irisshaders.iris.pipel
 echo "=== Overrides mixin"; javap -c -p -cp "$ICP" net.irisshaders.iris.mixin.MixinShaderManager_Overrides 2>&1 | head -150
 echo "=== ShaderOverrides"; javap -p -cp "$ICP" net.irisshaders.iris.pipeline.programs.ShaderOverrides 2>&1 | head -40
 } > $OUT/iris_decide.txt 2>&1
+# 0.18.2c: tail of redirectIrisProgram (null-program branch).
+javap -c -p -cp "/tmp/irisx:$CP" net.irisshaders.iris.mixin.MixinShaderManager_Overrides 2>&1 | sed -n '/redirectIrisProgram/,/^  [a-z].*(/p' | sed -n '150,260p' > $OUT/iris_null.txt 2>&1
