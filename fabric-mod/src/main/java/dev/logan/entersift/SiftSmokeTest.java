@@ -28,7 +28,10 @@ final class SiftSmokeTest {
             if (ticks == 20) stageOne(server);
             if (ticks == 120) stageTwo(server);
             if (ticks == 140) checkAnchors(server);
-            if (ticks == 260) {
+            if (ticks == 40) buildRitual(server);
+            if (ticks == 60) playRitual(server);
+            if (ticks == 480) checkRitual(server);
+            if (ticks == 500) {
                 EnterTheSift.LOGGER.info("SIFT-SMOKE DONE");
                 server.halt(false);
             }
@@ -88,6 +91,48 @@ final class SiftSmokeTest {
         EnterTheSift.LOGGER.info("SIFT-SMOKE anchors: rifts={} portals={} wrongType={}", rifts, portals, wrong);
         if (rifts == 0 || portals == 0 || wrong > 0)
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL rift_portal entities: rifts={} portals={} wrongType={}", rifts, portals, wrong);
+    }
+
+    // ------------------------------------------------------------------ ritual (0.14.1)
+    // The dev arena layout in the Overworld: a 10x7 reinforced deepslate frame and eight note blocks on
+    // sonorous deepslate tuned to pitches 1..8, left to right. The guardian is marked as defeated.
+    private static final int RX = 4000, RY = -40, RZ = 4000;
+
+    private static void buildRitual(MinecraftServer server) {
+        String in = "execute in minecraft:overworld run ";
+        run(server, in + "forceload add " + (RX - 16) + " " + (RZ - 16) + " " + (RX + 16) + " " + (RZ + 16));
+        run(server, in + "fill " + (RX - 8) + " " + (RY - 1) + " " + (RZ - 4) + " " + (RX + 8) + " " + (RY + 9) + " " + (RZ + 12) + " minecraft:air");
+        run(server, in + "fill " + (RX - 6) + " " + (RY - 1) + " " + (RZ - 2) + " " + (RX + 6) + " " + (RY - 1) + " " + (RZ + 10) + " entersift:salt");
+        run(server, in + "fill " + (RX - 5) + " " + RY + " " + (RZ + 7) + " " + (RX + 5) + " " + (RY + 7) + " " + (RZ + 7) + " minecraft:reinforced_deepslate");
+        run(server, in + "fill " + (RX - 4) + " " + (RY + 1) + " " + (RZ + 7) + " " + (RX + 4) + " " + (RY + 6) + " " + (RZ + 7) + " minecraft:air");
+        for (int k = 0; k < 8; k++) {
+            run(server, in + "setblock " + (RX - 4 + k) + " " + RY + " " + RZ + " entersift:sonorous_deepslate");
+            run(server, in + "setblock " + (RX - 4 + k) + " " + (RY + 1) + " " + RZ + " minecraft:note_block[note=" + k + "]");
+        }
+        // Frame centre = bottom-left rim (RX-5, RY, RZ+7) + half the width along X.
+        run(server, in + "summon minecraft:marker " + (RX + 0.5) + " " + (RY + 1.0) + " " + (RZ + 7.5) + " {Tags:[\"sift.encounter\",\"sift.ready\"]}");
+    }
+
+    private static void playRitual(MinecraftServer server) {
+        net.minecraft.server.level.ServerLevel level = server.overworld();
+        for (int pitch : RitualSequence.ORDER) {
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(RX - 4 + pitch - 1, RY + 1, RZ);
+            EnterTheSift.strike(level, pos, null);
+            EnterTheSift.strike(level, pos, null); // a real click can reach the server twice: must not reset
+        }
+    }
+
+    private static void checkRitual(MinecraftServer server) {
+        net.minecraft.server.level.ServerLevel level = server.overworld();
+        boolean portalMarker = false, portalAnchor = false;
+        for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
+            if (e.distanceToSqr(RX + 0.5, RY + 1.0, RZ + 7.5) > 4) continue;
+            if (e.entityTags().contains("sift.portal")) portalMarker = true;
+            if (e instanceof RiftPortalEntity && e.entityTags().contains("sift.portal_anchor")) portalAnchor = true;
+        }
+        EnterTheSift.LOGGER.info("SIFT-SMOKE ritual: portalMarker={} portalAnchor={}", portalMarker, portalAnchor);
+        if (!portalMarker || !portalAnchor)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL ritual 1,3,7,6,5,2,4,8 did not open the portal (marker={}, anchor={})", portalMarker, portalAnchor);
     }
 
     private SiftSmokeTest() {}

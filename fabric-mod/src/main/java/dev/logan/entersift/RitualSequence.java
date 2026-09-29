@@ -12,21 +12,32 @@ public final class RitualSequence {
     private int progress;
     private List<String> completedNotes = List.of();
     private long lastTick = Long.MIN_VALUE;
-    public enum Result { ADVANCED, RESET, COMPLETE }
+    public enum Result { ADVANCED, RESET, COMPLETE, IGNORED }
+    private String lastPosition;
+    private int lastWrongPitch, lastExpected;
     public Result play(int pitch, String position, long tick) {
         if (lastTick != Long.MIN_VALUE && tick - lastTick > TIMEOUT) reset();
         lastTick = tick;
+        // Striking the block that was just accepted again is never a new note: ignore it, don't reset.
+        if (progress > 0 && position.equals(lastPosition)) return Result.IGNORED;
         if (pitch != ORDER[progress] || notes.contains(position)) {
+            lastWrongPitch = pitch; lastExpected = ORDER[progress];
             reset();
-            if (pitch == ORDER[0]) { notes.add(position); progress = 1; }
+            lastPosition = null;
+            if (pitch == ORDER[0]) { notes.add(position); progress = 1; lastPosition = position; }
             return Result.RESET;
         }
         notes.add(position);
+        lastPosition = position;
         if (++progress == ORDER.length) { completedNotes = List.copyOf(notes); reset(); return Result.COMPLETE; }
         return Result.ADVANCED;
     }
     public List<String> completedNotes() { return completedNotes; }
     public int progress() { return progress; }
     public boolean expired(long tick) { return lastTick != Long.MIN_VALUE && tick - lastTick > TIMEOUT; }
-    private void reset() { progress = 0; notes.clear(); }
+    /** Human-readable reason for the last RESET. */
+    public String resetReason() {
+        return "Pitch " + lastWrongPitch + " is not next (expected " + lastExpected + ").";
+    }
+    private void reset() { progress = 0; notes.clear(); lastPosition = null; }
 }

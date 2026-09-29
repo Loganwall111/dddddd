@@ -357,6 +357,14 @@ class DataContracts(unittest.TestCase):
         self.assertIn('spill(',(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text())
         ents=(ROOT/'src/main/java/dev/logan/entersift/SiftEntities.java').read_text()
         self.assertIn('spawn("soul_valley"',ents); self.assertIn('spawn("campaign_peaks"',ents)
+    def test_v0141_ritual_survives_duplicate_clicks(self):
+        j=(ROOT/'src/main/java/dev/logan/entersift/EnterTheSift.java').read_text()
+        self.assertIn('public static void strike(',j); self.assertIn('ticks - last < 8',j); self.assertIn('frameNear(',j)
+        self.assertNotIn('AncientFrame.find(level,p',j)
+        r=(ROOT/'src/main/java/dev/logan/entersift/RitualSequence.java').read_text()
+        self.assertIn('Result.IGNORED',r); self.assertIn('{1, 3, 7, 6, 5, 2, 4, 8}',r)
+        smoke=(ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text()
+        self.assertIn('playRitual',smoke); self.assertIn('SIFT-SMOKE FAIL ritual',smoke)
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

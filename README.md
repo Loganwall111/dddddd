@@ -123,6 +123,12 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.14.1: ritual fix
+- **The song now registers every note.** One left click on a note block could reach the server two or three times. The repeat counted as a wrong note and silently reset the song to 1/8. Repeat hits on the same block are now ignored.
+- **One frame per ancient city.** Note blocks spread around a big city could each detect a different reinforced-deepslate frame, which split the song's progress. The first frame found, or the one where the Twisted Warden was fought, is now used for every note nearby.
+- **Clearer messages.** A wrong note now says which pitch was expected. Striking a note that's already sung explains that each pitch needs its own note block.
+- **CI now plays the whole ritual.** The server test builds a frame, strikes 1, 3, 7, 6, 5, 2, 4, 8 (every strike sent twice) and checks that the portal forms.
+
 ### 0.14.0: Soul Valley, Campaign Peaks, real terrain, souls, subtle fog, brighter rifts
 - **Terrain.** The Sift no longer uses giant biome squares. Biomes now come from overworld-style multi-noise (temperature, humidity, continentalness, erosion). The terrain uses amplified-style shaping, so it has much bigger cliffs, ridges and valleys.
 - **Bigger trees.** The tiered giant trees are larger.
