@@ -20,14 +20,36 @@ jobs:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Encode ritual music (wav -> ogg vorbis)
+      - name: Encode audio (wav -> ogg vorbis)
         run: |
           command -v oggenc || (sudo apt-get update -qq && sudo apt-get install -y -qq vorbis-tools)
-          mkdir -p src/main/resources/assets/entersift/sounds/ritual
-          oggenc -Q -q 5 -o src/main/resources/assets/entersift/sounds/ritual/song.ogg art/audio/ritual_song.wav
-          test -s src/main/resources/assets/entersift/sounds/ritual/song.ogg
+          S=src/main/resources/assets/entersift/sounds
+          mkdir -p $S/ritual
+          oggenc -Q -q 5 -o $S/ritual/song.ogg art/audio/ritual_song.wav
+          find art/audio -mindepth 2 -name '*.wav' | while read -r f; do
+            rel=${f#art/audio/}; out=$S/${rel%.wav}.ogg
+            mkdir -p "$(dirname "$out")"
+            oggenc -Q -q 4 -o "$out" "$f"
+          done
+          test -s $S/ritual/song.ogg
+          test -s $S/music/sift_1.ogg
+          python3 - <<'PY'
+          import json, pathlib
+          s = pathlib.Path('src/main/resources/assets/entersift')
+          miss = []
+          for ev in json.loads((s / 'sounds.json').read_text()).values():
+              for e in ev['sounds']:
+                  n = e if isinstance(e, str) else e['name']
+                  if not (s / 'sounds' / (n.split(':')[1] + '.ogg')).exists(): miss.append(n)
+          print('missing sounds:', miss); assert not miss
+          PY
       - run: python3 tools/validate.py
       - run: python3 tools/test_data.py
+      - name: Compile-check shaderpack (glslang)
+        run: |
+          curl -sSL -o /tmp/glslang.tgz https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-linux-x86_64-release.tar.gz
+          mkdir -p /tmp/glslang && tar xzf /tmp/glslang.tgz -C /tmp/glslang
+          python3 tools/check_shaders.py "$(find /tmp/glslang -name glslangValidator -type f | head -1)"
       - name: Compile mod and report diagnostics
         shell: bash
         run: |

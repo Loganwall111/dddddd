@@ -5,14 +5,18 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.logan.entersift.SiftContent;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * 0.9 Sift sky: a procedural "lava lamp" of slowly drifting, merging colour blobs. There are no
  * textures, panoramas or shader packs; everything is computed in Java every frame.
  *
  * How it is drawn (vanilla/Fabric only): Fabric 26.3 has no sky hook, so the sky is a finely
- * tessellated sphere submitted in COLLECT_SUBMITS with {@code RenderTypes.debugQuads()}. That type
+ * tessellated sphere submitted in COLLECT_SUBMITS with {@link SiftRenderTypes#SOLID}. That type
  * uses the core {@code position_color} shader, which has no fog term, and it depth-tests normally.
  * The sphere sits beyond the last rendered chunk and inside the far plane, so terrain always stays
  * in front and the blobs show wherever the sky is open. Colours are per vertex; the GPU blends
@@ -27,7 +31,13 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
  *   noon     saturated neon mint and pearl white
  *   evening  magenta, dusty rose and muted crimson
  *   night    heavy amber-gold with soft crimson vertical pillars
- * The only light shafts in the Sift are the sun's god rays, drawn here.
+ * The only light shafts from the sky's sun are its single god ray, drawn here.
+ *
+ * 0.11 layer stack (render types from {@link SiftRenderTypes}; no OIT, so terrain no longer flickers):
+ *   1. opaque lava-lamp dome (Cyan -> Mint -> Magenta -> Golden Amber through the day)
+ *   2. linear diagonal aurora streaks scrolling sideways, and flat rectangular voxel shard panels
+ *      grouped along sweeping arcs (aurora ribbons)
+ *   3. world-space diagonal light beams slicing into the terrain, tinting the ground where they land
  */
 public final class SiftSky {
     private SiftSky() {}
@@ -54,9 +64,13 @@ public final class SiftSky {
     private static float[] rgb(int c) { return new float[]{(c >> 16 & 255) / 255f, (c >> 8 & 255) / 255f, (c & 255) / 255f}; }
 
     public static void register() {
+        SiftRenderTypes.initialize();
         LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.level == null || !mc.level.dimension().identifier().equals(SiftContent.id("the_sift"))) return;
+            if (mc.level == null) return;
+            // 0.11 dimension guard: only ever draw inside the entersift namespace, and only in the Sift.
+            Identifier dim = mc.level.dimension().identifier();
+            if (!dim.toString().startsWith("entersift:") || !dim.equals(SiftContent.id("the_sift"))) return;
             float partial = context.levelState().worldPartialTicks;
             float tick = (float) (mc.level.getOverworldClockTime() % 24000L) + partial;
             float seconds = (float) ((System.nanoTime() / 1.0e9) % 7200.0);
@@ -68,12 +82,27 @@ public final class SiftSky {
                 org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] lava-lamp sky radius {} blocks", lastRadius);
             }
             Palette pal = palette(tick);
-            float[] sun = sunDirection(tick);
+            float[] sun = norm(sunDirection(tick));
+            Vec3 cam = context.levelState().cameraRenderState.pos;
+            float beamRange = Math.min(chunks * 16f, 176f);
+            List<float[]> beams = collectBeams(mc, cam, beamRange, tick);
             PoseStack pose = context.poseStack();
-            context.submitNodeCollector().submitCustomGeometry(pose, RenderTypes.debugQuads(), (p, vc) -> {
-                dome(p, vc, radius, pal, seconds);
-                if (sun[1] > -0.12f) sunAndRays(p, vc, radius * 0.97f, sun, pal, seconds);
-            });
+            pose.pushPose(); // balanced: every push is popped even if a submit throws
+            try {
+                var out = context.submitNodeCollector();
+                // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
+                out.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> dome(p, vc, radius, pal, seconds));
+                // Layers 2-3 in the sky: aurora streaks, voxel shard ribbons, the sun and its single god ray (additive).
+                out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
+                    auroraStreaks(p, vc, radius * 0.985f, pal, seconds);
+                    shardRibbons(p, vc, radius * 0.97f, pal, seconds);
+                    if (sun[1] > -0.12f) sunAndRay(p, vc, radius * 0.96f, sun, pal);
+                });
+                // World-space diagonal beams slicing into the terrain, with a tint pool where each one lands.
+                if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> worldBeams(p, vc, beams, cam, pal, sun, seconds, beamRange));
+            } finally {
+                pose.popPose();
+            }
         });
     }
 
@@ -215,35 +244,207 @@ public final class SiftSky {
         vc.addVertex(p, d[0] * r, d[1] * r, d[2] * r).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
     }
 
-    /** Sun disc with a soft corona and slowly turning god rays: the only light shafts in the Sift. */
-    private static void sunAndRays(PoseStack.Pose p, VertexConsumer vc, float r, float[] dir, Palette pal, float t) {
-        float len = (float) Math.sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
-        float[] f = {dir[0] / len, dir[1] / len, dir[2] / len};
-        // Tangent basis around the sun direction.
+    // ------------------------------------------------------------------ 0.11 sky layers
+
+    private static float hash(int a, int b, int c) {
+        long h = a * 0x9E3779B97F4A7C15L + b * 0xBF58476D1CE4E5B9L + c * 0x94D049BB133111EBL + 0x5117L;
+        h ^= h >>> 31; h *= 0x7FB5D329728EA185L; h ^= h >>> 27;
+        return (h >>> 40) / (float) (1L << 24);
+    }
+
+    private static float[] dir(double az, double el) {
+        return new float[]{(float) (Math.cos(el) * Math.cos(az)), (float) Math.sin(el), (float) (Math.cos(el) * Math.sin(az))};
+    }
+
+    private static float[] bright(float[] c, float w) { return lerp(c, new float[]{1f, 1f, 1f}, w); }
+
+    /** How strongly the aurora shows: faint at noon, strongest in the evening and at night. */
+    private static float auroraStrength(Palette pal) { return 0.55f + 0.45f * (1 - pal.noon()); }
+
+    /**
+     * Linear diagonal aurora streaks: long straight-ish bands laid diagonally across the sky, fading
+     * upward like curtains, that scroll slowly sideways over the lava-lamp blobs.
+     */
+    private static void auroraStreaks(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float strength = auroraStrength(pal);
+        int streaks = 9, segs = 36;
+        for (int k = 0; k < streaks; k++) {
+            double a0 = hash(k, 1, 0) * Math.PI * 2 + t * (0.006 + 0.004 * (k % 3)); // horizontal scroll
+            double span = 1.1 + 0.9 * hash(k, 2, 0);
+            double e0 = 0.18 + 0.55 * hash(k, 3, 0), slope = (hash(k, 4, 0) - 0.5) * 0.7;
+            double height = 0.10 + 0.12 * hash(k, 5, 0), skew = 0.08 + 0.1 * hash(k, 6, 0);
+            float[] c = bright(pal.blobs()[k % 4], 0.35f);
+            float base = (0.16f + 0.12f * hash(k, 7, 0)) * strength * (0.75f + 0.25f * (float) Math.sin(t * 0.21f + k * 1.3f));
+            for (int s = 0; s < segs; s++) {
+                double f0 = s / (double) segs, f1 = (s + 1) / (double) segs;
+                float w0 = (float) Math.sin(Math.PI * f0), w1 = (float) Math.sin(Math.PI * f1);
+                double az0 = a0 + span * f0, az1 = a0 + span * f1;
+                double el0 = e0 + slope * span * f0, el1 = e0 + slope * span * f1;
+                float[] b0 = dir(az0, el0), b1 = dir(az1, el1);
+                float[] u0 = dir(az0 + skew, el0 + height), u1 = dir(az1 + skew, el1 + height);
+                v(p, vc, b0, r, c, base * w0); v(p, vc, b1, r, c, base * w1);
+                v(p, vc, u1, r, c, 0f); v(p, vc, u0, r, c, 0f);
+                // A thin bright core line along the bottom edge of the curtain.
+                float[] m0 = dir(az0 + skew * 0.15, el0 + height * 0.15), m1 = dir(az1 + skew * 0.15, el1 + height * 0.15);
+                float[] core = bright(c, 0.5f);
+                v(p, vc, b0, r, core, 0f); v(p, vc, b1, r, core, 0f);
+                v(p, vc, m1, r, core, base * w1 * 0.9f); v(p, vc, m0, r, core, base * w0 * 0.9f);
+            }
+        }
+    }
+
+    /**
+     * Flat, semi-transparent rectangular "voxel shard" panels, grouped along sweeping arcs so that
+     * together they read as aurora ribbons (the big pale rectangles in the Sift trailer sky).
+     */
+    private static void shardRibbons(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float strength = auroraStrength(pal);
+        int arcs = 5;
+        for (int m = 0; m < arcs; m++) {
+            double centre = hash(m, 11, 0) * Math.PI * 2 + t * 0.0035 * (m % 2 == 0 ? 1 : -1);
+            double width = 1.4 + 1.2 * hash(m, 12, 0), lift = 0.35 + 0.55 * hash(m, 13, 0), floor = 0.12 + 0.2 * hash(m, 14, 0);
+            int panels = 12 + (int) (hash(m, 15, 0) * 8);
+            for (int i = 0; i < panels; i++) {
+                double f = (i + 0.5 + (hash(m, i, 16) - 0.5) * 0.6) / panels;
+                double az = centre + (f - 0.5) * width;
+                double el = floor + lift * Math.sin(Math.PI * f) + (hash(m, i, 17) - 0.5) * 0.08;
+                // Voxel look: snap panel centres to a coarse angular grid.
+                az = Math.round(az / 0.035) * 0.035; el = Math.round(el / 0.035) * 0.035;
+                if (el < 0.06) continue;
+                float[] n = dir(az, el);
+                float[] east = norm(new float[]{(float) -Math.sin(az), 0f, (float) Math.cos(az)});
+                float[] north = cross(n, east);
+                // Tilt each panel along the arc's tangent (plus a little jitter), like sheets hanging in wind.
+                double slope = Math.atan2(lift * Math.PI * Math.cos(Math.PI * f), width);
+                double tilt = slope + (hash(m, i, 18) - 0.5) * 0.5 + 0.12 * Math.sin(t * 0.15 + i);
+                float ct = (float) Math.cos(tilt), st = (float) Math.sin(tilt);
+                float[] ax = {east[0] * ct + north[0] * st, east[1] * ct + north[1] * st, east[2] * ct + north[2] * st};
+                float[] ay = {-east[0] * st + north[0] * ct, -east[1] * st + north[1] * ct, -east[2] * st + north[2] * ct};
+                float hw = 0.03f + 0.045f * hash(m, i, 19), hh = 0.06f + 0.1f * hash(m, i, 20);
+                float twinkle = 0.65f + 0.35f * (float) Math.sin(t * (0.25f + 0.2f * hash(m, i, 21)) + i * 2.1f);
+                float alpha = (0.14f + 0.16f * hash(m, i, 22)) * twinkle * strength * smooth(0.04f, 0.25f, (float) el);
+                float[] c = bright(pal.blobs()[(m + i) % 4], 0.45f + 0.3f * hash(m, i, 23));
+                panel(p, vc, r, n, ax, ay, hw * 1.6f, hh * 1.25f, c, alpha * 0.25f); // soft bloom
+                panel(p, vc, r, n, ax, ay, hw, hh, c, alpha);
+            }
+        }
+    }
+
+    private static void panel(PoseStack.Pose p, VertexConsumer vc, float r, float[] n, float[] ax, float[] ay, float hw, float hh, float[] c, float a) {
+        float[][] q = {
+            {n[0] - ax[0] * hw - ay[0] * hh, n[1] - ax[1] * hw - ay[1] * hh, n[2] - ax[2] * hw - ay[2] * hh},
+            {n[0] + ax[0] * hw - ay[0] * hh, n[1] + ax[1] * hw - ay[1] * hh, n[2] + ax[2] * hw - ay[2] * hh},
+            {n[0] + ax[0] * hw + ay[0] * hh, n[1] + ax[1] * hw + ay[1] * hh, n[2] + ax[2] * hw + ay[2] * hh},
+            {n[0] - ax[0] * hw + ay[0] * hh, n[1] - ax[1] * hw + ay[1] * hh, n[2] - ax[2] * hw + ay[2] * hh}};
+        for (float[] d : q) vc.addVertex(p, d[0] * r, d[1] * r, d[2] * r).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
+    }
+
+    /**
+     * The sun disc with a soft corona, and exactly one god ray: an additive quad from the sun down to
+     * the horizon below it, alpha 0.35 at the sun fading to 0 at the horizon. It follows the clock.
+     */
+    private static void sunAndRay(PoseStack.Pose p, VertexConsumer vc, float r, float[] f, Palette pal) {
         float[] up = Math.abs(f[1]) > 0.95f ? new float[]{1, 0, 0} : new float[]{0, 1, 0};
         float[] a = norm(cross(up, f)), b = cross(f, a);
         float[] core = {1f, 0.99f, 0.93f};
         float[] warm = lerp(pal.horizon(), core, 0.6f);
         float horizon = smooth(-0.12f, 0.08f, f[1]);
-        // Rays: long tapering fans, alpha fades to zero at the tips. Drawn first so the disc sits on top.
-        int rays = 14;
-        for (int k = 0; k < rays; k++) {
-            float ang = k / (float) rays * 6.2831855f + t * 0.01f + 0.4f * noise(k * 1.7f, t * 0.05f, 0);
-            float length = 0.55f + 0.35f * (0.5f + 0.5f * noise(k * 3.1f, t * 0.08f, 5));
-            float width = 0.025f + 0.02f * (0.5f + 0.5f * noise(k * 2.3f, 9, t * 0.07f));
-            float alpha = (0.18f + 0.12f * (0.5f + 0.5f * noise(k, t * 0.2f, 3))) * horizon;
-            float ca = (float) Math.cos(ang), sa = (float) Math.sin(ang);
-            float[] dirr = {a[0] * ca + b[0] * sa, a[1] * ca + b[1] * sa, a[2] * ca + b[2] * sa};
-            float[] side = {-a[0] * sa + b[0] * ca, -a[1] * sa + b[1] * ca, -a[2] * sa + b[2] * ca};
-            float[] p0 = on(f, dirr, 0.04f, side, -width), p1 = on(f, dirr, 0.04f, side, width);
-            float[] p2 = on(f, dirr, length, side, width * 2.2f), p3 = on(f, dirr, length, side, -width * 2.2f);
-            v(p, vc, norm(p0), r, warm, alpha); v(p, vc, norm(p1), r, warm, alpha);
-            v(p, vc, norm(p2), r, warm, 0f); v(p, vc, norm(p3), r, warm, 0f);
+        if (f[1] > 0.02f) {
+            double az = Math.atan2(f[2], f[0]), el = Math.asin(Math.max(-1f, Math.min(1f, f[1])));
+            int segs = 12;
+            for (int s = 0; s < segs; s++) {
+                double t0 = s / (double) segs, t1 = (s + 1) / (double) segs;
+                double e0 = el * (1 - t0), e1 = el * (1 - t1);
+                double w0 = 0.035 + 0.22 * t0, w1 = 0.035 + 0.22 * t1;       // widens toward the horizon
+                float a0 = 0.35f * (float) (1 - t0) * horizon, a1 = 0.35f * (float) (1 - t1) * horizon;
+                v(p, vc, dir(az - w0, e0), r, warm, a0); v(p, vc, dir(az + w0, e0), r, warm, a0);
+                v(p, vc, dir(az + w1, e1), r, warm, a1); v(p, vc, dir(az - w1, e1), r, warm, a1);
+            }
         }
-        // Corona rings then the disc.
         ring(p, vc, r * 0.995f, f, a, b, 0.0f, 0.34f, warm, 0.45f * horizon, 0f);
         ring(p, vc, r * 0.99f, f, a, b, 0.0f, 0.12f, core, 0.8f * horizon, 0.25f * horizon);
         ring(p, vc, r * 0.985f, f, a, b, 0.0f, 0.055f, core, horizon, horizon);
+    }
+
+    // ------------------------------------------------------------------ world beams
+
+    private static final int BEAM_CELL = 72;
+
+    /** Beam landing points {x, groundY, z, seed, colourIndex} on a fixed world grid around the camera. */
+    private static List<float[]> collectBeams(Minecraft mc, Vec3 cam, float range, float tick) {
+        List<float[]> out = new ArrayList<>();
+        int cx0 = (int) Math.floor((cam.x - range) / BEAM_CELL), cx1 = (int) Math.floor((cam.x + range) / BEAM_CELL);
+        int cz0 = (int) Math.floor((cam.z - range) / BEAM_CELL), cz1 = (int) Math.floor((cam.z + range) / BEAM_CELL);
+        int day = (int) (mc.level.getOverworldClockTime() / 24000L);
+        for (int cx = cx0; cx <= cx1; cx++) for (int cz = cz0; cz <= cz1; cz++) {
+            if (hash(cx, cz, 91 + day) < 0.45f) continue;
+            int x = cx * BEAM_CELL + (int) (hash(cx, cz, 92) * BEAM_CELL), z = cz * BEAM_CELL + (int) (hash(cx, cz, 93) * BEAM_CELL);
+            double dx = x + 0.5 - cam.x, dz = z + 0.5 - cam.z;
+            if (dx * dx + dz * dz > range * range) continue;
+            int y = mc.level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+            if (y <= -60) continue; // chunk not loaded
+            out.add(new float[]{x + 0.5f, y, z + 0.5f, hash(cx, cz, 94), (int) (hash(cx, cz, 95) * 4)});
+        }
+        return out;
+    }
+
+    /**
+     * Diagonal translucent light beams in world space, slicing down from high above into the ground.
+     * Colours follow the 4-stage timeline; each beam fades with distance and pools a soft additive tint
+     * on the terrain where it lands. Positions are camera-relative (x - cam).
+     */
+    private static void worldBeams(PoseStack.Pose p, VertexConsumer vc, List<float[]> beams, Vec3 cam, Palette pal, float[] sun, float t, float range) {
+        // All beams share one slant, leaning away from the sun so they read as light falling from the sky.
+        float[] axis = norm(new float[]{-sun[0] * 0.45f + 0.2f, 1f, -sun[2] * 0.45f - 0.25f});
+        for (float[] b : beams) {
+            float gx = (float) (b[0] - cam.x), gy = (float) (b[1] - cam.y), gz = (float) (b[2] - cam.z);
+            float dist = (float) Math.sqrt(gx * gx + gz * gz);
+            float fade = smooth(6f, 22f, dist) * (1 - smooth(range * 0.55f, range, dist));
+            if (fade < 0.01f) continue;
+            float pulse = 0.7f + 0.3f * (float) Math.sin(t * 0.4f + b[3] * 20f);
+            float[] c = bright(pal.blobs()[(int) b[4]], 0.3f);
+            float alpha = 0.2f * fade * pulse, width = 2.5f + 3f * b[3], len = 200f;
+            float[] bottom = {gx, gy - 1.5f, gz}, top = {gx + axis[0] * len, gy + axis[1] * len, gz + axis[2] * len};
+            // Billboard around the beam axis toward the camera (camera is at the origin).
+            float[] mid = {(bottom[0] + top[0]) / 2, (bottom[1] + top[1]) / 2, (bottom[2] + top[2]) / 2};
+            float[] side = norm(cross(axis, mid));
+            float[] s0 = {side[0] * width / 2, side[1] * width / 2, side[2] * width / 2};
+            int segs = 6;
+            for (int k = 0; k < segs; k++) {
+                float f0 = k / (float) segs, f1 = (k + 1) / (float) segs;
+                float a0 = alpha * (1 - f0) * (1 - f0), a1 = alpha * (1 - f1) * (1 - f1);
+                float w0 = 1 + f0 * 1.5f, w1 = 1 + f1 * 1.5f; // widens with height
+                float[] p0 = at(bottom, top, f0), p1 = at(bottom, top, f1);
+                bv(p, vc, p0[0] - s0[0] * w0, p0[1] - s0[1] * w0, p0[2] - s0[2] * w0, c, a0);
+                bv(p, vc, p0[0] + s0[0] * w0, p0[1] + s0[1] * w0, p0[2] + s0[2] * w0, c, a0);
+                bv(p, vc, p1[0] + s0[0] * w1, p1[1] + s0[1] * w1, p1[2] + s0[2] * w1, c, a1);
+                bv(p, vc, p1[0] - s0[0] * w1, p1[1] - s0[1] * w1, p1[2] - s0[2] * w1, c, a1);
+            }
+            // Bright core line.
+            float[] core = bright(c, 0.6f);
+            bv(p, vc, bottom[0] - s0[0] * 0.2f, bottom[1] - s0[1] * 0.2f, bottom[2] - s0[2] * 0.2f, core, alpha * 0.8f);
+            bv(p, vc, bottom[0] + s0[0] * 0.2f, bottom[1] + s0[1] * 0.2f, bottom[2] + s0[2] * 0.2f, core, alpha * 0.8f);
+            float[] q = at(bottom, top, 0.5f);
+            bv(p, vc, q[0] + s0[0] * 0.3f, q[1] + s0[1] * 0.3f, q[2] + s0[2] * 0.3f, core, 0f);
+            bv(p, vc, q[0] - s0[0] * 0.3f, q[1] - s0[1] * 0.3f, q[2] - s0[2] * 0.3f, core, 0f);
+            // Ground tint pool: a soft horizontal disc just above the landing surface.
+            float pool = width * 1.8f, py = gy + 0.06f;
+            int n = 20;
+            for (int k = 0; k < n; k++) {
+                double t0 = k * Math.PI * 2 / n, t1 = (k + 1) * Math.PI * 2 / n;
+                bv(p, vc, gx, py, gz, c, alpha * 1.1f); bv(p, vc, gx, py, gz, c, alpha * 1.1f);
+                bv(p, vc, gx + (float) Math.cos(t1) * pool, py, gz + (float) Math.sin(t1) * pool, c, 0f);
+                bv(p, vc, gx + (float) Math.cos(t0) * pool, py, gz + (float) Math.sin(t0) * pool, c, 0f);
+            }
+        }
+    }
+
+    private static float[] at(float[] a, float[] b, float f) {
+        return new float[]{a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f};
+    }
+
+    private static void bv(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
+        vc.addVertex(p, x, y, z).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
     }
 
     private static float[] on(float[] f, float[] d, float along, float[] side, float w) {

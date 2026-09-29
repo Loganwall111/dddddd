@@ -41,4 +41,16 @@ public class SiftBeast extends Monster {
     @Override public boolean removeWhenFarAway(double distance) {
         return kind() != SiftKind.TWISTED_WARDEN && super.removeWhenFarAway(distance);
     }
+
+    @Override protected net.minecraft.sounds.SoundEvent getAmbientSound() { return SiftSounds.voice(kind()).ambient(); }
+    @Override protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource source) { return SiftSounds.voice(kind()).hurt(); }
+    @Override protected net.minecraft.sounds.SoundEvent getDeathSound() { return SiftSounds.voice(kind()).death(); }
+    @Override protected float getSoundVolume() {
+        SiftKind k = kind();
+        return k == SiftKind.TWISTED_WARDEN || k == SiftKind.DRIFT_JELLY ? 2.2f : k == SiftKind.SINGER ? 1.6f : 1.0f;
+    }
+    @Override public int getAmbientSoundInterval() {
+        SiftKind k = kind();
+        return k == SiftKind.NOTE_BIRD ? 120 : k == SiftKind.DRIFT_JELLY || k == SiftKind.SINGER ? 260 : 160;
+    }
 }

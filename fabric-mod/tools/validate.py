@@ -14,6 +14,7 @@ for p in (r/'data').rglob('*.mcfunction'):
     for line in p.read_text().splitlines():
         if '$(' in line and not line.startswith('$'): errors.append(f'{p}: macro line missing $')
 for p in (r/'assets/entersift').rglob('*.json'):
+    if p.name == 'sounds.json': continue  # sound paths (entersift:entity/...) are not model refs
     for kind,name in re.findall(r'entersift:(block|item|entity)/([a-z0-9_]+)',p.read_text()):
         # Model JSON contains texture refs; item definitions/blockstates contain model refs.
         folder='textures' if 'models' in p.parts else 'models'

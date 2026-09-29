@@ -72,8 +72,24 @@ class DataContracts(unittest.TestCase):
         self.assertNotIn('fixed_time',dim)
     def test_sky_is_native_java_lava_lamp(self):
         sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
-        self.assertIn('RenderTypes.debugQuads()',sky)   # position_color: fog-free, no textures
-        self.assertFalse((ROOT/'shaderpack').exists())
+        # 0.11: private fog-free position_color types, no OIT (debugQuads made terrain flicker).
+        self.assertIn('SiftRenderTypes.SOLID',sky)
+        self.assertIn('SiftRenderTypes.GLOW',sky)
+        self.assertNotIn('debugQuads',sky)
+        self.assertIn('startsWith("entersift:")',sky)          # dimension guard
+        self.assertEqual(sky.count('pushPose()'),sky.count('popPose()'))
+        self.assertIn('finally',sky)
+        for layer in ['auroraStreaks','shardRibbons','sunAndRay','worldBeams']: self.assertIn(f'void {layer}(',sky)
+        self.assertIn('0.35f',sky)                              # single sun god ray alpha
+        rift=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertNotIn('debugQuads',rift)
+        self.assertEqual(rift.count('pushPose()'),rift.count('popPose()'))
+        # Shader pack: Overworld only; the Sift composite is a passthrough and no Sift sky code remains.
+        sp=ROOT/'shaderpack/shaders'
+        self.assertFalse((sp/'lib/sift_sky.glsl').exists())
+        self.assertFalse((sp/'textures').exists())
+        self.assertNotIn('SIFT_DIMENSION',(sp/'program/composite.fsh').read_text())
+        self.assertIn('texture2D(colortex0, texcoord)',(sp/'world_sift/composite.fsh').read_text())
         self.assertFalse((ROOT/'src/client/java/dev/logan/entersift/client/SiftSkyLayer.java').exists())
         self.assertFalse((R/'assets/entersift/textures/environment').exists())
         # Java stage table and timeline keyframes must agree, or the horizon shows a seam.
@@ -123,9 +139,12 @@ class DataContracts(unittest.TestCase):
         self.assertEqual(rule[-2]['then_run']['result_state'],'entersift:teal_path')  # bluish floor
     def test_old_shader_packs_are_removed(self):
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
-        self.assertIn('Sift-Cinematic-0.8.zip',code)
+        self.assertIn('Sift-Cinematic-',code)
         self.assertIn('deleteIfExists',code)
-        self.assertNotIn('Files.copy',code)
+        # The optional Overworld pack is installed only if absent and never enabled.
+        self.assertIn('if (Files.exists(target)) return;',code)
+        self.assertNotIn('iris.properties',code)   # never touches Iris config (pack stays off)
+        self.assertIn("Dungeons-II-Overworld-0.11.zip",(ROOT/'build.gradle').read_text())
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
         self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))

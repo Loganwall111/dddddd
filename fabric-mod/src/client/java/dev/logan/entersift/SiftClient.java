@@ -9,6 +9,7 @@ import net.minecraft.client.resources.model.sprite.Material;
 import dev.logan.entersift.client.SiftCreatureRenderer;
 import dev.logan.entersift.client.SiftModelDefs;
 import dev.logan.entersift.client.SiftSky;
+import dev.logan.entersift.client.SiftRenderTypes;
 import dev.logan.entersift.client.RiftPortalRenderer;
 import java.util.function.Supplier;
 import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
@@ -34,6 +35,7 @@ public final class SiftClient implements ClientModInitializer {
         creature(SiftKind.NOTE_BIRD, SiftModelDefs::noteBird, SiftModelDefs.NOTE_BIRD_PARTS);
         creature(SiftKind.TWISTED_WARDEN, SiftModelDefs::twistedWarden, SiftModelDefs.TWISTED_WARDEN_PARTS);
         creature(SiftKind.SINGER, SiftModelDefs::singer, SiftModelDefs.SINGER_PARTS);
+        SiftRenderTypes.initialize();
         SiftSky.register();
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
@@ -42,15 +44,35 @@ public final class SiftClient implements ClientModInitializer {
                 new Material(SiftContent.id("block/ichor_still")),
                 new Material(SiftContent.id("block/ichor_flow")),
                 new Material(SiftContent.id("block/ichor_overlay")), null));
-        // 0.9: the Sift no longer ships an Iris shader pack (everything is vanilla Java rendering).
-        // Remove the packs that older versions of this mod copied into shaderpacks/; nothing else is touched.
+        installOverworldShaderPack();
+    }
+
+    private static final String PACK = "Dungeons-II-Overworld-0.11.zip";
+
+    /**
+     * 0.11: ship the optional Dungeons II Overworld Iris pack. It is copied into shaderpacks/ only if
+     * missing and is never selected or enabled (Iris settings are not touched): it is OFF by default.
+     * The Sift needs no shaders. Only the old Sift-Cinematic-*.zip packs of earlier versions are removed.
+     */
+    private static void installOverworldShaderPack() {
         var packs = FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
-        for (String old : new String[]{"Sift-Cinematic-0.2.zip", "Sift-Cinematic-0.3.zip", "Sift-Cinematic-0.7.zip", "Sift-Cinematic-0.8.zip"}) {
-            try {
-                if (Files.deleteIfExists(packs.resolve(old))) EnterTheSift.LOGGER.info("[Sift] removed old shader pack {}", old);
-            } catch (Exception error) {
-                EnterTheSift.LOGGER.warn("Could not remove old Sift shader pack {}", old, error);
+        try (var list = Files.isDirectory(packs) ? Files.list(packs) : java.util.stream.Stream.<java.nio.file.Path>empty()) {
+            for (var old : list.filter(f -> f.getFileName().toString().matches("Sift-Cinematic-.*\\.zip")).toList()) {
+                Files.deleteIfExists(old);
+                EnterTheSift.LOGGER.info("[Sift] removed old shader pack {}", old.getFileName());
             }
+        } catch (Exception error) {
+            EnterTheSift.LOGGER.warn("Could not clean old Sift shader packs", error);
+        }
+        var target = packs.resolve(PACK);
+        if (Files.exists(target)) return;
+        try (var in = SiftClient.class.getResourceAsStream("/assets/entersift/shaderpacks/" + PACK)) {
+            if (in == null) return;
+            Files.createDirectories(packs);
+            Files.copy(in, target);
+            EnterTheSift.LOGGER.info("[Sift] installed optional shader pack {} (off by default)", PACK);
+        } catch (Exception error) {
+            EnterTheSift.LOGGER.warn("Could not install optional shader pack {}", PACK, error);
         }
     }
 }

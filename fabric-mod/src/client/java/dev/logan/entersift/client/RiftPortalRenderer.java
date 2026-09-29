@@ -135,9 +135,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 float off = (hash(seed, band, 21) - 0.5f) * 0.5f, half = 0.34f + 0.26f * hash(seed, band, 22);
                 return Math.abs(u - off) < half;
             }
-            default: { // PORTAL: a full frame with a jagged pixel rim
-                boolean border = i == 0 || j == 0 || i == cols - 1 || j == rows - 1;
-                return !(border && hash(seed, i, j) < 0.3f);
+            default: { // PORTAL (0.11, blue portal ref): a glowing rectangle with a crenellated rim and stepped corners
+                int ci = Math.min(i, cols - 1 - i), cj = Math.min(j, rows - 1 - j);
+                if (ci + cj < 2) return false;                                  // stepped corners
+                if (cj == 0) return (i / 2) % 2 == 0;                            // merlons along the top and bottom
+                if (ci == 0) return (j / 2) % 2 == 0;                            // and down both sides
+                return true;
             }
         }
     }
@@ -205,6 +208,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         Vector3f cam = new Vector3f((float) (camera.pos.x - s.ex), (float) (camera.pos.y - s.ey), (float) (camera.pos.z - s.ez))
             .rotateY((float) Math.toRadians(s.yaw));
         pose.pushPose();
+        try {
         pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
         float age = s.age;
         if (age < RIPPLE_END + 8) {
@@ -216,28 +220,34 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 float rf = Math.max(0.001f, ease - rn * 0.25f);
                 float alpha = (1 - f * 0.7f) * (rn == 0 ? 0.55f : 0.3f) * Math.min(1f, (RIPPLE_END + 8 - age) / 8f);
                 pose.pushPose();
-                pose.translate(0, sh.cy(), 0);
-                pose.scale(radius * rf, radius * rf, 1f);
-                collector.submitCustomGeometry(pose, RenderTypes.lightning(), (p, vc) -> ring(p, vc, 0.82f, 1f, edge, alpha));
-                collector.submitCustomGeometry(pose, RenderTypes.debugQuads(), (p, vc) -> ring(p, vc, 0f, 0.82f, edge, alpha * 0.12f));
-                pose.popPose();
+                try {
+                    pose.translate(0, sh.cy(), 0);
+                    pose.scale(radius * rf, radius * rf, 1f);
+                    collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> ring(p, vc, 0.82f, 1f, edge, alpha));
+                    collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> ring(p, vc, 0f, 0.82f, edge, alpha * 0.12f));
+                } finally {
+                    pose.popPose();
+                }
             }
         }
         if (age >= SEED_START && age < appearAt(1) + 2) {
             // PHASE 2: the incubation seed and its erratic lightning.
             float grow = Math.min(1f, (age - SEED_START) / 4f), shrink = 1 - Math.max(0, Math.min(1, (age - appearAt(0)) / 8f));
             float k = grow * shrink * (1 + 0.12f * (float) Math.sin(age * 1.7f));
-            collector.submitCustomGeometry(pose, RenderTypes.debugQuads(), (p, vc) ->
+            collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) ->
                 box(p, vc, -0.2f * k, sh.cy() - 0.12f * k, -0.12f * k, 0.2f * k, sh.cy() + 0.12f * k, 0.12f * k, new float[]{1f, 0.98f, 0.95f}, 1f));
-            collector.submitCustomGeometry(pose, RenderTypes.lightning(), (p, vc) -> seedBolts(p, vc, sh, s, cam, edge, age, k));
+            collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> seedBolts(p, vc, sh, s, cam, edge, age, k));
         }
         if (age >= CLUSTER_START) {
             // PHASE 3 + STABLE: the voxel cluster.
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(INTERIOR[s.type.id]), (p, vc) -> interior(p, vc, sh, s, age));
-            collector.submitCustomGeometry(pose, RenderTypes.debugQuads(), (p, vc) -> walls(p, vc, sh, s, edge, age));
-            collector.submitCustomGeometry(pose, RenderTypes.lightning(), (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
+            collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> walls(p, vc, sh, s, edge, age));
+            collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> flashes(p, vc, sh, age));
+            collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
         }
-        pose.popPose();
+        } finally {
+            pose.popPose();
+        }
     }
 
     // ------------------------------------------------------------------ interior canvas
@@ -297,8 +307,6 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (!visible(sh, i + 1, j, age)) wall(p, vc, r[2], r[1], r[2], r[3], 0, -DEPTH, front, back, 0.8f);
             if (!visible(sh, i, j - 1, age)) wall(p, vc, r[0], r[1], r[2], r[1], 0, -DEPTH, front, back, 1f);
             if (!visible(sh, i, j + 1, age)) wall(p, vc, r[0], r[3], r[2], r[3], 0, -DEPTH, front, back, 0.72f);
-            float hot = heat(age, at);
-            if (hot > 0) rect(p, vc, r[0], r[1], r[2], r[3], -DEPTH + 0.02f, new float[]{1f, 1f, 1f}, hot * 0.9f);
         }
         for (float[] b : sh.sats()) {
             float at = appearAt(TIERS) + b[6] % 3, k = pop(age, at);
@@ -313,7 +321,19 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         if (age >= GROWN) for (int k = 0; k < 7; k++) {
             float[] c = cube(sh, s, k);
             float q = c[3];
-            box(p, vc, c[0] - q, c[1] - q, c[2] - q, c[0] + q, c[1] + q, c[2] + q, mix(new float[]{1f, 0.95f, 0.9f}, edge, 0.45f), 0.55f);
+            box(p, vc, c[0] - q, c[1] - q, c[2] - q, c[0] + q, c[1] + q, c[2] + q, mix(new float[]{1f, 0.95f, 0.9f}, edge, 0.45f), 1f);
+        }
+    }
+
+    /** White-hot flash on each cell as it snaps in (additive). */
+    private static void flashes(PoseStack.Pose p, VertexConsumer vc, Shape sh, float age) {
+        if (age > GROWN + 8) return;
+        for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
+            if (!sh.on(i, j)) continue;
+            float at = appearAt(sh.tier()[i][j]), hot = heat(age, at), k = pop(age, at);
+            if (hot <= 0 || k <= 0) continue;
+            float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
+            rect(p, vc, r[0], r[1], r[2], r[3], -DEPTH + 0.02f, new float[]{1f, 1f, 1f}, hot * 0.9f);
         }
     }
 
