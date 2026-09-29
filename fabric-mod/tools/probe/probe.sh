@@ -70,3 +70,25 @@ for c in net.minecraft.client.renderer.BindGroupLayouts 'com.mojang.renderpearl.
 done
 javap -c -p -cp "$CP" net.minecraft.client.renderer.RenderPipelines 2>/dev/null | grep -n -B2 -A28 'String core/rendertype_end_portal' | head -60
 } > $OUT/bindgroups.txt
+# 0.18: real screen-space lensing for rifts: copy the scene colour into a sampled texture mid-frame.
+{
+for c in net.minecraft.client.renderer.texture.AbstractTexture net.minecraft.client.renderer.texture.DynamicTexture \
+         net.minecraft.client.renderer.texture.TextureManager com.mojang.renderpearl.api.device.GpuDevice \
+         com.mojang.renderpearl.api.commands.CommandEncoder com.mojang.renderpearl.api.textures.GpuTexture \
+         'com.mojang.renderpearl.api.textures.GpuTexture$Usage' com.mojang.renderpearl.api.textures.GpuTextureView \
+         com.mojang.renderpearl.api.textures.TextureFormat com.mojang.renderpearl.api.textures.AddressMode com.mojang.renderpearl.api.textures.FilterMode \
+         com.mojang.blaze3d.pipeline.RenderTarget com.mojang.blaze3d.pipeline.MainTarget com.mojang.blaze3d.pipeline.TextureTarget \
+         com.mojang.blaze3d.systems.RenderSystem com.mojang.blaze3d.systems.SamplerCache \
+         'net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder' 'net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding' \
+         net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext net.fabricmc.fabric.api.client.rendering.v1.level.AbstractLevelRenderContext \
+         'net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents$AfterSolidFeatures' 'net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents$AfterOpaqueTerrain' \
+         'net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents$StartMain' 'net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents$AfterTranslucentTerrain' \
+         net.minecraft.client.renderer.LevelRenderer net.minecraft.client.renderer.feature.FeatureRenderDispatcher; do
+  echo "===== $c"; javap -protected -cp "$CP" "$c" 2>&1 | head -160
+done
+for j in "${JARS[@]}"; do case "$j" in *.jar) unzip -Z1 "$j" 2>/dev/null | grep -iE 'renderpearl/api/textures/|client/renderer/feature/[A-Z]' | sed "s|^|$(basename $j): |";; esac; done | sort -u | head -80
+for j in "${JARS[@]}"; do case "$j" in *.jar)
+  for f in assets/minecraft/shaders/core/rendertype_end_portal.fsh assets/minecraft/shaders/include/sample_lightmap.glsl; do
+    if unzip -Z1 "$j" "$f" >/dev/null 2>&1; then echo "===== $f"; unzip -p "$j" "$f"; fi; done;; esac; done
+javap -c -p -cp "$CP" net.minecraft.client.renderer.LevelRenderer 2>/dev/null | grep -nE "invoke.*(Feature|renderTranslucent|Translucent|copyTexture|Sky|Cloud)" | head -80
+} > $OUT/lens_api.txt
