@@ -34,3 +34,12 @@ for j in "${JARS[@]}"; do case "$j" in *.jar)
   for f in feature/ore_iron.json feature/lake_lava.json feature/spring_lava_overworld.json feature/basalt_pillar.json feature/delta.json placed_feature/ore_iron_middle.json placed_feature/lake_lava_surface.json placed_feature/spring_lava.json; do
     if unzip -Z1 "$j" "data/minecraft/worldgen/$f" >/dev/null 2>&1; then echo "===== $f"; unzip -p "$j" "data/minecraft/worldgen/$f"; echo; fi
   done;; esac; done > $OUT/feature_samples.txt
+# 0.13c: 26.3 material rule syntax (y / steep / stone depth conditions) + Fluid.animateTick signature.
+for j in "${JARS[@]}"; do case "$j" in *.jar)
+  for f in material_rule/overworld.json; do
+    if unzip -Z1 "$j" "data/minecraft/worldgen/$f" >/dev/null 2>&1; then echo "===== $f"; unzip -p "$j" "data/minecraft/worldgen/$f" | head -c 20000; echo; fi
+  done
+  unzip -Z1 "$j" 2>/dev/null | grep -E '^data/minecraft/worldgen/material_(rule|condition)/' ;;
+  esac; done > $OUT/material_samples.txt
+javap -protected -cp "$CP" net.minecraft.world.level.material.Fluid 2>&1 | grep -iE "animateTick|getDripParticle" >> $OUT/material_samples.txt
+javap -protected -cp "$CP" net.minecraft.world.level.material.LavaFluid 2>&1 | grep -iE "animateTick" >> $OUT/material_samples.txt
