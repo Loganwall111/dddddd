@@ -121,6 +121,48 @@ Generator run order: … → phase5 → `rift_scenes.py` → `phase6.py`.
 
 Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` → `creatures.py` → `item_art.py` → `phase9.py`.
 
+## 0.11.0-alpha: aurora sky and beams, flicker fix, custom Sift rock and turf, foliage, sounds and music, optional Overworld shader pack
+
+**Sky (Sift only, vanilla Java).**
+- The sky is stricter about where it draws. It renders only when the dimension id is in the `entersift` namespace and is `entersift:the_sift`.
+- Every `pushPose` has a matching `popPose` in a `finally` block, in both the sky and the rift renderer.
+- The sky is drawn in 3 layers:
+  1. The lava-lamp dome: cyan, then mint, then magenta, then golden amber.
+  2. Linear diagonal aurora streaks that scroll sideways. On top of them, flat semi-transparent rectangular "voxel shard" panels, grouped in sweeping arcs like the big pale rectangles in the trailer sky.
+  3. World-space diagonal light beams that slice down into the terrain. They take their colours from the 4-stage timeline, fade with distance, and leave a soft tint pool on the ground where they land.
+- There is one sun god ray: an additive quad at alpha 0.35 at the sun, fading to 0 at the horizon, following the clock.
+
+**Flicker fix.** Until 0.10 the sky and rifts used `RenderTypes.debugQuads()`. That type goes through the transparency (OIT) pass, and the huge dome in that pass made leaves and ichor flicker when the camera moved. The new `SiftRenderTypes` has 2 types with no transparency pass and no sorting:
+- SOLID: opaque, and writes depth.
+- GLOW: additive, depth-tested, and does not write depth.
+
+Ichor stays on the same translucent layer as water.
+
+**Portal.** The PORTAL rift is now a glowing cyan rectangle with a crenellated rim, stepped corners and a new bright cyan pixel-mosaic interior, matching the blue portal ref. Walls and hollow cubes are opaque, and halos, edges and flashes are additive.
+
+**Custom Sift blocks.** No vanilla blocks remain in Sift worldgen:
+- Rock and coral replacements: `crag_rock` (dusty rose-mauve strata), `crag_rock_dark`, `crag_band` (rust), `pale_crust`, `crag_moss`, `coral_pink_block`, `coral_orange_block` and `sift_earth`. They replace stone, andesite, tuff, calcite, mossy cobblestone, pink concrete and orange terracotta.
+- Canyon walls and everything underground are now crag rock. Before, they were the brick-patterned saltstone, which showed up as a weird floor on every cliff.
+- The carapace texture no longer looks like End stone.
+
+**Blue and pink grass.**
+- New `blue_turf` and `pink_turf` surfaces, laid in noise patches: blue with pink patches in the Singer Meadow, pink with blue in the Pale Grove, blue with mossy crag in the Titan Crags. The Boneyard floor is pale crust.
+- New foliage in every biome: blue grass, pink grass, glowing cyan tufts (light 9) and sift blooms. For example, the meadow gets 40 blue, 20 pink and 10 glowing tufts per chunk.
+- More ambient particles: cyan glow motes and floating spores.
+- Block loot tables are fixed to the 26.x single `condition` format.
+
+**Sound.** Everything is synthesised by `tools/audio11.py` and encoded to OGG in CI. Every creature has ambient, hurt and death sounds with its own character:
+- Blub: bloops. Sculker: clicks and growls. Antlerling: hollow knocks and "hoo" calls. Drift Jelly: a whale hum. Licker: slurps. Overseer: an electronic whine. Twisted Warden: a heartbeat and a roar. Note Bird: pentatonic chirps. Singer: a sung "ah" choir.
+
+The Sift also has 2 streamed music tracks (D lydian lullaby, and E dorian with a distant choir) plus an ambience loop, mood sound and chime additions.
+
+**Shader pack (optional, OFF by default).** `Dungeons-II-Overworld-0.11.zip` is copied into `shaderpacks/` only if it is missing, and is never enabled. It is for the Overworld:
+- Warm sun and lavender-blue shadows.
+- Chunky volumetric clouds with white tops and a peach horizon.
+- Stronger god rays, reflections, waterfall foam and a more saturated grade.
+
+In the Sift it is a pure passthrough, and all Sift sky code has been removed from the pack. The pack is compile-checked with glslang in CI.
+
 ## 0.10.0-alpha: rifts become entities (Dungeons II trailer pipeline), rift waves every 5 minutes, Blub and Singer remade
 
 **Rifts are a real entity now.** Every rift, the ritual portal and the Sift return gate are `entersift:rift_portal`

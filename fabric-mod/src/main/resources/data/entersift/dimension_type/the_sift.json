@@ -5,7 +5,17 @@
     "minecraft:visual/sky_color": "#7fd3cf",
     "minecraft:visual/ambient_light_color": "#203946",
     "minecraft:audio/ambient_sounds": {
-      "loop": "minecraft:ambient.soul_sand_valley.loop"
+      "loop": "entersift:ambient.sift.loop",
+      "mood": {
+        "sound": "entersift:ambient.sift.mood",
+        "tick_delay": 6000,
+        "block_search_extent": 8,
+        "offset": 2.0
+      },
+      "additions": {
+        "sound": "entersift:ambient.sift.additions",
+        "tick_chance": 0.0111
+      }
     },
     "minecraft:gameplay/bed_rule": {
       "can_set_spawn": "never",
@@ -15,7 +25,14 @@
       }
     },
     "minecraft:visual/cloud_color": "#00ffffff",
-    "minecraft:visual/water_fog_color": "#5fc4c0"
+    "minecraft:visual/water_fog_color": "#5fc4c0",
+    "minecraft:audio/background_music": {
+      "default": {
+        "sound": "entersift:music.sift",
+        "min_delay": 12000,
+        "max_delay": 24000
+      }
+    }
   },
   "coordinate_scale": 1.0,
   "default_clock": "minecraft:overworld",

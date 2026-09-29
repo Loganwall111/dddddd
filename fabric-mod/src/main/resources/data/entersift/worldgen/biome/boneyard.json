@@ -14,6 +14,12 @@
             "type": "minecraft:white_ash"
           },
           "probability": 0.012
+        },
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.002
         }
       ]
     },
@@ -41,7 +47,9 @@
       "entersift:soul_salt",
       "entersift:boneyard_ribcage",
       "entersift:giant_skull",
-      "entersift:bone_tusk"
+      "entersift:bone_tusk",
+      "entersift:pink_grass_boneyard",
+      "entersift:glow_tuft_boneyard"
     ],
     []
   ]

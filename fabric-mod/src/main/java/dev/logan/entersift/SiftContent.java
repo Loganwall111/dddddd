@@ -85,6 +85,21 @@ public final class SiftContent {
     public static final Block GLOW_BULB = plant("glow_bulb", 12);
     public static final Block SIFT_CORAL_RED = plant("sift_coral_red", 4);
     public static final Block SIFT_CORAL_YELLOW = plant("sift_coral_yellow", 4);
+    // 0.11: custom Sift rock, coral and turf (no vanilla blocks in Sift worldgen) and more foliage.
+    public static final Block CRAG_ROCK = block("crag_rock", Blocks.STONE, 0);
+    public static final Block CRAG_ROCK_DARK = block("crag_rock_dark", Blocks.STONE, 0);
+    public static final Block CRAG_BAND = block("crag_band", Blocks.TERRACOTTA, 0);
+    public static final Block PALE_CRUST = block("pale_crust", Blocks.CALCITE, 0);
+    public static final Block CRAG_MOSS = block("crag_moss", Blocks.MOSSY_COBBLESTONE, 0);
+    public static final Block CORAL_PINK_BLOCK = block("coral_pink_block", Blocks.TERRACOTTA, 2);
+    public static final Block CORAL_ORANGE_BLOCK = block("coral_orange_block", Blocks.TERRACOTTA, 2);
+    public static final Block SIFT_EARTH = block("sift_earth", Blocks.DIRT, 0);
+    public static final Block BLUE_TURF = block("blue_turf", Blocks.MOSS_BLOCK, 0);
+    public static final Block PINK_TURF = block("pink_turf", Blocks.MOSS_BLOCK, 0);
+    public static final Block BLUE_GRASS = plant("blue_grass", 3);
+    public static final Block PINK_GRASS = plant("pink_grass", 0);
+    public static final Block GLOW_TUFT = plant("glow_tuft", 9);
+    public static final Block SIFT_BLOOM = plant("sift_bloom", 2);
     public static final Block RIFT_PINK = riftSeed("rift_pink", 3, 1);
     public static final Block RIFT_ORANGE = riftSeed("rift_orange", 4, 3);
     public static final Block RIFT_YELLOW = riftSeed("rift_yellow", 0, 0);
@@ -131,7 +146,8 @@ public final class SiftContent {
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS).register(output -> {
             output.accept(SONOROUS_DEEPSLATE); output.accept(SALT); output.accept(SOUL_SALT); output.accept(SOULWOOD); output.accept(SOUL_CANOPY);
             for (Block b : new Block[]{ROSE_SPIRE,SPIRE_BRICKS,ROSE_PATH,TEAL_PATH,REEF_STONE,PALE_CANOPY,SIFT_MOSAIC,SIFT_GRASS,GLOW_BULB,
-                SIFT_CORAL_RED,SIFT_CORAL_YELLOW,RIFT_PINK,RIFT_ORANGE,RIFT_YELLOW,RIFT_RED,RIFT_OLIVE}) output.accept(b);
+                SIFT_CORAL_RED,SIFT_CORAL_YELLOW,CRAG_ROCK,CRAG_ROCK_DARK,CRAG_BAND,PALE_CRUST,CRAG_MOSS,CORAL_PINK_BLOCK,
+                CORAL_ORANGE_BLOCK,SIFT_EARTH,BLUE_TURF,PINK_TURF,BLUE_GRASS,PINK_GRASS,GLOW_TUFT,SIFT_BLOOM,RIFT_PINK,RIFT_ORANGE,RIFT_YELLOW,RIFT_RED,RIFT_OLIVE}) output.accept(b);
         });
     }
     private SiftContent() {}

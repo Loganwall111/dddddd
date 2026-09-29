@@ -5,7 +5,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -28,7 +28,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -51,7 +51,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -74,7 +74,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -97,7 +97,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -120,7 +120,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -143,7 +143,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -166,7 +166,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -189,7 +189,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -212,7 +212,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -235,7 +235,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -258,7 +258,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -281,7 +281,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -304,7 +304,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -327,7 +327,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -350,7 +350,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -373,7 +373,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -396,7 +396,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -419,7 +419,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -442,7 +442,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -465,7 +465,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -488,7 +488,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -511,7 +511,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -534,7 +534,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -557,7 +557,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -580,7 +580,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -603,7 +603,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -626,7 +626,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -649,7 +649,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -672,7 +672,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -695,7 +695,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -718,7 +718,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -741,7 +741,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -764,7 +764,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -787,7 +787,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -810,7 +810,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -833,7 +833,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -856,7 +856,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -879,7 +879,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -902,7 +902,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -925,7 +925,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -948,7 +948,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -971,7 +971,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -994,7 +994,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1017,7 +1017,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1040,7 +1040,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1063,7 +1063,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1086,7 +1086,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1109,7 +1109,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1132,7 +1132,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1155,7 +1155,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1178,7 +1178,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1201,7 +1201,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1224,7 +1224,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1247,7 +1247,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1270,7 +1270,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1293,7 +1293,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1316,7 +1316,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1339,7 +1339,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1362,7 +1362,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1385,7 +1385,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1408,7 +1408,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1431,7 +1431,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1454,7 +1454,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1477,7 +1477,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1500,7 +1500,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1523,7 +1523,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1546,7 +1546,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1569,7 +1569,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1592,7 +1592,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1615,7 +1615,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1638,7 +1638,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1661,7 +1661,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1684,7 +1684,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1707,7 +1707,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1730,7 +1730,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1753,7 +1753,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1776,7 +1776,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1799,7 +1799,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1822,7 +1822,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1845,7 +1845,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1868,7 +1868,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1891,7 +1891,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1914,7 +1914,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1937,7 +1937,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1960,7 +1960,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -1983,7 +1983,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2006,7 +2006,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2029,7 +2029,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2052,7 +2052,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2075,7 +2075,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2098,7 +2098,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2121,7 +2121,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2144,7 +2144,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2167,7 +2167,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2190,7 +2190,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2213,7 +2213,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2236,7 +2236,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2259,7 +2259,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2282,7 +2282,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2305,7 +2305,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2328,7 +2328,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2351,7 +2351,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2374,7 +2374,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2397,7 +2397,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2420,7 +2420,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2443,7 +2443,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2466,7 +2466,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2489,7 +2489,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2512,7 +2512,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2535,7 +2535,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2558,7 +2558,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2581,7 +2581,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2604,7 +2604,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2627,7 +2627,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2650,7 +2650,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2673,7 +2673,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2696,7 +2696,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2719,7 +2719,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2742,7 +2742,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2765,7 +2765,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2788,7 +2788,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2811,7 +2811,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2834,7 +2834,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2857,7 +2857,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2880,7 +2880,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2903,7 +2903,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2926,7 +2926,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2949,7 +2949,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2972,7 +2972,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -2995,7 +2995,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3018,7 +3018,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3041,7 +3041,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3064,7 +3064,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3087,7 +3087,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3110,7 +3110,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3133,7 +3133,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3156,7 +3156,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3179,7 +3179,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3202,7 +3202,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3225,7 +3225,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3248,7 +3248,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3271,7 +3271,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3294,7 +3294,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3317,7 +3317,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3340,7 +3340,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3363,7 +3363,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3386,7 +3386,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3409,7 +3409,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3432,7 +3432,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3455,7 +3455,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3478,7 +3478,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3501,7 +3501,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3524,7 +3524,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3547,7 +3547,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3570,7 +3570,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3593,7 +3593,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3616,7 +3616,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3639,7 +3639,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3662,7 +3662,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3685,7 +3685,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3708,7 +3708,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3731,7 +3731,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3754,7 +3754,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3777,7 +3777,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3800,7 +3800,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3823,7 +3823,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3846,7 +3846,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3869,7 +3869,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3892,7 +3892,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3915,7 +3915,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3938,7 +3938,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3961,7 +3961,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -3984,7 +3984,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4007,7 +4007,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4030,7 +4030,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4053,7 +4053,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4076,7 +4076,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4099,7 +4099,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4122,7 +4122,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4145,7 +4145,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4168,7 +4168,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4191,7 +4191,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4214,7 +4214,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4237,7 +4237,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4260,7 +4260,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4283,7 +4283,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4306,7 +4306,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4329,7 +4329,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4352,7 +4352,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4375,7 +4375,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4398,7 +4398,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4421,7 +4421,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4444,7 +4444,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4467,7 +4467,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4490,7 +4490,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4513,7 +4513,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4536,7 +4536,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4559,7 +4559,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4582,7 +4582,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4605,7 +4605,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4628,7 +4628,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4651,7 +4651,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4674,7 +4674,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4697,7 +4697,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4720,7 +4720,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4743,7 +4743,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4766,7 +4766,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4789,7 +4789,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4812,7 +4812,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4835,7 +4835,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4858,7 +4858,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4881,7 +4881,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4904,7 +4904,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4927,7 +4927,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4950,7 +4950,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4973,7 +4973,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -4996,7 +4996,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5019,7 +5019,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5042,7 +5042,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5065,7 +5065,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5088,7 +5088,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5111,7 +5111,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5134,7 +5134,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5157,7 +5157,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5180,7 +5180,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5203,7 +5203,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5226,7 +5226,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -5249,7 +5249,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5272,7 +5272,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5295,7 +5295,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5318,7 +5318,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5341,7 +5341,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5364,7 +5364,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5387,7 +5387,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5410,7 +5410,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5433,7 +5433,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5456,7 +5456,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5479,7 +5479,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5502,7 +5502,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5525,7 +5525,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5548,7 +5548,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5571,7 +5571,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5594,7 +5594,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5617,7 +5617,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5640,7 +5640,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5663,7 +5663,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5686,7 +5686,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5709,7 +5709,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5732,7 +5732,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5755,7 +5755,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5778,7 +5778,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5801,7 +5801,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5824,7 +5824,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5847,7 +5847,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5870,7 +5870,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5893,7 +5893,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5916,7 +5916,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5939,7 +5939,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5962,7 +5962,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -5985,7 +5985,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6008,7 +6008,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6031,7 +6031,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6054,7 +6054,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6077,7 +6077,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6100,7 +6100,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6123,7 +6123,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6146,7 +6146,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6169,7 +6169,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6192,7 +6192,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6215,7 +6215,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6238,7 +6238,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6261,7 +6261,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6284,7 +6284,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6307,7 +6307,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6330,7 +6330,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6353,7 +6353,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6376,7 +6376,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6399,7 +6399,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6422,7 +6422,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6445,7 +6445,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6468,7 +6468,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6491,7 +6491,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6514,7 +6514,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6537,7 +6537,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6560,7 +6560,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6583,7 +6583,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6606,7 +6606,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6629,7 +6629,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6652,7 +6652,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6675,7 +6675,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6698,7 +6698,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6721,7 +6721,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6744,7 +6744,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6767,7 +6767,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6790,7 +6790,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6813,7 +6813,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6836,7 +6836,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6859,7 +6859,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6882,7 +6882,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6905,7 +6905,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6928,7 +6928,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6951,7 +6951,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6974,7 +6974,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -6997,7 +6997,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7020,7 +7020,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7043,7 +7043,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7066,7 +7066,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7089,7 +7089,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7112,7 +7112,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7135,7 +7135,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7158,7 +7158,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7181,7 +7181,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7204,7 +7204,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7227,7 +7227,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7250,7 +7250,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7273,7 +7273,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7296,7 +7296,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7319,7 +7319,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7342,7 +7342,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7365,7 +7365,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7388,7 +7388,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7411,7 +7411,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7434,7 +7434,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7457,7 +7457,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7480,7 +7480,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7503,7 +7503,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7526,7 +7526,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7549,7 +7549,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7572,7 +7572,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7595,7 +7595,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7618,7 +7618,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7641,7 +7641,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7664,7 +7664,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7687,7 +7687,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7710,7 +7710,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7733,7 +7733,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:andesite"
+          "id": "entersift:crag_rock_dark"
         }
       },
       "placement": [
@@ -7756,7 +7756,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7779,7 +7779,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7802,7 +7802,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7825,7 +7825,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7848,7 +7848,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7871,7 +7871,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7894,7 +7894,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7917,7 +7917,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7940,7 +7940,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7963,7 +7963,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -7986,7 +7986,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8009,7 +8009,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8032,7 +8032,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8055,7 +8055,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8078,7 +8078,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8101,7 +8101,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8124,7 +8124,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8147,7 +8147,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8170,7 +8170,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8193,7 +8193,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8216,7 +8216,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8239,7 +8239,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8262,7 +8262,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8285,7 +8285,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8308,7 +8308,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8331,7 +8331,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8354,7 +8354,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8377,7 +8377,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8400,7 +8400,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8423,7 +8423,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8446,7 +8446,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8469,7 +8469,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8492,7 +8492,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8515,7 +8515,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8538,7 +8538,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8561,7 +8561,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8584,7 +8584,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8607,7 +8607,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8630,7 +8630,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8653,7 +8653,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8676,7 +8676,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8699,7 +8699,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8722,7 +8722,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8745,7 +8745,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8768,7 +8768,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8791,7 +8791,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8814,7 +8814,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8837,7 +8837,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8860,7 +8860,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8883,7 +8883,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8906,7 +8906,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8929,7 +8929,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8952,7 +8952,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8975,7 +8975,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -8998,7 +8998,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9021,7 +9021,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9044,7 +9044,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9067,7 +9067,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9090,7 +9090,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9113,7 +9113,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9136,7 +9136,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9159,7 +9159,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9182,7 +9182,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9205,7 +9205,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9228,7 +9228,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9251,7 +9251,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9274,7 +9274,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9297,7 +9297,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9320,7 +9320,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9343,7 +9343,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9366,7 +9366,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9389,7 +9389,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9412,7 +9412,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9435,7 +9435,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9458,7 +9458,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9481,7 +9481,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9504,7 +9504,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9527,7 +9527,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9550,7 +9550,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9573,7 +9573,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9596,7 +9596,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9619,7 +9619,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9642,7 +9642,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9665,7 +9665,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9688,7 +9688,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9711,7 +9711,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9734,7 +9734,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9757,7 +9757,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9780,7 +9780,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9803,7 +9803,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9826,7 +9826,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9849,7 +9849,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9872,7 +9872,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9895,7 +9895,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9918,7 +9918,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9941,7 +9941,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9964,7 +9964,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -9987,7 +9987,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -10010,7 +10010,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:tuff"
+          "id": "entersift:crag_band"
         }
       },
       "placement": [
@@ -10033,7 +10033,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10056,7 +10056,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10079,7 +10079,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10102,7 +10102,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10125,7 +10125,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10148,7 +10148,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10171,7 +10171,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10194,7 +10194,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10217,7 +10217,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10240,7 +10240,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10263,7 +10263,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10286,7 +10286,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10309,7 +10309,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10332,7 +10332,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10355,7 +10355,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10378,7 +10378,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10401,7 +10401,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10424,7 +10424,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10447,7 +10447,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10470,7 +10470,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10493,7 +10493,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10516,7 +10516,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10539,7 +10539,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10562,7 +10562,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10585,7 +10585,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10608,7 +10608,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10631,7 +10631,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10654,7 +10654,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10677,7 +10677,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10700,7 +10700,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10723,7 +10723,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10746,7 +10746,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10769,7 +10769,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10792,7 +10792,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10815,7 +10815,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10838,7 +10838,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10861,7 +10861,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10884,7 +10884,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10907,7 +10907,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10930,7 +10930,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10953,7 +10953,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10976,7 +10976,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -10999,7 +10999,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11022,7 +11022,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11045,7 +11045,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11068,7 +11068,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11091,7 +11091,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11114,7 +11114,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11137,7 +11137,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11160,7 +11160,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11183,7 +11183,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11206,7 +11206,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11229,7 +11229,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11252,7 +11252,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11275,7 +11275,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:stone"
+          "id": "entersift:crag_rock"
         }
       },
       "placement": [
@@ -11298,7 +11298,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11321,7 +11321,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11344,7 +11344,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11367,7 +11367,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11390,7 +11390,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11413,7 +11413,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11436,7 +11436,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11459,7 +11459,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11488,7 +11488,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11517,7 +11517,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11546,7 +11546,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11575,7 +11575,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11604,7 +11604,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11633,7 +11633,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11662,7 +11662,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11691,7 +11691,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11720,7 +11720,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11749,7 +11749,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11778,7 +11778,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11807,7 +11807,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11836,7 +11836,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11865,7 +11865,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11894,7 +11894,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11923,7 +11923,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11952,7 +11952,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -11981,7 +11981,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -12010,7 +12010,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [
@@ -12039,7 +12039,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:calcite"
+          "id": "entersift:pale_crust"
         }
       },
       "placement": [

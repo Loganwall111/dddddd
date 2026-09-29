@@ -1,0 +1,55 @@
+{
+  "feature": "entersift:blue_grass",
+  "placement": [
+    {
+      "type": "minecraft:count",
+      "count": 40
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "minecraft:heightmap",
+      "heightmap": "WORLD_SURFACE_WG"
+    },
+    {
+      "type": "minecraft:block_predicate_filter",
+      "predicate": {
+        "type": "minecraft:all_of",
+        "predicates": [
+          {
+            "type": "minecraft:matching_blocks",
+            "blocks": "minecraft:air"
+          },
+          {
+            "type": "minecraft:matching_blocks",
+            "offset": [
+              0,
+              -1,
+              0
+            ],
+            "blocks": [
+              "entersift:blue_turf",
+              "entersift:pink_turf",
+              "entersift:teal_path",
+              "entersift:rose_path",
+              "entersift:reef_stone",
+              "entersift:pale_crust",
+              "entersift:crag_rock",
+              "entersift:crag_moss",
+              "entersift:singer_moss",
+              "entersift:carapace",
+              "entersift:saltstone",
+              "entersift:sift_earth",
+              "entersift:crag_band",
+              "entersift:crag_rock_dark"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

@@ -10,12 +10,12 @@
   "rock_count": 4,
   "hole_count": 1,
   "valid_blocks": [
-    "minecraft:stone",
-    "minecraft:granite",
-    "minecraft:diorite",
-    "minecraft:andesite",
-    "minecraft:tuff",
-    "minecraft:calcite",
+    "entersift:crag_rock",
+    "entersift:crag_band",
+    "entersift:pale_crust",
+    "entersift:crag_rock_dark",
+    "entersift:crag_band",
+    "entersift:pale_crust",
     "minecraft:deepslate"
   ]
 }

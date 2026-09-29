@@ -14,6 +14,12 @@
             "type": "minecraft:glow"
           },
           "probability": 0.004
+        },
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.003
         }
       ]
     },
@@ -41,7 +47,10 @@
       "entersift:coral_tree",
       "entersift:dense_coral",
       "entersift:sift_coral_yellow",
-      "entersift:glow_bulb"
+      "entersift:glow_bulb",
+      "entersift:blue_grass_coral_expanse",
+      "entersift:pink_grass_coral_expanse",
+      "entersift:glow_tuft_coral_expanse"
     ],
     []
   ]

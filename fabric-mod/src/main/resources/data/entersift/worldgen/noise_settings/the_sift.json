@@ -99,7 +99,7 @@
       "label": "PS"
     }
   ],
-  "default_block": "entersift:saltstone",
+  "default_block": "entersift:crag_rock",
   "default_fluid": "entersift:ichor",
   "disable_mob_generation": false,
   "legacy_random_source": false,

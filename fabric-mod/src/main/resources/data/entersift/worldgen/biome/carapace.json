@@ -14,6 +14,18 @@
             "type": "minecraft:soul"
           },
           "probability": 0.003
+        },
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.003
+        },
+        {
+          "particle": {
+            "type": "minecraft:white_ash"
+          },
+          "probability": 0.004
         }
       ]
     },
@@ -49,7 +61,9 @@
     [
       "entersift:soul_salt",
       "entersift:ribcage",
-      "entersift:ruined_arch"
+      "entersift:ruined_arch",
+      "entersift:blue_grass_carapace",
+      "entersift:glow_tuft_carapace"
     ],
     []
   ]

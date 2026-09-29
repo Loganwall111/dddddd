@@ -14,6 +14,12 @@
             "type": "minecraft:glow"
           },
           "probability": 0.002
+        },
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.003
         }
       ]
     },
@@ -41,7 +47,9 @@
       "entersift:reef_boulder",
       "entersift:sift_coral_red",
       "entersift:sift_coral_yellow",
-      "entersift:glow_bulb"
+      "entersift:glow_bulb",
+      "entersift:blue_grass_tidepool_reef",
+      "entersift:glow_tuft_tidepool_reef"
     ],
     []
   ]

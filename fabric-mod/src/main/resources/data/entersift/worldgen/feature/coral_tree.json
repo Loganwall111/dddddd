@@ -74,7 +74,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -97,7 +97,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -120,7 +120,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -143,7 +143,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -166,7 +166,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -189,7 +189,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -235,7 +235,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -258,7 +258,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -281,7 +281,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -304,7 +304,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -327,7 +327,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -350,7 +350,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -396,7 +396,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -419,7 +419,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -442,7 +442,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -465,7 +465,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -488,7 +488,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -511,7 +511,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -557,7 +557,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -580,7 +580,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -603,7 +603,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -626,7 +626,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -649,7 +649,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -672,7 +672,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -718,7 +718,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -741,7 +741,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -764,7 +764,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -787,7 +787,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -810,7 +810,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -833,7 +833,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:pink_concrete"
+          "id": "entersift:coral_pink_block"
         }
       },
       "placement": [
@@ -879,7 +879,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -902,7 +902,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -925,7 +925,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -948,7 +948,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [
@@ -971,7 +971,7 @@
       "feature": {
         "type": "minecraft:simple_block",
         "to_place": {
-          "id": "minecraft:orange_terracotta"
+          "id": "entersift:coral_orange_block"
         }
       },
       "placement": [

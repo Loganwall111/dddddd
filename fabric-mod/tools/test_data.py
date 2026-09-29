@@ -133,10 +133,35 @@ class DataContracts(unittest.TestCase):
             self.assertIn('#souls_fx',line)
             self.assertTrue(line.endswith('normal @s'))
     def test_saltstone_under_salt_surface(self):
-        self.assertEqual(read('worldgen/noise_settings/the_sift.json')['default_block'],'entersift:saltstone')
+        # 0.11: canyon walls / underground are rose-mauve crag rock (brick saltstone looked like a weird floor).
+        self.assertEqual(read('worldgen/noise_settings/the_sift.json')['default_block'],'entersift:crag_rock')
         rule=read('worldgen/material_rule/the_sift.json')['sequence']
-        self.assertEqual(rule[-1]['result_state'],'entersift:saltstone')
+        self.assertEqual(rule[-1]['result_state'],'entersift:crag_rock')
         self.assertEqual(rule[-2]['then_run']['result_state'],'entersift:teal_path')  # bluish floor
+        txt=json.dumps(rule)
+        for b in ['entersift:blue_turf','entersift:pink_turf','entersift:pale_crust']: self.assertIn(b,txt)
+        for v in ['minecraft:stone"','minecraft:calcite"','minecraft:andesite"','minecraft:tuff"']: self.assertNotIn(v,txt)
+    def test_no_vanilla_blocks_in_sift_features_and_lots_of_foliage(self):
+        banned=['minecraft:stone','minecraft:andesite','minecraft:tuff','minecraft:calcite','minecraft:mossy_cobblestone',
+                'minecraft:pink_concrete','minecraft:orange_terracotta','minecraft:allium']
+        for p in (D/'worldgen/feature').glob('*.json'):
+            t=p.read_text()
+            for b in banned: self.assertNotIn(f'"{b}"',t,p.name)
+        meadow=read('worldgen/biome/singer_meadow.json')['features'][9]
+        for f in ['blue_grass','pink_grass','glow_tuft']: self.assertIn(f'entersift:{f}_singer_meadow',meadow)
+        java=(ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text()
+        for b in ['crag_rock','blue_turf','pink_turf','blue_grass','pink_grass','glow_tuft','sift_bloom']: self.assertIn(f'"{b}"',java)
+        dim=read('dimension_type/the_sift.json')['attributes']
+        self.assertEqual(dim['minecraft:audio/background_music']['default']['sound'],'entersift:music.sift')
+        self.assertEqual(dim['minecraft:audio/ambient_sounds']['loop'],'entersift:ambient.sift.loop')
+    def test_every_creature_has_sounds(self):
+        sounds=json.loads((R/'assets/entersift/sounds.json').read_text())
+        for k in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','note_bird','singer']:
+            for e in ['ambient','hurt','death']: self.assertIn(f'entity.{k}.{e}',sounds)
+        self.assertTrue(all(s['stream'] for s in sounds['music.sift']['sounds']))
+        for c in ['SiftBeast','SiftCritter']:
+            j=(ROOT/f'src/main/java/dev/logan/entersift/{c}.java').read_text()
+            for m in ['getHurtSound','getDeathSound','getAmbientSound']: self.assertIn(m,j)
     def test_old_shader_packs_are_removed(self):
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
         self.assertIn('Sift-Cinematic-',code)

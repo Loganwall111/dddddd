@@ -14,6 +14,18 @@
             "type": "minecraft:soul"
           },
           "probability": 0.003
+        },
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.006
+        },
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.004
         }
       ]
     },
@@ -42,7 +54,11 @@
       "entersift:weeping_soul_tree",
       "entersift:flowers",
       "entersift:sift_grass",
-      "entersift:glow_bulb"
+      "entersift:glow_bulb",
+      "entersift:blue_grass_singer_meadow",
+      "entersift:pink_grass_singer_meadow",
+      "entersift:glow_tuft_singer_meadow",
+      "entersift:sift_bloom_singer_meadow"
     ],
     []
   ]
