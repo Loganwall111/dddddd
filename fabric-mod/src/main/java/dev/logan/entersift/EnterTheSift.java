@@ -85,7 +85,7 @@ public final class EnterTheSift implements ModInitializer {
             if (Math.abs(f.x() - pos.getX()) <= 32 && Math.abs(f.z() - pos.getZ()) <= 32 && Math.abs(f.y() - pos.getY()) <= 16
                 && level.getBlockState(f.bottom()).is(Blocks.REINFORCED_DEEPSLATE)) return f;
         for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
-            if (e.getType() != net.minecraft.world.entity.EntityType.MARKER || !e.entityTags().contains("sift.encounter")) continue;
+            if (!e.entityTags().contains("sift.encounter")) continue; // only the ritual frame marker carries this tag
             if (e.distanceToSqr(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5) > 40 * 40) continue;
             AncientFrame f = AncientFrame.find(level, BlockPos.containing(e.getX(), e.getY(), e.getZ()));
             if (f != null && Math.abs(f.x() - e.getX()) < 1.1 && Math.abs(f.y() - e.getY()) < 1.1 && Math.abs(f.z() - e.getZ()) < 1.1) {
