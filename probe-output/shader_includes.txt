@@ -1,0 +1,721 @@
+===== assets/minecraft/shaders/include/
+===== assets/minecraft/shaders/include/projection.glsl
+#ifndef MINECRAFT_PROJECTION_GLSL
+#define MINECRAFT_PROJECTION_GLSL
+
+layout(std140) uniform Projection {
+    mat4 ProjMat;
+};
+
+vec4 projection_from_position(vec4 position) {
+    vec4 projection = position * 0.5;
+    projection.xy = vec2(projection.x + projection.w, projection.y + projection.w);
+    projection.zw = position.zw;
+    return projection;
+}
+
+#endif
+===== assets/minecraft/shaders/include/oit_depth_sample.glsl
+#ifndef MINECRAFT_OIT_DEPTH_SAMPLE_GLSL
+#define MINECRAFT_OIT_DEPTH_SAMPLE_GLSL
+
+uniform sampler2D DepthBoundsSampler;
+
+const float OIT_HIGH_PRECISION_DEPTH_THRESHOLD = 10.0;
+const int OIT_LOW_PRECISION_DEPTH_BINS = 2;
+
+float normalizeDepth(float fragmentDeviceDepth) {
+    vec4 depthBoundsSample = texelFetch(DepthBoundsSampler, ivec2(gl_FragCoord.xy), 0);
+    float closestBoundLinearDepthNegated = depthBoundsSample.r;
+    float closestBoundLinearDepth = -closestBoundLinearDepthNegated;
+    float furthestBoundLinearDepth = depthBoundsSample.g;
+
+    float fragmentLinearDepth = deviceToLinearDepth(fragmentDeviceDepth);
+    float range = max(furthestBoundLinearDepth - closestBoundLinearDepth, 0.0001);
+    float depthWithinBounds = clamp(fragmentLinearDepth - closestBoundLinearDepth, 0.0, range);
+
+    const float depthFractionWithHighPrecision = float(OIT_NUMBER_OF_DEPTH_BINS - OIT_LOW_PRECISION_DEPTH_BINS) / float(OIT_NUMBER_OF_DEPTH_BINS);
+    float depthWithHighPrecision = depthFractionWithHighPrecision * range;
+
+    if (depthWithHighPrecision <= OIT_HIGH_PRECISION_DEPTH_THRESHOLD) {
+        return depthWithinBounds / range;
+    } else if (depthWithinBounds <= OIT_HIGH_PRECISION_DEPTH_THRESHOLD) {
+        return (depthWithinBounds / OIT_HIGH_PRECISION_DEPTH_THRESHOLD) * depthFractionWithHighPrecision;
+    } else {
+        return depthFractionWithHighPrecision + ((depthWithinBounds - OIT_HIGH_PRECISION_DEPTH_THRESHOLD) / (range - OIT_HIGH_PRECISION_DEPTH_THRESHOLD)) * (1.0 - depthFractionWithHighPrecision);
+    }
+}
+
+#endif
+===== assets/minecraft/shaders/include/globals.glsl
+#ifndef MINECRAFT_GLOBALS_GLSL
+#define MINECRAFT_GLOBALS_GLSL
+
+layout(std140) uniform Globals {
+    ivec3 CameraBlockPos;
+    float GlintAlpha;
+    vec3 CameraOffset;
+    float GameTime;
+    vec2 ScreenSize;
+    int MenuBlurRadius;
+    int UseRgss;
+};
+
+#endif
+===== assets/minecraft/shaders/include/oit_depth_bounds.glsl
+#ifndef MINECRAFT_OIT_DEPTH_BOUNDS_GLSL
+#define MINECRAFT_OIT_DEPTH_BOUNDS_GLSL
+
+layout(location = 0) out vec4 fragColor;
+
+void calculateDepthBounds(float fragmentDeviceDepth, float alpha) {
+    float fragmentLinearDepth = deviceToLinearDepth(fragmentDeviceDepth);
+    float opaqueFragmentDeviceDepth = alpha > OIT_FULLY_OPAQUE_ALPHA ? fragmentDeviceDepth : 0.0;
+    fragColor = vec4(-fragmentLinearDepth, fragmentLinearDepth, fragmentDeviceDepth, opaqueFragmentDeviceDepth);
+}
+
+#endif
+===== assets/minecraft/shaders/core/rendertype_end_portal.fsh
+#version 330
+#extension GL_ARB_separate_shader_objects : require
+
+#include <minecraft:fog.glsl>
+#include <minecraft:matrix.glsl>
+#include <minecraft:globals.glsl>
+
+uniform sampler2D Sampler0;
+uniform sampler2D Sampler1;
+
+layout(location = 0) in vec4 texProj0;
+layout(location = 1) in float sphericalVertexDistance;
+layout(location = 2) in float cylindricalVertexDistance;
+
+const vec3[] COLORS = vec3[](
+    vec3(0.022087, 0.098399, 0.110818),
+    vec3(0.011892, 0.095924, 0.089485),
+    vec3(0.027636, 0.101689, 0.100326),
+    vec3(0.046564, 0.109883, 0.114838),
+    vec3(0.064901, 0.117696, 0.097189),
+    vec3(0.063761, 0.086895, 0.123646),
+    vec3(0.084817, 0.111994, 0.166380),
+    vec3(0.097489, 0.154120, 0.091064),
+    vec3(0.106152, 0.131144, 0.195191),
+    vec3(0.097721, 0.110188, 0.187229),
+    vec3(0.133516, 0.138278, 0.148582),
+    vec3(0.070006, 0.243332, 0.235792),
+    vec3(0.196766, 0.142899, 0.214696),
+    vec3(0.047281, 0.315338, 0.321970),
+    vec3(0.204675, 0.390010, 0.302066),
+    vec3(0.080955, 0.314821, 0.661491)
+);
+
+const mat4 SCALE_TRANSLATE = mat4(
+    0.5, 0.0, 0.0, 0.25,
+    0.0, 0.5, 0.0, 0.25,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+);
+
+mat4 end_portal_layer(float layer) {
+    mat4 translate = mat4(
+        1.0, 0.0, 0.0, 17.0 / layer,
+        0.0, 1.0, 0.0, (2.0 + layer / 1.5) * (GameTime * 1.5),
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    );
+
+    mat2 rotate = mat2_rotate_z(radians((layer * layer * 4321.0 + layer * 9.0) * 2.0));
+
+    mat2 scale = mat2((4.5 - layer / 4.0) * 2.0);
+
+    return mat4(scale * rotate) * translate * SCALE_TRANSLATE;
+}
+
+layout(location = 0) out vec4 fragColor;
+
+void main() {
+    vec3 color = textureProj(Sampler0, texProj0).rgb * COLORS[0];
+    for (int i = 0; i < PORTAL_LAYERS; i++) {
+        color += textureProj(Sampler1, texProj0 * end_portal_layer(float(i + 1))).rgb * COLORS[i];
+    }
+    fragColor = apply_fog(vec4(color, 1.0), sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+}
+===== assets/minecraft/shaders/include/sample_lightmap.glsl
+#ifndef MINECRAFT_SAMPLE_LIGHTMAP_GLSL
+#define MINECRAFT_SAMPLE_LIGHTMAP_GLSL
+
+vec4 sample_lightmap(sampler2D lightMap, ivec2 uv) {
+    return texture(lightMap, clamp((uv / 256.0) + 0.5 / 16.0, vec2(0.5 / 16.0), vec2(15.5 / 16.0)));
+}
+
+#endif
+===== assets/minecraft/shaders/include/oit_common.glsl
+#ifndef MINECRAFT_OIT_COMMON_GLSL
+#define MINECRAFT_OIT_COMMON_GLSL
+
+#include <minecraft:projection.glsl>
+
+const float OIT_FULLY_OPAQUE_ALPHA = 0.99;
+const float OIT_FULLY_OPAQUE_TOTAL_TRANSMITTANCE = 0.02;
+// The number of depth bins is the same number as the number of coefficients.
+// Example: with 8 coefficients, 1 is used as a scaling coeffiecient, and the rest represent a tree-like structure of wavelets.
+// 1 splits the depth range into 2 bins, 2 more split it into 4 bins, and 4 more into 8 bins.
+// So half of the coefficients (4 in this case) represent the lowest levels of the wavelets, and each of those wavelets represents 2 depth bins.
+// So effectively the NUMBER_OF_DEPTH_BINS = 2 * (OIT_COEFF_COUNT / 2)
+// And it is the same for any OIT_COEFF_COUNT that is a power of 2.
+const int OIT_NUMBER_OF_DEPTH_BINS = OIT_COEFF_COUNT;
+
+float deviceToLinearDepth(float deviceDepth) {
+    #ifndef RENDERPEARL_DEPTH_IS_ZERO_TO_ONE
+    deviceDepth = (deviceDepth - 0.5) * 2.0;
+    #endif
+    return ProjMat[3][2] / (deviceDepth + ProjMat[2][2]);
+}
+
+float toAbsorbance(float transmittance) {
+    return clamp(-log(max(transmittance, 0.0001)), 0, 4.0);
+}
+
+float toTransmittance(float absorbance) {
+    return clamp(exp(-absorbance), 0.0001, 1.0);
+}
+
+#endif
+===== assets/minecraft/shaders/include/animation_sprite.glsl
+#ifndef MINECRAFT_ANIMATION_SPRITE_GLSL
+#define MINECRAFT_ANIMATION_SPRITE_GLSL
+
+layout(std140) uniform SpriteAnimationInfo {
+    mat4 ProjectionMatrix;
+    mat4 SpriteMatrix;
+    float UPadding;
+    float VPadding;
+    int MipMapLevel;
+};
+
+#endif
+===== assets/minecraft/shaders/core/rendertype_end_portal.vsh
+#version 330
+#extension GL_ARB_separate_shader_objects : require
+
+#include <minecraft:fog.glsl>
+#include <minecraft:projection.glsl>
+#include <minecraft:dynamictransforms.glsl>
+
+layout(location = 0) in vec3 Position;
+
+layout(location = 0) out vec4 texProj0;
+layout(location = 1) out float sphericalVertexDistance;
+layout(location = 2) out float cylindricalVertexDistance;
+
+void main() {
+    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+
+    texProj0 = projection_from_position(gl_Position);
+    sphericalVertexDistance = fog_spherical_distance(Position);
+    cylindricalVertexDistance = fog_cylindrical_distance(Position);
+}
+===== assets/minecraft/shaders/include/texture_sampling.glsl
+#ifndef MINECRAFT_TEXTURE_SAMPLING_GLSL
+#define MINECRAFT_TEXTURE_SAMPLING_GLSL
+
+vec4 sampleNearest(sampler2D source, vec2 uv, vec2 pixelSize, vec2 du, vec2 dv, vec2 texelScreenSize) {
+    // Convert our UV back up to texel coordinates and find out how far over we are from the center of each pixel
+    vec2 uvTexelCoords = uv / pixelSize;
+    vec2 texelCenter = round(uvTexelCoords) - 0.5f;
+    vec2 texelOffset = uvTexelCoords - texelCenter;
+
+    // Move our offset closer to the texel center based on texel size on screen
+    texelOffset = (texelOffset - 0.5f) * pixelSize / texelScreenSize + 0.5f;
+    texelOffset = clamp(texelOffset, 0.0f, 1.0f);
+
+    uv = (texelCenter + texelOffset) * pixelSize;
+    return textureGrad(source, uv, du, dv);
+}
+
+vec4 sampleNearest(sampler2D source, vec2 uv, vec2 pixelSize) {
+    vec2 du = dFdx(uv);
+    vec2 dv = dFdy(uv);
+    vec2 texelScreenSize = sqrt(du * du + dv * dv);
+    return sampleNearest(source, uv, pixelSize, du, dv, texelScreenSize);
+}
+
+// Rotated Grid Super-Sampling
+vec4 sampleRGSS(sampler2D source, vec2 uv, vec2 pixelSize) {
+    vec2 du = dFdx(uv);
+    vec2 dv = dFdy(uv);
+
+    vec2 texelScreenSize = sqrt(du * du + dv * dv);
+    float maxTexelSize = max(texelScreenSize.x, texelScreenSize.y);
+
+    float minPixelSize = min(pixelSize.x, pixelSize.y);
+
+    float transitionStart = minPixelSize * 1.0;
+    float transitionEnd = minPixelSize * 2.0;
+    float blendFactor = smoothstep(transitionStart, transitionEnd, maxTexelSize);
+
+    float duLength = length(du);
+    float dvLength = length(dv);
+    float minDerivative = min(duLength, dvLength);
+    float maxDerivative = max(duLength, dvLength);
+
+    float effectiveDerivative = sqrt(minDerivative * maxDerivative);
+
+    float mipLevelExact = max(0.0, log2(effectiveDerivative / minPixelSize));
+
+    float mipLevelLow = floor(mipLevelExact);
+    float mipLevelHigh = mipLevelLow + 1.0;
+    float mipBlend = fract(mipLevelExact);
+
+    const vec2 offsets[4] = vec2[](
+    vec2(0.125, 0.375),
+    vec2(-0.125, -0.375),
+    vec2(0.375, -0.125),
+    vec2(-0.375, 0.125)
+    );
+
+    vec4 rgssColorLow = vec4(0.0);
+    vec4 rgssColorHigh = vec4(0.0);
+    for (int i = 0; i < 4; ++i) {
+        vec2 sampleUV = uv + offsets[i] * pixelSize;
+        rgssColorLow += textureLod(source, sampleUV, mipLevelLow);
+        rgssColorHigh += textureLod(source, sampleUV, mipLevelHigh);
+    }
+    rgssColorLow *= 0.25;
+    rgssColorHigh *= 0.25;
+
+    vec4 rgssColor = mix(rgssColorLow, rgssColorHigh, mipBlend);
+
+    vec4 nearestColor = sampleNearest(source, uv, pixelSize, du, dv, texelScreenSize);
+
+    return mix(nearestColor, rgssColor, blendFactor);
+}
+
+#endif
+===== assets/minecraft/shaders/core/rendertype_beacon_beam.vsh
+#version 330
+#extension GL_ARB_separate_shader_objects : require
+
+#include <minecraft:dynamictransforms.glsl>
+#include <minecraft:projection.glsl>
+
+layout(location = 0) in vec3 Position;
+layout(location = 1) in vec4 Color;
+layout(location = 2) in vec2 UV0;
+
+layout(location = 0) out vec4 vertexColor;
+layout(location = 1) out vec2 texCoord0;
+
+void main() {
+    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+
+    vertexColor = Color;
+    texCoord0 = UV0;
+}
+===== assets/minecraft/shaders/core/position_tex_color.vsh
+#version 330
+#extension GL_ARB_separate_shader_objects : require
+
+// Can't moj_import in things used during startup, when resource packs don't exist.
+// This is a copy of dynamicimports.glsl and projection.glsl
+layout(std140) uniform DynamicTransforms {
+    mat4 ModelViewMat;
+    mat4 TextureMat;
+    vec4 ColorModulator;
+    vec3 ModelOffset;
+};
+layout(std140) uniform Projection {
+    mat4 ProjMat;
+};
+
+layout(location = 0) in vec3 Position;
+layout(location = 1) in vec2 UV0;
+layout(location = 2) in vec4 Color;
+
+layout(location = 0) out vec2 texCoord0;
+layout(location = 1) out vec4 vertexColor;
+
+void main() {
+    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+
+    texCoord0 = UV0;
+    vertexColor = Color;
+}
+===== assets/minecraft/shaders/include/oit.glsl
+#ifndef MINECRAFT_OIT_GLSL
+#define MINECRAFT_OIT_GLSL
+
+#ifdef OIT
+    #include <minecraft:oit_common.glsl>
+
+    #if defined(OIT_TRANSMITTANCE) || defined(OIT_ACCUMULATE)
+        #include <minecraft:oit_depth_sample.glsl>
+    #endif
+
+    #if defined(OIT_DEPTH_BOUNDS)
+        #include <minecraft:oit_depth_bounds.glsl>
+    #elif defined(OIT_TRANSMITTANCE)
+        #include <minecraft:oit_add_transmittance.glsl>
+    #else
+        #include <minecraft:oit_sample.glsl>
+    #endif
+#endif
+
+void executeAlphaOnlyPhase(float deviceDepth, float alpha) {
+    #ifdef OIT_DEPTH_BOUNDS
+    if (alpha < 0.01) {
+        discard;
+    }
+    calculateDepthBounds(deviceDepth, alpha);
+    #elif defined(OIT_ADDITIVE)
+    // Additive surfaces do not occlude, so they contribute nothing to the transmittance function. Discard to avoid writing to those targets.
+    discard;
+    #elif defined(OIT_TRANSMITTANCE)
+    addTransmittance(1.0 - alpha);
+    #endif
+}
+
+#endif
+===== assets/minecraft/shaders/include/oit_add_transmittance.glsl
+#ifndef MINECRAFT_OIT_ADD_TRANSMITTANCE_GLSL
+#define MINECRAFT_OIT_ADD_TRANSMITTANCE_GLSL
+
+layout(location = 0) out vec4 coeff[OIT_COEFF_ATTACHMENT_COUNT];
+
+void addTransmittance(float transmittance) {
+    float coefficients[OIT_COEFF_COUNT];
+    for (int i = 0; i < OIT_COEFF_COUNT; i++) {
+        coefficients[i] = 0;
+    }
+
+    float absorbance = toAbsorbance(transmittance);
+
+    float originalDepth = normalizeDepth(gl_FragCoord.z);
+    float depth = originalDepth * float(OIT_NUMBER_OF_DEPTH_BINS - 1) / OIT_NUMBER_OF_DEPTH_BINS;
+
+    float averageAbsorbance = absorbance * (1 - depth);
+    coefficients[0] = averageAbsorbance;
+
+    int depthBinIndex = int(floor(originalDepth * (OIT_NUMBER_OF_DEPTH_BINS - 1)));
+    // The tree starts at the coefficient 1
+    int treeIndex = depthBinIndex + OIT_COEFF_COUNT;
+
+    for (int waveletLevel = 0; waveletLevel <= OIT_WAVELET_RANK; waveletLevel++) {
+        int power = OIT_WAVELET_RANK - waveletLevel;
+        int parentIndex = treeIndex >> 1;
+        float indexAtParentLevel = float(parentIndex & ((1 << power) - 1));
+
+        int isRightHalf = treeIndex & 1;
+        int waveletSign = 1 - (isRightHalf << 1);
+        float waveletWidth = exp2(-power);
+        float waveletHeightScale = exp2(power * 0.5);
+        float depthOffsetRelativeToWavelet = depth - waveletWidth * indexAtParentLevel;
+        float distanceFromWaveletEdge = isRightHalf * waveletWidth + waveletSign * depthOffsetRelativeToWavelet;
+        float differenceCoefficient = distanceFromWaveletEdge * waveletHeightScale * absorbance;
+        coefficients[parentIndex] = differenceCoefficient;
+
+        treeIndex = parentIndex;
+    }
+
+    for (int attachmentIndex = 0; attachmentIndex < OIT_COEFF_ATTACHMENT_COUNT; attachmentIndex++) {
+        for (int i = 0; i < 4; i++) {
+            coeff[attachmentIndex][i] = coefficients[attachmentIndex * 4 + i];
+        }
+    }
+    #ifdef RENDERPEARL_EXPLICIT_DEPTH_INVARIANCE
+    gl_FragDepth = gl_FragCoord.z;
+    #endif
+}
+
+#endif
+===== assets/minecraft/shaders/include/chunksection.glsl
+#ifndef MINECRAFT_CHUNKSECTION_GLSL
+#define MINECRAFT_CHUNKSECTION_GLSL
+
+layout(std140) uniform ChunkSection {
+    ivec3 ChunkPosition;
+    float ChunkVisibility;
+};
+
+#endif
+===== assets/minecraft/shaders/include/matrix.glsl
+#ifndef MINECRAFT_MATRIX_GLSL
+#define MINECRAFT_MATRIX_GLSL
+
+mat2 mat2_rotate_z(float radians) {
+    return mat2(
+        cos(radians), -sin(radians),
+        sin(radians), cos(radians)
+    );
+}
+
+#endif
+===== assets/minecraft/shaders/core/rendertype_beacon_beam.fsh
+#version 330
+#extension GL_ARB_separate_shader_objects : require
+
+#include <minecraft:fog.glsl>
+#include <minecraft:dynamictransforms.glsl>
+#include <minecraft:oit.glsl>
+
+uniform sampler2D Sampler0;
+
+layout(location = 0) in vec4 vertexColor;
+layout(location = 1) in vec2 texCoord0;
+
+#ifndef OIT_ALPHA_ONLY
+layout(location = 0) out vec4 fragColor;
+#endif
+
+vec4 calculateFinalColor(vec4 color) {
+    #ifdef OIT_ACCUMULATE
+    color = sampleColorForAccumulation(color);
+    vec4 fogColor = vec4(FogColor.rgb * color.a, FogColor.a);
+    #else
+    vec4 fogColor = FogColor;
+    #endif
+    float fragmentDistance = 1.0 / gl_FragCoord.w;
+    return apply_fog(color, fragmentDistance, fragmentDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, fogColor);
+}
+
+void main() {
+    vec4 color = texture(Sampler0, texCoord0);
+    color *= vertexColor * ColorModulator;
+    #ifdef OIT_ALPHA_ONLY
+    executeAlphaOnlyPhase(gl_FragCoord.z, color.a);
+    #else
+    fragColor = calculateFinalColor(color);
+    #endif
+}
+===== assets/minecraft/shaders/include/terrainglobals.glsl
+#ifndef MINECRAFT_TERRAINGLOBLAS_GLSL
+#define MINECRAFT_TERRAINGLOBALS_GLSL
+
+layout(std140) uniform TerrainUniform {
+    mat4 ModelViewMat;
+    ivec2 TextureSize;
+};
+
+#endif
+===== assets/minecraft/shaders/core/position_tex_color.fsh
+#version 330
+#extension GL_ARB_separate_shader_objects : require
+
+// Can't moj_import in things used during startup, when resource packs don't exist.
+// This is a copy of dynamicimports.glsl
+layout(std140) uniform DynamicTransforms {
+    mat4 ModelViewMat;
+    mat4 TextureMat;
+    vec4 ColorModulator;
+    vec3 ModelOffset;
+};
+
+uniform sampler2D Sampler0;
+
+layout(location = 0) in vec2 texCoord0;
+layout(location = 1) in vec4 vertexColor;
+
+layout(location = 0) out vec4 fragColor;
+
+void main() {
+    vec4 color = texture(Sampler0, texCoord0) * vertexColor;
+    if (color.a == 0.0) {
+        discard;
+    }
+    fragColor = color * ColorModulator;
+}
+===== assets/minecraft/shaders/include/light.glsl
+#ifndef MINECRAFT_LIGHT_GLSL
+#define MINECRAFT_LIGHT_GLSL
+
+#define MINECRAFT_LIGHT_POWER   (0.6)
+#define MINECRAFT_AMBIENT_LIGHT (0.4)
+
+layout(std140) uniform Lighting {
+    vec3 Light0_Direction;
+    vec3 Light1_Direction;
+};
+
+vec2 minecraft_compute_light(vec3 lightDir0, vec3 lightDir1, vec3 normal) {
+    return vec2(dot(lightDir0, normal), dot(lightDir1, normal));
+}
+
+vec4 minecraft_mix_light_separate(vec2 light, vec4 color) {
+    vec2 lightValue = max(vec2(0.0), light);
+    float lightAccum = min(1.0, (lightValue.x + lightValue.y) * MINECRAFT_LIGHT_POWER + MINECRAFT_AMBIENT_LIGHT);
+    return vec4(color.rgb * lightAccum, color.a);
+}
+
+vec4 minecraft_mix_light(vec3 lightDir0, vec3 lightDir1, vec3 normal, vec4 color) {
+    vec2 light = minecraft_compute_light(lightDir0, lightDir1, normal);
+    return minecraft_mix_light_separate(light, color);
+}
+
+
+#endif
+===== assets/minecraft/shaders/include/oit_sample.glsl
+#ifndef MINECRAFT_OIT_SAMPLE_GLSL
+#define MINECRAFT_OIT_SAMPLE_GLSL
+
+uniform sampler2D Coeff0;
+#if OIT_COEFF_COUNT > 4
+uniform sampler2D Coeff1;
+#endif
+#if OIT_COEFF_COUNT > 8
+uniform sampler2D Coeff2;
+uniform sampler2D Coeff3;
+#endif
+
+float sampleAbsorbance(float coefficients[OIT_COEFF_COUNT], float originalDepth, float currentAbsorbance) {
+    float averageAbsorbance = coefficients[0];
+    if (averageAbsorbance == 0) {
+        return 0.0;
+    }
+
+    float depthMeasuredInBins = originalDepth * (OIT_NUMBER_OF_DEPTH_BINS - 1);
+
+    float depth = depthMeasuredInBins / OIT_NUMBER_OF_DEPTH_BINS;
+
+    float currentAverageAbsorbanceContribution = currentAbsorbance * (1 - depth);
+    averageAbsorbance -= currentAverageAbsorbanceContribution;
+
+    int treeIndexB = clamp(int(floor(depthMeasuredInBins)), 0, OIT_NUMBER_OF_DEPTH_BINS - 1);
+    bool shouldSampleA = treeIndexB >= 1;
+    int treeIndexA = shouldSampleA ? (treeIndexB - 1) : treeIndexB;
+
+    treeIndexB += OIT_COEFF_COUNT;
+    treeIndexA += OIT_COEFF_COUNT;
+
+    // B is the sample at the depth bin that the fragment is in, and A is the sample at the depth bin just before it.
+
+    float sampleB = averageAbsorbance;
+    float sampleA = shouldSampleA ? averageAbsorbance : 0;
+
+    for (int waveletLevel = 0; waveletLevel <= OIT_WAVELET_RANK; waveletLevel++) {
+        int power = OIT_WAVELET_RANK - waveletLevel;
+        float waveletWidth = exp2(-power);
+        float waveletHeightScale = exp2(power * 0.5);
+
+        int parentIndexB = treeIndexB >> 1;
+        int isRightHalfB = treeIndexB & 1;
+        int waveletSignB = 1 - (isRightHalfB << 1);
+
+        float indexAtParentLevel = float(parentIndexB & ((1 << power) - 1));
+        float depthOffsetRelativeToWavelet = depth - waveletWidth * indexAtParentLevel;
+        float currentDifferenceCoefficient = (isRightHalfB * waveletWidth + waveletSignB * depthOffsetRelativeToWavelet) * waveletHeightScale * currentAbsorbance;
+
+        float differenceCoefficientB = coefficients[parentIndexB];
+        differenceCoefficientB -= currentDifferenceCoefficient;
+
+        sampleB -= waveletHeightScale * differenceCoefficientB * waveletSignB;
+        treeIndexB = parentIndexB;
+
+        if (shouldSampleA) {
+            int parentIndexA = treeIndexA >> 1;
+            float differenceCoefficientA = (parentIndexA == parentIndexB) ? differenceCoefficientB : coefficients[parentIndexA];
+            int isRightHalfA = treeIndexA & 1;
+            int waveletSignA = 1 - (isRightHalfA << 1);
+            sampleA -= waveletHeightScale * differenceCoefficientA * waveletSignA;
+            treeIndexA = parentIndexA;
+        }
+    }
+
+    float lerpAlpha = depthMeasuredInBins >= OIT_NUMBER_OF_DEPTH_BINS ? 1.0 : fract(depthMeasuredInBins);
+
+    return mix(sampleA, sampleB, lerpAlpha);
+}
+
+float sampleTransmittance(ivec2 pos, float depth, float currentTransmittance) {
+    float coefficients[OIT_COEFF_COUNT];
+    const int targetCount = OIT_COEFF_COUNT / 4;
+    vec4 coeffSamples[targetCount];
+    coeffSamples[0] = texelFetch(Coeff0, pos, 0);
+    #if OIT_COEFF_COUNT > 4
+    coeffSamples[1] = texelFetch(Coeff1, pos, 0);
+    #endif
+    #if OIT_COEFF_COUNT > 8
+    coeffSamples[2] = texelFetch(Coeff2, pos, 0);
+    coeffSamples[3] = texelFetch(Coeff3, pos, 0);
+    #endif
+    for (int i = 0; i < targetCount; i++) {
+        for (int j = 0; j < 4; j++) {
+            coefficients[i * 4 + j] = coeffSamples[i][j];
+        }
+    }
+    return toTransmittance(sampleAbsorbance(coefficients, depth, toAbsorbance(currentTransmittance)));
+}
+
+#ifdef OIT_ACCUMULATE
+vec4 sampleColorForAccumulation(vec4 color) {
+    #ifdef OIT_ADDITIVE
+    float transmittance = 1.0;
+    float accumAlpha = 0.0;
+    #else
+    float transmittance = 1.0 - color.a;
+    float accumAlpha = color.a;
+    #endif
+    #ifdef RENDERPEARL_EXPLICIT_DEPTH_INVARIANCE
+    gl_FragDepth = gl_FragCoord.z;
+    #endif
+    float sampledTransmittance = sampleTransmittance(ivec2(gl_FragCoord.xy), normalizeDepth(gl_FragCoord.z), transmittance);
+    return vec4(color.rgb * color.a, accumAlpha) * sampledTransmittance;
+}
+#endif
+
+#endif
+===== assets/minecraft/shaders/include/dynamictransforms.glsl
+#ifndef MINECRAFT_DYNAMIC_TRANSFORMS_GLSL
+#define MINECRAFT_DYNAMIC_TRANSFORMS_GLSL
+
+layout(std140) uniform DynamicTransforms {
+    mat4 ModelViewMat;
+    mat4 TextureMat;
+    vec4 ColorModulator;
+    vec3 ModelOffset;
+};
+
+#endif
+===== assets/minecraft/shaders/include/fog.glsl
+#ifndef MINECRAFT_FOG_GLSL
+#define MINECRAFT_FOG_GLSL
+
+layout(std140) uniform Fog {
+    vec4 FogColor;
+    float FogEnvironmentalStart;
+    float FogEnvironmentalEnd;
+    float FogRenderDistanceStart;
+    float FogRenderDistanceEnd;
+    float FogSkyEnd;
+    float FogCloudsEnd;
+};
+
+float linear_fog_value(float vertexDistance, float fogStart, float fogEnd) {
+    if (vertexDistance <= fogStart) {
+        return 0.0;
+    } else if (vertexDistance >= fogEnd) {
+        return 1.0;
+    }
+
+    return (vertexDistance - fogStart) / (fogEnd - fogStart);
+}
+
+float total_fog_value(float sphericalVertexDistance, float cylindricalVertexDistance, float environmentalStart, float environmantalEnd, float renderDistanceStart, float renderDistanceEnd) {
+    return max(linear_fog_value(sphericalVertexDistance, environmentalStart, environmantalEnd), linear_fog_value(cylindricalVertexDistance, renderDistanceStart, renderDistanceEnd));
+}
+
+vec4 apply_fog(vec4 inColor, float sphericalVertexDistance, float cylindricalVertexDistance, float environmentalStart, float environmantalEnd, float renderDistanceStart, float renderDistanceEnd, vec4 fogColor) {
+    float fogValue = total_fog_value(sphericalVertexDistance, cylindricalVertexDistance, environmentalStart, environmantalEnd, renderDistanceStart, renderDistanceEnd);
+    return vec4(mix(inColor.rgb, fogColor.rgb, fogValue * fogColor.a), inColor.a);
+}
+
+float fog_spherical_distance(vec3 pos) {
+    return length(pos);
+}
+
+float fog_cylindrical_distance(vec3 pos) {
+    float distXZ = length(pos.xz);
+    float distY = abs(pos.y);
+    return max(distXZ, distY);
+}
+
+#endif
