@@ -22,3 +22,10 @@ javap -c -p -cp "$CP" net.minecraft.client.renderer.RenderPipelines > $OUT/pipel
 javap -c -p -cp "$CP" net.minecraft.client.renderer.rendertype.RenderTypes > $OUT/rendertypes_full.txt 2>&1
 javap -protected -cp "$CP" net.minecraft.world.entity.LivingEntity 2>&1 | grep -iE "sound|playHurt" > $OUT/living_sounds.txt
 javap -protected -cp "$CP" net.minecraft.world.entity.Mob 2>&1 | grep -iE "sound" >> $OUT/living_sounds.txt
+# 0.13: vanilla worldgen data (density functions / noise settings) for the Sift terrain rework.
+for j in "${JARS[@]}"; do case "$j" in *.jar) unzip -Z1 "$j" 2>/dev/null | grep -E '^data/minecraft/worldgen/(density_function|noise_settings|noise)/' | sed "s|^|$(basename $j): |";; esac; done | sort -u > $OUT/worldgen_files.txt
+for j in "${JARS[@]}"; do case "$j" in *.jar)
+  for f in noise_settings/amplified.json noise_settings/large_biomes.json density_function/overworld_amplified/final_density.json density_function/overworld/final_density.json; do
+    if unzip -Z1 "$j" "data/minecraft/worldgen/$f" >/dev/null 2>&1; then echo "===== $f"; unzip -p "$j" "data/minecraft/worldgen/$f" | head -c 6000; echo; fi
+  done;; esac; done > $OUT/worldgen_samples.txt
+for j in "${JARS[@]}"; do case "$j" in *.jar) unzip -Z1 "$j" 2>/dev/null | grep -E '^data/minecraft/worldgen/(feature|configured_carver|structure|template_pool|structure_set)/' | sed "s|^|$(basename $j): |";; esac; done | sort -u | head -900 > $OUT/worldgen_features.txt
