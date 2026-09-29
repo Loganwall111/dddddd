@@ -91,7 +91,7 @@ public final class SiftSky {
             try {
                 var out = context.submitNodeCollector();
                 // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
-                out.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> dome(p, vc, radius, pal, seconds));
+                out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds));
                 // Layers 2-3 in the sky: aurora streaks, voxel shard ribbons, the sun and its single god ray (additive).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
                     auroraStreaks(p, vc, radius * 0.985f, pal, seconds);

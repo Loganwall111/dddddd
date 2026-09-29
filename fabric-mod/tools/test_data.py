@@ -73,7 +73,7 @@ class DataContracts(unittest.TestCase):
     def test_sky_is_native_java_lava_lamp(self):
         sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
         # 0.11: private fog-free position_color types, no OIT (debugQuads made terrain flicker).
-        self.assertIn('SiftRenderTypes.SOLID',sky)
+        self.assertIn('SiftRenderTypes.SKY',sky)                # 0.12: own pipeline, Iris maps it to skybasic
         self.assertIn('SiftRenderTypes.GLOW',sky)
         self.assertNotIn('debugQuads',sky)
         self.assertIn('startsWith("entersift:")',sky)          # dimension guard
@@ -169,7 +169,7 @@ class DataContracts(unittest.TestCase):
         # The optional Overworld pack is installed only if absent and never enabled.
         self.assertIn('if (Files.exists(target)) return;',code)
         self.assertNotIn('iris.properties',code)   # never touches Iris config (pack stays off)
-        self.assertIn("Dungeons-II-Overworld-0.11.zip",(ROOT/'build.gradle').read_text())
+        self.assertIn("Dungeons-II-Overworld-0.12.zip",(ROOT/'build.gradle').read_text())
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
         self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))
@@ -260,6 +260,28 @@ class DataContracts(unittest.TestCase):
         b=read('worldgen/biome/singer_meadow.json')
         self.assertIn('entersift:weeping_soul_tree',b['features'][9])
         self.assertIn('entersift:ruined_arch',b['features'][9])
+    def test_v012_iris_compat_and_accurate_rifts(self):
+        c=ROOT/'src/client/java/dev/logan/entersift'
+        rt=(c/'client/SiftRenderTypes.java').read_text()
+        # Iris: pipelines assigned through the public API by reflection (Iris stays optional).
+        for k in ['net.irisshaders.iris.api.v0.IrisApi','assignPipeline','"SKY_BASIC"','"BASIC"','isModLoaded("iris")','pipeline/sift_sky']:
+            self.assertIn(k,rt)
+        self.assertNotIn('import net.irisshaders',rt)
+        self.assertIn('SiftRenderTypes.registerWithIris()',(c/'SiftClient.java').read_text())
+        sp=ROOT/'shaderpack/shaders'
+        for d in ['','world_overworld/','world_sift/']:
+            self.assertIn('/program/gbuffers_color.fsh',(sp/f'{d}gbuffers_basic.fsh').read_text())
+        self.assertIn('/program/gbuffers_color.vsh',(sp/'world_sift/gbuffers_skybasic.vsh').read_text())
+        col=(sp/'program/gbuffers_color.fsh').read_text()
+        self.assertIn('gl_FragData[0] = glcolor;',col)
+        self.assertNotIn('#if SIFT_SKY_GLOW',(sp/'world_sift/composite.fsh').read_text())  # float #if is invalid GLSL
+        self.assertIn('SIFT_SKY_GLOW',(sp/'shaders.properties').read_text())
+        # Rifts: dimension-dependent views, inset canvas, gradient rim, distance zoom + parallax.
+        rift=(c/'client/RiftPortalRenderer.java').read_text()
+        for k in ['view_sift.png','view_overworld.png','INSET = 0.01f','the_sift','void band(','hollowCube(','zoom(float dist)','0.8f * t * t','RenderTypes.entityCutout(s.view)','RiftType.OVERWORLD.edge']:
+            self.assertIn(k,rift)
+        for n in ['view_sift','view_overworld']:
+            self.assertTrue((R/f'assets/entersift/textures/rift/{n}.png').exists())
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

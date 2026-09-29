@@ -17,3 +17,5 @@ option.shadowMapResolution=Shadow quality
 option.shadowDistance=Shadow distance
 option.SIFT_GODRAYS=Volumetric god rays
 option.SIFT_REFLECTIONS=Water reflections
+option.SIFT_SKY_GLOW=Sift sky glow
+option.SIFT_SKY_GLOW.comment=Soft bloom around the aurora, sun ray and rift rims in the Sift. The sky colours themselves are never changed.

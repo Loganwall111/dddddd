@@ -36,6 +36,7 @@ public final class SiftClient implements ClientModInitializer {
         creature(SiftKind.TWISTED_WARDEN, SiftModelDefs::twistedWarden, SiftModelDefs.TWISTED_WARDEN_PARTS);
         creature(SiftKind.SINGER, SiftModelDefs::singer, SiftModelDefs.SINGER_PARTS);
         SiftRenderTypes.initialize();
+        SiftRenderTypes.registerWithIris(); // 0.12: shader packs draw the Sift sky and rifts with known programs
         SiftSky.register();
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
@@ -47,7 +48,7 @@ public final class SiftClient implements ClientModInitializer {
         installOverworldShaderPack();
     }
 
-    private static final String PACK = "Dungeons-II-Overworld-0.11.zip";
+    private static final String PACK = "Dungeons-II-Overworld-0.12.zip";
 
     /**
      * 0.11: ship the optional Dungeons II Overworld Iris pack. It is copied into shaderpacks/ only if
@@ -64,6 +65,8 @@ public final class SiftClient implements ClientModInitializer {
         } catch (Exception error) {
             EnterTheSift.LOGGER.warn("Could not clean old Sift shader packs", error);
         }
+        // 0.12: installed under a new name so existing installs get the Sift-aware programs. Older copies
+        // are left alone (one may be selected in Iris, and Iris settings are never touched).
         var target = packs.resolve(PACK);
         if (Files.exists(target)) return;
         try (var in = SiftClient.class.getResourceAsStream("/assets/entersift/shaderpacks/" + PACK)) {

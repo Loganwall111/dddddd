@@ -121,6 +121,33 @@ Generator run order: … → phase5 → `rift_scenes.py` → `phase6.py`.
 
 Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` → `creatures.py` → `item_art.py` → `phase9.py`.
 
+## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
+
+**The Sift sky under the Dungeons II pack (and Iris in general)**
+- Found the cause: with a shader pack active, Iris replaces every render pipeline with a pack program. The mod's own sky and rift pipelines were missing from its list, so they were drawn with the vanilla shader into the pack's buffers, and the sky rendered wrongly.
+- The mod now registers its pipelines through the public Iris API. It uses reflection, so Iris stays optional:
+  - the sky dome (new `entersift:pipeline/sift_sky`) goes to `gbuffers_skybasic`;
+  - the aurora, beams and rift frames go to `gbuffers_basic`.
+- Iris flips the reverse-Z depth tests itself, so the depth states stay valid.
+- The bundled pack is now `Dungeons-II-Overworld-0.12.zip`. It adds `gbuffers_basic` (root, Overworld and Sift) and `gbuffers_skybasic` (Sift), which draw the mod's exact vertex colours with no lighting, fog or grading.
+- The Sift looks the same with the pack on as with it off. `world_sift` adds only an optional soft **Sift sky glow** around the aurora, the sun ray and the rift rims, with no warping.
+- The pack is still OFF by default. Older copies are left alone, so select the 0.12 zip in Iris.
+
+**Rifts, 1-to-1 with the new trailer shots**
+- **No Z-fighting.** The interior canvas is inset 0.01 from every wall and frame edge, and the walls reach just behind it. Fully grown cells merge into row runs, so there are no seams or jagged top borders. Satellites never share a plane with the main canvas.
+- **Neon outline.** Each rim is one additive, anti-aliased gradient band: a thin white core fading to translucent pink, then to nothing. Behind the whole cluster there is a faint wide bloom.
+- **Dual-dimension projection.** The view is chosen every frame from the client level, so it swaps instantly when you change dimension:
+  - Outside the Sift, SIFT rifts show a new coral, orange and yellow pixel sunset with white square sparkles. The ritual portal keeps its cyan mosaic.
+  - Inside the Sift, SIFT rifts, the portal and Overworld rifts show a new flat, tileable Overworld panorama (sky, blocky clouds, hills, oak trees, golden field) inside a yellow frame.
+  - Nether and End rifts keep their own canvases.
+- **Look-through illusion without shaders.** The interior UVs zoom from about 1.0× at 24+ blocks to about 1.8× at 2 blocks, with a subtle sideways parallax from the camera position. The interior is still a single flat quad.
+- **Shapes from the refs:**
+  - the SIFT rift is a central cross: a tall column with a stepped cap and wide jagged arms;
+  - satellites now include hollow L and Z tetromino pieces;
+  - the floating cubes are hollow, with open fronts and pale cream inner walls;
+  - a soft white-pink glow sits in the heart of the opening.
+- New generator: `tools/phase12.py`, which writes `textures/rift/view_sift.png` and `view_overworld.png`.
+
 ## 0.11.0-alpha: aurora sky and beams, flicker fix, custom Sift rock and turf, foliage, sounds and music, optional Overworld shader pack
 
 **Sky (Sift only, vanilla Java).**

@@ -51,8 +51,49 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         @Override protected boolean removeEldestEntry(Map.Entry<Long, Shape> eldest) { return size() > 48; } // bounded: no leaks
     };
 
+    /** 0.12 views: the Sift sunset seen from outside the Sift, the Overworld panorama seen from inside it. */
+    static final Identifier VIEW_SIFT = SiftContent.id("textures/rift/view_sift.png");
+    static final Identifier VIEW_OVERWORLD = SiftContent.id("textures/rift/view_overworld.png");
+    static final Identifier THE_SIFT = SiftContent.id("the_sift");
+    /** Interior canvas inset from the frame and walls (kills Z-fighting / jagged top borders). */
+    static final float INSET = 0.01f;
+
     static {
         for (RiftType t : RiftType.values()) INTERIOR[t.id] = SiftContent.id("textures/rift/interior_" + t.name + ".png");
+    }
+
+    /**
+     * 0.12 dual-dimension projection. Chosen every frame from the client level, so the swap is instant
+     * on a dimension change. From outside the Sift, SIFT rifts show the Sift sunset (the ritual PORTAL
+     * keeps its cyan mosaic); from inside the Sift, SIFT, PORTAL and OVERWORLD rifts show the Overworld
+     * panorama. OVERWORLD rifts always show the panorama; NETHER and END keep their own canvases.
+     */
+    static Identifier view(RiftType type, boolean inSift) {
+        return switch (type) {
+            case OVERWORLD -> VIEW_OVERWORLD;
+            case SIFT -> inSift ? VIEW_OVERWORLD : VIEW_SIFT;
+            case PORTAL -> inSift ? VIEW_OVERWORLD : INTERIOR[type.id];
+            default -> INTERIOR[type.id];
+        };
+    }
+
+    /** Frame colour: rifts that show the Overworld from inside the Sift get the yellow frame of the footage. */
+    static int frame(RiftType type, boolean inSift) {
+        return inSift && (type == RiftType.SIFT || type == RiftType.PORTAL) ? RiftType.OVERWORLD.edge : type.edge;
+    }
+
+    /** Warm bloom colour for the outer gradient band (the pink bloom around the white neon edge). */
+    static float[] bloom(int frame) {
+        if (frame == RiftType.SIFT.edge) return new float[]{1f, 0.5f, 0.76f};
+        if (frame == RiftType.OVERWORLD.edge) return new float[]{1f, 0.78f, 0.3f};
+        float[] c = rgb(frame);
+        return new float[]{c[0], c[1] * 0.85f, c[2] * 0.9f};
+    }
+
+    /** Interior zoom by camera distance: ~1.0 at 24+ blocks, ~1.8 at 2 blocks (smoothstep in between). */
+    static float zoom(float dist) {
+        float t = clamp((24f - dist) / 22f, 0f, 1f);
+        return 1f + 0.8f * t * t * (3f - 2f * t);
     }
 
     public RiftPortalRenderer(EntityRendererProvider.Context context) { super(context); }
@@ -62,6 +103,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float w, h, age, yaw, time;
         long seed;
         double ex, ey, ez;
+        boolean inSift;
+        Identifier view = VIEW_SIFT;
+        int frame = RiftType.SIFT.edge;
     }
 
     @Override public State createRenderState() { return new State(); }
@@ -77,6 +121,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         s.yaw = e.getYRot();
         s.seed = e.blockPosition().asLong() * 31 + s.type.id;
         s.ex = e.getX(); s.ey = e.getY(); s.ez = e.getZ();
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
+        s.view = view(s.type, s.inSift);
+        s.frame = frame(s.type, s.inSift);
     }
 
     @Override
@@ -110,9 +158,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static boolean inBody(RiftType type, long seed, float u, float v, float xb, float yb, int i, int j, int cols, int rows) {
         switch (type) {
             case SIFT: {
-                float arm = 0.8f + 0.16f * hash(seed, j / 2, 7);
-                boolean in = (Math.abs(u) < 0.42f && Math.abs(v) < 0.66f) || (Math.abs(u) < 0.17f && v > 0 && v < 0.98f)
-                    || (Math.abs(v) < 0.3f && Math.abs(u) < arm);
+                // 0.12 (trailer refs): a central cross. Tall centre column with a stepped cap on top,
+                // a squat heart block, and wide horizontal arms whose tips are jagged per row pair.
+                float arm = 0.82f + 0.15f * hash(seed, j / 2, 7);
+                float lean = hash(seed, 3, 3) > 0.5f ? 1f : -1f;
+                boolean in = (Math.abs(u) < 0.36f && Math.abs(v) < 0.58f)                 // heart
+                    || (Math.abs(u) < 0.19f && v > -0.96f && v < 0.98f)                    // centre column
+                    || (u * lean > -0.3f && u * lean < 0.1f && v > 0.5f && v < 0.8f)        // step on top
+                    || (Math.abs(v) < 0.26f && Math.abs(u) < arm)                          // wide arms
+                    || (Math.abs(u) > 0.5f && Math.abs(u) < arm - 0.12f && v > 0.2f && v < 0.4f); // arm shoulders
                 if (hash(seed, 1, 1) > 0.35f) in |= u < -0.48f && u > -0.8f && v < -0.28f && v > -0.72f;
                 if (hash(seed, 2, 2) > 0.35f) in |= u > 0.5f && u < 0.82f && v > 0.28f && v < 0.58f;
                 return in;
@@ -171,9 +225,30 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             }
             float scatter = type == RiftType.NETHER ? 0.9f * hash(seed, k, 36) : 0.25f;
             px += (float) Math.cos(a) * scatter; py += (float) Math.sin(a) * scatter;
-            float sw = 0.5f + 0.5f * hash(seed, k, 32), sh = 0.45f + 0.5f * hash(seed, k, 33);
             float zf = 0.12f + 0.7f * hash(seed, k, 34), zb = zf - (0.35f + 0.3f * hash(seed, k, 35));
-            proto.sats().add(new float[]{px - sw / 2, BASE + h / 2 + py - sh / 2, px + sw / 2, BASE + h / 2 + py + sh / 2, zf, zb, k});
+            if (Math.abs(zb + DEPTH) < 0.04f) zb = -DEPTH + 0.05f; // never coplanar with the body canvas
+            float cy = BASE + h / 2 + py;
+            int piece = type == RiftType.PORTAL ? 0 : k % 3; // 0 box, 1 L tetromino, 2 Z tetromino
+            if (piece == 0) {
+                float sw = 0.5f + 0.5f * hash(seed, k, 32), sh = 0.45f + 0.5f * hash(seed, k, 33);
+                proto.sats().add(new float[]{px - sw / 2, cy - sh / 2, px + sw / 2, cy + sh / 2, zf, zb, k, 0});
+            } else {
+                int[][] cells = piece == 1 ? new int[][]{{0, 0}, {0, 1}, {0, 2}, {1, 0}} : new int[][]{{0, 1}, {1, 1}, {1, 0}, {2, 0}};
+                float q = 0.28f + 0.1f * hash(seed, k, 32);
+                int flip = hash(seed, k, 33) > 0.5f ? -1 : 1;
+                float ox = px - q * 1.5f * flip, oy = cy - q * 1.5f;
+                for (int[] c : cells) {
+                    int mask = 0;
+                    for (int[] o : cells) {
+                        if (o[1] == c[1] && o[0] == c[0] - flip) mask |= 1;  // neighbour on the left
+                        if (o[1] == c[1] && o[0] == c[0] + flip) mask |= 2;  // on the right
+                        if (o[0] == c[0] && o[1] == c[1] - 1) mask |= 4;     // below
+                        if (o[0] == c[0] && o[1] == c[1] + 1) mask |= 8;     // above
+                    }
+                    float x0 = ox + c[0] * q * flip, x1 = x0 + q * flip;
+                    proto.sats().add(new float[]{Math.min(x0, x1), oy + c[1] * q, Math.max(x0, x1), oy + (c[1] + 1) * q, zf, zb, k, mask});
+                }
+            }
         }
         return proto;
     }
@@ -204,7 +279,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     @Override
     public void submit(State s, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
         Shape sh = shape(s);
-        float[] edge = rgb(s.type.edge);
+        float[] edge = rgb(s.frame);
         Vector3f cam = new Vector3f((float) (camera.pos.x - s.ex), (float) (camera.pos.y - s.ey), (float) (camera.pos.z - s.ez))
             .rotateY((float) Math.toRadians(s.yaw));
         pose.pushPose();
@@ -240,7 +315,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
         if (age >= CLUSTER_START) {
             // PHASE 3 + STABLE: the voxel cluster.
-            collector.submitCustomGeometry(pose, RenderTypes.entityCutout(INTERIOR[s.type.id]), (p, vc) -> interior(p, vc, sh, s, age));
+            // Look-through illusion on a flat quad: zoom with distance plus a subtle lateral parallax.
+            float dist = cam.length(), z = zoom(dist);
+            float facing = Math.max(1.5f, Math.abs(cam.z));
+            float pu = -clamp(cam.x / facing, -2f, 2f) * 0.045f, pv = clamp((cam.y - sh.cy()) / facing, -2f, 2f) * 0.03f;
+            collector.submitCustomGeometry(pose, RenderTypes.entityCutout(s.view), (p, vc) -> interior(p, vc, sh, s, age, z, pu, pv));
             collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> walls(p, vc, sh, s, edge, age));
             collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> flashes(p, vc, sh, age));
             collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
@@ -252,28 +331,51 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     // ------------------------------------------------------------------ interior canvas
 
-    /** Flat destination canvas on the back faces, scrolling slowly sideways (U wraps without seams). */
-    private static void interior(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, float age) {
+    /**
+     * Flat destination canvas on the back faces, scrolling slowly sideways (U wraps without seams).
+     * 0.12: fully grown cells are merged into horizontal runs (no seams between cells), and every canvas
+     * edge that meets a wall is inset by {@link #INSET}, so frame, walls and canvas never share an edge.
+     */
+    private static void interior(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, float age, float zoom, float pu, float pv) {
         float scroll = s.time * 0.012f;
-        for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
-            if (!sh.on(i, j)) continue;
-            float k = pop(age, appearAt(sh.tier()[i][j]));
-            if (k <= 0) continue;
-            float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
-            canvas(p, vc, sh, r[0], r[1], r[2], r[3], -DEPTH, scroll);
+        for (int j = 0; j < sh.rows(); j++) {
+            int i = 0;
+            while (i < sh.cols()) {
+                if (!sh.on(i, j)) { i++; continue; }
+                float k = pop(age, appearAt(sh.tier()[i][j]));
+                if (k <= 0) { i++; continue; }
+                if (k < 1f) { // still popping in: its own inset quad
+                    float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
+                    canvas(p, vc, sh, r[0] + INSET, r[1] + INSET, r[2] - INSET, r[3] - INSET, -DEPTH, scroll, zoom, pu, pv);
+                    i++;
+                    continue;
+                }
+                boolean below = visible(sh, i, j - 1, age), above = visible(sh, i, j + 1, age);
+                int from = i;
+                while (i < sh.cols() && visible(sh, i, j, age) && visible(sh, i, j - 1, age) == below && visible(sh, i, j + 1, age) == above) i++;
+                float x0 = sh.x(from) + (visible(sh, from - 1, j, age) ? 0 : INSET);
+                float x1 = sh.x(i) - (visible(sh, i, j, age) ? 0 : INSET);
+                float y0 = sh.y(j) + (below ? 0 : INSET), y1 = sh.y(j) + sh.ch() - (above ? 0 : INSET);
+                canvas(p, vc, sh, x0, y0, x1, y1, -DEPTH, scroll, zoom, pu, pv);
+            }
         }
         for (float[] b : sh.sats()) {
             float k = pop(age, appearAt(TIERS) + b[6] % 3);
             if (k <= 0) continue;
             float[] r = scaled(b[0], b[1], b[2], b[3], k);
-            canvas(p, vc, sh, r[0], r[1], r[2], r[3], b[5], scroll + 0.07f);
+            int m = (int) b[7];
+            canvas(p, vc, sh, r[0] + ((m & 1) != 0 ? 0 : INSET), r[1] + ((m & 4) != 0 ? 0 : INSET),
+                r[2] - ((m & 2) != 0 ? 0 : INSET), r[3] - ((m & 8) != 0 ? 0 : INSET), b[5], scroll + 0.07f, zoom, pu, pv);
         }
     }
 
-    private static void canvas(PoseStack.Pose p, VertexConsumer vc, Shape sh, float x0, float y0, float x1, float y1, float z, float scroll) {
+    /** One canvas rectangle. UVs are divided by the distance zoom and shifted by the parallax offset. */
+    private static void canvas(PoseStack.Pose p, VertexConsumer vc, Shape sh, float x0, float y0, float x1, float y1, float z, float scroll,
+                               float zoom, float pu, float pv) {
+        if (x1 <= x0 || y1 <= y0) return;
         float span = Math.max(sh.w(), sh.h()) * 2f;
-        float ua = x0 / span + 0.5f + scroll, ub = x1 / span + 0.5f + scroll;
-        float v0 = clamp(0.5f - (y0 - sh.cy()) / (sh.h() * 1.3f), 0, 1), v1 = clamp(0.5f - (y1 - sh.cy()) / (sh.h() * 1.3f), 0, 1);
+        float ua = x0 / span / zoom + 0.5f + scroll + pu, ub = x1 / span / zoom + 0.5f + scroll + pu;
+        float v0 = clamp(0.5f - (y0 - sh.cy()) / (sh.h() * 1.3f) / zoom + pv, 0, 1), v1 = clamp(0.5f - (y1 - sh.cy()) / (sh.h() * 1.3f) / zoom + pv, 0, 1);
         float base = (float) Math.floor(ua);
         ua -= base; ub -= base;
         if (ub <= 1f) { texQuad(p, vc, x0, y0, x1, y1, z, ua, v0, ub, v1); return; }
@@ -303,25 +405,28 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float at = appearAt(sh.tier()[i][j]), k = pop(age, at);
             if (k <= 0) continue;
             float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
-            if (!visible(sh, i - 1, j, age)) wall(p, vc, r[0], r[1], r[0], r[3], 0, -DEPTH, front, back, 0.92f);
-            if (!visible(sh, i + 1, j, age)) wall(p, vc, r[2], r[1], r[2], r[3], 0, -DEPTH, front, back, 0.8f);
-            if (!visible(sh, i, j - 1, age)) wall(p, vc, r[0], r[1], r[2], r[1], 0, -DEPTH, front, back, 1f);
-            if (!visible(sh, i, j + 1, age)) wall(p, vc, r[0], r[3], r[2], r[3], 0, -DEPTH, front, back, 0.72f);
+            float zb = -DEPTH - 2 * INSET; // walls reach just behind the inset canvas: no light leaks, no shared edge
+            if (!visible(sh, i - 1, j, age)) wall(p, vc, r[0], r[1], r[0], r[3], 0, zb, front, back, 0.92f);
+            if (!visible(sh, i + 1, j, age)) wall(p, vc, r[2], r[1], r[2], r[3], 0, zb, front, back, 0.8f);
+            if (!visible(sh, i, j - 1, age)) wall(p, vc, r[0], r[1], r[2], r[1], 0, zb, front, back, 1f);
+            if (!visible(sh, i, j + 1, age)) wall(p, vc, r[0], r[3], r[2], r[3], 0, zb, front, back, 0.72f);
         }
         for (float[] b : sh.sats()) {
             float at = appearAt(TIERS) + b[6] % 3, k = pop(age, at);
             if (k <= 0) continue;
             float[] r = scaled(b[0], b[1], b[2], b[3], k);
-            wall(p, vc, r[0], r[1], r[0], r[3], b[4], b[5], front, back, 0.92f);
-            wall(p, vc, r[2], r[1], r[2], r[3], b[4], b[5], front, back, 0.8f);
-            wall(p, vc, r[0], r[1], r[2], r[1], b[4], b[5], front, back, 1f);
-            wall(p, vc, r[0], r[3], r[2], r[3], b[4], b[5], front, back, 0.72f);
+            int m = (int) b[7];
+            float zb = b[5] - 2 * INSET;
+            if ((m & 1) == 0) wall(p, vc, r[0], r[1], r[0], r[3], b[4], zb, front, back, 0.92f);
+            if ((m & 2) == 0) wall(p, vc, r[2], r[1], r[2], r[3], b[4], zb, front, back, 0.8f);
+            if ((m & 4) == 0) wall(p, vc, r[0], r[1], r[2], r[1], b[4], zb, front, back, 1f);
+            if ((m & 8) == 0) wall(p, vc, r[0], r[3], r[2], r[3], b[4], zb, front, back, 0.72f);
         }
-        // Floating hollow cubes (stable phase): tinted inner faces.
+        // Floating small hollow cubes (stable phase): open at the front, pale cream inner walls.
         if (age >= GROWN) for (int k = 0; k < 7; k++) {
             float[] c = cube(sh, s, k);
             float q = c[3];
-            box(p, vc, c[0] - q, c[1] - q, c[2] - q, c[0] + q, c[1] + q, c[2] + q, mix(new float[]{1f, 0.95f, 0.9f}, edge, 0.45f), 1f);
+            hollowCube(p, vc, c[0] - q, c[1] - q, c[2] - q, c[0] + q, c[1] + q, c[2] + q, mix(new float[]{1f, 0.95f, 0.88f}, edge, 0.3f));
         }
     }
 
@@ -350,8 +455,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ additive glow
 
     private static void glow(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, Vector3f cam, float[] edge, float age) {
-        float[] core = {1f, 0.99f, 0.97f};
+        float[] core = {1f, 0.99f, 0.97f}, bl = bloom(s.frame);
         float stable = Math.min(1f, Math.max(0f, (age - GROWN) / 10f));
+        // Soft white-pink inner glow in the heart of the opening (additive, on the canvas).
+        float grown = Math.min(1f, Math.max(0f, (age - appearAt(1)) / 20f));
+        if (grown > 0) halo(p, vc, 0, sh.cy(), -DEPTH + 0.03f, Math.min(sh.w(), sh.h()) * 0.55f, mix(core, bl, 0.35f), 0.34f * grown);
         // Bloom halo behind the whole cluster.
         halo(p, vc, 0, sh.cy(), 0.02f, Math.max(sh.w(), sh.h()) * 0.85f * (0.4f + 0.6f * Math.min(1f, (age - CLUSTER_START) / 29f)), edge, 0.12f);
         for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
@@ -360,10 +468,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (k <= 0) continue;
             float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
             float hot = heat(age, at);
-            if (!visible(sh, i - 1, j, age)) rim(p, vc, cam, r[0], r[1], r[0], r[3], 0.01f, -DEPTH, core, edge, hot);
-            if (!visible(sh, i + 1, j, age)) rim(p, vc, cam, r[2], r[1], r[2], r[3], 0.01f, -DEPTH, core, edge, hot);
-            if (!visible(sh, i, j - 1, age)) rim(p, vc, cam, r[0], r[1], r[2], r[1], 0.01f, -DEPTH, core, edge, hot);
-            if (!visible(sh, i, j + 1, age)) rim(p, vc, cam, r[0], r[3], r[2], r[3], 0.01f, -DEPTH, core, edge, hot);
+            if (!visible(sh, i - 1, j, age)) rim(p, vc, cam, r[0], r[1], r[0], r[3], 0.01f, -DEPTH, core, bl, hot);
+            if (!visible(sh, i + 1, j, age)) rim(p, vc, cam, r[2], r[1], r[2], r[3], 0.01f, -DEPTH, core, bl, hot);
+            if (!visible(sh, i, j - 1, age)) rim(p, vc, cam, r[0], r[1], r[2], r[1], 0.01f, -DEPTH, core, bl, hot);
+            if (!visible(sh, i, j + 1, age)) rim(p, vc, cam, r[0], r[3], r[2], r[3], 0.01f, -DEPTH, core, bl, hot);
             // LENS JITTER: an ultra-low-opacity perimeter shell pushed outward, oscillating with sin(time * 0.4) * 0.05.
             if (stable > 0) {
                 float j0 = 0.16f + (float) Math.sin(s.ageInTicks * 0.4f) * 0.05f, j1 = 0.3f + (float) Math.sin(s.ageInTicks * 0.4f + 2.1f) * 0.05f;
@@ -381,13 +489,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (k <= 0) continue;
             float[] r = scaled(b[0], b[1], b[2], b[3], k);
             float hot = heat(age, at);
-            rim(p, vc, cam, r[0], r[1], r[0], r[3], b[4], b[5], core, edge, hot);
-            rim(p, vc, cam, r[2], r[1], r[2], r[3], b[4], b[5], core, edge, hot);
-            rim(p, vc, cam, r[0], r[1], r[2], r[1], b[4], b[5], core, edge, hot);
-            rim(p, vc, cam, r[0], r[3], r[2], r[3], b[4], b[5], core, edge, hot);
-            // The four depth edges make the satellite read as a 3D box.
-            for (float[] c : new float[][]{{r[0], r[1]}, {r[2], r[1]}, {r[0], r[3]}, {r[2], r[3]}})
-                ribbon(p, vc, cam, new float[]{c[0], c[1], b[4]}, new float[]{c[0], c[1], b[5]}, 0.06f, core, 0.8f);
+            int m = (int) b[7];
+            if ((m & 1) == 0) rim(p, vc, cam, r[0], r[1], r[0], r[3], b[4], b[5], core, bl, hot);
+            if ((m & 2) == 0) rim(p, vc, cam, r[2], r[1], r[2], r[3], b[4], b[5], core, bl, hot);
+            if ((m & 4) == 0) rim(p, vc, cam, r[0], r[1], r[2], r[1], b[4], b[5], core, bl, hot);
+            if ((m & 8) == 0) rim(p, vc, cam, r[0], r[3], r[2], r[3], b[4], b[5], core, bl, hot);
+            // Depth edges at the outer corners make the satellite (or tetromino) read as a 3D box.
+            float[][] corners = {{r[0], r[1], m & 5}, {r[2], r[1], m & 6}, {r[0], r[3], m & 9}, {r[2], r[3], m & 10}};
+            for (float[] c : corners)
+                if (c[2] == 0) ribbon(p, vc, cam, new float[]{c[0], c[1], b[4]}, new float[]{c[0], c[1], b[5]}, 0.06f, core, 0.8f);
         }
         if (age >= GROWN) {
             for (int k = 0; k < 7; k++) cubeOutline(p, vc, cam, cube(sh, s, k), core);
@@ -396,14 +506,41 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
-    /** Front rim: thick white core + tinted halo + wide bloom; back rim thinner. White-hot while popping in. */
+    /**
+     * 0.12 neon rim: one additive camera-facing gradient band per edge. It is a thin white core fading
+     * smoothly to translucent pink (the bloom colour) and then to nothing at the margins, so the outline is
+     * soft and anti-aliased instead of stacked hard ribbons. The back rim sits just in front of the canvas.
+     */
     private static void rim(PoseStack.Pose p, VertexConsumer vc, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
-                            float[] core, float[] edge, float hot) {
+                            float[] core, float[] bloom, float hot) {
         float[] a = {xa, ya, zf}, b = {xb, yb, zf};
-        ribbon(p, vc, cam, a, b, 0.13f + 0.1f * hot, core, 1f);
-        ribbon(p, vc, cam, a, b, 0.32f, edge, 0.3f + 0.3f * hot);
-        ribbon(p, vc, cam, a, b, 0.7f, edge, 0.07f);
-        ribbon(p, vc, cam, new float[]{xa, ya, zb}, new float[]{xb, yb, zb}, 0.07f, core, 0.65f);
+        band(p, vc, cam, a, b, 0.08f + 0.06f * hot, 0.5f + 0.15f * hot, core, bloom, 1f);
+        ribbon(p, vc, cam, a, b, 0.9f, bloom, 0.045f);
+        band(p, vc, cam, new float[]{xa, ya, zb + 0.012f}, new float[]{xb, yb, zb + 0.012f}, 0.04f, 0.18f, core, bloom, 0.6f);
+    }
+
+    /** Camera-facing gradient strip: bloom (alpha 0) -> bloom (0.4) -> white core (1) -> bloom (0.4) -> bloom (0). */
+    private static void band(PoseStack.Pose p, VertexConsumer vc, Vector3f cam, float[] a, float[] b, float core, float outer,
+                             float[] white, float[] bloom, float alpha) {
+        float dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+        float vx = (a[0] + b[0]) / 2 - cam.x, vy = (a[1] + b[1]) / 2 - cam.y, vz = (a[2] + b[2]) / 2 - cam.z;
+        float sx = dy * vz - dz * vy, sy = dz * vx - dx * vz, sz = dx * vy - dy * vx;
+        float len = (float) Math.sqrt(sx * sx + sy * sy + sz * sz), dl = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len < 1e-6f || dl < 1e-6f) return;
+        sx /= len; sy /= len; sz /= len;
+        float e = core / 2, ex = dx / dl * e, ey = dy / dl * e, ez = dz / dl * e;
+        float ax = a[0] - ex, ay = a[1] - ey, az = a[2] - ez, bx = b[0] + ex, by = b[1] + ey, bz = b[2] + ez;
+        float half = Math.max(outer / 2, core * 1.3f);
+        float[] off = {-half, -core * 1.15f, -core / 2, core / 2, core * 1.15f, half};
+        float[][] cs = {bloom, bloom, white, white, bloom, bloom};
+        float[] as = {0f, 0.4f, 1f, 1f, 0.4f, 0f};
+        for (int i = 0; i < 5; i++) {
+            float o0 = off[i], o1 = off[i + 1];
+            col(p, vc, ax + sx * o0, ay + sy * o0, az + sz * o0, cs[i], as[i] * alpha);
+            col(p, vc, bx + sx * o0, by + sy * o0, bz + sz * o0, cs[i], as[i] * alpha);
+            col(p, vc, bx + sx * o1, by + sy * o1, bz + sz * o1, cs[i + 1], as[i + 1] * alpha);
+            col(p, vc, ax + sx * o1, ay + sy * o1, az + sz * o1, cs[i + 1], as[i + 1] * alpha);
+        }
     }
 
     private static void seedBolts(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, Vector3f cam, float[] edge, float age, float k) {
@@ -504,6 +641,16 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     /** Double-sided flat rectangle (position/colour types). */
     private static void rect(PoseStack.Pose p, VertexConsumer vc, float x0, float y0, float x1, float y1, float z, float[] c, float a) {
         col(p, vc, x0, y0, z, c, a); col(p, vc, x1, y0, z, c, a); col(p, vc, x1, y1, z, c, a); col(p, vc, x0, y1, z, c, a);
+    }
+
+    /** Box without its front (+z) face: the inside walls show, shaded darker toward the back. */
+    private static void hollowCube(PoseStack.Pose p, VertexConsumer vc, float x0, float y0, float z0, float x1, float y1, float z1, float[] c) {
+        float[] back = {c[0] * 0.8f, c[1] * 0.78f, c[2] * 0.76f}, side = {c[0] * 0.92f, c[1] * 0.9f, c[2] * 0.88f};
+        col(p, vc, x0, y0, z0, back, 1f); col(p, vc, x1, y0, z0, back, 1f); col(p, vc, x1, y1, z0, back, 1f); col(p, vc, x0, y1, z0, back, 1f);
+        col(p, vc, x0, y1, z0, back, 1f); col(p, vc, x1, y1, z0, back, 1f); col(p, vc, x1, y1, z1, c, 1f); col(p, vc, x0, y1, z1, c, 1f);
+        col(p, vc, x0, y0, z0, back, 1f); col(p, vc, x1, y0, z0, back, 1f); col(p, vc, x1, y0, z1, side, 1f); col(p, vc, x0, y0, z1, side, 1f);
+        col(p, vc, x0, y0, z0, back, 1f); col(p, vc, x0, y1, z0, back, 1f); col(p, vc, x0, y1, z1, side, 1f); col(p, vc, x0, y0, z1, side, 1f);
+        col(p, vc, x1, y0, z0, back, 1f); col(p, vc, x1, y1, z0, back, 1f); col(p, vc, x1, y1, z1, side, 1f); col(p, vc, x1, y0, z1, side, 1f);
     }
 
     /** Closed box, six faces with simple directional shading. */
