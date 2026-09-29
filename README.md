@@ -123,6 +123,21 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.13.0: pre-beta fixes (Blub, clouds, no sun, coloured god rays, giant trees)
+- **Blub.** Pale icy-blue jelly body with glowing red slit eyes and a small red mouth, and shorter upright ears (lighter blue inside, no pink). It now wobbles side to side as it waddles: the body rocks from its feet, it squashes like jelly and the ears lag behind the wobble.
+- **Overworld clouds without shaders.** Vanilla clouds are replaced by puffy Dungeons-style voxel clouds: stepped mounds on a 6-block grid, 4 to 16 blocks tall. They have warm white tops, white-to-lavender sides and one flat, uniform lavender-grey underside (no checkerboard). They are tinted by the time of day (peach at dawn and dusk, deep blue at night), drift east and fade out at the edge of your render distance.
+  - While they show, the vanilla cloud setting is switched off. Your own setting is restored when you leave the Overworld, turn on a shader pack or quit.
+  - If you chose "Clouds: OFF", nothing is drawn.
+- **Overworld clouds with the Dungeons II pack.** Fixed the checkerboard: every cloud column now shares one flat base, the underside is one colour, and the bright rim traced around every cell is gone. The pack ships as `Dungeons-II-Overworld-0.13.zip`; select it in Iris to get the fix.
+- **No sun in the Sift.** The sun disc and its ray are gone. The day/night cycle stays.
+- **Coloured god rays from the sky.** Eleven soft light columns in red, orange, yellow, green, teal, blue, violet and magenta fall from high in the sky toward the horizon. They lean slightly, drift and pulse, with no hard edges. The world beams that land on the ground use the same rainbow colours and a slowly turning slant.
+- **Gigantic multi-tier trees.**
+  - Pale trees are now about 38 blocks tall, with a 3×3 trunk and buttress roots carrying four stacked canopy tiers. The tiers shrink toward the top, and each has a drooping rim fringed with long icicle strands.
+  - Weeping soul trees are about 31 blocks tall with three tiers.
+  - Both are a little rarer so the giants have room.
+  - Generator: `tools/phase13.py`.
+- **Rendering safety.** Every custom vertex (sky, beams, clouds, rifts) is checked, and a NaN or infinite position is collapsed instead of drawn, so it can never streak across the screen. Rift sizes are clamped before rendering.
+
 ### 0.12.1: soft aurora curtains, trailer sky colours
 - **Hard shapes removed.** The rectangular sky panels are gone, along with the thin bright arcs and the hard-edged beams and sun ray.
 - **Trans-aurora curtains.** Seven long, wavy, vertical sheets of light move slowly around the sky. Each one is a finely tessellated grid with alpha on every vertex: smoothstep falloff at both ends and at the top and bottom, and shimmering folds along its length. Colours run from mint, white-cyan or pink at the base to pink or violet at the top. They use strict additive blending with a base alpha of 0.18, so the gradient sky shows through.

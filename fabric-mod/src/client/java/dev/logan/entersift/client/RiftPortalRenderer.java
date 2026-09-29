@@ -114,8 +114,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     public void extractRenderState(RiftPortalEntity e, State s, float partial) {
         super.extractRenderState(e, s, partial);
         s.type = e.riftType();
-        s.w = e.riftWidth();
-        s.h = e.riftHeight();
+        // 0.13: clamp the synced size (a NaN/0 size before the first sync would produce NaN geometry).
+        s.w = Float.isFinite(e.riftWidth()) ? Math.max(1.5f, Math.min(12f, e.riftWidth())) : 3f;
+        s.h = Float.isFinite(e.riftHeight()) ? Math.max(1.5f, Math.min(12f, e.riftHeight())) : 4f;
         s.age = e.age() >= RiftPortalEntity.GROWN + 20 ? 999f : e.age() + partial;
         s.time = (e.tickCount + partial) / 20f;
         s.yaw = e.getYRot();
@@ -393,6 +394,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     private static void emit(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v, float nx, float ny, float nz) {
+        if (!Float.isFinite(x + y + z + u + v)) { x = 0f; y = 0f; z = 0f; u = 0f; v = 0f; } // 0.13: never emit NaN streaks
         vc.addVertex(p, x, y, z).setColor(1f, 1f, 1f, 1f).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LIGHT).setNormal(p, nx, ny, nz);
     }
 
@@ -635,6 +637,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     private static void col(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
+        if (!Float.isFinite(x + y + z)) { x = 0f; y = 0f; z = 0f; a = 0f; } // 0.13: collapse, keep the quad count intact
         vc.addVertex(p, x, y, z).setColor(c[0], c[1], c[2], a);
     }
 

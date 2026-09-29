@@ -79,8 +79,8 @@ class DataContracts(unittest.TestCase):
         self.assertIn('startsWith("entersift:")',sky)          # dimension guard
         self.assertEqual(sky.count('pushPose()'),sky.count('popPose()'))
         self.assertIn('finally',sky)
-        for layer in ['auroraCurtains','sunAndRay','worldBeams']: self.assertIn(f'void {layer}(',sky)
-        self.assertIn('0.35f',sky)                              # single sun god ray alpha
+        for layer in ['auroraCurtains','skyRays','worldBeams']: self.assertIn(f'void {layer}(',sky)
+        self.assertNotIn('sunAndRay',sky)                       # 0.13: no sun in the Sift at all
         rift=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertNotIn('debugQuads',rift)
         self.assertEqual(rift.count('pushPose()'),rift.count('popPose()'))
@@ -169,7 +169,7 @@ class DataContracts(unittest.TestCase):
         # The optional Overworld pack is installed only if absent and never enabled.
         self.assertIn('if (Files.exists(target)) return;',code)
         self.assertNotIn('iris.properties',code)   # never touches Iris config (pack stays off)
-        self.assertIn("Dungeons-II-Overworld-0.12.zip",(ROOT/'build.gradle').read_text())
+        self.assertIn("Dungeons-II-Overworld-0.13.zip",(ROOT/'build.gradle').read_text())
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
         self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))
@@ -288,6 +288,37 @@ class DataContracts(unittest.TestCase):
         self.assertIn('CURTAIN_ALPHA = 0.18f',sky)
         self.assertIn('smooth(0f, 0.18f, v)',sky)                                   # soft vertical margins
         self.assertIn('rgb(0x7CC6D8)',sky); self.assertIn('rgb(0xC6B8EC)',sky)       # teal-blue horizon, pale violet zenith
+    def test_v013_pre_beta_fixes(self):
+        c=ROOT/'src/client/java/dev/logan/entersift'
+        sky=(c/'client/SiftSky.java').read_text()
+        # No sun; multi-coloured god rays falling from the sky; NaN guards on every emitter.
+        self.assertNotIn('sunAndRay(',sky)
+        self.assertNotIn('sunDirection(tick)',sky.split('static float[] sunDirection')[0])
+        for hue in ['0xFF6B7A','0xFFA54F','0x8CFF9E','0x6FF2E6','0xFF7AD9']: self.assertIn(hue,sky)
+        self.assertIn('RAYS[',sky)
+        self.assertGreaterEqual(sky.count('Float.isFinite'),2)
+        self.assertIn('Float.isFinite',(c/'client/RiftPortalRenderer.java').read_text())
+        # Overworld voxel clouds: no shader pack only, vanilla clouds restored, uniform underside.
+        cl=(c/'client/SiftClouds.java').read_text()
+        for k in ['shaderPackInUse()','minecraft:overworld','CloudStatus.OFF','CLIENT_STOPPING','SiftRenderTypes.CLOUDS','Float.isFinite']:
+            self.assertIn(k,cl)
+        self.assertEqual(cl.count('pushPose()'),cl.count('popPose()'))
+        self.assertIn('SiftClouds.register()',(c/'SiftClient.java').read_text())
+        self.assertIn('{CLOUD_PIPELINE, "BASIC"}',(c/'client/SiftRenderTypes.java').read_text())
+        vc=(ROOT/'shaderpack/shaders/lib/voxel_clouds.glsl').read_text()
+        self.assertNotIn('cloudHash(c.xz * 0.37)',vc)            # the random 0/1 base made a checkerboard
+        # Blub: red eyes and mouth, wobbly waddle.
+        cr=(ROOT/'tools/creatures.py').read_text()
+        self.assertIn('BLUB_EYE, BLUB_MOUTH = (206, 38, 52), (176, 30, 44)',cr)
+        md=(c/'client/SiftCreatureModel.java').read_text()
+        self.assertIn('body.zRot += waddle',md)
+        # Gigantic multi-tier trees.
+        for n,lo in (('pale_tree',2000),('weeping_soul_tree',1200)):
+            d=json.loads((R/f'data/entersift/worldgen/feature/{n}.json').read_text())
+            self.assertGreater(len(d['features']),lo)
+            for f in d['features']:
+                for m in f['placement']:
+                    if m['type']=='minecraft:offset': self.assertTrue(all(abs(m[k])<=16 for k in 'xyz'))
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

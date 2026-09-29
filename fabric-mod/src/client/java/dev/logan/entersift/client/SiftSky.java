@@ -31,7 +31,8 @@ import net.minecraft.world.phys.Vec3;
  *   noon     the same, brighter, with a pearl sheen at the zenith
  *   evening  dusty rose horizon, lilac and soft blue-violet above
  *   night    soft hazy amber-gold backdrop with dusty crimson highlights
- * The only light shafts from the sky's sun are its single god ray, drawn here.
+ * 0.13: there is NO sun in the Sift (the day/night cycle stays). Its light comes from soft
+ * multi-coloured columns falling from the sky itself and coloured beams that land on the ground.
  *
  * 0.12 layer stack (render types from {@link SiftRenderTypes}; no OIT, so terrain does not flicker):
  *   1. opaque gradient dome with a faint pastel lava-lamp shimmer
@@ -88,7 +89,6 @@ public final class SiftSky {
                 org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] lava-lamp sky radius {} blocks", lastRadius);
             }
             Palette pal = palette(tick);
-            float[] sun = norm(sunDirection(tick));
             Vec3 cam = context.levelState().cameraRenderState.pos;
             float beamRange = Math.min(chunks * 16f, 176f);
             List<float[]> beams = collectBeams(mc, cam, beamRange, tick);
@@ -98,13 +98,13 @@ public final class SiftSky {
                 var out = context.submitNodeCollector();
                 // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds));
-                // Layers 2-3 in the sky: soft aurora curtains, the sun and its single god ray (additive).
+                // Layers 2-3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
                     auroraCurtains(p, vc, radius * 0.98f, pal, seconds);
-                    if (sun[1] > -0.12f) sunAndRay(p, vc, radius * 0.96f, sun, pal);
+                    skyRays(p, vc, radius * 0.96f, pal, seconds);
                 });
                 // World-space diagonal beams slicing into the terrain, with a tint pool where each one lands.
-                if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> worldBeams(p, vc, beams, cam, pal, sun, seconds, beamRange));
+                if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange));
             } finally {
                 pose.popPose();
             }
@@ -248,6 +248,8 @@ public final class SiftSky {
     }
 
     private static void v(PoseStack.Pose p, VertexConsumer vc, float[] d, float r, float[] c, float a) {
+        // 0.13 guard: a NaN/infinite vertex would stretch across the screen; collapse it instead (keeps quads intact).
+        if (!Float.isFinite(d[0] + d[1] + d[2])) { vc.addVertex(p, 0f, 0f, 0f).setColor(0f, 0f, 0f, 0f); return; }
         vc.addVertex(p, d[0] * r, d[1] * r, d[2] * r).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
     }
 
@@ -324,34 +326,40 @@ public final class SiftSky {
         }
     }
 
+    /** 0.13 god-ray hues from the trailer: rainbow light columns (red, orange, yellow, green, teal, blue, violet, magenta). */
+    static final float[][] RAYS = {rgb(0xFF6B7A), rgb(0xFFA54F), rgb(0xFFE070), rgb(0x8CFF9E),
+        rgb(0x6FF2E6), rgb(0x7DB8FF), rgb(0xB48CFF), rgb(0xFF7AD9)};
+    private static final int SKY_RAYS = 11;
+
     /**
-     * The sun disc with a soft corona, and exactly one god ray: an additive quad from the sun down to
-     * the horizon below it, alpha 0.35 at the sun fading to 0 at the horizon. It follows the clock.
+     * 0.13 god rays without a sun: soft, multi-coloured columns of light falling from high in the
+     * sky toward the horizon, leaning slightly and drifting slowly. Every column is two quads per
+     * segment with the alpha on the centre line and zero at both edges, and the alpha fades out
+     * near the zenith and toward the ground, so none of them has a hard edge.
      */
-    private static void sunAndRay(PoseStack.Pose p, VertexConsumer vc, float r, float[] f, Palette pal) {
-        float[] up = Math.abs(f[1]) > 0.95f ? new float[]{1, 0, 0} : new float[]{0, 1, 0};
-        float[] a = norm(cross(up, f)), b = cross(f, a);
-        float[] core = {1f, 0.99f, 0.93f};
-        float[] warm = lerp(pal.horizon(), core, 0.6f);
-        float horizon = smooth(-0.12f, 0.08f, f[1]);
-        if (f[1] > 0.02f) {
-            double az = Math.atan2(f[2], f[0]), el = Math.asin(Math.max(-1f, Math.min(1f, f[1])));
-            int segs = 12;
-            for (int s = 0; s < segs; s++) {
-                double t0 = s / (double) segs, t1 = (s + 1) / (double) segs;
-                double e0 = el * (1 - t0), e1 = el * (1 - t1);
-                double w0 = 0.035 + 0.22 * t0, w1 = 0.035 + 0.22 * t1;       // widens toward the horizon
-                float a0 = 0.35f * (float) (1 - t0) * horizon, a1 = 0.35f * (float) (1 - t1) * horizon;
-                // Soft across its width too: bright centre line, alpha 0 at both edges (no hard slab).
-                v(p, vc, dir(az - w0, e0), r, warm, 0f); v(p, vc, dir(az, e0), r, warm, a0);
-                v(p, vc, dir(az, e1), r, warm, a1); v(p, vc, dir(az - w1, e1), r, warm, 0f);
-                v(p, vc, dir(az, e0), r, warm, a0); v(p, vc, dir(az + w0, e0), r, warm, 0f);
-                v(p, vc, dir(az + w1, e1), r, warm, 0f); v(p, vc, dir(az, e1), r, warm, a1);
+    private static void skyRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float strength = 0.75f + 0.25f * (1 - pal.noon());
+        int segs = 12;
+        for (int k = 0; k < SKY_RAYS; k++) {
+            double az0 = hash(k, 61, 0) * Math.PI * 2 + t * 0.0025 * (k % 2 == 0 ? 1 : -1);
+            double w = 0.045 + 0.075 * hash(k, 62, 0), lean = (hash(k, 63, 0) - 0.5) * 0.5;
+            double top = 0.95 + 0.4 * hash(k, 64, 0);
+            float[] c = lerp(RAYS[k % RAYS.length], pal.blobs()[k % 4], 0.15f);
+            float base = 0.16f * strength * (0.65f + 0.35f * (float) Math.sin(t * 0.13f + k * 2.7f));
+            for (int sg = 0; sg < segs; sg++) {
+                double f0 = sg / (double) segs, f1 = (sg + 1) / (double) segs;
+                double e0 = -0.02 + top * f0, e1 = -0.02 + top * f1;
+                double a0z = az0 + lean * f0, a1z = az0 + lean * f1;
+                double w0 = w * (1.6 - 0.8 * f0), w1 = w * (1.6 - 0.8 * f1);   // wider low down, like light spreading
+                float al0 = base * smooth(-0.02f, 0.35f, (float) e0) * (1 - smooth(0.7f, 1.0f, (float) f0));
+                float al1 = base * smooth(-0.02f, 0.35f, (float) e1) * (1 - smooth(0.7f, 1.0f, (float) f1));
+                if (al0 + al1 < 0.002f) continue;
+                v(p, vc, dir(a0z - w0, e0), r, c, 0f); v(p, vc, dir(a0z, e0), r, c, al0);
+                v(p, vc, dir(a1z, e1), r, c, al1); v(p, vc, dir(a1z - w1, e1), r, c, 0f);
+                v(p, vc, dir(a0z, e0), r, c, al0); v(p, vc, dir(a0z + w0, e0), r, c, 0f);
+                v(p, vc, dir(a1z + w1, e1), r, c, 0f); v(p, vc, dir(a1z, e1), r, c, al1);
             }
         }
-        ring(p, vc, r * 0.995f, f, a, b, 0.0f, 0.34f, warm, 0.45f * horizon, 0f);
-        ring(p, vc, r * 0.99f, f, a, b, 0.0f, 0.12f, core, 0.8f * horizon, 0.25f * horizon);
-        ring(p, vc, r * 0.985f, f, a, b, 0.0f, 0.055f, core, horizon, horizon);
     }
 
     // ------------------------------------------------------------------ world beams
@@ -381,17 +389,18 @@ public final class SiftSky {
      * Colours follow the 4-stage timeline; each beam fades with distance and pools a soft additive tint
      * on the terrain where it lands. Positions are camera-relative (x - cam).
      */
-    private static void worldBeams(PoseStack.Pose p, VertexConsumer vc, List<float[]> beams, Vec3 cam, Palette pal, float[] sun, float t, float range) {
-        // All beams share one slant, leaning away from the sun so they read as light falling from the sky.
-        float[] axis = norm(new float[]{-sun[0] * 0.45f + 0.2f, 1f, -sun[2] * 0.45f - 0.25f});
+    private static void worldBeams(PoseStack.Pose p, VertexConsumer vc, List<float[]> beams, Vec3 cam, Palette pal, float t, float range) {
+        // All beams share one slow-turning slant, so they read as light falling from the sky (there is no sun).
+        double turn = t * 0.004;
+        float[] axis = norm(new float[]{0.32f * (float) Math.cos(turn), 1f, 0.32f * (float) Math.sin(turn)});
         for (float[] b : beams) {
             float gx = (float) (b[0] - cam.x), gy = (float) (b[1] - cam.y), gz = (float) (b[2] - cam.z);
             float dist = (float) Math.sqrt(gx * gx + gz * gz);
             float fade = smooth(6f, 22f, dist) * (1 - smooth(range * 0.55f, range, dist));
             if (fade < 0.01f) continue;
             float pulse = 0.7f + 0.3f * (float) Math.sin(t * 0.4f + b[3] * 20f);
-            float[] c = bright(pal.blobs()[(int) b[4]], 0.3f);
-            float alpha = 0.2f * fade * pulse, width = 2.5f + 3f * b[3], len = 200f;
+            float[] c = lerp(bright(RAYS[(int) (b[3] * RAYS.length) % RAYS.length], 0.15f), pal.blobs()[(int) b[4]], 0.2f); // multi-coloured
+            float alpha = 0.24f * fade * pulse, width = 2.5f + 3f * b[3], len = 200f;
             float[] bottom = {gx, gy - 1.5f, gz}, top = {gx + axis[0] * len, gy + axis[1] * len, gz + axis[2] * len};
             // Billboard around the beam axis toward the camera (camera is at the origin).
             float[] mid = {(bottom[0] + top[0]) / 2, (bottom[1] + top[1]) / 2, (bottom[2] + top[2]) / 2};
@@ -430,6 +439,7 @@ public final class SiftSky {
     }
 
     private static void bv(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
+        if (!Float.isFinite(x + y + z)) { x = 0f; y = 0f; z = 0f; a = 0f; }
         vc.addVertex(p, x, y, z).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
     }
 
@@ -457,6 +467,7 @@ public final class SiftSky {
 
     private static float[] norm(float[] u) {
         float l = (float) Math.sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2]);
+        if (!(l > 1e-6f)) return new float[]{0f, 1f, 0f}; // degenerate: never divide by zero (NaN streaks)
         return new float[]{u[0] / l, u[1] / l, u[2] / l};
     }
 }

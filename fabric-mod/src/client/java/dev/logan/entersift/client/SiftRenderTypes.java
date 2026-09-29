@@ -56,9 +56,19 @@ public final class SiftRenderTypes {
             .withCull(false)
             .build());
 
+    /** 0.13 Overworld voxel clouds: normal alpha blend (the far edge fades out), writes depth, no fog term. */
+    public static final RenderPipeline CLOUD_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/sift_clouds"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withCull(false)
+            .build());
+
     public static final RenderType SKY = RenderType.create("entersift_sky", RenderSetup.builder(SKY_PIPELINE).createRenderSetup());
     public static final RenderType SOLID = RenderType.create("entersift_solid", RenderSetup.builder(SOLID_PIPELINE).createRenderSetup());
     public static final RenderType GLOW = RenderType.create("entersift_glow", RenderSetup.builder(GLOW_PIPELINE).createRenderSetup());
+    public static final RenderType CLOUDS = RenderType.create("entersift_clouds", RenderSetup.builder(CLOUD_PIPELINE).createRenderSetup());
 
     /** Forces class loading (pipeline registration) during client init. */
     public static void initialize() {}
@@ -80,7 +90,7 @@ public final class SiftRenderTypes {
             Class<? extends Enum> program = (Class<? extends Enum>) Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
             Object iris = api.getMethod("getInstance").invoke(null);
             java.lang.reflect.Method assign = api.getMethod("assignPipeline", RenderPipeline.class, program);
-            Object[][] pairs = {{SKY_PIPELINE, "SKY_BASIC"}, {SOLID_PIPELINE, "BASIC"}, {GLOW_PIPELINE, "BASIC"}};
+            Object[][] pairs = {{SKY_PIPELINE, "SKY_BASIC"}, {SOLID_PIPELINE, "BASIC"}, {GLOW_PIPELINE, "BASIC"}, {CLOUD_PIPELINE, "BASIC"}};
             for (Object[] pair : pairs) {
                 try {
                     assign.invoke(iris, pair[0], Enum.valueOf(program, (String) pair[1]));

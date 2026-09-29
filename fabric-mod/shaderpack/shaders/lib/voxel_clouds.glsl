@@ -20,9 +20,9 @@ bool cloudCell(vec3 c, float coverageBias) {
     if (c.y < 0.0 || c.y >= VOXEL_LAYERS) return false;
     float cov = cloudFbm(c.xz * 0.085) + coverageBias;
     if (cov < 0.53) return false;
-    float base = floor(cloudHash(c.xz * 0.37) * 1.6);
+    // 0.13: one flat base for every column (a random 0/1 base made the underside a checkerboard).
     float height = 1.0 + floor((cov - 0.53) * 26.0);
-    return c.y >= base && c.y < base + height;
+    return c.y < height;
 }
 
 // original = background colour; returns clouds composited over it.
@@ -56,15 +56,17 @@ vec3 voxelClouds(vec3 original, vec3 dir, vec3 lightDir, float seconds, float sl
             float ndl = dot(normal, lightDir);
             vec3 col = mix(shade, lit, clamp(ndl * 0.5 + 0.5, 0.0, 1.0));
             if (normal.y > 0.5) col = mix(col, lit * 1.08, 0.6);        // sunlit tops
-            if (normal.y < -0.5) col = mix(col, shade * 0.9, 0.7);      // blue-grey undersides
+            if (normal.y < -0.5) col = mix(shade, ambient, 0.18) * 0.92; // one uniform blue-grey underside
             col += ambient * 0.25;
             // Self shadow: a solid neighbour toward the light darkens this face.
             vec3 toward = cell + normal + vec3(0.0, lightDir.y > 0.2 ? 1.0 : 0.0, 0.0);
             if (normal.y < 0.5 && cloudCell(toward, coverageBias)) col *= 0.78;
             // Soft edge darkening near the bottom of side faces (fake AO) + silver rim when back-lit.
-            if (abs(normal.y) < 0.5) col *= 0.86 + 0.14 * smoothstep(0.0, 0.6, local.y);
+            // Vertical gradient over the whole cloud height (per-layer AO banded every 6 blocks).
+            if (abs(normal.y) < 0.5) col *= 0.84 + 0.16 * smoothstep(0.0, VOXEL.y * 3.0, hitW.y);
             vec2 faceUV = abs(normal.x) > 0.5 ? local.zy : (abs(normal.z) > 0.5 ? local.xy : local.xz);
-            float edge = 1.0 - smoothstep(0.0, 0.08, min(min(faceUV.x, 1.0 - faceUV.x), min(faceUV.y, 1.0 - faceUV.y)));
+            // 0.13: silver rim only along the top edge of side faces (a rim on every cell drew a grid).
+            float edge = abs(normal.y) < 0.5 ? smoothstep(0.9, 1.0, faceUV.y) : 0.0;
             float back = pow(max(dot(dir, lightDir), 0.0), 4.0);
             col += lit * edge * (0.08 + back * 0.5);
             float fade = exp(-dist / 1900.0) * smoothstep(0.0, 0.06, abs(dir.y));

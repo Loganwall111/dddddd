@@ -53,10 +53,18 @@ public final class SiftCreatureModel extends EntityModel<LivingEntityRenderState
             head.xRot += s.xRot * DEG * 0.6f;
         }
         switch (kind) {
-            case "blub" -> { // hop: squash-and-stretch body bounce while moving
+            case "blub" -> { // 0.13: wobbly side-to-side jelly waddle (pivot at the feet) + hop + jelly squash
                 ModelPart body = part("body");
-                body.y -= Math.abs((float) Math.sin(pos * 0.6f)) * 3.0f * speed;
-                body.yScale = 1.0f + (float) Math.sin(age * 0.15f) * 0.03f;
+                float waddle = (float) Math.sin(pos * 0.6f) * 0.18f * speed + (float) Math.sin(age * 0.18f) * 0.06f;
+                body.zRot += waddle;
+                body.x += waddle * 4.0f;
+                body.y -= Math.abs((float) Math.sin(pos * 0.6f)) * 2.5f * speed;
+                float squash = (float) Math.sin(age * 0.3f + pos * 1.2f) * (0.035f + 0.06f * speed);
+                body.yScale = 1.0f + squash;
+                body.xScale = 1.0f - squash * 0.6f;
+                body.zScale = 1.0f - squash * 0.6f;
+                part("ear_l").zRot -= waddle * 1.6f; // ears lag behind the wobble
+                part("ear_r").zRot -= waddle * 1.6f;
             }
             case "sculker" -> part("jaw").xRot += 0.15f + (0.5f + 0.5f * (float) Math.sin(age * 0.12f)) * 0.55f;
             case "drift_jelly" -> {

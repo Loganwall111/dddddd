@@ -38,6 +38,7 @@ public final class SiftClient implements ClientModInitializer {
         SiftRenderTypes.initialize();
         SiftRenderTypes.registerWithIris(); // 0.12: shader packs draw the Sift sky and rifts with known programs
         SiftSky.register();
+        dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,
@@ -48,7 +49,7 @@ public final class SiftClient implements ClientModInitializer {
         installOverworldShaderPack();
     }
 
-    private static final String PACK = "Dungeons-II-Overworld-0.12.zip";
+    private static final String PACK = "Dungeons-II-Overworld-0.13.zip";
 
     /**
      * 0.11: ship the optional Dungeons II Overworld Iris pack. It is copied into shaderpacks/ only if
@@ -65,7 +66,8 @@ public final class SiftClient implements ClientModInitializer {
         } catch (Exception error) {
             EnterTheSift.LOGGER.warn("Could not clean old Sift shader packs", error);
         }
-        // 0.12: installed under a new name so existing installs get the Sift-aware programs. Older copies
+        // 0.12/0.13: installed under a new name so existing installs get the fixed programs (0.13: no
+        // checkerboard cloud undersides; select the 0.13 pack in Iris). Older copies
         // are left alone (one may be selected in Iris, and Iris settings are never touched).
         var target = packs.resolve(PACK);
         if (Files.exists(target)) return;

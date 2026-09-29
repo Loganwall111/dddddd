@@ -1,6 +1,6 @@
 DUNGEONS II OVERWORLD 0.12 - optional Iris shader pack bundled with Enter the Sift
 ===============================================================================
-OFF by default. The mod copies Dungeons-II-Overworld-0.12.zip into shaderpacks/ only if it is
+OFF by default. The mod copies Dungeons-II-Overworld-0.13.zip into shaderpacks/ only if it is
 missing; it never selects or enables it. Turn it on in Video Settings > Shader Packs.
 
 What it does (Overworld): warm sun and cool lavender-blue shadows, chunky volumetric

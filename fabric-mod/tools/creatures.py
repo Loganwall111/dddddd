@@ -35,19 +35,19 @@ BLUE = (156, 214, 232)
 RED_EYE = (224, 44, 62)
 SPECS: dict[str, dict] = {}
 
-# Blub — (0.9 ref crop) an all-blue jelly bunny: sky-blue cube body, dark navy bar eyes and a small dark
-# mouth, upright ears in the same blue (slightly lighter inside). No pink, no purple.
-BLUB_EYE, BLUB_MOUTH = (30, 38, 86), (40, 52, 104)
-BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (150, 206, 244), (112, 176, 232), (140, 198, 244), (92, 150, 206)
-BLUB_BLUE = (118, 182, 236)
+# Blub — (0.13, user correction) an icy-blue jelly bunny: pale blue cube body, RED slit eyes and a small red
+# mouth, short upright ears in the body blue (lighter blue inside). No pink, no purple.
+BLUB_EYE, BLUB_MOUTH = (206, 38, 52), (176, 30, 44)
+BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (196, 234, 250), (148, 206, 236), (184, 228, 248), (120, 178, 214)
+BLUB_BLUE = (156, 214, 240)
 SPECS["blub"] = dict(tex=64, egg=(BLUB_BLUE, BLUB_EYE), parts=[
     P("body", (0, 21, 0), [B(-5, -8, -5, 10, 8, 10, BLUB_BLUE, "speckle", faces={
-        "north": [(1, 3, 3, 1, BLUB_EYE, False), (6, 3, 3, 1, BLUB_EYE, False), (4, 5, 2, 1, BLUB_MOUTH, False)],
+        "north": [(1, 3, 3, 1, BLUB_EYE, True), (6, 3, 3, 1, BLUB_EYE, True), (4, 5, 2, 1, BLUB_MOUTH, False)],
         "top": [(0, 0, 10, 10, BLUB_TOP, False)]})]),
-    P("ear_l", (-3, 13, 1), [B(-1.5, -7, -0.5, 3, 7, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 5, BLUB_EAR_IN, False)]})],
-      parent="body", rot=(0.2, 0, -0.25)),
-    P("ear_r", (3, 13, 1), [B(-1.5, -7, -0.5, 3, 7, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 5, BLUB_EAR_IN, False)]})],
-      parent="body", rot=(0.2, 0, 0.25)),
+    P("ear_l", (-3, 13, 1), [B(-1.5, -5, -0.5, 3, 5, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 3, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.12, 0, -0.14)),
+    P("ear_r", (3, 13, 1), [B(-1.5, -5, -0.5, 3, 5, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 3, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.12, 0, 0.14)),
     P("leg_0", (-3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
     P("leg_1", (3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
     P("leg_2", (-3, 21, 3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
