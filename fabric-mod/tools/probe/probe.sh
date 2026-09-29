@@ -29,3 +29,8 @@ for j in "${JARS[@]}"; do case "$j" in *.jar)
     if unzip -Z1 "$j" "data/minecraft/worldgen/$f" >/dev/null 2>&1; then echo "===== $f"; unzip -p "$j" "data/minecraft/worldgen/$f" | head -c 6000; echo; fi
   done;; esac; done > $OUT/worldgen_samples.txt
 for j in "${JARS[@]}"; do case "$j" in *.jar) unzip -Z1 "$j" 2>/dev/null | grep -E '^data/minecraft/worldgen/(feature|configured_carver|structure|template_pool|structure_set)/' | sed "s|^|$(basename $j): |";; esac; done | sort -u | head -900 > $OUT/worldgen_features.txt
+# 0.13b: exact 26.3 formats of ore / lake / spring / basalt features + their placed features.
+for j in "${JARS[@]}"; do case "$j" in *.jar)
+  for f in feature/ore_iron.json feature/lake_lava.json feature/spring_lava_overworld.json feature/basalt_pillar.json feature/delta.json placed_feature/ore_iron_middle.json placed_feature/lake_lava_surface.json placed_feature/spring_lava.json; do
+    if unzip -Z1 "$j" "data/minecraft/worldgen/$f" >/dev/null 2>&1; then echo "===== $f"; unzip -p "$j" "data/minecraft/worldgen/$f"; echo; fi
+  done;; esac; done > $OUT/feature_samples.txt
