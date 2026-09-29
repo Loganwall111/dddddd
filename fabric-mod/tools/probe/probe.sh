@@ -92,3 +92,31 @@ for j in "${JARS[@]}"; do case "$j" in *.jar)
     if unzip -Z1 "$j" "$f" >/dev/null 2>&1; then echo "===== $f"; unzip -p "$j" "$f"; fi; done;; esac; done
 javap -c -p -cp "$CP" net.minecraft.client.renderer.LevelRenderer 2>/dev/null | grep -nE "invoke.*(Feature|renderTranslucent|Translucent|copyTexture|Sky|Cloud)" | head -80
 } > $OUT/lens_api.txt
+# 0.18.2: Iris API for making the rift pipelines work under shader packs.
+{
+IRIS_URL=$(curl -s 'https://api.modrinth.com/v2/project/iris/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%2226.3%22%5D' | python3 -c 'import sys,json; v=json.load(sys.stdin); print(v[0]["files"][0]["url"] if v else "")' 2>/dev/null)
+if [ -z "$IRIS_URL" ]; then
+  echo "no 26.3 build; latest fabric versions:"
+  curl -s 'https://api.modrinth.com/v2/project/iris/version?loaders=%5B%22fabric%22%5D' | python3 -c 'import sys,json; [print(x["version_number"], x["game_versions"][-3:], x["files"][0]["url"]) for x in json.load(sys.stdin)[:6]]'
+  IRIS_URL=$(curl -s 'https://api.modrinth.com/v2/project/iris/version?loaders=%5B%22fabric%22%5D' | python3 -c 'import sys,json; print(json.load(sys.stdin)[0]["files"][0]["url"])')
+fi
+echo "IRIS_URL=$IRIS_URL"
+curl -sL "$IRIS_URL" -o /tmp/iris.jar
+unzip -Z1 /tmp/iris.jar | grep -E '\.jar$' | head
+# Iris nests its implementation jar? list pipeline-related classes.
+unzip -Z1 /tmp/iris.jar | grep -iE 'api/v0/|pipeline/(IrisPipelines|ShaderKey|PipelineManager)|RenderPipeline|Pipelines' | head -60
+mkdir -p /tmp/irisx && (cd /tmp/irisx && unzip -qo /tmp/iris.jar)
+for n in $(ls /tmp/irisx/META-INF/jars/*.jar 2>/dev/null); do (cd /tmp/irisx && unzip -qo "$n"); done
+ICP="/tmp/irisx:$CP"
+for c in net.irisshaders.iris.api.v0.IrisApi net.irisshaders.iris.api.v0.IrisProgram; do
+  echo "===== $c"; javap -cp "$ICP" "$c" 2>&1 | head -80
+done
+for f in $(cd /tmp/irisx && grep -rlE 'assignPipeline|IrisPipelines' --include=*.class . | head -12); do
+  c=$(echo "$f" | sed 's|^\./||; s|\.class$||; s|/|.|g'); echo "===== $c"; javap -p -cp "$ICP" "$c" 2>&1 | head -70
+done
+# How unassigned pipelines are handled: strings in the pipeline classes.
+for f in $(cd /tmp/irisx && grep -rlE 'assignPipeline|IrisPipelines' --include=*.class . | head -12); do
+  echo "----- strings $f"; strings -n 8 "/tmp/irisx/$f" | grep -iE 'pipeline|assign|shader|unknown|missing|not ' | head -25
+done
+cat /tmp/irisx/fabric.mod.json 2>/dev/null | head -40
+} > $OUT/iris_api.txt 2>&1
