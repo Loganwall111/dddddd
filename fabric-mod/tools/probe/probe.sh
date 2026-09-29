@@ -60,3 +60,13 @@ for c in net.minecraft.world.effect.MobEffect net.minecraft.world.effect.MobEffe
   echo "===== $c"; javap -protected -cp "$CP" "$c" 2>&1 | grep -iE "class|MobEffect|register|Holder|Effect\(|getDuration|endsWithin|isInfiniteDuration" | head -80
 done
 } > $OUT/effect_api.txt
+# 0.17: shader includes + end portal shaders + bind group API for a custom rift core shader.
+for j in "${JARS[@]}"; do case "$j" in *.jar)
+  for f in $(unzip -Z1 "$j" 2>/dev/null | grep -E '^assets/minecraft/shaders/(include/|core/(rendertype_end_portal|rendertype_entity_translucent|rendertype_beacon_beam|position_tex_color))'); do
+    echo "===== $f"; unzip -p "$j" "$f"; done;; esac; done > $OUT/shader_includes.txt
+{
+for c in net.minecraft.client.renderer.BindGroupLayouts 'com.mojang.renderpearl.api.pipeline.RenderPipeline$Builder' com.mojang.renderpearl.api.pipeline.BindGroupLayout; do
+  echo "===== $c"; javap -public -cp "$CP" "$c" 2>&1 | head -80
+done
+javap -c -p -cp "$CP" net.minecraft.client.renderer.RenderPipelines 2>/dev/null | grep -n -B2 -A28 'String core/rendertype_end_portal' | head -60
+} > $OUT/bindgroups.txt
