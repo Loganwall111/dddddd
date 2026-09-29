@@ -39,7 +39,7 @@ public class RiftPortalEntity extends Entity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(TYPE, RiftType.SIFT.id).define(AGE, 0).define(WIDTH, 4.5f).define(HEIGHT, 3.5f);
+        builder.define(TYPE, RiftType.SIFT.id).define(AGE, 0).define(WIDTH, 7.0f).define(HEIGHT, 5.0f);
     }
 
     public RiftType riftType() { return RiftType.byId(this.entityData.get(TYPE)); }
@@ -64,8 +64,8 @@ public class RiftPortalEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         this.entityData.set(TYPE, input.getIntOr("RiftType", RiftType.SIFT.id));
-        this.entityData.set(WIDTH, Math.max(1.5f, Math.min(12f, input.getFloatOr("Width", 4.5f))));
-        this.entityData.set(HEIGHT, Math.max(1.5f, Math.min(12f, input.getFloatOr("Height", 3.5f))));
+        this.entityData.set(WIDTH, Math.max(1.5f, Math.min(12f, input.getFloatOr("Width", 7.0f))));
+        this.entityData.set(HEIGHT, Math.max(1.5f, Math.min(12f, input.getFloatOr("Height", 5.0f))));
         this.entityData.set(AGE, input.getIntOr("Age", 0));
     }
 

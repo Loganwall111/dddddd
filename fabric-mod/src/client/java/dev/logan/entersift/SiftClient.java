@@ -44,6 +44,8 @@ public final class SiftClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context -> dev.logan.entersift.client.SiftBudget.reset());
         dev.logan.entersift.client.SiftTransition.register(); // 0.16 chromatic + orange-flash rift transition overlay
         SiftSky.register();
+        dev.logan.entersift.client.SiftLens.register();   // 0.18 scene copy for real rift lensing
+        dev.logan.entersift.client.SiftTunnel.register(); // 0.18 warp-tunnel view inside the rift tunnel
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
         dev.logan.entersift.client.SiftSouls.register(); // 0.14 wandering souls with blue comet trails (Sift only)
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.

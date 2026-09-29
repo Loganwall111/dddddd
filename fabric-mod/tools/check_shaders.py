@@ -88,7 +88,7 @@ def check_core(tool) -> int:
                     lines.append(line)
             if not tool:
                 continue
-            variants = [None] + sorted(set(re.findall(r'#ifdef\s+(RIFT_[A-Z_]+)', prog.read_text())))
+            variants = [None] + sorted(set(re.findall(r'(?:#ifdef\s+|defined\s*\(\s*)((?:RIFT|TUNNEL)_[A-Z_]+)', prog.read_text())))
             for define in variants:
                 src = list(lines)
                 if define:

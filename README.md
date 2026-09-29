@@ -123,6 +123,16 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.18.0
+
+- **The whole rift is a shader.** In GPU mode every part of a rift is drawn by the rift GLSL program: the interior, the cream box walls, the white rims and glow, and the lens. The rift is now a large plus-shaped cluster of deep hollow boxes (about one block per box, 1 block deep). Natural rifts are 6-9 blocks wide and 4-6 tall. They have crisp white rims, a pink/orange marble interior with a big white centre glow, and larger floating hollow cubes. The halo blobs and ring bands that made rifts look like a white blob are gone.
+- **Real gravitational lensing.** Each frame the rendered scene is copied to a texture, but only while a rift is on screen. A quad behind the rift bends that image with the point-mass lens equation (beta = theta - thetaE^2/theta), with slight chromatic aberration. The world behind and around a rift is really bent around it: an Einstein ring forms and an inner mirrored image appears. The image is one frame behind. Turn it off with `rift_lens=false` in `config/entersift-client.properties`. If the scene cannot be copied, lensing switches itself off and logs a warning.
+- **Warp tunnel.** The rift tunnel is no longer a block hallway. Its walls are invisible barriers, and the client draws a warp burst around you: a white-pink core down the tunnel, yellow and orange rings, a red body, radial streaks (some teal/green) rushing outward, and about 120 glowing particles flying at you. The walk is shorter (about 28 blocks with Speed II). Existing worlds rebuild the tunnel automatically.
+- **Frostbloom Spires.** Titan Crags is replaced by the MCD2 Sift ambience biome. The ground is pink and blue turf, all stone is red rose spire rock, and the crags and spires are remapped to red spire stone with pale bands. It has giant frosted white and pale-cyan trees, dense blooms, and falling petals and ash.
+- **Colossal trees.** Every Sift tree is regenerated as a true giant with a hollow 5x5 trunk, flaring buttress roots, 4-5 thick canopy tiers (5 blocks deep, up to ~13 blocks radius) and long frosted strands. Trees stand up to 46 blocks tall and have 5,000-8,000 blocks each. There are no single-log trees any more.
+- **Bigger sky panels.** The Sift sky panels are now huge (17-33 degrees wide), and there are fewer of them. The swirl blobs are about twice as large.
+- **Shader pack.** God rays get really intense at sunset and sunrise, and they keep going until the sun touches the horizon. Ground lighting now changes through the day: rosy-gold morning, white noon, deep orange sunset and blue night. The Sift gets its own sky-coloured god rays, gentle by day and strongest around sunset (new `SIFT_SIFT_RAYS` option), plus a stronger time-of-day ground tint.
+
 ### 0.17.0
 
 - **Two Sift skies.** The rose, frost, bone and peak biomes show soft, translucent teal, green and pink panels on a deep teal sky. Coral Expanse, Tidepool Reef, Singer Meadow and Soul Valley show slowly swirling pink and teal blobs instead. Crossing a biome border blends between the two skies over about 3 seconds. The colours are more saturated teal overhead, with no milky white. The panels are alpha-blended, not additive, so they keep their colour.

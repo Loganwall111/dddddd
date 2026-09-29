@@ -72,6 +72,12 @@ void main() {
             float amount = skyLight * skyLight * lightStrength * (SIFT_SHADOW_STRENGTH / 0.55);
             if (depth < depth1 - 0.000001) amount *= 0.5; // seen through water/glass
             color *= mix(vec3(1.0), shade, clamp(amount, 0.0, 1.0));
+            // 0.18 time-of-day ground light: rosy-gold morning, clean white noon, deep orange sunset,
+            // cool blue night. Morning and evening are told apart by the sun's side of the sky.
+            float morning = step(mod(float(worldTime), 24000.0), 6000.0) + step(22000.0, mod(float(worldTime), 24000.0));
+            vec3 duskTint = mix(vec3(1.30, 0.78, 0.55), vec3(1.18, 0.92, 0.86), morning);
+            vec3 todTint = mix(vec3(0.62, 0.72, 1.05), mix(vec3(1.03, 1.0, 0.97), duskTint, owDusk), owDay);
+            color *= mix(vec3(1.0), todTint, 0.45 * skyLight);
         }
     }
 #endif
@@ -88,9 +94,13 @@ void main() {
         float scatter = godRays(rayRel, noise);
         float cosT = dot(normalize(rayRel), lightW);
         float phase = 0.2 + 1.8 * pow(max(cosT, 0.0), 8.0) + 0.5 * pow(max(cosT, 0.0), 2.0);
-        vec3 rayCol = owDay > 0.5 ? mix(vec3(1.0, 0.86, 0.62), vec3(1.0, 0.58, 0.32), owDusk) : vec3(0.30, 0.40, 0.65) * 0.5;
+        // 0.18: god rays get really intense at sunset and sunrise (low sun: long, saturated shafts).
+        phase += owDusk * 2.2 * pow(max(cosT, 0.0), 4.0);
+        vec3 rayCol = owDay > 0.5 ? mix(vec3(1.0, 0.86, 0.62), vec3(1.0, 0.46, 0.26), owDusk) : vec3(0.30, 0.40, 0.65) * 0.5;
         float eyeSky = mix(0.45, 1.0, float(eyeBrightnessSmooth.y) / 240.0);
-        color += rayCol * scatter * phase * SIFT_GODRAYS * lightStrength * 0.3 * eyeSky;
+        // The low sun must not switch the rays off: they keep going until it touches the horizon.
+        float rayLight = mix(0.3, 1.0, owDay) * (1.0 - rainStrength * 0.85) * smoothstep(-0.02, 0.06, lightW.y);
+        color += rayCol * scatter * phase * SIFT_GODRAYS * rayLight * 0.3 * eyeSky * (1.0 + 3.5 * owDusk);
     }
 #endif
     vec2 pixel = 1.0 / vec2(viewWidth, viewHeight);

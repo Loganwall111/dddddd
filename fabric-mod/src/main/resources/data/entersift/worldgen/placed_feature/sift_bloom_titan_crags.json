@@ -3,7 +3,7 @@
   "placement": [
     {
       "type": "minecraft:count",
-      "count": 3
+      "count": 8
     },
     {
       "type": "minecraft:in_square"
@@ -42,7 +42,9 @@
               "entersift:saltstone",
               "entersift:sift_earth",
               "entersift:crag_band",
-              "entersift:crag_rock_dark"
+              "entersift:crag_rock_dark",
+              "entersift:rose_spire",
+              "entersift:spire_bricks"
             ]
           }
         ]

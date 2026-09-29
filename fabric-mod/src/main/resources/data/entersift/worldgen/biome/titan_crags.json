@@ -3,7 +3,7 @@
   "temperature": 0.5,
   "downfall": 0,
   "effects": {
-    "water_color": "#4fa0a8"
+    "water_color": "#7fd3cf"
   },
   "attributes": {
     "minecraft:visual/ambient_particles": {
@@ -11,7 +11,19 @@
       "argument": [
         {
           "particle": {
-            "type": "minecraft:spore_blossom_air"
+            "type": "minecraft:cherry_leaves"
+          },
+          "probability": 0.006
+        },
+        {
+          "particle": {
+            "type": "minecraft:white_ash"
+          },
+          "probability": 0.008
+        },
+        {
+          "particle": {
+            "type": "minecraft:snowflake"
           },
           "probability": 0.003
         },
@@ -19,7 +31,7 @@
           "particle": {
             "type": "minecraft:glow"
           },
-          "probability": 0.004
+          "probability": 0.003
         }
       ]
     },
@@ -30,7 +42,7 @@
         "spawns_by_category": {}
       }
     },
-    "minecraft:visual/fog_color": "#e6def2"
+    "minecraft:visual/fog_color": "#f4dfe6"
   },
   "carvers": [],
   "features": [

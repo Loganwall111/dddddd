@@ -51,7 +51,7 @@ public final class SiftBudget {
 
     // ------------------------------------------------------------------ config
 
-    public static boolean overworldClouds = true, riftEffects = true, transitionHud = true, riftShader = true, auraGlow = true;
+    public static boolean overworldClouds = true, riftEffects = true, transitionHud = true, riftShader = true, auraGlow = true, riftLens = true;
 
     public static void load(Path configDir) {
         Path file = configDir.resolve("entersift-client.properties");
@@ -65,21 +65,23 @@ public final class SiftBudget {
         transitionHud = flag(props, "transition_hud", true);
         riftShader = flag(props, "rift_shader", true);   // 0.17 GPU rift interior (core shader)
         auraGlow = flag(props, "aura_glow", true);       // 0.17 night aura columns + note-block columns
+        riftLens = flag(props, "rift_lens", true);       // 0.18 real screen-space gravitational lensing around rifts
         props.setProperty("overworld_clouds", Boolean.toString(overworldClouds));
         props.setProperty("rift_effects", Boolean.toString(riftEffects));
         props.setProperty("transition_hud", Boolean.toString(transitionHud));
         props.setProperty("rift_shader", Boolean.toString(riftShader));
         props.setProperty("aura_glow", Boolean.toString(auraGlow));
+        props.setProperty("rift_lens", Boolean.toString(riftLens));
         try {
             Files.createDirectories(configDir);
             try (OutputStream out = Files.newOutputStream(file)) {
-                props.store(out, "Enter the Sift client rendering switches (0.17). Set to false to disable a pass.");
+                props.store(out, "Enter the Sift client rendering switches (0.18). Set to false to disable a pass.");
             }
         } catch (IOException error) {
             org.slf4j.LoggerFactory.getLogger("entersift").warn("[Sift] could not write {}", file, error);
         }
-        org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] render switches: overworld_clouds={} rift_effects={} transition_hud={} rift_shader={} aura_glow={}",
-            overworldClouds, riftEffects, transitionHud, riftShader, auraGlow);
+        org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] render switches: overworld_clouds={} rift_effects={} transition_hud={} rift_shader={} aura_glow={} rift_lens={}",
+            overworldClouds, riftEffects, transitionHud, riftShader, auraGlow, riftLens);
     }
 
     private static boolean flag(Properties props, String key, boolean fallback) {

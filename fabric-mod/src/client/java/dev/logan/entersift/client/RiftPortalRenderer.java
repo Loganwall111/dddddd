@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -24,7 +25,7 @@ import org.joml.Vector3f;
 /**
  * Renderer for {@link RiftPortalEntity}, matching the trailer footage frame by frame.
  *
- * The opening is a voxel "puzzle cluster": a main hollow body made of 0.5-block cells, plus
+ * The opening is a voxel "puzzle cluster": a main hollow body made of ~1-block cells (0.18), plus
  * satellite hollow boxes that stick out of its rim at different depths. Each box is open at the
  * front. Its back face is a flat canvas showing the destination, its side walls are pale cream
  * tinted by the variant colour, and every rim is traced with a thick emissive edge and bloom.
@@ -35,16 +36,19 @@ import org.joml.Vector3f;
  *          snapping to the surrounding block coordinates.
  *   51-80  VOXEL CLUSTER EXPANSION: a flipbook. Cells snap into view tier by tier, from the centre
  *          out, each popping from 0 to full size with a white-hot flash; satellites arrive last.
- *   80+    STABLE: the canvas scrolls slowly sideways, the lens-jitter shell shimmers around the rim
- *          ({@code sin(time * 0.4) * 0.05}), sparkles rise, hollow cubes drift and arcs flash.
+ *   80+    STABLE: the marble interior flows, the scene around the rift is bent by a real gravitational
+ *          lens (0.18, {@link SiftLens}), sparkles rise, hollow cubes drift and arcs flash.
  *
  * Variants (RiftType): SIFT wide jagged puzzle cross, pink/white #FFBFE0; NETHER chaotic squares,
  * dark red #FF3333; OVERWORLD stepped staircase, gold; END tall stack, violet; PORTAL cyan mosaic.
- * No shader pack, stencil or see-through tricks: the interior is deliberately a flat canvas.
+ * 0.18: in GPU mode every part (walls, rims, glow, interior, lens) is drawn by the core/rift GLSL program.
  */
 public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, RiftPortalRenderer.State> {
     private static final int LIGHT = 0x00F000F0;
-    private static final float CELL = 0.5f, BASE = 0.25f, DEPTH = 0.55f;
+    private static final float BASE = 0.25f, DEPTH = 1.0f; // 0.18: deep hollow boxes like the trailer (was 0.55)
+
+    /** 0.18: cell size scales with the rift (about one block per box) instead of a fixed half-block grid. */
+    static float cell(float w, float h) { return clamp(Math.max(w, h) / 9f, 0.7f, 1.2f); }
     private static final int TIERS = 5;
     private static final Identifier[] INTERIOR = new Identifier[RiftType.values().length];
     private static final Map<Long, Shape> SHAPES = new LinkedHashMap<>(32, 0.75f, true) {
@@ -154,12 +158,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     private static Shape shape(State s) {
-        int cols = Math.max(4, Math.round(s.w / CELL)), rows = Math.max(4, Math.round(s.h / CELL));
+        float c = cell(s.w, s.h);
+        int cols = Math.max(4, Math.round(s.w / c)), rows = Math.max(4, Math.round(s.h / c));
         long key = s.seed * 1315423911L + cols * 131L + rows;
         return SHAPES.computeIfAbsent(key, k -> build(s.type, s.seed, cols, rows, s.w, s.h));
     }
 
-    private static boolean inBody(RiftType type, long seed, float u, float v, float xb, float yb, int i, int j, int cols, int rows) {
+    private static boolean inBody(RiftType type, long seed, float u, float v, float xb, float yb, int i, int j, int cols, int rows, float xspan, float yspan) {
         switch (type) {
             case SIFT: {
                 // 0.12 (trailer refs): a central cross. Tall centre column with a stepped cap on top,
@@ -176,10 +181,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 return in;
             }
             case NETHER: {
-                if (Math.abs(xb) < 1.0f && Math.abs(yb) < 1.0f) return true;
+                if (Math.abs(xb) < 1.6f && Math.abs(yb) < 1.6f) return true;
                 for (int k = 0; k < 6; k++) {
-                    float cx = (hash(seed, k, 11) - 0.5f) * cols * CELL * 0.75f, cy = (hash(seed, k, 12) - 0.5f) * rows * CELL * 0.7f;
-                    float hb = 0.35f + 0.6f * hash(seed, k, 13);
+                    float cx = (hash(seed, k, 11) - 0.5f) * xspan * 0.75f, cy = (hash(seed, k, 12) - 0.5f) * yspan * 0.7f;
+                    float hb = 0.6f + 0.9f * hash(seed, k, 13);
                     if (Math.abs(xb - cx) < hb && Math.abs(yb - cy) < hb) return true;
                 }
                 return false;
@@ -213,7 +218,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) {
             float u = (i + 0.5f) / cols * 2 - 1, v = (j + 0.5f) / rows * 2 - 1;
             float xb = -w / 2 + (i + 0.5f) * cw, yb = -h / 2 + (j + 0.5f) * ch;
-            body[i][j] = inBody(type, seed, u, v, xb, yb, i, j, cols, rows);
+            body[i][j] = inBody(type, seed, u, v, xb, yb, i, j, cols, rows, w, h);
             // Tier: rings from the centre outward (the flipbook order), slightly shuffled.
             float d = Math.max(Math.abs(u), Math.abs(v)) * 0.85f + 0.15f * hash(seed, i, j + 97);
             tier[i][j] = Math.min(TIERS - 1, (int) (d * TIERS));
@@ -230,18 +235,18 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 if (!proto.on(i, j)) break;
                 px = u * w / 2; py = v * h / 2;
             }
-            float scatter = type == RiftType.NETHER ? 0.9f * hash(seed, k, 36) : 0.25f;
+            float scatter = type == RiftType.NETHER ? 1.4f * hash(seed, k, 36) : 0.45f;
             px += (float) Math.cos(a) * scatter; py += (float) Math.sin(a) * scatter;
-            float zf = 0.12f + 0.7f * hash(seed, k, 34), zb = zf - (0.35f + 0.3f * hash(seed, k, 35));
+            float zf = 0.2f + 1.0f * hash(seed, k, 34), zb = zf - (0.6f + 0.5f * hash(seed, k, 35));
             if (Math.abs(zb + DEPTH) < 0.04f) zb = -DEPTH + 0.05f; // never coplanar with the body canvas
             float cy = BASE + h / 2 + py;
             int piece = type == RiftType.PORTAL ? 0 : k % 3; // 0 box, 1 L tetromino, 2 Z tetromino
             if (piece == 0) {
-                float sw = 0.5f + 0.5f * hash(seed, k, 32), sh = 0.45f + 0.5f * hash(seed, k, 33);
+                float sw = 0.9f + 0.8f * hash(seed, k, 32), sh = 0.8f + 0.8f * hash(seed, k, 33);
                 proto.sats().add(new float[]{px - sw / 2, cy - sh / 2, px + sw / 2, cy + sh / 2, zf, zb, k, 0});
             } else {
                 int[][] cells = piece == 1 ? new int[][]{{0, 0}, {0, 1}, {0, 2}, {1, 0}} : new int[][]{{0, 1}, {1, 1}, {1, 0}, {2, 0}};
-                float q = 0.28f + 0.1f * hash(seed, k, 32);
+                float q = 0.45f + 0.15f * hash(seed, k, 32);
                 int flip = hash(seed, k, 33) > 0.5f ? -1 : 1;
                 float ox = px - q * 1.5f * flip, oy = cy - q * 1.5f;
                 for (int[] c : cells) {
@@ -294,6 +299,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         try {
         pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
         float age = s.age;
+        // 0.18: in GPU mode EVERY part of the rift goes through the rift GLSL program (walls, rims, glow,
+        // interior and lens). Under an Iris shader pack or with rift_shader=false, plain pipelines are used.
+        boolean gpu = SiftBudget.riftShader && !SiftRenderTypes.shaderPackInUseCached();
+        RenderType wallT = gpu ? SiftRenderTypes.RIFT_WALL : SiftRenderTypes.SOLID;
+        RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
         if (age < RIPPLE_END + 8) {
             // PHASE 1: shockwave rings, grown with PoseStack.scale from 0 % to 100 %.
             float f = Math.min(1f, age / RIPPLE_END);
@@ -306,8 +316,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 try {
                     pose.translate(0, sh.cy(), 0);
                     pose.scale(radius * rf, radius * rf, 1f);
-                    collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> ring(p, vc, 0.82f, 1f, edge, alpha));
-                    collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> ring(p, vc, 0f, 0.82f, edge, alpha * 0.12f));
+                    collector.submitCustomGeometry(pose, glowT, (p, vc) -> ring(p, vc, 0.82f, 1f, edge, alpha));
+                    collector.submitCustomGeometry(pose, glowT, (p, vc) -> ring(p, vc, 0f, 0.82f, edge, alpha * 0.12f));
                 } finally {
                     pose.popPose();
                 }
@@ -317,9 +327,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             // PHASE 2: the incubation seed and its erratic lightning.
             float grow = Math.min(1f, (age - SEED_START) / 4f), shrink = 1 - Math.max(0, Math.min(1, (age - appearAt(0)) / 8f));
             float k = grow * shrink * (1 + 0.12f * (float) Math.sin(age * 1.7f));
-            collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) ->
+            collector.submitCustomGeometry(pose, wallT, (p, vc) ->
                 box(p, vc, -0.2f * k, sh.cy() - 0.12f * k, -0.12f * k, 0.2f * k, sh.cy() + 0.12f * k, 0.12f * k, new float[]{1f, 0.98f, 0.95f}, 1f));
-            collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> seedBolts(p, vc, sh, s, cam, edge, age, k));
+            collector.submitCustomGeometry(pose, glowT, (p, vc) -> seedBolts(p, vc, sh, s, cam, edge, age, k));
         }
         if (age >= CLUSTER_START) {
             // PHASE 3 + STABLE: the voxel cluster.
@@ -329,12 +339,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float pu = -clamp(cam.x / facing, -2f, 2f) * 0.045f, pv = clamp((cam.y - sh.cy()) / facing, -2f, 2f) * 0.03f;
             // 0.17: the interior is drawn by our own GLSL core shader (wavy marble, per-pixel parallax,
             // fake lens), unless it is switched off or an Iris shader pack replaces pipelines.
-            boolean gpu = SiftBudget.riftShader && !SiftRenderTypes.shaderPackInUseCached();
             if (gpu) {
                 float fade = Math.min(1f, (age - CLUSTER_START) / 20f);
                 float[] code = {0f, 0f, 0f, (s.type.id + 0.5f) / 8f}; // length 4 = GPU mode for canvas()
                 collector.submitCustomGeometry(pose, SiftRenderTypes.RIFT, (p, vc) -> interior(p, vc, sh, s, age, 1f, 0f, 0f, 0f, 0f, code, fade));
-                if (SiftBudget.riftEffects) collector.submitCustomGeometry(pose, SiftRenderTypes.RIFT_HALO, (p, vc) -> lensHalo(p, vc, sh, code[3], fade));
+                // 0.18 REAL gravitational lens: the scene behind and around the rift is bent by a point mass.
+                SiftLens.want();
+                if (SiftLens.ready()) collector.submitCustomGeometry(pose, SiftRenderTypes.RIFT_LENS, (p, vc) -> lens(p, vc, sh, code[3], fade));
             } else {
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(s.view), (p, vc) -> interior(p, vc, sh, s, age, z, pu, pv));
             // 0.16 sinkhole: two translucent voxel veils float between the canvas and the rim. Each one
@@ -352,11 +363,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             }
             }
             if (s.night && age >= GROWN && SiftBudget.auraGlow)
-                collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> nightAura(p, vc, sh, s, cam));
-            collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> walls(p, vc, sh, s, edge, age));
-            collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> flashes(p, vc, sh, age));
-            if (SiftBudget.riftEffects) collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
-            if (age >= GROWN && SiftBudget.riftEffects) collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> spill(p, vc, sh, s, edge, age));
+                collector.submitCustomGeometry(pose, glowT, (p, vc) -> nightAura(p, vc, sh, s, cam));
+            collector.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, sh, s, edge, age));
+            collector.submitCustomGeometry(pose, glowT, (p, vc) -> flashes(p, vc, sh, age));
+            if (SiftBudget.riftEffects) collector.submitCustomGeometry(pose, glowT, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
+            if (age >= GROWN && SiftBudget.riftEffects) collector.submitCustomGeometry(pose, glowT, (p, vc) -> spill(p, vc, sh, s, edge, age));
         }
         } finally {
             pose.popPose();
@@ -442,11 +453,17 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         vc.addVertex(p, x, y, z).setColor(u, v, code, clamp(fade, 0f, 1f));
     }
 
-    /** 0.17 lens halo: one quad behind the rift; the RIFT_HALO shader draws outward ripples and bloom on it. */
-    private static void lensHalo(PoseStack.Pose p, VertexConsumer vc, Shape sh, float code, float fade) {
-        float half = Math.max(sh.w(), sh.h()) * 1.05f, z = -DEPTH - 0.04f, cy = sh.cy();
-        gv(p, vc, -half, cy - half, z, 0f, 0f, code, fade); gv(p, vc, half, cy - half, z, 1f, 0f, code, fade);
-        gv(p, vc, half, cy + half, z, 1f, 1f, code, fade); gv(p, vc, -half, cy + half, z, 0f, 1f, code, fade);
+    /**
+     * 0.18 lens quad: one square behind the rift, about 1.9x its largest side. Face coordinates (u, v) run
+     * 0..1 across it with the rift centre at (0.5, 0.5); the RIFT_LENS shader turns them into screen
+     * positions and applies the lens equation to the scene copy.
+     */
+    private static void lens(PoseStack.Pose p, VertexConsumer vc, Shape sh, float code, float fade) {
+        float half = Math.max(sh.w(), sh.h()) * 0.95f, z = -DEPTH - 0.05f, cy = sh.cy();
+        gv(p, vc, -half, cy - half, z, 0f, 0f, code, fade);
+        gv(p, vc, half, cy - half, z, 1f, 0f, code, fade);
+        gv(p, vc, half, cy + half, z, 1f, 1f, code, fade);
+        gv(p, vc, -half, cy + half, z, 0f, 1f, code, fade);
     }
 
     /** 0.17 night aura: soft coloured columns rising behind the rift (teal, purple, magenta, pink). */
@@ -539,12 +556,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     private static void glow(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, Vector3f cam, float[] edge, float age) {
         float[] core = {1f, 0.99f, 0.97f}, bl = bloom(s.frame);
-        float stable = Math.min(1f, Math.max(0f, (age - GROWN) / 10f));
-        // Soft white-pink inner glow in the heart of the opening (additive, on the canvas).
-        float grown = Math.min(1f, Math.max(0f, (age - appearAt(1)) / 20f));
-        if (grown > 0) halo(p, vc, 0, sh.cy(), -DEPTH + 0.03f, Math.min(sh.w(), sh.h()) * 0.55f, mix(core, bl, 0.35f), 0.34f * grown);
-        // Bloom halo behind the whole cluster.
-        halo(p, vc, 0, sh.cy(), 0.02f, Math.max(sh.w(), sh.h()) * 0.85f * (0.4f + 0.6f * Math.min(1f, (age - CLUSTER_START) / 29f)), edge, 0.12f);
+        // 0.18: no halo blobs or jitter shells any more (they turned the rift into a white blob with rings);
+        // the white centre is drawn by the interior shader and the bending by the real lens pass.
         for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
             if (!sh.on(i, j)) continue;
             float at = appearAt(sh.tier()[i][j]), k = pop(age, at);
@@ -555,17 +568,6 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (!visible(sh, i + 1, j, age)) rim(p, vc, cam, r[2], r[1], r[2], r[3], 0.01f, -DEPTH, core, bl, hot);
             if (!visible(sh, i, j - 1, age)) rim(p, vc, cam, r[0], r[1], r[2], r[1], 0.01f, -DEPTH, core, bl, hot);
             if (!visible(sh, i, j + 1, age)) rim(p, vc, cam, r[0], r[3], r[2], r[3], 0.01f, -DEPTH, core, bl, hot);
-            // LENS JITTER: an ultra-low-opacity perimeter shell pushed outward, oscillating with sin(time * 0.4) * 0.05.
-            if (stable > 0) {
-                float j0 = 0.16f + (float) Math.sin(s.ageInTicks * 0.4f) * 0.05f, j1 = 0.3f + (float) Math.sin(s.ageInTicks * 0.4f + 2.1f) * 0.05f;
-                for (float jit : new float[]{j0, j1}) {
-                    float a = 0.07f * stable;
-                    if (!sh.on(i - 1, j)) ribbon(p, vc, cam, new float[]{r[0] - jit, r[1], -0.05f}, new float[]{r[0] - jit, r[3], -0.05f}, 0.34f, edge, a);
-                    if (!sh.on(i + 1, j)) ribbon(p, vc, cam, new float[]{r[2] + jit, r[1], -0.05f}, new float[]{r[2] + jit, r[3], -0.05f}, 0.34f, edge, a);
-                    if (!sh.on(i, j - 1)) ribbon(p, vc, cam, new float[]{r[0], r[1] - jit, -0.05f}, new float[]{r[2], r[1] - jit, -0.05f}, 0.34f, edge, a);
-                    if (!sh.on(i, j + 1)) ribbon(p, vc, cam, new float[]{r[0], r[3] + jit, -0.05f}, new float[]{r[2], r[3] + jit, -0.05f}, 0.34f, edge, a);
-                }
-            }
         }
         for (float[] b : sh.sats()) {
             float at = appearAt(TIERS) + b[6] % 3, k = pop(age, at);
@@ -600,17 +602,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float t = s.ageInTicks, breathe = 0.85f + 0.15f * (float) Math.sin(t * 0.07f);
         float[] white = {1f, 0.98f, 0.97f}, pink = mix(white, bloom(s.frame), 0.55f);
         float span = Math.max(sh.w(), sh.h());
-        // Interior haze: two stacked soft discs just in front of the canvas.
-        halo(p, vc, 0, sh.cy(), -DEPTH + 0.06f, span * 0.42f, white, (s.type == RiftType.PORTAL ? 0.2f : 0.13f) * in * breathe);
-        halo(p, vc, 0, sh.cy(), -DEPTH * 0.5f, span * 0.6f, pink, 0.07f * in * breathe);
         float band = Math.min(0.6f, Math.min(sh.cw(), sh.ch()) * 1.2f), out = 1.1f, fwd = 0.7f;
         for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
             if (!sh.on(i, j)) continue;
             float x0 = sh.x(i), y0 = sh.y(j), x1 = x0 + sh.cw(), y1 = y0 + sh.ch(), zc = -DEPTH + 0.04f;
-            float ea = 0.24f * in * breathe, sa = 0.12f * in * breathe;
+            float ea = 0.24f * in * breathe, sa = 0.05f * in * breathe;
             // 0.15 outer bloom: a soft band in the rift's plane, fading outward from every open edge.
             boolean portal = s.type == RiftType.PORTAL;
-            float gw = portal ? 0.85f : 0.7f, ga = (portal ? 0.34f : 0.16f) * in * breathe, zo = 0.02f;
+            float gw = portal ? 0.85f : 0.6f, ga = (portal ? 0.34f : 0.08f) * in * breathe, zo = 0.02f;
             float[] gc = portal ? mix(white, edge, 0.6f) : pink;
             if (!sh.on(i - 1, j)) grad(p, vc, x0, y0, zo, x0, y1, zo, x0 - gw, y1, zo, x0 - gw, y0, zo, gc, ga, 0f);
             if (!sh.on(i + 1, j)) grad(p, vc, x1, y1, zo, x1, y0, zo, x1 + gw, y0, zo, x1 + gw, y1, zo, gc, ga, 0f);
@@ -658,8 +657,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static void rim(PoseStack.Pose p, VertexConsumer vc, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
                             float[] core, float[] bloom, float hot) {
         float[] a = {xa, ya, zf}, b = {xb, yb, zf};
-        band(p, vc, cam, a, b, 0.08f + 0.06f * hot, 0.5f + 0.15f * hot, core, bloom, 1f);
-        ribbon(p, vc, cam, a, b, 0.9f, bloom, 0.045f);
+        band(p, vc, cam, a, b, 0.08f + 0.06f * hot, 0.32f + 0.15f * hot, core, bloom, 1f);
+        ribbon(p, vc, cam, a, b, 0.55f, bloom, 0.03f);
         band(p, vc, cam, new float[]{xa, ya, zb + 0.012f}, new float[]{xb, yb, zb + 0.012f}, 0.04f, 0.18f, core, bloom, 0.6f);
     }
 
@@ -747,11 +746,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     private static float[] cube(Shape sh, State s, int k) {
         double a = hash(s.seed, k, 1) * Math.PI * 2;
-        float reach = 0.7f + 0.4f * hash(s.seed, k, 2);
-        float cx = (float) Math.cos(a) * sh.w() / 2 * reach * 1.2f + 0.15f * (float) Math.sin(s.time * 0.7f + k);
-        float cy = sh.cy() + (float) Math.sin(a) * sh.h() / 2 * reach * 1.15f + 0.2f * (float) Math.sin(s.time * 0.9f + k * 1.7f);
-        float cz = 0.2f + 0.6f * hash(s.seed, k, 3);
-        float half = 0.1f + 0.14f * hash(s.seed, k, 4);
+        float reach = 0.8f + 0.45f * hash(s.seed, k, 2);
+        float cx = (float) Math.cos(a) * sh.w() / 2 * reach * 1.25f + 0.25f * (float) Math.sin(s.time * 0.7f + k);
+        float cy = sh.cy() + (float) Math.sin(a) * sh.h() / 2 * reach * 1.2f + 0.3f * (float) Math.sin(s.time * 0.9f + k * 1.7f);
+        float cz = 0.3f + 1.0f * hash(s.seed, k, 3);
+        float half = 0.28f + 0.3f * hash(s.seed, k, 4); // 0.18: trailer-size floating boxes (was 0.1..0.24)
         return new float[]{cx, cy, cz, half};
     }
 

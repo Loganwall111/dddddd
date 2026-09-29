@@ -116,7 +116,8 @@ class DataContracts(unittest.TestCase):
         self.assertIn('sift.rift_visual',fn('rift/anchor'))
         client=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('submitCustomGeometry',client)
-        self.assertIn('Math.sin(s.ageInTicks * 0.4f) * 0.05f',client)  # lens jitter shell
+        self.assertIn('SiftRenderTypes.RIFT_LENS',client)  # 0.18: real lens pass replaces the jitter shell
+        self.assertNotIn('lensHalo',client)
         self.assertFalse((ROOT/'src/client/java/dev/logan/entersift/client/RiftRenderer.java').exists())
         self.assertIn('tag=sift.rift_visual',fn('world/tick'))
     def test_portal_and_rift_have_different_textures(self):
@@ -412,6 +413,34 @@ class DataContracts(unittest.TestCase):
             self.assertEqual(im.size,(256,128))
             px=list(im.getdata()); mean=sum(sum(p) for p in px)/len(px)/3
             self.assertGreater(mean,150,n)                       # luminous canvases, like the trailer
+    def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        rift=(C/'RiftPortalRenderer.java').read_text(); types=(C/'SiftRenderTypes.java').read_text()
+        # The whole rift goes through the rift GLSL program; real lensing samples a scene copy.
+        for k in ('RIFT_WALL','RIFT_GLOW','RIFT_LENS'): self.assertIn(k,types); self.assertIn(k,(S/'rift.fsh').read_text())
+        self.assertIn('withTexture("Sampler0", SiftLens.ID)',types); self.assertNotIn('RIFT_HALO',types)
+        self.assertIn('thE * thE',(S/'rift.fsh').read_text())                 # point-mass lens equation
+        lens=(C/'SiftLens.java').read_text()
+        for k in ('copyTextureToTexture','USAGE_COPY_SRC','HudElementRegistry.addFirst','extends AbstractTexture'): self.assertIn(k,lens)
+        self.assertIn('DEPTH = 1.0f',rift); self.assertIn('static float cell(',rift); self.assertNotIn('LENS JITTER',rift)
+        self.assertIn('random value 6..9',fn('rift/style')); self.assertIn('distance=..3.0',fn('rift/transport'))
+        # Warp tunnel: invisible barriers, shorter, client-drawn burst.
+        self.assertIn('minecraft:barrier hollow',fn('tunnel/build')); self.assertNotIn('tunnel_rib',fn('tunnel/build'))
+        self.assertIn('matches 28..',fn('tunnel/player_tick')); self.assertNotIn('particle minecraft:',fn('tunnel/player_tick'))
+        self.assertIn('{v:2b}',fn('travel/begin')); self.assertIn('{v:2b}',fn('world/tick'))
+        self.assertTrue((S/'tunnel.fsh').exists()); self.assertIn('TUNNEL',types)
+        self.assertIn('rift_tunnel',(C/'SiftTunnel.java').read_text())
+        # Frostbloom Spires and giant trees (no single-log trees).
+        lang=json.loads((R/'assets/entersift/lang/en_us.json').read_text())
+        self.assertEqual(lang['biome.entersift.titan_crags'],'Frostbloom Spires')
+        self.assertIn('entersift:rose_spire',json.dumps(json.loads((D/'worldgen/material_rule/the_sift.json').read_text())))
+        for t in ('pale_tree','weeping_soul_tree','verdant_tree','violet_tree','crag_tree'):
+            n=len(json.loads((D/f'worldgen/feature/{t}.json').read_text())['features']); self.assertGreater(n,4000,t)
+        self.assertNotIn('crag_rock"',(D/'worldgen/feature/titan_crag.json').read_text())
+        # Shader pack: sunset god rays in both worlds; bigger sky panels.
+        self.assertIn('siftRays(',(ROOT/'shaderpack/shaders/world_sift/composite.fsh').read_text())
+        self.assertIn('3.5 * owDusk',(ROOT/'shaderpack/shaders/program/composite.fsh').read_text())
+        self.assertIn('hw = 0.30',(C/'SiftSky.java').read_text())
     def test_v017_two_skies_gpu_rifts_tunnel_block_portal(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         sky=(C/'SiftSky.java').read_text()

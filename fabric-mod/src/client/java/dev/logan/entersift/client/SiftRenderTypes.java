@@ -8,6 +8,7 @@ import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import dev.logan.entersift.SiftContent;
+import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -84,22 +85,58 @@ public final class SiftRenderTypes {
             .withCull(false)
             .build());
 
-    /** 0.17 lens halo behind a rift: same shader with RIFT_HALO, additive, depth-tested, no depth write. */
-    public static final RenderPipeline RIFT_HALO_PIPELINE = RenderPipelines.register(
+    /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
+    public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .build());
+
+    /** 0.18 rim glow and sparks: RIFT_GLOW, additive, depth-tested, no depth write. */
+    public static final RenderPipeline RIFT_GLOW_PIPELINE = RenderPipelines.register(riftVariant("rift_glow", "RIFT_GLOW")
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build());
+
+    /**
+     * 0.18 REAL gravitational lens: RIFT_LENS samples the scene copy made by {@link SiftLens} (Sampler0) and
+     * bends it with the point-mass lens equation. Alpha-blended, depth-tested, no depth write.
+     */
+    public static final RenderPipeline RIFT_LENS_PIPELINE = RenderPipelines.register(riftVariant("rift_lens", "RIFT_LENS")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build());
+
+    /** 0.18 warp tunnel sphere around the camera inside the rift tunnel (core/tunnel). Always behind everything. */
+    public static final RenderPipeline TUNNEL_PIPELINE = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
-            .withLocation(SiftContent.id("pipeline/rift_halo"))
-            .withVertexShader(SiftContent.id("core/rift"))
-            .withFragmentShader(SiftContent.id("core/rift"))
-            .withShaderDefine("RIFT_HALO")
+            .withLocation(SiftContent.id("pipeline/tunnel"))
+            .withVertexShader(SiftContent.id("core/tunnel"))
+            .withFragmentShader(SiftContent.id("core/tunnel"))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
+            .withColorTargetState(ColorTargetState.DEFAULT)
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .withCull(false)
             .build());
 
+    private static RenderPipeline.Builder riftVariant(String name, String define) {
+        return RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/" + name))
+            .withVertexShader(SiftContent.id("core/rift"))
+            .withFragmentShader(SiftContent.id("core/rift"))
+            .withShaderDefine(define)
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withCull(false);
+    }
+
     public static final RenderType RIFT = RenderType.create("entersift_rift", RenderSetup.builder(RIFT_PIPELINE).createRenderSetup());
-    public static final RenderType RIFT_HALO = RenderType.create("entersift_rift_halo", RenderSetup.builder(RIFT_HALO_PIPELINE).createRenderSetup());
+    public static final RenderType RIFT_WALL = RenderType.create("entersift_rift_wall", RenderSetup.builder(RIFT_WALL_PIPELINE).createRenderSetup());
+    public static final RenderType RIFT_GLOW = RenderType.create("entersift_rift_glow", RenderSetup.builder(RIFT_GLOW_PIPELINE).createRenderSetup());
+    public static final RenderType RIFT_LENS = RenderType.create("entersift_rift_lens",
+        RenderSetup.builder(RIFT_LENS_PIPELINE).withTexture("Sampler0", SiftLens.ID).createRenderSetup());
+    public static final RenderType TUNNEL = RenderType.create("entersift_tunnel", RenderSetup.builder(TUNNEL_PIPELINE).createRenderSetup());
 
     /** 0.17 sky overlays (panels, swirl blobs): normal alpha blend so colours stay saturated instead of adding up to white. */
     public static final RenderPipeline SKY_BLEND_PIPELINE = RenderPipelines.register(

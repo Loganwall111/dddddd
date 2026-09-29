@@ -368,7 +368,7 @@ public final class SiftSky {
         }
     }
 
-    private static final int ARCS = 4, PANELS = 10, PANEL_GRID = 6;
+    private static final int ARCS = 4, PANELS = 6, PANEL_GRID = 8; // 0.18: fewer, much larger panels
 
     /**
      * 0.16 sky layer 2 (new Sift refs): semi-transparent rectangular "voxel" panels laid along sweeping
@@ -383,7 +383,7 @@ public final class SiftSky {
         float[] ga = new float[grid.length];
         for (int k = 0; k < ARCS; k++) {
             double arcAz = hash(k, 11, 0) * Math.PI * 2 + t * 0.006 * (k % 2 == 0 ? 1 : -1);
-            double arcEl = 0.28 + 0.34 * hash(k, 12, 0), arcSpan = 1.6 + 0.9 * hash(k, 13, 0), bow = 0.18 + 0.2 * hash(k, 14, 0);
+            double arcEl = 0.3 + 0.36 * hash(k, 12, 0), arcSpan = 2.6 + 1.2 * hash(k, 13, 0), bow = 0.18 + 0.2 * hash(k, 14, 0);
             for (int i = 0; i < PANELS; i++) {
                 float f = (i + 0.5f) / PANELS;
                 // Panels slide along their arc (scrolling diagonal stripes) and wrap around.
@@ -391,9 +391,9 @@ public final class SiftSky {
                 double az = arcAz + arcSpan * (slide - 0.5);
                 double el = arcEl + bow * Math.sin(Math.PI * slide) - bow * 0.5 + 0.03 * Math.sin(t * 0.07 + i);
                 double rot = Math.atan2(bow * Math.PI * Math.cos(Math.PI * slide), arcSpan) + 0.25 * (hash(k, i, 15) - 0.5);
-                double hw = 0.09 + 0.12 * hash(k, i, 16), hh = 0.05 + 0.07 * hash(k, i, 17); // 0.17: bigger panels
+                double hw = 0.30 + 0.28 * hash(k, i, 16), hh = 0.17 + 0.16 * hash(k, i, 17); // 0.18: huge panels (17-33 deg wide)
                 float ends = smooth(0f, 0.15f, slide) * smooth(1f, 0.85f, slide);
-                float alpha = 0.42f * strength * ends * (0.7f + 0.3f * (float) Math.sin(t * 0.21f + i * 1.3f + k)); // translucent, not additive
+                float alpha = 0.36f * strength * ends * (0.7f + 0.3f * (float) Math.sin(t * 0.21f + i * 1.3f + k)); // translucent, not additive
                 if (alpha < 0.004f) continue;
                 float[] c = lerp(PANEL_COLS[(k * 3 + i) % PANEL_COLS.length], pal.blobs()[i % 4], 0.2f);
                 double cr = Math.cos(rot), sr = Math.sin(rot), ce = Math.max(0.2, Math.cos(el));
@@ -429,7 +429,7 @@ public final class SiftSky {
             double ph = hash(k, 85, 0) * Math.PI * 2 + t * w;
             double az = cAz + orbit * Math.cos(ph) / Math.max(0.3, Math.cos(cEl));
             double el = Math.max(0.03, Math.min(1.35, cEl + orbit * 0.6 * Math.sin(ph)));
-            float size = 0.1f + 0.12f * hash(k, 86, 0);
+            float size = 0.22f + 0.22f * hash(k, 86, 0); // 0.18: much bigger swirl blobs
             float[] c = lerp(SWIRL_COLS[k % SWIRL_COLS.length], pal.blobs()[k % 4], 0.25f);
             float alpha = weight * (0.3f + 0.12f * (float) Math.sin(t * 0.17f + k * 1.7f));
             float[] f = dir(az, el);
