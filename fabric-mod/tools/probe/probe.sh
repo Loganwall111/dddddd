@@ -130,3 +130,6 @@ echo "=== ShaderOverrides"; javap -p -cp "$ICP" net.irisshaders.iris.pipeline.pr
 } > $OUT/iris_decide.txt 2>&1
 # 0.18.2c: tail of redirectIrisProgram (null-program branch).
 javap -c -p -cp "/tmp/irisx:$CP" net.irisshaders.iris.mixin.MixinShaderManager_Overrides 2>&1 | sed -n '/redirectIrisProgram/,/^  [a-z].*(/p' | sed -n '150,260p' > $OUT/iris_null.txt 2>&1
+# 0.18.2d: does Iris flip depth compare ops for every pipeline?
+{ for c in net.irisshaders.iris.mixin.MixinRenderPipeline net.irisshaders.iris.mixin.MixinGlRenderPipeline; do echo "=== $c"; javap -c -p -cp "/tmp/irisx:$CP" $c 2>&1 | head -120; done
+  echo "=== reverseZ refs"; cd /tmp/irisx && grep -rl "isReverseZ\|reverseZ\|ReverseZ" --include=*.class . | head -20; } > $OUT/iris_depth.txt 2>&1
