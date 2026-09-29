@@ -106,15 +106,15 @@ public final class SiftContent {
     public static final Block RIFT_RED = riftSeed("rift_red", 4, 3);
     public static final Block RIFT_OLIVE = riftSeed("rift_olive", 1, 1);
     // 0.14 Soul Valley (green + purple giant trees, ruins) and Campaign Peaks (volcanic) blocks.
-    public static final Block VERDANT_WOOD = block("verdant_wood", Blocks.OAK_LOG, 0);
-    public static final Block VIOLET_WOOD = block("violet_wood", Blocks.OAK_LOG, 0);
+    public static final Block VERDANT_WOOD = block("verdant_wood", Blocks.OAK_PLANKS, 0);
+    public static final Block VIOLET_WOOD = block("violet_wood", Blocks.OAK_PLANKS, 0);
     public static final Block VERDANT_CANOPY = see("verdant_canopy", Blocks.OAK_LEAVES, 4);
     public static final Block VIOLET_CANOPY = see("violet_canopy", Blocks.OAK_LEAVES, 6);
     public static final Block VALLEY_TURF = block("valley_turf", Blocks.MOSS_BLOCK, 0);
     public static final Block RUIN_BRICKS = block("ruin_bricks", Blocks.STONE_BRICKS, 0);
     public static final Block MOSSY_RUIN_BRICKS = block("mossy_ruin_bricks", Blocks.MOSSY_STONE_BRICKS, 0);
     public static final Block RUIN_TILES = block("ruin_tiles", Blocks.STONE_BRICKS, 0);
-    public static final Block CINDER_ROCK = block("cinder_rock", Blocks.BASALT, 0);
+    public static final Block CINDER_ROCK = block("cinder_rock", Blocks.BLACKSTONE, 0);
     public static final Block ASH_CRUST = block("ash_crust", Blocks.TUFF, 0);
     public static final Block CINDER_GLOW = block("cinder_glow", Blocks.MAGMA_BLOCK, 10);
     public static final Block EMBER_ORE = block("ember_ore", Blocks.IRON_ORE, 5);
