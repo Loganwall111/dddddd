@@ -54,3 +54,9 @@ for c in net.minecraft.client.gui.GuiGraphicsExtractor net.fabricmc.fabric.api.c
   echo "===== $c"; javap -public -cp "$CP" "$c" 2>&1 | head -150
 done
 } > $OUT/hud_api.txt
+{
+for c in net.minecraft.world.effect.MobEffect net.minecraft.world.effect.MobEffectInstance net.minecraft.world.effect.MobEffectCategory \
+         net.minecraft.core.Registry net.minecraft.world.entity.LivingEntity; do
+  echo "===== $c"; javap -protected -cp "$CP" "$c" 2>&1 | grep -iE "class|MobEffect|register|Holder|Effect\(|getDuration|endsWithin|isInfiniteDuration" | head -80
+done
+} > $OUT/effect_api.txt
