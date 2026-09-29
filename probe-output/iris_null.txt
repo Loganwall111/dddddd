@@ -1,0 +1,31 @@
+       369: ifeq          400
+       372: getstatic     #211                // Field net/irisshaders/iris/Iris.logger:Lnet/irisshaders/iris/IrisLogging;
+       375: aload_0
+       376: invokevirtual #195                // Method com/mojang/renderpearl/api/pipeline/RenderPipeline.getLocation:()Lnet/minecraft/resources/Identifier;
+       379: invokestatic  #215                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+       382: invokedynamic #219,  0            // InvokeDynamic #2:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+       387: new           #223                // class java/lang/Throwable
+       390: dup
+       391: invokespecial #225                // Method java/lang/Throwable."<init>":()V
+       394: invokevirtual #226                // Method net/irisshaders/iris/IrisLogging.fatal:(Ljava/lang/String;Ljava/lang/Throwable;)V
+       397: goto          425
+       400: getstatic     #211                // Field net/irisshaders/iris/Iris.logger:Lnet/irisshaders/iris/IrisLogging;
+       403: aload_0
+       404: invokevirtual #195                // Method com/mojang/renderpearl/api/pipeline/RenderPipeline.getLocation:()Lnet/minecraft/resources/Identifier;
+       407: invokestatic  #215                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+       410: invokedynamic #232,  0            // InvokeDynamic #3:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+       415: new           #223                // class java/lang/Throwable
+       418: dup
+       419: invokespecial #225                // Method java/lang/Throwable."<init>":()V
+       422: invokevirtual #233                // Method net/irisshaders/iris/IrisLogging.error:(Ljava/lang/String;Ljava/lang/Throwable;)V
+       425: return
+
+  private static com.mojang.renderpearl.backend.api.BackendRenderPipeline$CreateInfo iris$createInfo(com.mojang.renderpearl.backend.api.BackendRenderPipeline$CreateInfo, com.mojang.renderpearl.backend.opengl.GlProgram, java.util.List<com.mojang.renderpearl.api.vertex.VertexFormat>);
+  private static java.util.Map lambda$redirectIrisProgram$1(com.mojang.renderpearl.backend.opengl.GlProgram);
+    Code:
+         0: new           #330                // class java/util/HashMap
+         3: dup
+         4: invokespecial #332                // Method java/util/HashMap."<init>":()V
+         7: areturn
+
+  private static java.util.Map lambda$redirectIrisProgram$0(com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline);
