@@ -28,10 +28,13 @@ final class SiftSmokeTest {
             if (ticks == 20) stageOne(server);
             if (ticks == 120) stageTwo(server);
             if (ticks == 140) checkAnchors(server);
-            if (ticks == 40) buildRitual(server);
-            if (ticks == 60) playRitual(server);
-            if (ticks == 480) checkRitual(server);
-            if (ticks == 500) {
+            // 0.16: the arena chunks are force-loaded first and built 80 ticks later (a slow runner may not
+            // have generated them in the same tick), and the portal gets ~200 ticks of slack after opening.
+            if (ticks == 30) forceRitualChunks(server);
+            if (ticks == 110) buildRitual(server);
+            if (ticks == 130) playRitual(server);
+            if (ticks == 680) checkRitual(server);
+            if (ticks == 700) {
                 EnterTheSift.LOGGER.info("SIFT-SMOKE DONE");
                 server.halt(false);
             }
@@ -98,8 +101,14 @@ final class SiftSmokeTest {
     // sonorous deepslate tuned to pitches 1..8, left to right. The guardian is marked as defeated.
     private static final int RX = 4000, RY = -40, RZ = 4000;
 
+    private static void forceRitualChunks(MinecraftServer server) {
+        run(server, "execute in minecraft:overworld run forceload add " + (RX - 16) + " " + (RZ - 16) + " " + (RX + 16) + " " + (RZ + 16));
+    }
+
     private static void buildRitual(MinecraftServer server) {
         String in = "execute in minecraft:overworld run ";
+        boolean loaded = server.overworld().isLoaded(new net.minecraft.core.BlockPos(RX, RY, RZ + 7));
+        EnterTheSift.LOGGER.info("SIFT-SMOKE ritual arena loaded before build: {}", loaded);
         run(server, in + "forceload add " + (RX - 16) + " " + (RZ - 16) + " " + (RX + 16) + " " + (RZ + 16));
         run(server, in + "fill " + (RX - 8) + " " + (RY - 1) + " " + (RZ - 4) + " " + (RX + 8) + " " + (RY + 9) + " " + (RZ + 12) + " minecraft:air");
         run(server, in + "fill " + (RX - 6) + " " + (RY - 1) + " " + (RZ - 2) + " " + (RX + 6) + " " + (RY - 1) + " " + (RZ + 10) + " entersift:salt");
@@ -130,7 +139,11 @@ final class SiftSmokeTest {
             if (e.entityTags().contains("sift.portal")) portalMarker = true;
             if (e instanceof RiftPortalEntity && e.entityTags().contains("sift.portal_anchor")) portalAnchor = true;
         }
-        EnterTheSift.LOGGER.info("SIFT-SMOKE ritual: portalMarker={} portalAnchor={}", portalMarker, portalAnchor);
+        boolean ritualMarker = false;
+        for (net.minecraft.world.entity.Entity e : level.getAllEntities())
+            if (e.distanceToSqr(RX + 0.5, RY + 1.0, RZ + 7.5) <= 4 && e.entityTags().contains("sift.ritual")) ritualMarker = true;
+        EnterTheSift.LOGGER.info("SIFT-SMOKE ritual: portalMarker={} portalAnchor={} stillOpening={} frameBlock={}", portalMarker, portalAnchor,
+            ritualMarker, level.getBlockState(new net.minecraft.core.BlockPos(RX - 5, RY, RZ + 7)));
         if (!portalMarker || !portalAnchor)
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL ritual 1,3,7,6,5,2,4,8 did not open the portal (marker={}, anchor={})", portalMarker, portalAnchor);
     }
