@@ -413,6 +413,22 @@ class DataContracts(unittest.TestCase):
             self.assertEqual(im.size,(256,128))
             px=list(im.getdata()); mean=sum(sum(p) for p in px)/len(px)/3
             self.assertGreater(mean,150,n)                       # luminous canvases, like the trailer
+    def test_v019_stacked_box_rifts_crack_free_and_coral_interior(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
+        # Stacked hollow boxes at different depths, with step walls and lip rims between them.
+        self.assertIn('static float boxes(',rift); self.assertIn('float[][] depth, float maxDepth',rift)
+        self.assertIn('private static float wallTop(',rift); self.assertIn('boolean lip)',rift)
+        self.assertIn('private static boolean same(',rift)
+        self.assertIn('-sh.maxDepth() - 0.05f',rift)
+        # Uniform jitter (no per-position phase -> no cracks between interior strips).
+        self.assertIn('return x + (float) Math.sin(gameTime() * 0.4f) * 0.05f;',rift)
+        self.assertNotIn('y * 1.9f + z * 0.7f',rift)
+        # Coral pixel interior without horizontal cloud bands; the whole view on a chunky grid.
+        self.assertIn('destination(type, px(lens, 56.0)',fsh)
+        self.assertIn('vec3(0.97, 0.43, 0.30)',fsh)
+        self.assertNotIn('bright horizon band',fsh)
+        self.assertNotIn('0.012 * vec2(sin(lens.y * 9.0',fsh)
     def test_v0182_gpu_rifts_under_iris_and_pack_updates(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         types=(c/'client/SiftRenderTypes.java').read_text()
@@ -444,7 +460,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.18.2-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.19',(ROOT/'gradle.properties').read_text())
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()

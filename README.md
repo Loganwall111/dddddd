@@ -123,6 +123,19 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.19.0
+Rifts rebuilt against the trailer frames:
+- **Stacked hollow boxes.** The cluster is split into rectangular boxes (big deep centre box, arms and side
+  blocks at different depths). Where two boxes meet, the deeper one shows a stepped inner wall with a
+  white lip rim, so the rift reads as a 3D voxel structure instead of a flat pale cut-out.
+- **No more cracks.** The 0.18.1 tremble moved each vertex by a position-dependent amount, which tore
+  seams (grass showing through) between interior strips. The whole rift now trembles as one piece
+  (`sin(gameTime*0.4)*0.05`).
+- **Trailer interior.** The Overworld view is a saturated coral/salmon canvas with chunky cream and peach
+  pixel blotches and warm light in the middle, instead of wavy horizontal stripes. Every destination view
+  is sampled on a chunky pixel grid, and the wavy distortion is much gentler.
+- Inner walls are near-white at the lip and take the rift colour deeper in; the rims are thinner and crisper.
+
 ### 0.18.2
 - **The 0.18 GLSL rifts now work under Iris shader packs.** Before, turning on a pack dropped rifts back to
   the old CPU texture interior. Probing Iris 1.11.6 showed that a pipeline with no pack program assigned

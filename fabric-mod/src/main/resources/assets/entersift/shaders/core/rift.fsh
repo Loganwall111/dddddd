@@ -96,19 +96,21 @@ vec3 marble(vec2 uv, float t, int type, float layer) {
 // Blocky Minecraft-style pixelation of a coordinate (the trailer views are chunky, not smooth).
 vec2 px(vec2 p, float n) { return (floor(p * n) + 0.5) / n; }
 
-// Overworld: radiant peach-to-pink sky canvas with soft blocky clouds drifting along the horizon.
+// Overworld (0.19, trailer refs): a saturated coral / salmon canvas covered in chunky pixel blotches of
+// cream and pale peach at three parallax depths, darker coral pockets, and warm light low in the middle.
+// No horizontal bands (they read as stripes up close).
 vec3 viewOverworld(vec2 uv, vec2 par, float t) {
-    float y = uv.y - par.y * 0.35;
-    vec3 c = mix(vec3(1.00, 0.62, 0.36), vec3(1.00, 0.72, 0.62), smoothstep(0.1, 0.55, y));
-    c = mix(c, vec3(1.00, 0.80, 0.82), smoothstep(0.55, 1.0, y));
-    c += vec3(0.25, 0.18, 0.08) * exp(-pow((y - 0.42) * 5.0, 2.0));        // bright horizon band
-    for (int i = 0; i < 3; i++) {
-        float d = 0.2 + 0.25 * float(i);
-        vec2 q = px(uv - par * d + vec2(t * (0.012 + 0.006 * float(i)), 0.0), 40.0);
-        float band = exp(-pow((q.y - (0.30 + 0.16 * float(i))) * 4.0, 2.0));
-        float cl = smoothstep(0.48, 0.72, fbm(q * vec2(4.0, 7.0) + float(i) * 3.7)) * band;
-        c = mix(c, mix(vec3(1.0, 0.93, 0.84), vec3(1.0, 0.70, 0.66), float(i) * 0.4), cl * 0.85);
+    vec3 c = mix(vec3(0.97, 0.43, 0.30), vec3(1.00, 0.58, 0.45), smoothstep(0.05, 0.95, uv.y));
+    for (int i = 2; i >= 0; i--) {                                         // far to near
+        float d = 0.15 + 0.25 * float(i);
+        vec2 q = px(uv - par * d + vec2(t * (0.010 + 0.004 * float(i)), t * 0.003), 30.0 - 6.0 * float(i));
+        float n = fbm(q * vec2(4.6, 3.8) + float(i) * 3.7 + vec2(0.0, t * 0.01));
+        vec3 blot = mix(vec3(1.00, 0.88, 0.74), vec3(1.00, 0.70, 0.54), float(i) * 0.45);
+        c = mix(c, blot, smoothstep(0.52 - 0.03 * float(i), 0.72, n) * (0.8 - 0.15 * float(i)));
+        c = mix(c, vec3(0.86, 0.32, 0.26), smoothstep(0.34, 0.18, n) * 0.28);
     }
+    vec2 g = (uv - vec2(0.5, 0.40)) * vec2(1.3, 1.7);
+    c += vec3(0.22, 0.15, 0.07) * exp(-dot(g, g) * 5.0);                  // warm light pouring through
     return c;
 }
 
@@ -268,12 +270,13 @@ void main() {
     float ang = 0.5 * exp(-r * 3.5) * (1.0 + 0.3 * sin(t * 0.4));
     mat2 rot = mat2(cos(ang), -sin(ang), sin(ang), cos(ang));
     vec2 lens = 0.5 + rot * d * (1.0 - 0.18 * exp(-r * r * 14.0));
-    lens += 0.012 * vec2(sin(lens.y * 9.0 + t * 1.1), cos(lens.x * 8.0 - t * 0.9));
+    lens += 0.005 * vec2(sin(lens.y * 7.0 + t * 0.8), cos(lens.x * 6.0 - t * 0.7)); // 0.19: gentle, no stripes
 
     // 0.18.1 destination viewport (camera parallax per layer inside each view).
-    vec3 col = destination(type, lens, par * 0.2, t);
+    // 0.19: sampled on a chunky pixel grid, like the blocky destination seen through the trailer rifts.
+    vec3 col = destination(type, px(lens, 56.0), par * 0.2, t);
     // Light pouring through from the other side: white-hot core for bright worlds, a soft glow otherwise.
-    float coreK = (type == 1 || type == 2) ? 0.25 : (type == 5 ? 0.85 : 0.55);
+    float coreK = (type == 1 || type == 2) ? 0.25 : (type == 5 ? 0.85 : 0.45);
     float core = exp(-r * r * 9.0) * (0.85 + 0.15 * sin(t * 1.7));
     col = mix(col, vec3(1.0, 0.98, 0.95), core * coreK);
     // Soft bokeh lights drifting up (the trailer's floating light blobs).

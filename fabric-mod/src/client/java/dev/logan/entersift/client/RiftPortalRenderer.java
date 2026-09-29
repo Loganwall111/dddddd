@@ -155,8 +155,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ shape
 
     /** Body cells + satellites, in rift-local blocks (x across, y up, z = facing normal). */
-    private record Shape(int cols, int rows, float cw, float ch, float w, float h, boolean[][] body, int[][] tier, List<float[]> sats) {
+    /**
+     * 0.19 (trailer refs): the body is a stack of hollow BOXES at different depths, not one flat cut-out.
+     * {@code depth[i][j]} is how far cell (i, j) is recessed; cells of one box share a depth, and where two
+     * boxes meet, the deeper one shows a step wall with a white lip rim, like the footage.
+     */
+    private record Shape(int cols, int rows, float cw, float ch, float w, float h, boolean[][] body, int[][] tier, List<float[]> sats,
+                         float[][] depth, float maxDepth) {
         boolean on(int i, int j) { return i >= 0 && j >= 0 && i < cols && j < rows && body[i][j]; }
+        float d(int i, int j) { return on(i, j) ? depth[i][j] : 0f; }
         float x(int i) { return -w / 2 + i * cw; }
         float y(int j) { return BASE + j * ch; }
         float cy() { return BASE + h / 2; }
@@ -234,7 +241,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float d = Math.max(Math.abs(u), Math.abs(v)) * 0.85f + 0.15f * hash(seed, i, j + 97);
             tier[i][j] = Math.min(TIERS - 1, (int) (d * TIERS));
         }
-        Shape proto = new Shape(cols, rows, cw, ch, w, h, body, tier, new ArrayList<>());
+        float[][] depth = new float[cols][rows];
+        float maxDepth = boxes(type, seed, cols, rows, body, tier, depth);
+        Shape proto = new Shape(cols, rows, cw, ch, w, h, body, tier, new ArrayList<>(), depth, maxDepth);
         int count = switch (type) { case SIFT -> 8; case NETHER -> 11; case OVERWORLD -> 6; case END -> 7; default -> 4; };
         for (int k = 0; k < count; k++) {
             // March out from the centre along a random direction to the body's rim; the satellite sits across it.
@@ -274,6 +283,67 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             }
         }
         return proto;
+    }
+
+    /**
+     * 0.19: splits the body into rectangular boxes (greedy, centre first, 2-5 cells wide, 2-4 tall) and gives
+     * each box its own recess depth. The centre box is the deepest; neighbouring boxes always differ by at
+     * least 0.22 blocks so every seam shows a real step. All cells of a box pop in together (one tier).
+     * The ritual PORTAL stays one clean rectangle at a single depth. Returns the deepest recess.
+     */
+    static float boxes(RiftType type, long seed, int cols, int rows, boolean[][] body, int[][] tier, float[][] depth) {
+        int[][] box = new int[cols][rows];
+        for (int[] c : box) java.util.Arrays.fill(c, -1);
+        if (type == RiftType.PORTAL) {
+            for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) depth[i][j] = DEPTH;
+            return DEPTH;
+        }
+        List<int[]> order = new ArrayList<>();
+        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) if (body[i][j]) order.add(new int[]{i, j});
+        float ci = (cols - 1) / 2f, cj = (rows - 1) / 2f;
+        order.sort((a, b) -> Float.compare(Math.abs(a[0] - ci) + Math.abs(a[1] - cj) * 1.1f, Math.abs(b[0] - ci) + Math.abs(b[1] - cj) * 1.1f));
+        List<Float> depths = new ArrayList<>();
+        float max = 0f;
+        for (int[] start : order) {
+            if (box[start[0]][start[1]] >= 0) continue;
+            int id = depths.size();
+            int maxW = 2 + (int) (hash(seed, id, 41) * 4f), maxH = 2 + (int) (hash(seed, id, 42) * 3f);
+            if (id == 0) { maxW += 1; maxH += 1; }                               // the big centre box
+            int x0 = start[0], x1 = start[0], y0 = start[1], y1 = start[1];
+            boolean grew = true;
+            while (grew) {
+                grew = false;
+                if (x1 - x0 + 1 < maxW && free(body, box, x1 + 1, x1 + 1, y0, y1)) { x1++; grew = true; }
+                if (x1 - x0 + 1 < maxW && free(body, box, x0 - 1, x0 - 1, y0, y1)) { x0--; grew = true; }
+                if (y1 - y0 + 1 < maxH && free(body, box, x0, x1, y1 + 1, y1 + 1)) { y1++; grew = true; }
+                if (y1 - y0 + 1 < maxH && free(body, box, x0, x1, y0 - 1, y0 - 1)) { y0--; grew = true; }
+            }
+            float d = id == 0 ? 1.45f : 0.55f + 0.7f * hash(seed, id, 43);
+            // Keep a visible step against every box already touching this one.
+            for (int attempt = 0; attempt < 4; attempt++) {
+                boolean clash = false;
+                for (int i = x0 - 1; i <= x1 + 1; i++) for (int j = y0 - 1; j <= y1 + 1; j++) {
+                    if (i < 0 || j < 0 || i >= cols || j >= rows || box[i][j] < 0) continue;
+                    if ((i >= x0 && i <= x1) == (j >= y0 && j <= y1)) continue;     // edge neighbours only
+                    if (Math.abs(depths.get(box[i][j]) - d) < 0.22f) clash = true;
+                }
+                if (!clash) break;
+                d = d + 0.29f > 1.3f ? d - 0.53f : d + 0.29f;
+                d = Math.max(0.45f, d);
+            }
+            d = Math.round(d * 40f) / 40f + 0.0037f;                              // never coplanar with satellites
+            depths.add(d);
+            max = Math.max(max, d);
+            int t = tier[start[0]][start[1]];
+            for (int i = x0; i <= x1; i++) for (int j = y0; j <= y1; j++) { box[i][j] = id; depth[i][j] = d; tier[i][j] = t; }
+        }
+        return Math.max(max, 0.5f);
+    }
+
+    private static boolean free(boolean[][] body, int[][] box, int x0, int x1, int y0, int y1) {
+        if (x0 < 0 || y0 < 0 || x1 >= body.length || y1 >= body[0].length) return false;
+        for (int i = x0; i <= x1; i++) for (int j = y0; j <= y1; j++) if (!body[i][j] || box[i][j] >= 0) return false;
+        return true;
     }
 
     // ------------------------------------------------------------------ timeline helpers
@@ -409,19 +479,21 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 if (!sh.on(i, j)) { i++; continue; }
                 float k = pop(age, appearAt(sh.tier()[i][j]));
                 if (k <= 0) { i++; continue; }
+                float d = sh.d(i, j);
                 if (k < 1f) { // still popping in: its own inset quad
                     float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
-                    canvas(p, vc, sh, r[0] + INSET, r[1] + INSET, r[2] - INSET, r[3] - INSET, -DEPTH + dz, scroll, zoom, pu, pv, tint, alpha);
+                    canvas(p, vc, sh, r[0] + INSET, r[1] + INSET, r[2] - INSET, r[3] - INSET, -d + dz, scroll, zoom, pu, pv, tint, alpha);
                     i++;
                     continue;
                 }
-                boolean below = visible(sh, i, j - 1, age), above = visible(sh, i, j + 1, age);
+                // 0.19: runs merge only across cells of the same depth; any other edge is inset from its wall.
+                boolean below = same(sh, i, j - 1, d, age), above = same(sh, i, j + 1, d, age);
                 int from = i;
-                while (i < sh.cols() && visible(sh, i, j, age) && visible(sh, i, j - 1, age) == below && visible(sh, i, j + 1, age) == above) i++;
-                float x0 = sh.x(from) + (visible(sh, from - 1, j, age) ? 0 : INSET);
-                float x1 = sh.x(i) - (visible(sh, i, j, age) ? 0 : INSET);
+                while (i < sh.cols() && same(sh, i, j, d, age) && same(sh, i, j - 1, d, age) == below && same(sh, i, j + 1, d, age) == above) i++;
+                float x0 = sh.x(from) + (same(sh, from - 1, j, d, age) ? 0 : INSET);
+                float x1 = sh.x(i) - (same(sh, i, j, d, age) ? 0 : INSET);
                 float y0 = sh.y(j) + (below ? 0 : INSET), y1 = sh.y(j) + sh.ch() - (above ? 0 : INSET);
-                canvas(p, vc, sh, x0, y0, x1, y1, -DEPTH + dz, scroll, zoom, pu, pv, tint, alpha);
+                canvas(p, vc, sh, x0, y0, x1, y1, -d + dz, scroll, zoom, pu, pv, tint, alpha);
             }
         }
         for (float[] b : sh.sats()) {
@@ -473,7 +545,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * positions and applies the lens equation to the scene copy.
      */
     private static void lens(PoseStack.Pose p, VertexConsumer vc, Shape sh, float code, float fade) {
-        float half = Math.max(sh.w(), sh.h()) * 0.95f, z = -DEPTH - 0.05f, cy = sh.cy();
+        float half = Math.max(sh.w(), sh.h()) * 0.95f, z = -sh.maxDepth() - 0.05f, cy = sh.cy();
         gv(p, vc, -half, cy - half, z, 0f, 0f, code, fade);
         gv(p, vc, half, cy - half, z, 1f, 0f, code, fade);
         gv(p, vc, half, cy + half, z, 1f, 1f, code, fade);
@@ -516,17 +588,22 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ walls (pale cream, tinted)
 
     private static void walls(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, float[] edge, float age) {
-        float[] front = mix(new float[]{1f, 0.97f, 0.9f}, edge, 0.28f), back = mix(new float[]{0.93f, 0.86f, 0.8f}, edge, 0.5f);
+        // 0.19 (trailer): the inner walls are near-white at the lip and take the rift colour deeper in.
+        float[] front = mix(new float[]{1f, 0.98f, 0.95f}, edge, 0.12f), back = mix(new float[]{0.96f, 0.88f, 0.84f}, edge, 0.55f);
         for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
             if (!sh.on(i, j)) continue;
             float at = appearAt(sh.tier()[i][j]), k = pop(age, at);
             if (k <= 0) continue;
             float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
-            float zb = -DEPTH - 2 * INSET; // walls reach just behind the inset canvas: no light leaks, no shared edge
-            if (!visible(sh, i - 1, j, age)) wall(p, vc, r[0], r[1], r[0], r[3], 0, zb, front, back, 0.92f);
-            if (!visible(sh, i + 1, j, age)) wall(p, vc, r[2], r[1], r[2], r[3], 0, zb, front, back, 0.8f);
-            if (!visible(sh, i, j - 1, age)) wall(p, vc, r[0], r[1], r[2], r[1], 0, zb, front, back, 1f);
-            if (!visible(sh, i, j + 1, age)) wall(p, vc, r[0], r[3], r[2], r[3], 0, zb, front, back, 0.72f);
+            float d = sh.d(i, j), zb = -d - 2 * INSET; // walls reach just behind the inset canvas: no light leaks
+            // 0.19: an open edge gets a full wall from the front plane; an edge against a SHALLOWER box gets
+            // the step wall between the two back planes (the deeper box owns it).
+            float zl = wallTop(sh, i - 1, j, d, age), zr = wallTop(sh, i + 1, j, d, age);
+            float zd = wallTop(sh, i, j - 1, d, age), zu = wallTop(sh, i, j + 1, d, age);
+            if (zl <= 0) wall(p, vc, r[0], r[1], r[0], r[3], zl, zb, front, back, 0.92f);
+            if (zr <= 0) wall(p, vc, r[2], r[1], r[2], r[3], zr, zb, front, back, 0.8f);
+            if (zd <= 0) wall(p, vc, r[0], r[1], r[2], r[1], zd, zb, front, back, 1f);
+            if (zu <= 0) wall(p, vc, r[0], r[3], r[2], r[3], zu, zb, front, back, 0.72f);
         }
         for (float[] b : sh.sats()) {
             float at = appearAt(TIERS) + b[6] % 3, k = pop(age, at);
@@ -547,6 +624,17 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
+    /**
+     * 0.19: front z of the wall on the edge toward neighbour (ni, nj) of a cell recessed by {@code d}:
+     * 0 (the front plane) when the neighbour is open, -dn when the neighbour is a shallower box, and
+     * +1 (no wall) when the neighbour is at the same depth or deeper.
+     */
+    private static float wallTop(Shape sh, int ni, int nj, float d, float age) {
+        if (!visible(sh, ni, nj, age)) return 0f;
+        float dn = sh.d(ni, nj);
+        return dn < d - 1e-4f ? -dn : 1f;
+    }
+
     /** White-hot flash on each cell as it snaps in (additive). */
     private static void flashes(PoseStack.Pose p, VertexConsumer vc, Shape sh, float age) {
         if (age > GROWN + 8) return;
@@ -555,8 +643,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float at = appearAt(sh.tier()[i][j]), hot = heat(age, at), k = pop(age, at);
             if (hot <= 0 || k <= 0) continue;
             float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
-            rect(p, vc, r[0], r[1], r[2], r[3], -DEPTH + 0.02f, new float[]{1f, 1f, 1f}, hot * 0.9f);
+            rect(p, vc, r[0], r[1], r[2], r[3], -sh.d(i, j) + 0.02f, new float[]{1f, 1f, 1f}, hot * 0.9f);
         }
+    }
+
+    /** 0.19: fully grown body cell at exactly depth {@code d} (same box or a box at the same recess). */
+    private static boolean same(Shape sh, int i, int j, float d, float age) {
+        return visible(sh, i, j, age) && Math.abs(sh.d(i, j) - d) < 1e-4f;
     }
 
     private static boolean visible(Shape sh, int i, int j, float age) {
@@ -580,11 +673,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float at = appearAt(sh.tier()[i][j]), k = pop(age, at);
             if (k <= 0) continue;
             float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
-            float hot = heat(age, at);
-            if (!visible(sh, i - 1, j, age)) rim(p, vc, cam, r[0], r[1], r[0], r[3], 0.01f, -DEPTH, core, bl, hot);
-            if (!visible(sh, i + 1, j, age)) rim(p, vc, cam, r[2], r[1], r[2], r[3], 0.01f, -DEPTH, core, bl, hot);
-            if (!visible(sh, i, j - 1, age)) rim(p, vc, cam, r[0], r[1], r[2], r[1], 0.01f, -DEPTH, core, bl, hot);
-            if (!visible(sh, i, j + 1, age)) rim(p, vc, cam, r[0], r[3], r[2], r[3], 0.01f, -DEPTH, core, bl, hot);
+            float hot = heat(age, at), d = sh.d(i, j);
+            // 0.19: outer edges get the full neon rim; seams against a shallower box get a lip rim on the
+            // shallower back plane, so the internal box outlines glow like the footage.
+            float zl = wallTop(sh, i - 1, j, d, age), zr = wallTop(sh, i + 1, j, d, age);
+            float zd = wallTop(sh, i, j - 1, d, age), zu = wallTop(sh, i, j + 1, d, age);
+            if (zl <= 0) rim(p, vc, cam, r[0], r[1], r[0], r[3], zl + 0.01f, -d, core, bl, hot, zl < 0);
+            if (zr <= 0) rim(p, vc, cam, r[2], r[1], r[2], r[3], zr + 0.01f, -d, core, bl, hot, zr < 0);
+            if (zd <= 0) rim(p, vc, cam, r[0], r[1], r[2], r[1], zd + 0.01f, -d, core, bl, hot, zd < 0);
+            if (zu <= 0) rim(p, vc, cam, r[0], r[3], r[2], r[3], zu + 0.01f, -d, core, bl, hot, zu < 0);
         }
         for (float[] b : sh.sats()) {
             float at = appearAt(TIERS) + b[6] % 3, k = pop(age, at);
@@ -592,10 +689,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float[] r = scaled(b[0], b[1], b[2], b[3], k);
             float hot = heat(age, at);
             int m = (int) b[7];
-            if ((m & 1) == 0) rim(p, vc, cam, r[0], r[1], r[0], r[3], b[4], b[5], core, bl, hot);
-            if ((m & 2) == 0) rim(p, vc, cam, r[2], r[1], r[2], r[3], b[4], b[5], core, bl, hot);
-            if ((m & 4) == 0) rim(p, vc, cam, r[0], r[1], r[2], r[1], b[4], b[5], core, bl, hot);
-            if ((m & 8) == 0) rim(p, vc, cam, r[0], r[3], r[2], r[3], b[4], b[5], core, bl, hot);
+            if ((m & 1) == 0) rim(p, vc, cam, r[0], r[1], r[0], r[3], b[4], b[5], core, bl, hot, false);
+            if ((m & 2) == 0) rim(p, vc, cam, r[2], r[1], r[2], r[3], b[4], b[5], core, bl, hot, false);
+            if ((m & 4) == 0) rim(p, vc, cam, r[0], r[1], r[2], r[1], b[4], b[5], core, bl, hot, false);
+            if ((m & 8) == 0) rim(p, vc, cam, r[0], r[3], r[2], r[3], b[4], b[5], core, bl, hot, false);
             // Depth edges at the outer corners make the satellite (or tetromino) read as a 3D box.
             float[][] corners = {{r[0], r[1], m & 5}, {r[2], r[1], m & 6}, {r[0], r[3], m & 9}, {r[2], r[3], m & 10}};
             for (float[] c : corners)
@@ -622,7 +719,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float band = Math.min(0.6f, Math.min(sh.cw(), sh.ch()) * 1.2f), out = 1.1f, fwd = 0.7f;
         for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
             if (!sh.on(i, j)) continue;
-            float x0 = sh.x(i), y0 = sh.y(j), x1 = x0 + sh.cw(), y1 = y0 + sh.ch(), zc = -DEPTH + 0.04f;
+            float x0 = sh.x(i), y0 = sh.y(j), x1 = x0 + sh.cw(), y1 = y0 + sh.ch(), zc = -sh.d(i, j) + 0.04f;
             float ea = 0.24f * in * breathe, sa = 0.05f * in * breathe;
             // 0.15 outer bloom: a soft band in the rift's plane, fading outward from every open edge.
             boolean portal = s.type == RiftType.PORTAL;
@@ -672,10 +769,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * soft and anti-aliased instead of stacked hard ribbons. The back rim sits just in front of the canvas.
      */
     private static void rim(PoseStack.Pose p, VertexConsumer vc, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
-                            float[] core, float[] bloom, float hot) {
+                            float[] core, float[] bloom, float hot, boolean lip) {
         float[] a = {xa, ya, zf}, b = {xb, yb, zf};
-        band(p, vc, cam, a, b, 0.08f + 0.06f * hot, 0.32f + 0.15f * hot, core, bloom, 1f);
-        ribbon(p, vc, cam, a, b, 0.55f, bloom, 0.03f);
+        // 0.19: crisp thin white line with a soft halo (trailer), lips slightly thinner than the outer rim.
+        float k = lip ? 0.75f : 1f;
+        band(p, vc, cam, a, b, (0.06f + 0.06f * hot) * k, (0.30f + 0.15f * hot) * k, core, bloom, lip ? 0.85f : 1f);
+        ribbon(p, vc, cam, a, b, 0.7f * k, bloom, 0.035f);
         band(p, vc, cam, new float[]{xa, ya, zb + 0.012f}, new float[]{xb, yb, zb + 0.012f}, 0.04f, 0.18f, core, bloom, 0.6f);
     }
 
@@ -795,14 +894,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /**
-     * 0.18.1 portal edge jitter: every rift vertex trembles by {@code Math.sin(gameTime * 0.4f) * 0.05f},
-     * phase-shifted by its position, so the whole voxel silhouette waves like an active reality tear.
-     * Shared corners get the same offset, so walls, rims and interior never crack apart.
+     * 0.18.1 portal edge jitter: the rift trembles by {@code Math.sin(gameTime * 0.4f) * 0.05f}.
+     * 0.19: the SAME offset is applied to every vertex (x and y on slightly different phases). The
+     * 0.18.1 per-position phase bent shared edges by different amounts and tore visible cracks between
+     * the interior strips (T-junctions); a uniform shift keeps every seam closed.
      */
     static float gameTime() { return (float) ((System.nanoTime() / 5.0e7) % 1.0e6); } // ticks (20 per second)
 
-    private static float jx(float x, float y, float z) { return x + (float) Math.sin(gameTime() * 0.4f + y * 1.9f + z * 0.7f) * 0.05f; }
-    private static float jy(float x, float y, float z) { return y + (float) Math.sin(gameTime() * 0.4f * 1.13f + x * 1.7f + 2.1f) * 0.05f; }
+    private static float jx(float x, float y, float z) { return x + (float) Math.sin(gameTime() * 0.4f) * 0.05f; }
+    private static float jy(float x, float y, float z) { return y + (float) Math.sin(gameTime() * 0.4f * 1.13f + 2.1f) * 0.05f; }
 
     private static void col(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
         if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
