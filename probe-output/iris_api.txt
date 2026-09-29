@@ -1,0 +1,304 @@
+IRIS_URL=https://cdn.modrinth.com/data/YL57xq9U/versions/bAdKrpw8/iris-fabric-1.11.6%2Bmc26.3.jar
+META-INF/jars/antlr4-runtime-4.13.1.jar
+META-INF/jars/fabric-api-base-2.0.6+fcdff87f02.jar
+META-INF/jars/fabric-key-mapping-api-v1-2.0.8+3434d6d902.jar
+META-INF/jars/glsl-transformer-3.0.0-pre3.jar
+META-INF/jars/jcpp-1.4.14.jar
+net/irisshaders/iris/api/v0/
+net/irisshaders/iris/api/v0/IrisApi.class
+net/irisshaders/iris/api/v0/IrisApiConfig.class
+net/irisshaders/iris/api/v0/IrisApiInternal.class
+net/irisshaders/iris/api/v0/IrisProgram.class
+net/irisshaders/iris/api/v0/IrisShadowProgram.class
+net/irisshaders/iris/api/v0/IrisShadowRenderCallback.class
+net/irisshaders/iris/api/v0/IrisTextVertexSink.class
+net/irisshaders/iris/api/v0/item/
+net/irisshaders/iris/api/v0/item/IrisItemLightProvider.class
+net/irisshaders/iris/mixin/MixinGlRenderPipeline.class
+net/irisshaders/iris/mixin/MixinRenderPipeline.class
+net/irisshaders/iris/mixinterface/GlRenderPipelineAccess.class
+net/irisshaders/iris/pipeline/IrisPipelines$1.class
+net/irisshaders/iris/pipeline/IrisPipelines.class
+net/irisshaders/iris/pipeline/PipelineManager.class
+===== net.irisshaders.iris.api.v0.IrisApi
+Compiled from "IrisApi.java"
+public interface net.irisshaders.iris.api.v0.IrisApi {
+  public static net.irisshaders.iris.api.v0.IrisApi getInstance();
+  public abstract int getMinorApiRevision();
+  public abstract boolean isShaderPackInUse();
+  public abstract boolean isRenderingShadowPass();
+  public abstract java.lang.Object openMainIrisScreenObj(java.lang.Object);
+  public abstract java.lang.String getMainScreenLanguageKey();
+  public abstract net.irisshaders.iris.api.v0.IrisApiConfig getConfig();
+  public abstract net.irisshaders.iris.api.v0.IrisTextVertexSink createTextVertexSink(int, java.util.function.IntFunction<java.nio.ByteBuffer>);
+  public abstract float getSunPathRotation();
+  public abstract void assignPipeline(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisProgram);
+  public abstract void assignPipelineShadow(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisShadowProgram);
+  public abstract void registerShadowRenderCallback(net.irisshaders.iris.api.v0.IrisShadowRenderCallback);
+  public abstract boolean isReverseZDuringShaders();
+}
+===== net.irisshaders.iris.api.v0.IrisProgram
+Compiled from "IrisProgram.java"
+public final class net.irisshaders.iris.api.v0.IrisProgram extends java.lang.Enum<net.irisshaders.iris.api.v0.IrisProgram> {
+  public static final net.irisshaders.iris.api.v0.IrisProgram BASIC;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TEXTURED;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TERRAIN;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TERRAIN_SOLID;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TERRAIN_CUTOUT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram SKY_BASIC;
+  public static final net.irisshaders.iris.api.v0.IrisProgram SKY_TEXTURED;
+  public static final net.irisshaders.iris.api.v0.IrisProgram ARMOR_GLINT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram ENTITIES;
+  public static final net.irisshaders.iris.api.v0.IrisProgram ENTITIES_TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram CLOUDS;
+  public static final net.irisshaders.iris.api.v0.IrisProgram BLOCK;
+  public static final net.irisshaders.iris.api.v0.IrisProgram BLOCK_TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram HAND;
+  public static final net.irisshaders.iris.api.v0.IrisProgram HAND_TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram PARTICLES;
+  public static final net.irisshaders.iris.api.v0.IrisProgram PARTICLES_TRANSLUCENT;
+  public static final net.irisshaders.iris.api.v0.IrisProgram EMISSIVE_ENTITIES;
+  public static final net.irisshaders.iris.api.v0.IrisProgram BEACON_BEAM;
+  public static final net.irisshaders.iris.api.v0.IrisProgram LINES;
+  public static net.irisshaders.iris.api.v0.IrisProgram[] values();
+  public static net.irisshaders.iris.api.v0.IrisProgram valueOf(java.lang.String);
+  static {};
+}
+===== net.irisshaders.iris.pipeline.IrisPipelines
+Compiled from "IrisPipelines.java"
+public class net.irisshaders.iris.pipeline.IrisPipelines {
+  private static final java.util.Map<com.mojang.renderpearl.api.pipeline.RenderPipeline, it.unimi.dsi.fastutil.Function<net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey>> coreShaderMap;
+  private static final java.util.Map<com.mojang.renderpearl.api.pipeline.RenderPipeline, it.unimi.dsi.fastutil.Function<net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey>> coreShaderMapShadow;
+  private static final it.unimi.dsi.fastutil.Function<net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey> FAKE_FUNCTION;
+  public net.irisshaders.iris.pipeline.IrisPipelines();
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey getText(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey getTextIntensity(java.lang.Object);
+  private static void assignToMain(com.mojang.renderpearl.api.pipeline.RenderPipeline, it.unimi.dsi.fastutil.Function<net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey>);
+  private static void assignToShadow(com.mojang.renderpearl.api.pipeline.RenderPipeline, it.unimi.dsi.fastutil.Function<net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey>);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey getGlint(net.irisshaders.iris.pipeline.programs.ShaderKey);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey getCutout(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey getSolid(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey getTranslucent(java.lang.Object);
+  public static net.irisshaders.iris.pipeline.programs.ShaderKey getPipeline(net.irisshaders.iris.pipeline.IrisRenderingPipeline, com.mojang.renderpearl.api.pipeline.RenderPipeline);
+  public static void assignPipeline(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey);
+  public static void assignPipelineShadow(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey);
+  public static void copyPipeline(com.mojang.renderpearl.api.pipeline.RenderPipeline, com.mojang.renderpearl.api.pipeline.RenderPipeline);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$assignPipelineShadow$0(net.irisshaders.iris.pipeline.programs.ShaderKey, java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$assignPipeline$0(net.irisshaders.iris.pipeline.programs.ShaderKey, java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$103(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$102(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$101(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$100(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$99(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$98(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$97(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$96(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$95(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$94(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$93(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$92(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$91(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$90(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$89(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$88(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$87(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$86(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$85(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$84(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$83(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$82(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$81(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$80(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$79(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$78(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$77(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$76(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$75(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$74(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$73(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$72(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$71(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$70(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$69(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$68(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$67(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$66(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$65(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$64(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$63(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$62(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$61(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$60(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$59(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$58(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$57(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$56(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$55(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$54(java.lang.Object);
+===== net.irisshaders.iris.pipeline.IrisPipelines$1
+Compiled from "IrisPipelines.java"
+class net.irisshaders.iris.pipeline.IrisPipelines$1 {
+  static final int[] $SwitchMap$net$irisshaders$iris$pipeline$programs$ShaderKey;
+  static {};
+}
+===== net.irisshaders.iris.apiimpl.IrisApiV0Impl
+Compiled from "IrisApiV0Impl.java"
+public class net.irisshaders.iris.apiimpl.IrisApiV0Impl implements net.irisshaders.iris.api.v0.IrisApi {
+  public static final net.irisshaders.iris.apiimpl.IrisApiV0Impl INSTANCE;
+  private static final net.irisshaders.iris.apiimpl.IrisApiV0ConfigImpl CONFIG;
+  public net.irisshaders.iris.apiimpl.IrisApiV0Impl();
+  public int getMinorApiRevision();
+  public boolean isShaderPackInUse();
+  public boolean isRenderingShadowPass();
+  public java.lang.Object openMainIrisScreenObj(java.lang.Object);
+  public java.lang.String getMainScreenLanguageKey();
+  public net.irisshaders.iris.api.v0.IrisApiConfig getConfig();
+  public net.irisshaders.iris.api.v0.IrisTextVertexSink createTextVertexSink(int, java.util.function.IntFunction<java.nio.ByteBuffer>);
+  public float getSunPathRotation();
+  public void assignPipeline(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisProgram);
+  public void assignPipelineShadow(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisShadowProgram);
+  public void registerShadowRenderCallback(net.irisshaders.iris.api.v0.IrisShadowRenderCallback);
+  public boolean isReverseZDuringShaders();
+  static {};
+}
+===== net.irisshaders.iris.mixin.MixinShaderManager_Overrides
+Compiled from "MixinShaderManager_Overrides.java"
+public abstract class net.irisshaders.iris.mixin.MixinShaderManager_Overrides {
+  private static java.util.Set<com.mojang.renderpearl.api.pipeline.RenderPipeline> missingShaders;
+  private static final java.util.Map<com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline, java.util.Map<com.mojang.renderpearl.backend.opengl.GlProgram, java.util.Map<java.util.List<com.mojang.renderpearl.api.vertex.VertexFormat>, com.mojang.renderpearl.frontend.FrontendRenderPipeline>>> iris$overrides;
+  public net.irisshaders.iris.mixin.MixinShaderManager_Overrides();
+  private static void redirectIrisProgram(com.mojang.renderpearl.api.pipeline.RenderPipeline, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline>);
+  private static com.mojang.renderpearl.backend.api.BackendRenderPipeline$CreateInfo iris$createInfo(com.mojang.renderpearl.backend.api.BackendRenderPipeline$CreateInfo, com.mojang.renderpearl.backend.opengl.GlProgram, java.util.List<com.mojang.renderpearl.api.vertex.VertexFormat>);
+  private static java.util.Map lambda$redirectIrisProgram$1(com.mojang.renderpearl.backend.opengl.GlProgram);
+  private static java.util.Map lambda$redirectIrisProgram$0(com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline);
+  static {};
+}
+===== net.irisshaders.iris.api.v0.IrisApi
+Compiled from "IrisApi.java"
+public interface net.irisshaders.iris.api.v0.IrisApi {
+  public static net.irisshaders.iris.api.v0.IrisApi getInstance();
+  public abstract int getMinorApiRevision();
+  public abstract boolean isShaderPackInUse();
+  public abstract boolean isRenderingShadowPass();
+  public abstract java.lang.Object openMainIrisScreenObj(java.lang.Object);
+  public abstract java.lang.String getMainScreenLanguageKey();
+  public abstract net.irisshaders.iris.api.v0.IrisApiConfig getConfig();
+  public abstract net.irisshaders.iris.api.v0.IrisTextVertexSink createTextVertexSink(int, java.util.function.IntFunction<java.nio.ByteBuffer>);
+  public abstract float getSunPathRotation();
+  public abstract void assignPipeline(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisProgram);
+  public abstract void assignPipelineShadow(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.api.v0.IrisShadowProgram);
+  public abstract void registerShadowRenderCallback(net.irisshaders.iris.api.v0.IrisShadowRenderCallback);
+  public abstract boolean isReverseZDuringShaders();
+}
+----- strings ./net/irisshaders/iris/pipeline/IrisPipelines.class
+3net/irisshaders/iris/pipeline/IrisRenderingPipeline	
+*net/irisshaders/iris/pathways/HandRenderer
+,Lnet/irisshaders/iris/pathways/HandRenderer;
+0net/irisshaders/iris/pipeline/programs/ShaderKey
+2Lnet/irisshaders/iris/pipeline/programs/ShaderKey;	
+6net/irisshaders/iris/pipeline/programs/ShaderOverrides
+8(Lnet/irisshaders/iris/pipeline/IrisRenderingPipeline;)Z	
++net/irisshaders/iris/pipeline/IrisPipelines
+coreShaderMap
+net/irisshaders/iris/Iris
+"Lnet/irisshaders/iris/IrisLogging;
+ net/irisshaders/iris/IrisLogging
+coreShaderMapShadow
+-net/irisshaders/iris/pipeline/IrisPipelines$1
+;$SwitchMap$net$irisshaders$iris$pipeline$programs$ShaderKey
+2com/mojang/renderpearl/api/pipeline/RenderPipeline
+4com/mojang/renderpearl/api/pipeline/ColorTargetState
+1net/irisshaders/iris/shadows/ShadowRenderingState
+getShaderDefines
+/()Lnet/minecraft/client/renderer/ShaderDefines;
++net/minecraft/client/renderer/ShaderDefines
+T(Lnet/irisshaders/iris/pipeline/programs/ShaderKey;)Lit/unimi/dsi/fastutil/Function;
+F(Ljava/lang/Object;)Lnet/irisshaders/iris/pipeline/programs/ShaderKey;	
+f(Lnet/irisshaders/iris/pipeline/programs/ShaderKey;)Lnet/irisshaders/iris/pipeline/programs/ShaderKey;	
+-net/minecraft/client/renderer/RenderPipelines
+----- strings ./net/irisshaders/iris/pipeline/IrisPipelines$1.class
+0net/irisshaders/iris/pipeline/programs/ShaderKey
+5()[Lnet/irisshaders/iris/pipeline/programs/ShaderKey;	
+-net/irisshaders/iris/pipeline/IrisPipelines$1
+;$SwitchMap$net$irisshaders$iris$pipeline$programs$ShaderKey
+2Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+IrisPipelines.java
++net/irisshaders/iris/pipeline/IrisPipelines
+----- strings ./net/irisshaders/iris/apiimpl/IrisApiV0Impl.class
+net/irisshaders/iris/Iris
+getPipelineManager
+1()Lnet/irisshaders/iris/pipeline/PipelineManager;
+-net/irisshaders/iris/pipeline/PipelineManager
+getPipelineNullable
+8()Lnet/irisshaders/iris/pipeline/WorldRenderingPipeline;
+6net/irisshaders/iris/pipeline/VanillaRenderingPipeline
+1net/irisshaders/iris/shadows/ShadowRenderingState
+0net/irisshaders/iris/gui/screen/ShaderPackScreen
+ options.iris.shaderPackSelection	
+*net/irisshaders/iris/apiimpl/IrisApiV0Impl
+2Lnet/irisshaders/iris/apiimpl/IrisApiV0ConfigImpl;
+4net/irisshaders/iris/vertices/IrisTextVertexSinkImpl
+4net/irisshaders/iris/pipeline/WorldRenderingPipeline
+1net/irisshaders/iris/shaderpack/loading/ProgramId
+^(Lnet/irisshaders/iris/api/v0/IrisProgram;)Lnet/irisshaders/iris/shaderpack/loading/ProgramId;
+0net/irisshaders/iris/pipeline/programs/ShaderKey
+(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/irisshaders/iris/shaderpack/loading/ProgramId;)Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
++net/irisshaders/iris/pipeline/IrisPipelines
+assignPipeline
+i(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/irisshaders/iris/pipeline/programs/ShaderKey;)V
+d(Lnet/irisshaders/iris/api/v0/IrisShadowProgram;)Lnet/irisshaders/iris/shaderpack/loading/ProgramId;
+assignPipelineShadow
+2net/irisshaders/iris/shadows/ShadowRenderCallbacks
+9(Lnet/irisshaders/iris/api/v0/IrisShadowRenderCallback;)V
+----- strings ./net/irisshaders/iris/mixin/MixinShaderManager_Overrides.class
+/net/irisshaders/iris/pipeline/CompositeRenderer
+COMPOSITE_PIPELINE
+4Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;	
+-net/minecraft/client/renderer/RenderPipelines
+net/irisshaders/iris/Iris
+getPipelineManager
+1()Lnet/irisshaders/iris/pipeline/PipelineManager;
+-net/irisshaders/iris/pipeline/PipelineManager
+getPipelineNullable
+8()Lnet/irisshaders/iris/pipeline/WorldRenderingPipeline;
+3net/irisshaders/iris/pipeline/IrisRenderingPipeline
+shouldOverrideShaders
+,net/irisshaders/iris/vertices/ImmediateState
++net/irisshaders/iris/pipeline/IrisPipelines
+getPipeline
+(Lnet/irisshaders/iris/pipeline/IrisRenderingPipeline;Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;)Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+getShaderMap
+4()Lnet/irisshaders/iris/pipeline/programs/ShaderMap;
+0net/irisshaders/iris/pipeline/programs/ShaderMap
+	getShader
+e(Lnet/irisshaders/iris/pipeline/programs/ShaderKey;)Lcom/mojang/renderpearl/backend/opengl/GlProgram;
+6com/mojang/renderpearl/frontend/FrontendRenderPipeline
+backendRenderPipeline
+<()Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline;
+6com/mojang/renderpearl/backend/opengl/GlRenderPipeline
+grep: write error: Broken pipe
+----- strings ./net/irisshaders/iris/api/v0/IrisApi.class
++net/irisshaders/iris/api/v0/IrisApiInternal
+%Lnet/irisshaders/iris/api/v0/IrisApi;
+#net/irisshaders/iris/api/v0/IrisApi
+'()Lnet/irisshaders/iris/api/v0/IrisApi;
+isShaderPackInUse
+-()Lnet/irisshaders/iris/api/v0/IrisApiConfig;
+S(ILjava/util/function/IntFunction;)Lnet/irisshaders/iris/api/v0/IrisTextVertexSink;
+j(ILjava/util/function/IntFunction<Ljava/nio/ByteBuffer;>;)Lnet/irisshaders/iris/api/v0/IrisTextVertexSink;
+assignPipeline
+`(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/irisshaders/iris/api/v0/IrisProgram;)V
+assignPipelineShadow
+f(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/irisshaders/iris/api/v0/IrisShadowProgram;)V
+9(Lnet/irisshaders/iris/api/v0/IrisShadowRenderCallback;)V
+isReverseZDuringShaders
+{
+  "schemaVersion": 1,
+  "id": "org_anarres_jcpp",
+  "version": "1.4.14",
+  "name": "jcpp",
+  "custom": {
+    "fabric-loom:generated": true
+  }
+}
