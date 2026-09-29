@@ -38,6 +38,19 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 
 public abstract class IchorFluid extends FlowingFluid {
+	/**
+	 * 0.14: ichor bubbles and steams where it is open to the air (Campaign Peaks hot springs, pools and
+	 * seas): an occasional bubble pop and a wisp of white steam from source blocks. Client-side only.
+	 */
+	@Override
+	protected void animateTick(net.minecraft.world.level.Level level, BlockPos pos, FluidState state, net.minecraft.util.RandomSource random) {
+		if (!state.isSource() || !level.getBlockState(pos.above()).isAir()) return;
+		if (random.nextInt(14) == 0)
+			level.addParticle(net.minecraft.core.particles.ParticleTypes.BUBBLE_POP, pos.getX() + random.nextDouble(), pos.getY() + 0.95, pos.getZ() + random.nextDouble(), 0.0, 0.04, 0.0);
+		if (random.nextInt(60) == 0)
+			level.addParticle(net.minecraft.core.particles.ParticleTypes.WHITE_SMOKE, pos.getX() + random.nextDouble(), pos.getY() + 1.0, pos.getZ() + random.nextDouble(), 0.0, 0.03, 0.0);
+	}
+
 	public IchorFluid() {
 	}
 

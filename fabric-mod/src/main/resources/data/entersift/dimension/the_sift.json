@@ -4,19 +4,339 @@
     "type": "minecraft:noise",
     "settings": "entersift:the_sift",
     "biome_source": {
-      "type": "minecraft:checkerboard",
+      "type": "minecraft:multi_noise",
       "biomes": [
-        "entersift:carapace",
-        "entersift:singer_meadow",
-        "entersift:saltwound_expanse",
-        "entersift:rose_spires",
-        "entersift:pale_grove",
-        "entersift:tidepool_reef",
-        "entersift:boneyard",
-        "entersift:coral_expanse",
-        "entersift:titan_crags"
-      ],
-      "scale": 4
+        {
+          "biome": "entersift:coral_expanse",
+          "parameters": {
+            "temperature": [
+              -1,
+              1
+            ],
+            "humidity": [
+              -1,
+              1
+            ],
+            "continentalness": [
+              -1.2,
+              -0.19
+            ],
+            "erosion": [
+              -1,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:tidepool_reef",
+          "parameters": {
+            "temperature": [
+              -1,
+              1
+            ],
+            "humidity": [
+              -1,
+              1
+            ],
+            "continentalness": [
+              -0.19,
+              -0.11
+            ],
+            "erosion": [
+              -1,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:campaign_peaks",
+          "parameters": {
+            "temperature": [
+              -1,
+              1
+            ],
+            "humidity": [
+              -1,
+              1
+            ],
+            "continentalness": [
+              0.03,
+              1
+            ],
+            "erosion": [
+              -1,
+              -0.45
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:titan_crags",
+          "parameters": {
+            "temperature": [
+              -1,
+              1
+            ],
+            "humidity": [
+              -1,
+              1
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.45,
+              -0.22
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:pale_grove",
+          "parameters": {
+            "temperature": [
+              -1,
+              -0.15
+            ],
+            "humidity": [
+              0,
+              1
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.22,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:carapace",
+          "parameters": {
+            "temperature": [
+              -1,
+              -0.15
+            ],
+            "humidity": [
+              -1,
+              0
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.22,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:soul_valley",
+          "parameters": {
+            "temperature": [
+              -0.15,
+              0.35
+            ],
+            "humidity": [
+              0.1,
+              1
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.22,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:singer_meadow",
+          "parameters": {
+            "temperature": [
+              -0.15,
+              0.35
+            ],
+            "humidity": [
+              -1,
+              0.1
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.22,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:saltwound_expanse",
+          "parameters": {
+            "temperature": [
+              0.35,
+              1
+            ],
+            "humidity": [
+              0.1,
+              1
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.22,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:rose_spires",
+          "parameters": {
+            "temperature": [
+              0.35,
+              1
+            ],
+            "humidity": [
+              -0.45,
+              0.1
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.22,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "entersift:boneyard",
+          "parameters": {
+            "temperature": [
+              0.35,
+              1
+            ],
+            "humidity": [
+              -1,
+              -0.45
+            ],
+            "continentalness": [
+              -0.11,
+              1
+            ],
+            "erosion": [
+              -0.22,
+              1
+            ],
+            "weirdness": [
+              -1,
+              1
+            ],
+            "depth": [
+              0,
+              1
+            ],
+            "offset": 0.0
+          }
+        }
+      ]
     }
   }
 }

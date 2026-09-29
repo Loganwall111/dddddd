@@ -87,6 +87,18 @@ public final class SiftEntities {
         spawn("carapace", MobCategory.MONSTER, SiftKind.OVERSEER, 3, 1, 1);
         spawn("saltwound_expanse", MobCategory.MONSTER, SiftKind.LICKER, 12, 1, 2);
         spawn("saltwound_expanse", MobCategory.CREATURE, SiftKind.ANTLERLING, 6, 1, 1);
+        // 0.14 Soul Valley: bees, sculk-like mobs and jellyfish; Campaign Peaks: lickers and antlerlings.
+        spawn("soul_valley", MobCategory.CREATURE, SiftKind.SOUL_BEE, 20, 2, 5);
+        spawn("soul_valley", MobCategory.CREATURE, SiftKind.DRIFT_JELLY, 8, 1, 2);
+        spawn("soul_valley", MobCategory.CREATURE, SiftKind.SCULKLING, 10, 2, 3);
+        spawn("soul_valley", MobCategory.CREATURE, SiftKind.BLUB, 8, 2, 3);
+        spawn("soul_valley", MobCategory.MONSTER, SiftKind.SCULKER, 16, 1, 2);
+        spawn("soul_valley", MobCategory.MONSTER, SiftKind.WATCHLING, 14, 1, 3);
+        spawn("campaign_peaks", MobCategory.MONSTER, SiftKind.LICKER, 12, 1, 2);
+        spawn("campaign_peaks", MobCategory.MONSTER, SiftKind.WATCHLING, 6, 1, 2);
+        spawn("campaign_peaks", MobCategory.CREATURE, SiftKind.ANTLERLING, 8, 1, 2);
+        spawn("campaign_peaks", MobCategory.CREATURE, SiftKind.NOTE_BIRD, 6, 1, 3);
+        spawn("pale_grove", MobCategory.CREATURE, SiftKind.SOUL_BEE, 6, 1, 3);
         waterfalls();
     }
 

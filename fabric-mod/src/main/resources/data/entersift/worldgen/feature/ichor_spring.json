@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:spring_feature",
+  "state": {
+    "id": "entersift:ichor",
+    "properties": {
+      "falling": "true"
+    }
+  },
+  "valid_blocks": [
+    "entersift:cinder_rock",
+    "entersift:crag_rock",
+    "entersift:crag_rock_dark",
+    "entersift:ash_crust",
+    "entersift:cinder_glow"
+  ]
+}

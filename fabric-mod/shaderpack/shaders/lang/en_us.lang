@@ -19,3 +19,5 @@ option.SIFT_GODRAYS=Volumetric god rays
 option.SIFT_REFLECTIONS=Water reflections
 option.SIFT_SKY_GLOW=Sift sky glow
 option.SIFT_SKY_GLOW.comment=Soft bloom around the aurora, sun ray and rift rims in the Sift. The sky colours themselves are never changed.
+option.SIFT_DIM_FOG=Dimension & Biome Fog
+option.SIFT_DIM_FOG.comment=Subtle biome-tinted fog in the Sift, Nether and End (purple, green, amber...). 0 turns it off.

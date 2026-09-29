@@ -43,7 +43,8 @@
           ]
         }
       }
-    }
+    },
+    "minecraft:visual/fog_color": "#eee6e6"
   },
   "carvers": [],
   "features": [

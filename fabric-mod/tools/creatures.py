@@ -164,6 +164,31 @@ SPECS["note_bird"] = dict(tex=64, egg=(NB, (255, 120, 180)), parts=[
     P("leg_1", (1, 18, 0), [B(-0.5, 0, -0.5, 1, 2, 1, (250, 190, 90), "plain")]),
 ])
 
+# Soul Bee — (0.13 Soul Valley) a fuzzy teal bee with violet stripes, glowing white eyes, a glowing cyan
+# tail tip and pale see-through-looking wings.
+BEE, BEE_STRIPE, BEE_WING, BEE_GLOW = (92, 206, 190), (84, 52, 128), (206, 240, 246), (150, 255, 240)
+SPECS["soul_bee"] = dict(tex=64, egg=(BEE, BEE_STRIPE), parts=[
+    P("body", (0, 19, 0), [B(-2.5, -5, -3.5, 5, 5, 7, BEE, "speckle", faces={
+        "north": [(0, 1, 2, 2, (240, 255, 255), True), (3, 1, 2, 2, (240, 255, 255), True)],
+        "top": [(0, 2, 5, 1, BEE_STRIPE, False), (0, 4, 5, 1, BEE_STRIPE, False)],
+        "south": [(1, 1, 3, 3, BEE_GLOW, True)]}),
+        B(-0.5, -3, 3.5, 1, 1, 2, BEE_GLOW, "plain", glow=True)]),
+    P("wing_l", (-1, 14, -1), [B(-5, 0, -1.5, 5, 1, 4, BEE_WING, "plain")], parent="body"),
+    P("wing_r", (1, 14, -1), [B(0, 0, -1.5, 5, 1, 4, BEE_WING, "plain")], parent="body"),
+    P("leg_0", (-1, 19, 0), [B(-0.5, 0, -0.5, 1, 2, 1, BEE_STRIPE, "plain")]),
+    P("leg_1", (1, 19, 0), [B(-0.5, 0, -0.5, 1, 2, 1, BEE_STRIPE, "plain")]),
+])
+
+# Watchling — (0.13, Dungeons II ref: the small eye-cubes around the watcher) a dark slate cube with one
+# glowing blue eye, a tan band underneath and four dark tentacles hanging below.
+WSLATE, WBAND, WEYE, WTENT = (58, 70, 84), (196, 150, 104), (96, 176, 255), (40, 46, 58)
+SPECS["watchling"] = dict(tex=64, egg=(WSLATE, WEYE), parts=[
+    P("head", (0, 10, 0), [B(-4, -8, -4, 8, 8, 8, WSLATE, "speckle", faces={
+        "north": [(2, 2, 4, 4, WEYE, True), (3, 3, 2, 2, (20, 40, 90), False)]}),
+        B(-4, 0, -4, 8, 2, 8, WBAND, "noise")]),
+] + [P(f"tentacle_{i}", (x, 12, z), [B(-0.5, 0, -0.5, 1, 11, 1, WTENT, "plain", faces={"north": [(0, 8, 1, 3, (90, 150, 230), True)]})], parent="head")
+     for i, (x, z) in enumerate([(-2.5, -2.5), (2.5, -2.5), (-2.5, 2.5), (2.5, 2.5)])])
+
 # Singer — (0.9, MCD2 appearance art) tall sea-green figure: scaled teal robe, pale ridged mask face,
 # branching cream antlers, wide teal feathered wing-arms spread downward, a peach flower on the chest.
 SG, SGD, SGL = (104, 196, 176), (66, 146, 136), (164, 232, 212)

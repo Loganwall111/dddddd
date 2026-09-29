@@ -146,6 +146,30 @@ public final class SiftModelDefs {
     }
     public static final String[][] NOTE_BIRD_PARTS = {{"body"}, {"body", "head"}, {"body", "wing_l"}, {"body", "wing_r"}, {"leg_0"}, {"leg_1"}};
 
+    public static LayerDefinition soulBee() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition p_body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-2.5f, -5.0f, -3.5f, 5.0f, 5.0f, 7.0f).texOffs(0, 12).addBox(-0.5f, -3.0f, 3.5f, 1.0f, 1.0f, 2.0f), PartPose.offsetAndRotation(0.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_wing_l = p_body.addOrReplaceChild("wing_l", CubeListBuilder.create().texOffs(24, 0).addBox(-5.0f, 0.0f, -1.5f, 5.0f, 1.0f, 4.0f), PartPose.offsetAndRotation(-1.0f, -5.0f, -1.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_wing_r = p_body.addOrReplaceChild("wing_r", CubeListBuilder.create().texOffs(42, 0).addBox(0.0f, 0.0f, -1.5f, 5.0f, 1.0f, 4.0f), PartPose.offsetAndRotation(1.0f, -5.0f, -1.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_leg_0 = root.addOrReplaceChild("leg_0", CubeListBuilder.create().texOffs(6, 12).addBox(-0.5f, 0.0f, -0.5f, 1.0f, 2.0f, 1.0f), PartPose.offsetAndRotation(-1.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_leg_1 = root.addOrReplaceChild("leg_1", CubeListBuilder.create().texOffs(10, 12).addBox(-0.5f, 0.0f, -0.5f, 1.0f, 2.0f, 1.0f), PartPose.offsetAndRotation(1.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        return LayerDefinition.create(mesh, 64, 64);
+    }
+    public static final String[][] SOUL_BEE_PARTS = {{"body"}, {"body", "wing_l"}, {"body", "wing_r"}, {"leg_0"}, {"leg_1"}};
+
+    public static LayerDefinition watchling() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition p_head = root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0f, -8.0f, -4.0f, 8.0f, 8.0f, 8.0f).texOffs(0, 16).addBox(-4.0f, 0.0f, -4.0f, 8.0f, 2.0f, 8.0f), PartPose.offsetAndRotation(0.0f, 10.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_tentacle_0 = p_head.addOrReplaceChild("tentacle_0", CubeListBuilder.create().texOffs(32, 0).addBox(-0.5f, 0.0f, -0.5f, 1.0f, 11.0f, 1.0f), PartPose.offsetAndRotation(-2.5f, 2.0f, -2.5f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_tentacle_1 = p_head.addOrReplaceChild("tentacle_1", CubeListBuilder.create().texOffs(36, 0).addBox(-0.5f, 0.0f, -0.5f, 1.0f, 11.0f, 1.0f), PartPose.offsetAndRotation(2.5f, 2.0f, -2.5f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_tentacle_2 = p_head.addOrReplaceChild("tentacle_2", CubeListBuilder.create().texOffs(40, 0).addBox(-0.5f, 0.0f, -0.5f, 1.0f, 11.0f, 1.0f), PartPose.offsetAndRotation(-2.5f, 2.0f, 2.5f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_tentacle_3 = p_head.addOrReplaceChild("tentacle_3", CubeListBuilder.create().texOffs(44, 0).addBox(-0.5f, 0.0f, -0.5f, 1.0f, 11.0f, 1.0f), PartPose.offsetAndRotation(2.5f, 2.0f, 2.5f, 0.0f, 0.0f, 0.0f));
+        return LayerDefinition.create(mesh, 64, 64);
+    }
+    public static final String[][] WATCHLING_PARTS = {{"head"}, {"head", "tentacle_0"}, {"head", "tentacle_1"}, {"head", "tentacle_2"}, {"head", "tentacle_3"}};
+
     public static LayerDefinition singer() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();

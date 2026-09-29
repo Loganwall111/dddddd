@@ -17,7 +17,7 @@
         "type": "minecraft:max",
         "left": {
           "type": "minecraft:sub",
-          "left": "minecraft:overworld/depth",
+          "left": "minecraft:overworld_amplified/depth",
           "right": 0.9
         },
         "right": 0.0
@@ -41,11 +41,11 @@
       "xz_scale": 1.0,
       "y_scale": 1.0
     },
-    "surface_level": "minecraft:overworld/preliminary_surface_level"
+    "surface_level": "minecraft:overworld_amplified/preliminary_surface_level"
   },
   "debug_functions": [
     {
-      "function": "minecraft:overworld/final_density",
+      "function": "minecraft:overworld_amplified/final_density",
       "label": "N"
     },
     {
@@ -65,7 +65,7 @@
       "label": "E"
     },
     {
-      "function": "minecraft:overworld/depth",
+      "function": "minecraft:overworld_amplified/depth",
       "label": "D"
     },
     {
@@ -95,7 +95,7 @@
       "label": "PV"
     },
     {
-      "function": "minecraft:overworld/preliminary_surface_level",
+      "function": "minecraft:overworld_amplified/preliminary_surface_level",
       "label": "PS"
     }
   ],
@@ -109,11 +109,11 @@
     "min_y": -64
   },
   "noise_router": {
-    "chunk_surface_level": "minecraft:overworld/chunk_surface_level",
+    "chunk_surface_level": "minecraft:overworld_amplified/chunk_surface_level",
     "continents": "minecraft:overworld/continents",
-    "depth": "minecraft:overworld/depth",
+    "depth": "minecraft:overworld_amplified/depth",
     "erosion": "minecraft:overworld/erosion",
-    "final_density": "minecraft:overworld/final_density",
+    "final_density": "minecraft:overworld_amplified/final_density",
     "ridges": "minecraft:overworld/ridges",
     "temperature": "minecraft:overworld/temperature",
     "vegetation": "minecraft:overworld/vegetation"

@@ -21,20 +21,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from phase10 import overlay, write, D  # noqa: E402  (main code of phase10 is guarded)
 
 
-def tiered_tree(rng, height, base_r, tiers, leaf, strand, trunk_w=3):
+def tiered_tree(rng, height, base_r, tiers, leaf, strand, trunk_w=3, wood="soulwood"):
     pts = []
     half = trunk_w // 2
     trunk = [(x, z) for x in range(-half, trunk_w - half) for z in range(-half, trunk_w - half)]
     for y in range(-3, height - 1):
         for (tx, tz) in trunk:
-            pts.append((tx, y, tz, "soulwood"))
+            pts.append((tx, y, tz, wood))
     # Buttress roots flaring out at the base.
     for k in range(4):
         ang = k * math.pi / 2 + math.pi / 4 + rng.uniform(-0.3, 0.3)
         for s in range(1, 4):
             rx, rz = round(math.cos(ang) * (half + s)), round(math.sin(ang) * (half + s))
             for y in range(-1, 3 - s):
-                pts.append((rx, y, rz, "soulwood"))
+                pts.append((rx, y, rz, wood))
 
     for t in range(tiers):
         f = t / max(1, tiers - 1)
@@ -48,7 +48,7 @@ def tiered_tree(rng, height, base_r, tiers, leaf, strand, trunk_w=3):
             for k in range(5):
                 ang = k * 2 * math.pi / 5 + rng.uniform(-0.3, 0.3)
                 for s in range(half + 1, int(r * 0.75)):
-                    pts.append((round(math.cos(ang) * s), cy - 2 + (s - half) // 3, round(math.sin(ang) * s), "soulwood"))
+                    pts.append((round(math.cos(ang) * s), cy - 2 + (s - half) // 3, round(math.sin(ang) * s), wood))
         R = int(math.ceil(r)) + 2
         for x in range(-R, R + 1):
             for z in range(-R, R + 1):

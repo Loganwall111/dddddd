@@ -12,7 +12,10 @@ public enum SiftKind {
     OVERSEER("overseer",         true,  true,  true,  1.0f, 2.6f,  60, 0.18, 6,   0.0f),
     TWISTED_WARDEN("twisted_warden", true, true, false, 1.2f, 3.1f, 300, 0.30, 18, 1.1f),
     NOTE_BIRD("note_bird",       false, false, true,  0.5f, 0.5f,  6,  0.30, 0,   0.0f),
-    SINGER("singer",             false, false, true,  0.6f, 2.6f,  80, 0.0,  0,   0.0f);
+    SINGER("singer",             false, false, true,  0.6f, 2.6f,  80, 0.0,  0,   0.0f),
+    // 0.13 Soul Valley: glowing soul bees and watchlings (small floating eye-cubes with tentacles).
+    SOUL_BEE("soul_bee",         false, false, true,  0.5f, 0.5f,  6,  0.30, 0,   0.0f),
+    WATCHLING("watchling",       true,  true,  true,  0.7f, 1.4f,  14, 0.22, 3,   0.0f);
 
     public final String id;
     public final boolean hostile, aggressive, floats;

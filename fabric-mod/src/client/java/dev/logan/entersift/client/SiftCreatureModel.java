@@ -111,6 +111,16 @@ public final class SiftCreatureModel extends EntityModel<LivingEntityRenderState
                 part("body").y += (float) Math.sin(age * 0.9f + 1.5f) * 0.6f;
                 part("leg_0").xRot = 0.9f; part("leg_1").xRot = 0.9f; // tucked in flight
             }
+            case "soul_bee" -> { // fast wing buzz and a gentle bob
+                float flap = (float) Math.sin(age * 2.4f) * 0.7f;
+                part("wing_l").zRot += flap;
+                part("wing_r").zRot -= flap;
+                part("body").y += (float) Math.sin(age * 0.25f) * 0.8f;
+            }
+            case "watchling" -> { // hovering eye-cube; the tentacles sway via the generic tentacle_ rule
+                head.y += (float) Math.sin(age * 0.09f) * 1.2f;
+                head.zRot += (float) Math.sin(age * 0.05f) * 0.06f;
+            }
             case "antlerling" -> {
                 part("antler_l").zRot += (float) Math.sin(age * 0.05f) * 0.03f;
                 part("antler_r").zRot -= (float) Math.sin(age * 0.05f) * 0.03f;

@@ -35,10 +35,11 @@ final class SiftBehaviour {
         double bob = Math.sin(mob.tickCount * 0.08) * 0.004;
         double vx = v.x * 0.92, vz = v.z * 0.92;
         LivingEntity target = mob.getTarget();
-        if (target != null && kind == SiftKind.OVERSEER) {
+        if (target != null && (kind == SiftKind.OVERSEER || kind == SiftKind.WATCHLING)) {
             double dx = target.getX() - mob.getX(), dz = target.getZ() - mob.getZ();
             double len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
-            if (len > 5) { vx += dx / len * 0.02; vz += dz / len * 0.02; }
+            double keep = kind == SiftKind.WATCHLING ? 1.2 : 5; // watchlings close in to strike
+            if (len > keep) { vx += dx / len * 0.02; vz += dz / len * 0.02; }
             mob.getLookControl().setLookAt(target, 30, 30);
         } else if (kind != SiftKind.SINGER && mob.tickCount % 80 == 0) {
             vx += (mob.getRandom().nextDouble() - 0.5) * 0.12;
@@ -81,6 +82,17 @@ final class SiftBehaviour {
                     command(level, at(mob, String.format(Locale.ROOT, "playsound minecraft:block.note_block.%s neutral @a[distance=..24] ~ ~ ~ 0.5 %.3f", note, pitch)));
                     level.sendParticles(ParticleTypes.NOTE, mob.getX(), mob.getY() + 0.6, mob.getZ(), 1, 0, 0, 0, mob.getRandom().nextDouble());
                 }
+            }
+            case SOUL_BEE -> { // glowing soul pollen trail and a soft buzz
+                if (t % 5 == 0) level.sendParticles(ParticleTypes.GLOW, mob.getX(), mob.getY() + 0.2, mob.getZ(), 1, 0.1, 0.1, 0.1, 0);
+                if (t % 120 == 0 && mob.getRandom().nextInt(2) == 0)
+                    command(level, at(mob, "playsound minecraft:entity.bee.loop neutral @a[distance=..10] ~ ~ ~ 0.5 1.4"));
+            }
+            case WATCHLING -> { // strikes when it reaches its target
+                LivingEntity target = mob.getTarget();
+                if (target != null && t % 25 == 0 && mob.distanceToSqr(target) < 5.0)
+                    command(level, "damage " + target.getUUID() + " " + (int) kind.damage + " minecraft:mob_attack by " + mob.getUUID());
+                if (t % 8 == 0) level.sendParticles(ParticleTypes.SCULK_SOUL, mob.getX(), mob.getY() + 0.3, mob.getZ(), 1, 0.15, 0.1, 0.15, 0.01);
             }
             case DRIFT_JELLY -> { if (t % 6 == 0) level.sendParticles(ParticleTypes.SOUL, mob.getX(), mob.getY() + 0.1, mob.getZ(), 1, 0.2, 0.1, 0.2, 0.002); }
             case SINGER -> {

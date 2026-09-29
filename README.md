@@ -123,6 +123,18 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.14.0: Soul Valley, Campaign Peaks, real terrain, souls, subtle fog, brighter rifts
+- **Terrain.** The Sift no longer uses giant biome squares. Biomes now come from overworld-style multi-noise (temperature, humidity, continentalness, erosion). The terrain uses amplified-style shaping, so it has much bigger cliffs, ridges and valleys.
+- **Bigger trees.** The tiered giant trees are larger.
+- **Soul Valley (new biome).** Green and purple giant trees with verdant and violet wood and glowing canopies, plus valley turf, ferns and violet blooms. Ruins are scattered around: ruined huts, towers, broken walls, wells and huge colossus gates. Soul bees, watchlings, sculkers, sculklings, drift jellies and Blubs live here.
+- **Campaign Peaks (new biome).** Tall mountains with a volcanic crust of ash, cinder rock and glowing cinder cracks, and the new Ember Ore. Ichor volcanoes pour ichor down the slopes, and there are ichor springs and bubbling ichor hot springs ringed with sinter, plus ember shrines. Open ichor now bubbles and steams.
+- **Two new creatures.** Soul bees and watchlings, each with a spawn egg and its own sounds.
+- **Wandering souls.** Small white skull-like souls with dark eyes swoop in loops across the Sift, trailing glowing blue comet tails.
+- **Rifts.** A soft white-pink haze now fills the opening, glow bands run along its inner edges, light spills forward out of the rim and small white motes drift out.
+- **Shaders.** Fixed the Sift turning completely white with the Dungeons II shader pack on.
+- **Per-biome fog.** Each biome has its own very subtle fog tint, such as lavender in Soul Valley, green in Singer Meadow and warm in Campaign Peaks. In the shader pack, *Dimension & Biome Fog* (SIFT_DIM_FOG) controls how strong it is; set it to 0 to turn it off.
+- **New blocks (15).** Verdant and violet wood and canopies, valley turf, ruin bricks (plain and mossy), ruin tiles, cinder rock, ash crust, cinder glow, ember ore, sinter, valley fern and violet bloom.
+
 ### 0.13.0: pre-beta fixes (Blub, clouds, no sun, coloured god rays, giant trees)
 - **Blub.** Pale icy-blue jelly body with glowing red slit eyes and a small red mouth, and shorter upright ears (lighter blue inside, no pink). It now wobbles side to side as it waddles: the body rocks from its feet, it squashes like jelly and the ears lag behind the wobble.
 - **Overworld clouds without shaders.** Vanilla clouds are replaced by puffy Dungeons-style voxel clouds: stepped mounds on a 6-block grid, 4 to 16 blocks tall. They have warm white tops, white-to-lavender sides and one flat, uniform lavender-grey underside (no checkerboard). They are tinted by the time of day (peach at dawn and dusk, deep blue at night), drift east and fade out at the edge of your render distance.

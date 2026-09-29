@@ -29,7 +29,8 @@
         "spawn_costs": {},
         "spawns_by_category": {}
       }
-    }
+    },
+    "minecraft:visual/fog_color": "#d4f2ee"
   },
   "carvers": [],
   "features": [

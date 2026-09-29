@@ -25,7 +25,7 @@ for p in (r/'assets/entersift/textures').rglob('*.png'):
     if b[:8]!=b'\x89PNG\r\n\x1a\n': errors.append(f'{p}: bad PNG')
     w,h=struct.unpack('!II',b[16:24])
     if h>w and not p.with_suffix('.png.mcmeta').exists(): errors.append(f'{p}: animation metadata missing')
-assert len(list((r/'data/entersift/worldgen/biome').glob('*.json')))==9
+assert len(list((r/'data/entersift/worldgen/biome').glob('*.json')))==11
 assert '1, 3, 7, 6, 5, 2, 4, 8' in (root/'src/main/java/dev/logan/entersift/RitualSequence.java').read_text()
 assert (root/'gradle/wrapper/gradle-wrapper.jar').read_bytes()[:2]==b'PK'
 # Validate that custom worldgen block/biome/feature refs resolve locally.

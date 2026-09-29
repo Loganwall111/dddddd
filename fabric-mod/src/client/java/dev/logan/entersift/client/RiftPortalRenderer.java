@@ -324,6 +324,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> walls(p, vc, sh, s, edge, age));
             collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> flashes(p, vc, sh, age));
             collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
+            if (age >= GROWN) collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> spill(p, vc, sh, s, edge, age));
         }
         } finally {
             pose.popPose();
@@ -506,6 +507,59 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             sparkles(p, vc, cam, sh, s, edge);
             arcs(p, vc, cam, sh, s, edge);
         }
+    }
+
+    /**
+     * 0.14 light spill (trailer refs): a breathing white-pink haze filling the opening, soft glow bands
+     * along the inside of every opening edge, light fanning forward out of the rim, and small white
+     * square motes drifting out of the rift. All additive and low alpha, so pale rifts never wash out.
+     */
+    private static void spill(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, float[] edge, float age) {
+        float in = Math.min(1f, Math.max(0f, (age - GROWN) / 20f));
+        if (in <= 0f) return;
+        float t = s.ageInTicks, breathe = 0.85f + 0.15f * (float) Math.sin(t * 0.07f);
+        float[] white = {1f, 0.98f, 0.97f}, pink = mix(white, bloom(s.frame), 0.55f);
+        float span = Math.max(sh.w(), sh.h());
+        // Interior haze: two stacked soft discs just in front of the canvas.
+        halo(p, vc, 0, sh.cy(), -DEPTH + 0.06f, span * 0.42f, white, 0.13f * in * breathe);
+        halo(p, vc, 0, sh.cy(), -DEPTH * 0.5f, span * 0.6f, pink, 0.07f * in * breathe);
+        float band = Math.min(0.6f, Math.min(sh.cw(), sh.ch()) * 1.2f), out = 1.1f, fwd = 0.7f;
+        for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
+            if (!sh.on(i, j)) continue;
+            float x0 = sh.x(i), y0 = sh.y(j), x1 = x0 + sh.cw(), y1 = y0 + sh.ch(), zc = -DEPTH + 0.04f;
+            float ea = 0.24f * in * breathe, sa = 0.12f * in * breathe;
+            if (!sh.on(i - 1, j)) {   // left edge
+                grad(p, vc, x0, y0, zc, x0, y1, zc, x0 + band, y1, zc, x0 + band, y0, zc, white, ea, 0f);
+                grad(p, vc, x0, y0, 0.01f, x0, y1, 0.01f, x0 - out, y1, fwd, x0 - out, y0, fwd, pink, sa, 0f);
+            }
+            if (!sh.on(i + 1, j)) {   // right edge
+                grad(p, vc, x1, y1, zc, x1, y0, zc, x1 - band, y0, zc, x1 - band, y1, zc, white, ea, 0f);
+                grad(p, vc, x1, y1, 0.01f, x1, y0, 0.01f, x1 + out, y0, fwd, x1 + out, y1, fwd, pink, sa, 0f);
+            }
+            if (!sh.on(i, j - 1)) {   // bottom edge
+                grad(p, vc, x1, y0, zc, x0, y0, zc, x0, y0 + band, zc, x1, y0 + band, zc, white, ea, 0f);
+                grad(p, vc, x1, y0, 0.01f, x0, y0, 0.01f, x0, y0 - out, fwd, x1, y0 - out, fwd, pink, sa, 0f);
+            }
+            if (!sh.on(i, j + 1)) {   // top edge
+                grad(p, vc, x0, y1, zc, x1, y1, zc, x1, y1 - band, zc, x0, y1 - band, zc, white, ea, 0f);
+                grad(p, vc, x0, y1, 0.01f, x1, y1, 0.01f, x1, y1 + out, fwd, x0, y1 + out, fwd, pink, sa, 0f);
+            }
+        }
+        // Drifting motes: each one loops over 90 ticks, rising out of the opening and fading.
+        for (int k = 0; k < 18; k++) {
+            float seed = k * 12.9898f, life = ((t + k * 37f) % 90f) / 90f;
+            float bx = ((float) Math.sin(seed) * 0.5f) * sh.w() * 0.8f, by = sh.cy() + ((float) Math.cos(seed * 1.7f) * 0.5f) * sh.h() * 0.8f;
+            float x = bx + (float) Math.sin(seed * 3.1f + t * 0.03f) * 0.4f, y = by + life * 1.6f, z = -DEPTH * 0.3f + life * 1.4f;
+            float q = 0.05f + 0.05f * (k % 3), a = (float) Math.sin(life * Math.PI) * 0.75f * in;
+            rect(p, vc, x - q, y - q, x + q, y + q, z, white, a);
+        }
+    }
+
+    /** Additive quad: vertices 1-2 carry alpha a0 (the lit edge), vertices 3-4 carry a1. */
+    private static void grad(PoseStack.Pose p, VertexConsumer vc, float ax, float ay, float az, float bx, float by, float bz,
+                             float cx, float cy, float cz, float dx, float dy, float dz, float[] c, float a0, float a1) {
+        col(p, vc, ax, ay, az, c, a0); col(p, vc, bx, by, bz, c, a0);
+        col(p, vc, cx, cy, cz, c, a1); col(p, vc, dx, dy, dz, c, a1);
     }
 
     /**

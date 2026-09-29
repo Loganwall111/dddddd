@@ -1,7 +1,7 @@
 {
   "ambient_light": 0.1,
   "attributes": {
-    "minecraft:visual/fog_color": "#7cc6d8",
+    "minecraft:visual/fog_color": "#ffffff",
     "minecraft:visual/sky_color": "#7cc6d8",
     "minecraft:visual/ambient_light_color": "#203946",
     "minecraft:audio/ambient_sounds": {

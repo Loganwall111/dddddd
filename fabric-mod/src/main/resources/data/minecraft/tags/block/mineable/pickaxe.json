@@ -18,6 +18,14 @@
     "entersift:spire_bricks",
     "entersift:rose_path",
     "entersift:teal_path",
-    "entersift:reef_stone"
+    "entersift:reef_stone",
+    "entersift:ruin_bricks",
+    "entersift:mossy_ruin_bricks",
+    "entersift:ruin_tiles",
+    "entersift:cinder_rock",
+    "entersift:ash_crust",
+    "entersift:cinder_glow",
+    "entersift:ember_ore",
+    "entersift:sinter"
   ]
 }

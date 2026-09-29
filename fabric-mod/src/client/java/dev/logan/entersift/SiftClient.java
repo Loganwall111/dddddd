@@ -33,12 +33,15 @@ public final class SiftClient implements ClientModInitializer {
         creature(SiftKind.LICKER, SiftModelDefs::licker, SiftModelDefs.LICKER_PARTS);
         creature(SiftKind.OVERSEER, SiftModelDefs::overseer, SiftModelDefs.OVERSEER_PARTS);
         creature(SiftKind.NOTE_BIRD, SiftModelDefs::noteBird, SiftModelDefs.NOTE_BIRD_PARTS);
+        creature(SiftKind.SOUL_BEE, SiftModelDefs::soulBee, SiftModelDefs.SOUL_BEE_PARTS);
+        creature(SiftKind.WATCHLING, SiftModelDefs::watchling, SiftModelDefs.WATCHLING_PARTS);
         creature(SiftKind.TWISTED_WARDEN, SiftModelDefs::twistedWarden, SiftModelDefs.TWISTED_WARDEN_PARTS);
         creature(SiftKind.SINGER, SiftModelDefs::singer, SiftModelDefs.SINGER_PARTS);
         SiftRenderTypes.initialize();
         SiftRenderTypes.registerWithIris(); // 0.12: shader packs draw the Sift sky and rifts with known programs
         SiftSky.register();
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
+        dev.logan.entersift.client.SiftSouls.register(); // 0.14 wandering souls with blue comet trails (Sift only)
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,

@@ -251,5 +251,45 @@
       "entersift:entity/singer/death"
     ],
     "subtitle": "subtitles.entersift.entity.singer.death"
+  },
+  "entity.soul_bee.ambient": {
+    "sounds": [
+      "entersift:entity/soul_bee/ambient1",
+      "entersift:entity/soul_bee/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.soul_bee.ambient"
+  },
+  "entity.soul_bee.hurt": {
+    "sounds": [
+      "entersift:entity/soul_bee/hurt1",
+      "entersift:entity/soul_bee/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.soul_bee.hurt"
+  },
+  "entity.soul_bee.death": {
+    "sounds": [
+      "entersift:entity/soul_bee/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.soul_bee.death"
+  },
+  "entity.watchling.ambient": {
+    "sounds": [
+      "entersift:entity/watchling/ambient1",
+      "entersift:entity/watchling/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.watchling.ambient"
+  },
+  "entity.watchling.hurt": {
+    "sounds": [
+      "entersift:entity/watchling/hurt1",
+      "entersift:entity/watchling/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.watchling.hurt"
+  },
+  "entity.watchling.death": {
+    "sounds": [
+      "entersift:entity/watchling/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.watchling.death"
   }
 }

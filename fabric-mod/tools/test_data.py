@@ -156,7 +156,7 @@ class DataContracts(unittest.TestCase):
         self.assertEqual(dim['minecraft:audio/ambient_sounds']['loop'],'entersift:ambient.sift.loop')
     def test_every_creature_has_sounds(self):
         sounds=json.loads((R/'assets/entersift/sounds.json').read_text())
-        for k in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','note_bird','singer']:
+        for k in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','note_bird','singer','soul_bee','watchling']:
             for e in ['ambient','hurt','death']: self.assertIn(f'entity.{k}.{e}',sounds)
         self.assertTrue(all(s['stream'] for s in sounds['music.sift']['sounds']))
         for c in ['SiftBeast','SiftCritter']:
@@ -169,13 +169,13 @@ class DataContracts(unittest.TestCase):
         # The optional Overworld pack is installed only if absent and never enabled.
         self.assertIn('if (Files.exists(target)) return;',code)
         self.assertNotIn('iris.properties',code)   # never touches Iris config (pack stays off)
-        self.assertIn("Dungeons-II-Overworld-0.13.zip",(ROOT/'build.gradle').read_text())
+        self.assertIn("Dungeons-II-Overworld-0.14.zip",(ROOT/'build.gradle').read_text())
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
         self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))
         self.assertNotIn('unless entity',fn('guardian/slain'))
     def test_creature_eggs_have_functions_and_models(self):
-        for name in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','singer']:
+        for name in ['blub','sculker','sculkling','antlerling','drift_jelly','licker','overseer','twisted_warden','singer','soul_bee','watchling']:
             self.assertIn(f'summon entersift:{name}',fn(f'creature/{name}/spawn'))
             self.assertTrue((R/f'assets/entersift/items/{name}_spawn_egg.json').exists())
             self.assertTrue((R/f'assets/entersift/textures/entity/{name}.png').exists())
@@ -214,7 +214,7 @@ class DataContracts(unittest.TestCase):
         dim=json.loads((D/'dimension/the_sift.json').read_text())['generator']['biome_source']['biomes']
         rule=(D/'worldgen/material_rule/the_sift.json').read_text()
         for b in ['rose_spires','pale_grove','tidepool_reef']:
-            self.assertIn(f'entersift:{b}',dim)
+            self.assertIn(f'entersift:{b}',[e['biome'] for e in dim])
             self.assertIn(f'entersift:{b}',rule)
     def test_portal_pixelates_through_eight_stages(self):
         for k in range(8):
@@ -319,6 +319,44 @@ class DataContracts(unittest.TestCase):
             for f in d['features']:
                 for m in f['placement']:
                     if m['type']=='minecraft:offset': self.assertTrue(all(abs(m[k])<=16 for k in 'xyz'))
+    def test_v014_soul_valley_campaign_peaks_souls_and_fog(self):
+        java=(ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text()
+        for b in ['verdant_wood','violet_wood','verdant_canopy','violet_canopy','valley_turf','ruin_bricks','mossy_ruin_bricks',
+                  'ruin_tiles','cinder_rock','ash_crust','cinder_glow','ember_ore','sinter','valley_fern','violet_bloom']:
+            self.assertIn(f'"{b}"',java)
+            self.assertTrue((R/f'assets/entersift/blockstates/{b}.json').exists(), b)
+            self.assertTrue((D/f'loot_table/blocks/{b}.json').exists(), b)
+        # Proper multi-noise terrain, no checkerboard squares, amplified cliffs.
+        dim=read('dimension/the_sift.json')
+        src=dim['generator']['biome_source']
+        self.assertEqual(src['type'],'minecraft:multi_noise')
+        biomes={e['biome'] for e in src['biomes']}
+        self.assertTrue({'entersift:soul_valley','entersift:campaign_peaks'} <= biomes)
+        for b in biomes: self.assertTrue((D/f"worldgen/biome/{b.split(':')[1]}.json").exists(), b)
+        ns=json.dumps(read('worldgen/noise_settings/the_sift.json'))
+        self.assertIn('overworld_amplified',ns)
+        # Soul Valley: giant green + purple trees and ruins; Campaign Peaks: volcanoes, ore, ichor springs.
+        valley=json.dumps(read('worldgen/biome/soul_valley.json')['features'])
+        for f in ['verdant_tree','violet_tree','ruined_hut','ruined_tower','colossus_gate']: self.assertIn(f'entersift:{f}',valley)
+        peaks=json.dumps(read('worldgen/biome/campaign_peaks.json')['features'])
+        for f in ['ichor_volcano','ember_ore','ichor_spring','ichor_hot_spring','ember_shrine']: self.assertIn(f'entersift:{f}',peaks)
+        rules=json.dumps(read('worldgen/material_rule/the_sift.json'))
+        for b in ['valley_turf','cinder_rock','ash_crust','cinder_glow']: self.assertIn(f'entersift:{b}',rules)
+        # Subtle per-biome fog: every biome tints (multiplies) a white dimension fog; the shader can switch it off.
+        self.assertEqual(read('dimension_type/the_sift.json')['attributes']['minecraft:visual/fog_color'],'#ffffff')
+        for f in (D/'worldgen/biome').glob('*.json'):
+            self.assertIn('minecraft:visual/fog_color', json.loads(f.read_text()).get('attributes',{}), f.name)
+        pack=ROOT/'shaderpack/shaders'
+        self.assertIn('SIFT_DIM_FOG',(pack/'shaders.properties').read_text())
+        self.assertIn('gbuffers_plain',(pack/'world_sift/gbuffers_terrain.fsh').read_text())
+        # Wandering souls, ichor bubbles and the rift light spill.
+        souls=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSouls.java').read_text()
+        self.assertIn('SiftRenderTypes.GLOW',souls); self.assertIn('the_sift',souls)
+        self.assertIn('SiftSouls.register()',(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
+        self.assertIn('animateTick',(ROOT/'src/main/java/dev/logan/entersift/IchorFluid.java').read_text())
+        self.assertIn('spill(',(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text())
+        ents=(ROOT/'src/main/java/dev/logan/entersift/SiftEntities.java').read_text()
+        self.assertIn('spawn("soul_valley"',ents); self.assertIn('spawn("campaign_peaks"',ents)
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

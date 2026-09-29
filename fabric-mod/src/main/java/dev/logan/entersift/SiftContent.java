@@ -105,6 +105,22 @@ public final class SiftContent {
     public static final Block RIFT_YELLOW = riftSeed("rift_yellow", 0, 0);
     public static final Block RIFT_RED = riftSeed("rift_red", 4, 3);
     public static final Block RIFT_OLIVE = riftSeed("rift_olive", 1, 1);
+    // 0.14 Soul Valley (green + purple giant trees, ruins) and Campaign Peaks (volcanic) blocks.
+    public static final Block VERDANT_WOOD = block("verdant_wood", Blocks.OAK_LOG, 0);
+    public static final Block VIOLET_WOOD = block("violet_wood", Blocks.OAK_LOG, 0);
+    public static final Block VERDANT_CANOPY = see("verdant_canopy", Blocks.OAK_LEAVES, 4);
+    public static final Block VIOLET_CANOPY = see("violet_canopy", Blocks.OAK_LEAVES, 6);
+    public static final Block VALLEY_TURF = block("valley_turf", Blocks.MOSS_BLOCK, 0);
+    public static final Block RUIN_BRICKS = block("ruin_bricks", Blocks.STONE_BRICKS, 0);
+    public static final Block MOSSY_RUIN_BRICKS = block("mossy_ruin_bricks", Blocks.MOSSY_STONE_BRICKS, 0);
+    public static final Block RUIN_TILES = block("ruin_tiles", Blocks.STONE_BRICKS, 0);
+    public static final Block CINDER_ROCK = block("cinder_rock", Blocks.BASALT, 0);
+    public static final Block ASH_CRUST = block("ash_crust", Blocks.TUFF, 0);
+    public static final Block CINDER_GLOW = block("cinder_glow", Blocks.MAGMA_BLOCK, 10);
+    public static final Block EMBER_ORE = block("ember_ore", Blocks.IRON_ORE, 5);
+    public static final Block SINTER = block("sinter", Blocks.CALCITE, 0);
+    public static final Block VALLEY_FERN = plant("valley_fern", 0);
+    public static final Block VIOLET_BLOOM = plant("violet_bloom", 4);
     public static final Block[] THRESHOLD_STAGES = new Block[8];
     static { for (int i = 0; i < 8; i++) THRESHOLD_STAGES[i] = see("threshold_stage_" + i, Blocks.AMETHYST_BLOCK, 15); }
     /** Invisible display anchor for client-rendered rifts and portals (no item, never placed). */
@@ -134,11 +150,13 @@ public final class SiftContent {
     public static final Item LICKER_EGG = egg("licker");
     public static final Item OVERSEER_EGG = egg("overseer");
     public static final Item NOTE_BIRD_EGG = egg("note_bird");
+    public static final Item SOUL_BEE_EGG = egg("soul_bee");
+    public static final Item WATCHLING_EGG = egg("watchling");
     public static final Item SOUL_POTION = Registry.register(BuiltInRegistries.ITEM, id("soul_potion"),
         new SoulPotionItem(itemProperties("soul_potion").stacksTo(16)));
     public static void initialize() {
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.SPAWN_EGGS).register(output -> {
-            for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,NOTE_BIRD_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
+            for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,NOTE_BIRD_EGG,SOUL_BEE_EGG,WATCHLING_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
             output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
@@ -147,7 +165,9 @@ public final class SiftContent {
             output.accept(SONOROUS_DEEPSLATE); output.accept(SALT); output.accept(SOUL_SALT); output.accept(SOULWOOD); output.accept(SOUL_CANOPY);
             for (Block b : new Block[]{ROSE_SPIRE,SPIRE_BRICKS,ROSE_PATH,TEAL_PATH,REEF_STONE,PALE_CANOPY,SIFT_MOSAIC,SIFT_GRASS,GLOW_BULB,
                 SIFT_CORAL_RED,SIFT_CORAL_YELLOW,CRAG_ROCK,CRAG_ROCK_DARK,CRAG_BAND,PALE_CRUST,CRAG_MOSS,CORAL_PINK_BLOCK,
-                CORAL_ORANGE_BLOCK,SIFT_EARTH,BLUE_TURF,PINK_TURF,BLUE_GRASS,PINK_GRASS,GLOW_TUFT,SIFT_BLOOM,RIFT_PINK,RIFT_ORANGE,RIFT_YELLOW,RIFT_RED,RIFT_OLIVE}) output.accept(b);
+                CORAL_ORANGE_BLOCK,SIFT_EARTH,BLUE_TURF,PINK_TURF,BLUE_GRASS,PINK_GRASS,GLOW_TUFT,SIFT_BLOOM,RIFT_PINK,RIFT_ORANGE,RIFT_YELLOW,RIFT_RED,RIFT_OLIVE,
+                VERDANT_WOOD,VIOLET_WOOD,VERDANT_CANOPY,VIOLET_CANOPY,VALLEY_TURF,RUIN_BRICKS,MOSSY_RUIN_BRICKS,RUIN_TILES,
+                CINDER_ROCK,ASH_CRUST,CINDER_GLOW,EMBER_ORE,SINTER,VALLEY_FERN,VIOLET_BLOOM}) output.accept(b);
         });
     }
     private SiftContent() {}

@@ -1,0 +1,74 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#8fd6b8"
+  },
+  "attributes": {
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.006
+        },
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.008
+        },
+        {
+          "particle": {
+            "type": "minecraft:soul"
+          },
+          "probability": 0.0015
+        },
+        {
+          "particle": {
+            "type": "minecraft:white_ash"
+          },
+          "probability": 0.003
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    },
+    "minecraft:visual/fog_color": "#dccaff"
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:colossus_gate",
+      "entersift:ruined_tower",
+      "entersift:ruined_hut",
+      "entersift:ruin_well",
+      "entersift:broken_wall"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:verdant_tree",
+      "entersift:violet_tree",
+      "entersift:valley_fern_soul_valley",
+      "entersift:violet_bloom_soul_valley",
+      "entersift:glow_tuft_soul_valley",
+      "entersift:blue_grass_soul_valley"
+    ],
+    []
+  ]
+}

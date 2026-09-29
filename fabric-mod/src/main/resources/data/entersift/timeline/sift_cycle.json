@@ -72,7 +72,8 @@
           "ticks": 22500,
           "value": "#d9a450"
         }
-      ]
+      ],
+      "modifier": "multiply"
     },
     "minecraft:visual/water_fog_color": {
       "keyframes": [
