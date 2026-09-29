@@ -72,20 +72,20 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         return switch (type) {
             case OVERWORLD -> VIEW_OVERWORLD;
             case SIFT -> inSift ? VIEW_OVERWORLD : VIEW_SIFT;
-            case PORTAL -> inSift ? VIEW_OVERWORLD : INTERIOR[type.id];
+            case PORTAL -> INTERIOR[type.id]; // 0.15: the ritual portal is always the bright cyan mosaic (blue portal ref)
             default -> INTERIOR[type.id];
         };
     }
 
     /** Frame colour: rifts that show the Overworld from inside the Sift get the yellow frame of the footage. */
     static int frame(RiftType type, boolean inSift) {
-        return inSift && (type == RiftType.SIFT || type == RiftType.PORTAL) ? RiftType.OVERWORLD.edge : type.edge;
+        return inSift && type == RiftType.SIFT ? RiftType.OVERWORLD.edge : type.edge;
     }
 
     /** Warm bloom colour for the outer gradient band (the pink bloom around the white neon edge). */
     static float[] bloom(int frame) {
         if (frame == RiftType.SIFT.edge) return new float[]{1f, 0.5f, 0.76f};
-        if (frame == RiftType.OVERWORLD.edge) return new float[]{1f, 0.78f, 0.3f};
+        if (frame == RiftType.OVERWORLD.edge) return new float[]{1f, 0.6f, 0.5f}; // 0.15: warm peach, not yellow (trailer ref)
         float[] c = rgb(frame);
         return new float[]{c[0], c[1] * 0.85f, c[2] * 0.9f};
     }
@@ -191,11 +191,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 return Math.abs(u - off) < half;
             }
             default: { // PORTAL (0.11, blue portal ref): a glowing rectangle with a crenellated rim and stepped corners
+                // 0.15 (blue portal ref): a clean glowing rectangle with single square tabs poking out of
+                // the top edge and the sides; the bottom edge is straight (it rests on the frame).
                 int ci = Math.min(i, cols - 1 - i), cj = Math.min(j, rows - 1 - j);
-                if (ci + cj < 2) return false;                                  // stepped corners
-                if (cj == 0) return (i / 2) % 2 == 0;                            // merlons along the top and bottom
-                if (ci == 0) return (j / 2) % 2 == 0;                            // and down both sides
-                return true;
+                if (ci >= 1 && j >= 1 && cj >= 1) return true;                  // the rectangle
+                if (j == 0) return false;                                        // straight bottom
+                if (j == rows - 1) return ci >= 2 && (i + (int) (seed & 1)) % 4 == 2; // tabs along the top
+                if (ci == 0) return cj >= 2 && (j + (i == 0 ? 0 : 2)) % 4 == 1; // tabs down the sides
+                return false;
             }
         }
     }
@@ -280,7 +283,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     @Override
     public void submit(State s, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
         Shape sh = shape(s);
-        float[] edge = rgb(s.frame);
+        // 0.15: warm rifts glow peach with white rims like the trailer, never lemon yellow.
+        float[] edge = s.frame == RiftType.OVERWORLD.edge ? new float[]{1f, 0.74f, 0.6f} : rgb(s.frame);
         Vector3f cam = new Vector3f((float) (camera.pos.x - s.ex), (float) (camera.pos.y - s.ey), (float) (camera.pos.z - s.ez))
             .rotateY((float) Math.toRadians(s.yaw));
         pose.pushPose();
@@ -521,13 +525,21 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float[] white = {1f, 0.98f, 0.97f}, pink = mix(white, bloom(s.frame), 0.55f);
         float span = Math.max(sh.w(), sh.h());
         // Interior haze: two stacked soft discs just in front of the canvas.
-        halo(p, vc, 0, sh.cy(), -DEPTH + 0.06f, span * 0.42f, white, 0.13f * in * breathe);
+        halo(p, vc, 0, sh.cy(), -DEPTH + 0.06f, span * 0.42f, white, (s.type == RiftType.PORTAL ? 0.2f : 0.13f) * in * breathe);
         halo(p, vc, 0, sh.cy(), -DEPTH * 0.5f, span * 0.6f, pink, 0.07f * in * breathe);
         float band = Math.min(0.6f, Math.min(sh.cw(), sh.ch()) * 1.2f), out = 1.1f, fwd = 0.7f;
         for (int i = 0; i < sh.cols(); i++) for (int j = 0; j < sh.rows(); j++) {
             if (!sh.on(i, j)) continue;
             float x0 = sh.x(i), y0 = sh.y(j), x1 = x0 + sh.cw(), y1 = y0 + sh.ch(), zc = -DEPTH + 0.04f;
             float ea = 0.24f * in * breathe, sa = 0.12f * in * breathe;
+            // 0.15 outer bloom: a soft band in the rift's plane, fading outward from every open edge.
+            boolean portal = s.type == RiftType.PORTAL;
+            float gw = portal ? 0.85f : 0.7f, ga = (portal ? 0.34f : 0.16f) * in * breathe, zo = 0.02f;
+            float[] gc = portal ? mix(white, edge, 0.6f) : pink;
+            if (!sh.on(i - 1, j)) grad(p, vc, x0, y0, zo, x0, y1, zo, x0 - gw, y1, zo, x0 - gw, y0, zo, gc, ga, 0f);
+            if (!sh.on(i + 1, j)) grad(p, vc, x1, y1, zo, x1, y0, zo, x1 + gw, y0, zo, x1 + gw, y1, zo, gc, ga, 0f);
+            if (!sh.on(i, j - 1)) grad(p, vc, x1, y0, zo, x0, y0, zo, x0, y0 - gw, zo, x1, y0 - gw, zo, gc, ga, 0f);
+            if (!sh.on(i, j + 1)) grad(p, vc, x0, y1, zo, x1, y1, zo, x1, y1 + gw, zo, x0, y1 + gw, zo, gc, ga, 0f);
             if (!sh.on(i - 1, j)) {   // left edge
                 grad(p, vc, x0, y0, zc, x0, y1, zc, x0 + band, y1, zc, x0 + band, y0, zc, white, ea, 0f);
                 grad(p, vc, x0, y0, 0.01f, x0, y1, 0.01f, x0 - out, y1, fwd, x0 - out, y0, fwd, pink, sa, 0f);

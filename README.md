@@ -123,6 +123,11 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.15.0: trailer-accurate portal and rifts, shader pack install fixed
+- **Portal (blue portal ref).** The portal is now a clean glowing rectangle with square tabs on the top and sides, instead of a jagged outline. Inside is a bright, soft mosaic of pale cyan and white squares, like frosted glass. It has a thicker white rim and a wide cyan bloom around it, and looks the same from both dimensions.
+- **Rifts (pink and warm rift refs).** Rift interiors are now glowing marble instead of a flat picture of the other world. From the Overworld they look rose-pink and cream with lavender hints; from inside the Sift, coral, peach and gold. A soft bloom band surrounds every edge. Rifts that glowed yellow now glow peach with white rims.
+- **Shader pack installs again.** In 0.14 the installer looked for the wrong file name, so Dungeons-II-Overworld never appeared in your shaderpacks folder. It now installs `Dungeons-II-Overworld-0.15.zip` on first launch. It stays off until you select it in Iris, and a test keeps the two names in sync.
+
 ### 0.14.1: ritual fix
 - **The song now registers every note.** One left click on a note block could reach the server two or three times. The repeat counted as a wrong note and silently reset the song to 1/8. Repeat hits on the same block are now ignored.
 - **One frame per ancient city.** Note blocks spread around a big city could each detect a different reinforced-deepslate frame, which split the song's progress. The first frame found, or the one where the Twisted Warden was fought, is now used for every note nearby.

@@ -169,7 +169,7 @@ class DataContracts(unittest.TestCase):
         # The optional Overworld pack is installed only if absent and never enabled.
         self.assertIn('if (Files.exists(target)) return;',code)
         self.assertNotIn('iris.properties',code)   # never touches Iris config (pack stays off)
-        self.assertIn("Dungeons-II-Overworld-0.14.zip",(ROOT/'build.gradle').read_text())
+        self.assertIn("Dungeons-II-Overworld-0.15.zip",(ROOT/'build.gradle').read_text())
     def test_guardian_unlock_requires_death_and_link(self):
         self.assertIn('if score @s sift.link = #dead sift.link',fn('guardian/slain'))
         self.assertIn('tag @s add sift.ready',fn('guardian/unlock'))
@@ -365,6 +365,22 @@ class DataContracts(unittest.TestCase):
         self.assertIn('Result.IGNORED',r); self.assertIn('{1, 3, 7, 6, 5, 2, 4, 8}',r)
         smoke=(ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text()
         self.assertIn('playRitual',smoke); self.assertIn('SIFT-SMOKE FAIL ritual',smoke)
+    def test_v015_portal_rifts_and_bundled_pack(self):
+        import re
+        code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
+        gradle=(ROOT/'build.gradle').read_text()
+        pack=re.search(r'PACK = "([^"]+)"',code).group(1)
+        self.assertIn(f"archiveFileName = '{pack}'",gradle)      # 0.14 shipped mismatched names: no pack installed
+        r=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('case PORTAL -> INTERIOR[type.id];',r)
+        self.assertIn('outer bloom',r)
+        try: from PIL import Image
+        except ImportError: return                               # CI may lack Pillow; the name check above still runs
+        for n in ['interior_portal','view_sift','view_overworld']:
+            im=Image.open(R/f'assets/entersift/textures/rift/{n}.png').convert('RGB')
+            self.assertEqual(im.size,(256,128))
+            px=list(im.getdata()); mean=sum(sum(p) for p in px)/len(px)/3
+            self.assertGreater(mean,150,n)                       # luminous canvases, like the trailer
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

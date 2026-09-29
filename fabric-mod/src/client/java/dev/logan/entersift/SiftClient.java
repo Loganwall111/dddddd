@@ -52,7 +52,7 @@ public final class SiftClient implements ClientModInitializer {
         installOverworldShaderPack();
     }
 
-    private static final String PACK = "Dungeons-II-Overworld-0.13.zip";
+    private static final String PACK = "Dungeons-II-Overworld-0.15.zip" // must match build.gradle archiveFileName (test_data enforces it);
 
     /**
      * 0.11: ship the optional Dungeons II Overworld Iris pack. It is copied into shaderpacks/ only if
@@ -75,7 +75,7 @@ public final class SiftClient implements ClientModInitializer {
         var target = packs.resolve(PACK);
         if (Files.exists(target)) return;
         try (var in = SiftClient.class.getResourceAsStream("/assets/entersift/shaderpacks/" + PACK)) {
-            if (in == null) return;
+            if (in == null) { EnterTheSift.LOGGER.error("[Sift] bundled shader pack {} is missing from the jar", PACK); return; }
             Files.createDirectories(packs);
             Files.copy(in, target);
             EnterTheSift.LOGGER.info("[Sift] installed optional shader pack {} (off by default)", PACK);
