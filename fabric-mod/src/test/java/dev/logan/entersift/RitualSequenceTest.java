@@ -16,6 +16,14 @@ class RitualSequenceTest {
         var s=new RitualSequence();s.play(1,"a",0);
         assertEquals(RitualSequence.Result.RESET,s.play(3,"a",1));
     }
+    @Test void duplicateClicksAreIgnored() {
+        var s=new RitualSequence();
+        for(int i=0;i<7;i++){
+            assertEquals(RitualSequence.Result.ADVANCED,s.play(RitualSequence.ORDER[i],"note"+i,i*20));
+            assertEquals(RitualSequence.Result.IGNORED,s.play(RitualSequence.ORDER[i],"note"+i,i*20+1));
+        }
+        assertEquals(RitualSequence.Result.COMPLETE,s.play(8,"note7",140));
+    }
     @Test void timeoutAndRestart() {
         var s=new RitualSequence();s.play(1,"a",0);
         assertEquals(RitualSequence.Result.RESET,s.play(3,"b",601));

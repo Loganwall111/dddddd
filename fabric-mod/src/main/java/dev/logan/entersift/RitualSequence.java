@@ -14,21 +14,23 @@ public final class RitualSequence {
     private long lastTick = Long.MIN_VALUE;
     public enum Result { ADVANCED, RESET, COMPLETE, IGNORED }
     private String lastPosition;
+    private int lastPitch;
     private int lastWrongPitch, lastExpected;
     public Result play(int pitch, String position, long tick) {
         if (lastTick != Long.MIN_VALUE && tick - lastTick > TIMEOUT) reset();
         lastTick = tick;
-        // Striking the block that was just accepted again is never a new note: ignore it, don't reset.
-        if (progress > 0 && position.equals(lastPosition)) return Result.IGNORED;
+        // The same block at the same pitch as the note just accepted is a duplicate click: ignore it, don't reset.
+        // (Retuning that block to another pitch is still a wrong note and resets, see RitualSequenceTest.)
+        if (progress > 0 && position.equals(lastPosition) && pitch == lastPitch) return Result.IGNORED;
         if (pitch != ORDER[progress] || notes.contains(position)) {
             lastWrongPitch = pitch; lastExpected = ORDER[progress];
             reset();
             lastPosition = null;
-            if (pitch == ORDER[0]) { notes.add(position); progress = 1; lastPosition = position; }
+            if (pitch == ORDER[0]) { notes.add(position); progress = 1; lastPosition = position; lastPitch = pitch; }
             return Result.RESET;
         }
         notes.add(position);
-        lastPosition = position;
+        lastPosition = position; lastPitch = pitch;
         if (++progress == ORDER.length) { completedNotes = List.copyOf(notes); reset(); return Result.COMPLETE; }
         return Result.ADVANCED;
     }
