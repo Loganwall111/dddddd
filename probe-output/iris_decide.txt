@@ -1,0 +1,282 @@
+224:  public static net.irisshaders.iris.pipeline.programs.ShaderKey getPipeline(net.irisshaders.iris.pipeline.IrisRenderingPipeline, com.mojang.renderpearl.api.pipeline.RenderPipeline);
+225-    Code:
+226-         0: aload_1
+227-         1: invokevirtual #166                // Method com/mojang/renderpearl/api/pipeline/RenderPipeline.getLocation:()Lnet/minecraft/resources/Identifier;
+228-         4: invokevirtual #172                // Method net/minecraft/resources/Identifier.getNamespace:()Ljava/lang/String;
+229-         7: ldc           #178                // String sodium
+230-         9: invokevirtual #180                // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+231-        12: ifeq          100
+232-        15: aload_1
+233-        16: invokevirtual #184                // Method com/mojang/renderpearl/api/pipeline/RenderPipeline.getColorTargetStates:()Ljava/util/List;
+234-        19: iconst_0
+235-        20: invokeinterface #188,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+236-        25: checkcast     #193                // class com/mojang/renderpearl/api/pipeline/ColorTargetState
+237-        28: invokevirtual #195                // Method com/mojang/renderpearl/api/pipeline/ColorTargetState.blendFunction:()Ljava/util/Optional;
+238-        31: invokevirtual #199                // Method java/util/Optional.isPresent:()Z
+239-        34: ifeq          53
+240-        37: invokestatic  #204                // Method net/irisshaders/iris/shadows/ShadowRenderingState.areShadowsCurrentlyBeingRendered:()Z
+241-        40: ifeq          49
+242-        43: getstatic     #209                // Field net/irisshaders/iris/pipeline/programs/ShaderKey.SHADOW_SODIUM_TERRAIN_TRANSLUCENT:Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+243-        46: goto          52
+244-        49: getstatic     #212                // Field net/irisshaders/iris/pipeline/programs/ShaderKey.SODIUM_TERRAIN_TRANSLUCENT:Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+245-        52: areturn
+246-        53: aload_1
+247-        54: invokevirtual #215                // Method com/mojang/renderpearl/api/pipeline/RenderPipeline.getShaderDefines:()Lnet/minecraft/client/renderer/ShaderDefines;
+248-        57: invokevirtual #219                // Method net/minecraft/client/renderer/ShaderDefines.asSourceDirectives:()Ljava/lang/String;
+249-        60: ldc           #224                // String CUTOUT
+250-        62: invokevirtual #180                // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+251-        65: ifeq          84
+252-        68: invokestatic  #204                // Method net/irisshaders/iris/shadows/ShadowRenderingState.areShadowsCurrentlyBeingRendered:()Z
+253-        71: ifeq          80
+254-        74: getstatic     #226                // Field net/irisshaders/iris/pipeline/programs/ShaderKey.SHADOW_SODIUM_TERRAIN_CUTOUT:Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+255-        77: goto          83
+256-        80: getstatic     #229                // Field net/irisshaders/iris/pipeline/programs/ShaderKey.SODIUM_TERRAIN_CUTOUT:Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+257-        83: areturn
+258-        84: invokestatic  #204                // Method net/irisshaders/iris/shadows/ShadowRenderingState.areShadowsCurrentlyBeingRendered:()Z
+259-        87: ifeq          96
+260-        90: getstatic     #232                // Field net/irisshaders/iris/pipeline/programs/ShaderKey.SHADOW_SODIUM_TERRAIN_SOLID:Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+261-        93: goto          99
+262-        96: getstatic     #235                // Field net/irisshaders/iris/pipeline/programs/ShaderKey.SODIUM_TERRAIN_SOLID:Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+263-        99: areturn
+264-       100: invokestatic  #204                // Method net/irisshaders/iris/shadows/ShadowRenderingState.areShadowsCurrentlyBeingRendered:()Z
+265-       103: ifeq          131
+266-       106: getstatic     #96                 // Field coreShaderMapShadow:Ljava/util/Map;
+267-       109: aload_1
+268-       110: getstatic     #238                // Field FAKE_FUNCTION:Lit/unimi/dsi/fastutil/Function;
+269-       113: invokeinterface #242,  3          // InterfaceMethod java/util/Map.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+270-       118: checkcast     #65                 // class it/unimi/dsi/fastutil/Function
+271-       121: aload_0
+272-       122: invokeinterface #67,  2           // InterfaceMethod it/unimi/dsi/fastutil/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+273-       127: checkcast     #23                 // class net/irisshaders/iris/pipeline/programs/ShaderKey
+274-       130: areturn
+275-       131: getstatic     #49                 // Field coreShaderMap:Ljava/util/Map;
+276-       134: aload_1
+277-       135: getstatic     #238                // Field FAKE_FUNCTION:Lit/unimi/dsi/fastutil/Function;
+278-       138: invokeinterface #242,  3          // InterfaceMethod java/util/Map.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+279-       143: checkcast     #65                 // class it/unimi/dsi/fastutil/Function
+280-       146: aload_0
+281-       147: invokeinterface #67,  2           // InterfaceMethod it/unimi/dsi/fastutil/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+282-       152: checkcast     #23                 // class net/irisshaders/iris/pipeline/programs/ShaderKey
+283-       155: areturn
+284-
+=== FAKE / static tail
+5-  private static final java.util.Map<com.mojang.renderpearl.api.pipeline.RenderPipeline, it.unimi.dsi.fastutil.Function<net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey>> coreShaderMapShadow;
+6-
+7:  private static final it.unimi.dsi.fastutil.Function<net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey> FAKE_FUNCTION;
+8-
+9-  public net.irisshaders.iris.pipeline.IrisPipelines();
+10-    Code:
+11-         0: aload_0
+12-         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+13-         4: return
+14-
+15-  private static net.irisshaders.iris.pipeline.programs.ShaderKey getText(java.lang.Object);
+16-    Code:
+17-         0: aload_0
+18-         1: checkcast     #7                  // class net/irisshaders/iris/pipeline/IrisRenderingPipeline
+19-         4: astore_1
+--
+266-       106: getstatic     #96                 // Field coreShaderMapShadow:Ljava/util/Map;
+267-       109: aload_1
+268:       110: getstatic     #238                // Field FAKE_FUNCTION:Lit/unimi/dsi/fastutil/Function;
+269-       113: invokeinterface #242,  3          // InterfaceMethod java/util/Map.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+270-       118: checkcast     #65                 // class it/unimi/dsi/fastutil/Function
+271-       121: aload_0
+272-       122: invokeinterface #67,  2           // InterfaceMethod it/unimi/dsi/fastutil/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+273-       127: checkcast     #23                 // class net/irisshaders/iris/pipeline/programs/ShaderKey
+274-       130: areturn
+275-       131: getstatic     #49                 // Field coreShaderMap:Ljava/util/Map;
+276-       134: aload_1
+277:       135: getstatic     #238                // Field FAKE_FUNCTION:Lit/unimi/dsi/fastutil/Function;
+278-       138: invokeinterface #242,  3          // InterfaceMethod java/util/Map.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+279-       143: checkcast     #65                 // class it/unimi/dsi/fastutil/Function
+280-       146: aload_0
+281-       147: invokeinterface #67,  2           // InterfaceMethod it/unimi/dsi/fastutil/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+282-       152: checkcast     #23                 // class net/irisshaders/iris/pipeline/programs/ShaderKey
+283-       155: areturn
+284-
+285-  public static void assignPipeline(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.irisshaders.iris.pipeline.programs.ShaderKey);
+286-    Code:
+287-         0: getstatic     #49                 // Field coreShaderMap:Ljava/util/Map;
+288-         3: aload_0
+289-         4: invokeinterface #55,  2           // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+--
+925-        17: putstatic     #96                 // Field coreShaderMapShadow:Ljava/util/Map;
+926-        20: invokedynamic #403,  0            // InvokeDynamic #6:get:()Lit/unimi/dsi/fastutil/Function;
+927:        25: putstatic     #238                // Field FAKE_FUNCTION:Lit/unimi/dsi/fastutil/Function;
+928-        28: getstatic     #406                // Field net/minecraft/client/renderer/RenderPipelines.SOLID_BLOCK:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+929-        31: invokedynamic #412,  0            // InvokeDynamic #7:get:()Lit/unimi/dsi/fastutil/Function;
+930-        36: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+931-        39: getstatic     #417                // Field net/minecraft/client/renderer/RenderPipelines.CUTOUT_BLOCK:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+932-        42: invokedynamic #420,  0            // InvokeDynamic #8:get:()Lit/unimi/dsi/fastutil/Function;
+933-        47: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+934-        50: getstatic     #421                // Field net/minecraft/client/renderer/RenderPipelines.SOLID_TERRAIN:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+935-        53: invokedynamic #424,  0            // InvokeDynamic #9:get:()Lit/unimi/dsi/fastutil/Function;
+936-        58: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+937-        61: getstatic     #425                // Field net/minecraft/client/renderer/RenderPipelines.CUTOUT_TERRAIN:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+938-        64: invokedynamic #428,  0            // InvokeDynamic #10:get:()Lit/unimi/dsi/fastutil/Function;
+939-        69: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+=== Overrides mixin
+Compiled from "MixinShaderManager_Overrides.java"
+public abstract class net.irisshaders.iris.mixin.MixinShaderManager_Overrides {
+  private static java.util.Set<com.mojang.renderpearl.api.pipeline.RenderPipeline> missingShaders;
+
+  private static final java.util.Map<com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline, java.util.Map<com.mojang.renderpearl.backend.opengl.GlProgram, java.util.Map<java.util.List<com.mojang.renderpearl.api.vertex.VertexFormat>, com.mojang.renderpearl.frontend.FrontendRenderPipeline>>> iris$overrides;
+
+  public net.irisshaders.iris.mixin.MixinShaderManager_Overrides();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  private static void redirectIrisProgram(com.mojang.renderpearl.api.pipeline.RenderPipeline, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline>);
+    Code:
+         0: aload_0
+         1: getstatic     #7                  // Field net/irisshaders/iris/pipeline/CompositeRenderer.COMPOSITE_PIPELINE:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+         4: if_acmpne     8
+         7: return
+         8: aload_0
+         9: getstatic     #13                 // Field net/minecraft/client/renderer/RenderPipelines.ANIMATE_SPRITE_BLIT:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+        12: if_acmpeq     22
+        15: aload_0
+        16: getstatic     #18                 // Field net/minecraft/client/renderer/RenderPipelines.ANIMATE_SPRITE_INTERPOLATE:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+        19: if_acmpne     23
+        22: return
+        23: invokestatic  #21                 // Method net/irisshaders/iris/Iris.getPipelineManager:()Lnet/irisshaders/iris/pipeline/PipelineManager;
+        26: invokevirtual #27                 // Method net/irisshaders/iris/pipeline/PipelineManager.getPipelineNullable:()Lnet/irisshaders/iris/pipeline/WorldRenderingPipeline;
+        29: astore_2
+        30: aload_2
+        31: instanceof    #33                 // class net/irisshaders/iris/pipeline/IrisRenderingPipeline
+        34: ifeq          425
+        37: aload_2
+        38: checkcast     #33                 // class net/irisshaders/iris/pipeline/IrisRenderingPipeline
+        41: astore_3
+        42: aload_3
+        43: invokevirtual #35                 // Method net/irisshaders/iris/pipeline/IrisRenderingPipeline.shouldOverrideShaders:()Z
+        46: ifeq          425
+        49: getstatic     #39                 // Field net/irisshaders/iris/vertices/ImmediateState.bypass:Z
+        52: ifne          425
+        55: aload_0
+        56: astore        4
+        58: aload_3
+        59: aload         4
+        61: invokestatic  #45                 // Method net/irisshaders/iris/pipeline/IrisPipelines.getPipeline:(Lnet/irisshaders/iris/pipeline/IrisRenderingPipeline;Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;)Lnet/irisshaders/iris/pipeline/programs/ShaderKey;
+        64: astore        5
+        66: aload         5
+        68: ifnonnull     75
+        71: aconst_null
+        72: goto          84
+        75: aload_3
+        76: invokevirtual #51                 // Method net/irisshaders/iris/pipeline/IrisRenderingPipeline.getShaderMap:()Lnet/irisshaders/iris/pipeline/programs/ShaderMap;
+        79: aload         5
+        81: invokevirtual #55                 // Method net/irisshaders/iris/pipeline/programs/ShaderMap.getShader:(Lnet/irisshaders/iris/pipeline/programs/ShaderKey;)Lcom/mojang/renderpearl/backend/opengl/GlProgram;
+        84: astore        6
+        86: aload_1
+        87: invokevirtual #61                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.getReturnValue:()Ljava/lang/Object;
+        90: checkcast     #67                 // class com/mojang/renderpearl/frontend/FrontendRenderPipeline
+        93: invokevirtual #69                 // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline.backendRenderPipeline:()Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline;
+        96: checkcast     #73                 // class com/mojang/renderpearl/backend/opengl/GlRenderPipeline
+        99: astore        7
+       101: aload_1
+       102: invokevirtual #61                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.getReturnValue:()Ljava/lang/Object;
+       105: checkcast     #67                 // class com/mojang/renderpearl/frontend/FrontendRenderPipeline
+       108: astore        8
+       110: aload         6
+       112: ifnull        345
+       115: invokestatic  #75                 // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/renderpearl/api/device/GpuDevice;
+       118: checkcast     #81                 // class net/irisshaders/iris/mixin/GpuDeviceAccessor
+       121: invokeinterface #83,  1           // InterfaceMethod net/irisshaders/iris/mixin/GpuDeviceAccessor.getBackend:()Lcom/mojang/renderpearl/backend/api/GpuDeviceBackend;
+       126: checkcast     #87                 // class com/mojang/renderpearl/backend/opengl/GlDevice
+       129: astore        9
+       131: new           #89                 // class java/util/ArrayList
+       134: dup
+       135: aload_0
+       136: invokevirtual #91                 // Method com/mojang/renderpearl/api/pipeline/RenderPipeline.getVertexFormatBindings:()Ljava/util/List;
+       139: invokespecial #97                 // Method java/util/ArrayList."<init>":(Ljava/util/Collection;)V
+       142: astore        10
+       144: getstatic     #100                // Field iris$overrides:Ljava/util/Map;
+       147: aload         8
+       149: invokedynamic #106,  0            // InvokeDynamic #0:apply:()Ljava/util/function/Function;
+       154: invokeinterface #110,  3          // InterfaceMethod java/util/Map.computeIfAbsent:(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
+       159: checkcast     #111                // class java/util/Map
+       162: aload         6
+       164: invokedynamic #116,  0            // InvokeDynamic #1:apply:()Ljava/util/function/Function;
+       169: invokeinterface #110,  3          // InterfaceMethod java/util/Map.computeIfAbsent:(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
+       174: checkcast     #111                // class java/util/Map
+       177: aload         10
+       179: invokeinterface #117,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       184: checkcast     #67                 // class com/mojang/renderpearl/frontend/FrontendRenderPipeline
+       187: astore        11
+       189: aload         11
+       191: ifnull        201
+       194: aload_1
+       195: aload         11
+       197: invokevirtual #121                // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.setReturnValue:(Ljava/lang/Object;)V
+       200: return
+       201: aload         7
+       203: checkcast     #125                // class net/irisshaders/iris/mixinterface/GlRenderPipelineAccess
+       206: invokeinterface #127,  1          // InterfaceMethod net/irisshaders/iris/mixinterface/GlRenderPipelineAccess.getCreateInfo:()Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline$CreateInfo;
+       211: aload         6
+       213: aload         10
+       215: invokestatic  #131                // Method iris$createInfo:(Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline$CreateInfo;Lcom/mojang/renderpearl/backend/opengl/GlProgram;Ljava/util/List;)Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline$CreateInfo;
+       218: astore        12
+       220: invokestatic  #135                // Method org/lwjgl/opengl/GL.getCapabilities:()Lorg/lwjgl/opengl/GLCapabilities;
+       223: new           #141                // class java/util/HashSet
+       226: dup
+       227: invokespecial #143                // Method java/util/HashSet."<init>":()V
+       230: invokestatic  #144                // Method com/mojang/renderpearl/backend/opengl/VertexArray.createSource:(Lorg/lwjgl/opengl/GLCapabilities;Ljava/util/Set;)Ljava/util/function/BiFunction;
+       233: aload         6
+       235: aload         12
+       237: invokeinterface #150,  3          // InterfaceMethod java/util/function/BiFunction.apply:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+       242: checkcast     #145                // class com/mojang/renderpearl/backend/opengl/VertexArray
+       245: astore        13
+       247: new           #67                 // class com/mojang/renderpearl/frontend/FrontendRenderPipeline
+       250: dup
+       251: aload         8
+       253: invokevirtual #155                // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline.name:()Ljava/lang/String;
+       256: new           #73                 // class com/mojang/renderpearl/backend/opengl/GlRenderPipeline
+       259: dup
+       260: aload         9
+       262: aload         12
+       264: aload         6
+       266: aload         13
+       268: invokespecial #159                // Method com/mojang/renderpearl/backend/opengl/GlRenderPipeline."<init>":(Lcom/mojang/renderpearl/backend/opengl/GlDevice;Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline$CreateInfo;Lcom/mojang/renderpearl/backend/opengl/GlProgram;Lcom/mojang/renderpearl/backend/opengl/VertexArray;)V
+       271: aload         10
+       273: aload         8
+       275: invokevirtual #162                // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline.uniformIndices:()Lit/unimi/dsi/fastutil/objects/Object2IntMap;
+       278: aload         8
+       280: invokevirtual #166                // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline.uniforms:()Ljava/util/List;
+       283: aload         8
+       285: invokevirtual #169                // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline.colorTargetStates:()Ljava/util/List;
+       288: aload         8
+       290: invokevirtual #172                // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline.wantsDepthTexture:()Z
+       293: aload         8
+       295: invokevirtual #175                // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline.pushConstantSize:()I
+       298: invokespecial #179                // Method com/mojang/renderpearl/frontend/FrontendRenderPipeline."<init>":(Ljava/lang/String;Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline;Ljava/util/List;Lit/unimi/dsi/fastutil/objects/Object2IntMap;Ljava/util/List;Ljava/util/List;ZI)V
+       301: astore        14
+       303: getstatic     #100                // Field iris$overrides:Ljava/util/Map;
+       306: aload         8
+       308: invokeinterface #117,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       313: checkcast     #111                // class java/util/Map
+       316: aload         6
+       318: invokeinterface #117,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       323: checkcast     #111                // class java/util/Map
+       326: aload         10
+       328: aload         14
+       330: invokeinterface #182,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+       335: pop
+       336: aload_1
+       337: aload         14
+=== ShaderOverrides
+Compiled from "ShaderOverrides.java"
+public class net.irisshaders.iris.pipeline.programs.ShaderOverrides {
+  public net.irisshaders.iris.pipeline.programs.ShaderOverrides();
+  public static net.irisshaders.iris.pipeline.programs.ShaderKey getSkyShader(net.irisshaders.iris.pipeline.IrisRenderingPipeline);
+  public static net.irisshaders.iris.pipeline.programs.ShaderKey getSkyTexShader(net.irisshaders.iris.pipeline.IrisRenderingPipeline);
+  public static net.irisshaders.iris.pipeline.programs.ShaderKey getSkyTexColorShader(net.irisshaders.iris.pipeline.IrisRenderingPipeline);
+  public static net.irisshaders.iris.pipeline.programs.ShaderKey getSkyColorShader(net.irisshaders.iris.pipeline.IrisRenderingPipeline);
+  public static boolean isBlockEntities(net.irisshaders.iris.pipeline.IrisRenderingPipeline);
+  public static boolean isEntities(net.irisshaders.iris.pipeline.IrisRenderingPipeline);
+  public static boolean isSky(net.irisshaders.iris.pipeline.IrisRenderingPipeline);
+  public static boolean isPhase(net.irisshaders.iris.pipeline.IrisRenderingPipeline, net.irisshaders.iris.pipeline.WorldRenderingPhase);
+}
