@@ -82,3 +82,16 @@ net.minecraft.network.syncher.SynchedEntityData
 net.minecraft.network.syncher.EntityDataSerializers
 net.minecraft.world.entity.EntityType$Builder
 net.minecraft.world.entity.EntityDimensions
+com.mojang.renderpearl.api.pipeline.RenderPipeline
+com.mojang.renderpearl.api.pipeline.RenderPipeline$Builder
+com.mojang.renderpearl.api.pipeline.RenderPipeline$Snippet
+com.mojang.renderpearl.api.pipeline.BlendFunction
+com.mojang.renderpearl.api.pipeline.PrimitiveTopology
+net.minecraft.client.renderer.rendertype.RenderSetup
+net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder
+net.minecraft.client.renderer.RenderPipelines
+com.mojang.blaze3d.vertex.DefaultVertexFormat
+com.mojang.renderpearl.api.vertex.DefaultVertexFormat
+com.mojang.renderpearl.api.vertex.VertexFormat
+net.minecraft.sounds.SoundEvent
+net.minecraft.sounds.SoundEvents

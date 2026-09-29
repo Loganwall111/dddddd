@@ -17,3 +17,8 @@ javap -c -p -cp "$CP" net.minecraft.client.renderer.RenderPipelines 2>&1 | grep 
 for j in "${JARS[@]}"; do case "$j" in *clientOnly*|*client*26.3*)
   for s in position_color.fsh position_color.vsh rendertype_lightning.fsh rendertype_lightning.vsh; do
     echo "===== $s"; unzip -p "$j" "assets/minecraft/shaders/core/$s" 2>/dev/null; done ;; esac; done > $OUT/shaders.txt
+# 0.11: full bytecode of the vanilla pipeline + render type definitions (to build an opaque, fog-free sky pipeline).
+javap -c -p -cp "$CP" net.minecraft.client.renderer.RenderPipelines > $OUT/pipelines_full.txt 2>&1
+javap -c -p -cp "$CP" net.minecraft.client.renderer.rendertype.RenderTypes > $OUT/rendertypes_full.txt 2>&1
+javap -protected -cp "$CP" net.minecraft.world.entity.LivingEntity 2>&1 | grep -iE "sound|playHurt" > $OUT/living_sounds.txt
+javap -protected -cp "$CP" net.minecraft.world.entity.Mob 2>&1 | grep -iE "sound" >> $OUT/living_sounds.txt
