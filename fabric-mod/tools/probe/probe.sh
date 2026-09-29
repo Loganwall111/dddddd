@@ -120,3 +120,11 @@ for f in $(cd /tmp/irisx && grep -rlE 'assignPipeline|IrisPipelines' --include=*
 done
 cat /tmp/irisx/fabric.mod.json 2>/dev/null | head -40
 } > $OUT/iris_api.txt 2>&1
+# 0.18.2b: bytecode of Iris' pipeline override decision (what happens to unassigned pipelines).
+{
+ICP="/tmp/irisx:$CP"
+javap -c -p -cp "$ICP" net.irisshaders.iris.pipeline.IrisPipelines 2>&1 | grep -n -A60 'ShaderKey getPipeline(' | head -90
+echo "=== FAKE / static tail"; javap -c -p -cp "$ICP" net.irisshaders.iris.pipeline.IrisPipelines 2>&1 | grep -n -B2 -A12 'FAKE_FUNCTION' | head -60
+echo "=== Overrides mixin"; javap -c -p -cp "$ICP" net.irisshaders.iris.mixin.MixinShaderManager_Overrides 2>&1 | head -150
+echo "=== ShaderOverrides"; javap -p -cp "$ICP" net.irisshaders.iris.pipeline.programs.ShaderOverrides 2>&1 | head -40
+} > $OUT/iris_decide.txt 2>&1
