@@ -1,8 +1,8 @@
 {
   "ambient_light": 0.1,
   "attributes": {
-    "minecraft:visual/fog_color": "#7fd3cf",
-    "minecraft:visual/sky_color": "#7fd3cf",
+    "minecraft:visual/fog_color": "#7cc6d8",
+    "minecraft:visual/sky_color": "#7cc6d8",
     "minecraft:visual/ambient_light_color": "#203946",
     "minecraft:audio/ambient_sounds": {
       "loop": "entersift:ambient.sift.loop",
@@ -25,7 +25,7 @@
       }
     },
     "minecraft:visual/cloud_color": "#00ffffff",
-    "minecraft:visual/water_fog_color": "#5fc4c0",
+    "minecraft:visual/water_fog_color": "#5aa8bc",
     "minecraft:audio/background_music": {
       "default": {
         "sound": "entersift:music.sift",

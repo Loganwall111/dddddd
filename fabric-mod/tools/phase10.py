@@ -34,9 +34,9 @@ def write(p, data):
 STAGE_TICKS = [0, 3500, 5000, 8500, 11000, 14500, 16500, 22500]
 STAGE_AT = [0, 0, 1, 1, 2, 2, 3, 3]
 #            day        noon       evening    night
-HORIZON = ["#7fd3cf", "#8cf2c4", "#c86a92", "#d99a3c"]   # == SiftSky.HORIZON (fog + sky colour)
-LIGHT = ["#d8fbf6", "#e2ffee", "#ffc6dc", "#ffd48e"]     # ground/ichor tint (multiplies sky light)
-WATER_FOG = ["#5fc4c0", "#62e6ae", "#b0508a", "#c98a30"]  # fog inside ichor
+HORIZON = ["#7cc6d8", "#86d6dc", "#c89ab8", "#d9a450"]   # == SiftSky.HORIZON (fog + sky colour)
+LIGHT = ["#dcf4fa", "#e6fff4", "#f6d6e6", "#ffd89a"]     # ground/ichor tint (multiplies sky light)
+WATER_FOG = ["#5aa8bc", "#62b8c0", "#a87898", "#c08a3a"]  # fog inside ichor
 LIGHT_FACTOR = [1.0, 1.0, 0.9, 0.8]
 LIGHT_LEVEL = [1.0, 1.0, 0.9, 0.78]
 

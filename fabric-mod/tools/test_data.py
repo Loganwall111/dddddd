@@ -79,7 +79,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('startsWith("entersift:")',sky)          # dimension guard
         self.assertEqual(sky.count('pushPose()'),sky.count('popPose()'))
         self.assertIn('finally',sky)
-        for layer in ['auroraStreaks','shardRibbons','sunAndRay','worldBeams']: self.assertIn(f'void {layer}(',sky)
+        for layer in ['auroraCurtains','sunAndRay','worldBeams']: self.assertIn(f'void {layer}(',sky)
         self.assertIn('0.35f',sky)                              # single sun god ray alpha
         rift=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertNotIn('debugQuads',rift)
@@ -282,6 +282,12 @@ class DataContracts(unittest.TestCase):
             self.assertIn(k,rift)
         for n in ['view_sift','view_overworld']:
             self.assertTrue((R/f'assets/entersift/textures/rift/{n}.png').exists())
+    def test_v012_soft_aurora_curtains(self):
+        sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
+        for gone in ['shardRibbons','auroraStreaks','void panel(']: self.assertNotIn(gone,sky)   # no hard rectangles
+        self.assertIn('CURTAIN_ALPHA = 0.18f',sky)
+        self.assertIn('smooth(0f, 0.18f, v)',sky)                                   # soft vertical margins
+        self.assertIn('rgb(0x7CC6D8)',sky); self.assertIn('rgb(0xC6B8EC)',sky)       # teal-blue horizon, pale violet zenith
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

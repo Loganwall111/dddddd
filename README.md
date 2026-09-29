@@ -123,6 +123,16 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.12.1: soft aurora curtains, trailer sky colours
+- **Hard shapes removed.** The rectangular sky panels are gone, along with the thin bright arcs and the hard-edged beams and sun ray.
+- **Trans-aurora curtains.** Seven long, wavy, vertical sheets of light move slowly around the sky. Each one is a finely tessellated grid with alpha on every vertex: smoothstep falloff at both ends and at the top and bottom, and shimmering folds along its length. Colours run from mint, white-cyan or pink at the base to pink or violet at the top. They use strict additive blending with a base alpha of 0.18, so the gradient sky shows through.
+- **Trailer colours.** The dome is a smooth three-stop gradient:
+  - day and noon: soft teal-blue horizon, radiant mint-green, pale violet overhead;
+  - evening: dusty rose, lilac, soft blue-violet;
+  - night: hazy amber-gold with dusty crimson highlights.
+  The lava-lamp blobs are now a faint pastel shimmer (30% instead of 90%). The fog, ichor fog and ground light timeline follow the new colours.
+- **Softer beams.** World beams and the sun's single god ray now fade softly across their width.
+
 **The Sift sky under the Dungeons II pack (and Iris in general)**
 - Found the cause: with a shader pack active, Iris replaces every render pipeline with a pack program. The mod's own sky and rift pipelines were missing from its list, so they were drawn with the vanilla shader into the pack's buffers, and the sky rendered wrongly.
 - The mod now registers its pipelines through the public Iris API. It uses reflection, so Iris stays optional:
