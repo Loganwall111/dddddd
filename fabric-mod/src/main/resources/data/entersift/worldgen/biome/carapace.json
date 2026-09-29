@@ -20,12 +20,6 @@
             "type": "minecraft:glow"
           },
           "probability": 0.003
-        },
-        {
-          "particle": {
-            "type": "minecraft:white_ash"
-          },
-          "probability": 0.004
         }
       ]
     },

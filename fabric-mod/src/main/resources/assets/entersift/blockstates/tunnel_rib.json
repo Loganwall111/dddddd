@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "entersift:block/tunnel_rib"
+      },
+      {
+        "model": "entersift:block/tunnel_rib",
+        "y": 90
+      },
+      {
+        "model": "entersift:block/tunnel_rib",
+        "y": 180
+      },
+      {
+        "model": "entersift:block/tunnel_rib",
+        "y": 270
+      }
+    ]
+  }
+}

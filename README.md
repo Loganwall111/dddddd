@@ -123,6 +123,18 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.17.0
+
+- **Two Sift skies.** The rose, frost, bone and peak biomes show soft, translucent teal, green and pink panels on a deep teal sky. Coral Expanse, Tidepool Reef, Singer Meadow and Soul Valley show slowly swirling pink and teal blobs instead. Crossing a biome border blends between the two skies over about 3 seconds. The colours are more saturated teal overhead, with no milky white. The panels are alpha-blended, not additive, so they keep their colour.
+- **GPU rifts.** Rift interiors run a custom GLSL core shader (`shaders/core/rift.vsh/.fsh`). It gives the interior a wavy look and bends the area around the rim to imitate gravitational lensing. The lensing is approximate: it warps the shader's own pattern and does not sample the scene behind the rift. At night only, rifts give off a soft rainbow glow and coloured aura columns.
+- **No more loading-screen cutscene.** Walking into a rift puts you in a short, walkable reddish-gold tunnel with particles (the `entersift:rift_tunnel` pocket dimension). Walking out the far end takes you to the destination. A brief gold flash hides each dimension change.
+- **Block portal.** The ancient-city portal is now made of real, breakable portal blocks: an animated, vibrant cyan mosaic inside the frame with a glowing bottom row. Breaking any portal block collapses the whole portal.
+- **Aura columns on note blocks.** Played note blocks and the ritual show soft rainbow aura columns instead of beacon beams.
+- **More souls,** with bluish trails.
+- **Retextured Twisted Warden:** navy speckled body, glowing teal bracket horns, green-yellow striped chest plates and green arms. **Blub:** eyes and mouth are now the same dark red (#7a1020), no longer glowing bright red.
+- **Overworld clouds** are larger, softer heaps with white tops and bluish shadowed undersides, like the Dungeons look.
+- **Shader pack (off by default):** new *Sift lighting* option. It adds soft cast shadows in the Sift and light that follows the Sift sky colour (cyan day, magenta evening, amber night), with teal-violet shadows and a little sky-coloured bounce light on surfaces facing up.
+
 ### 0.16.0
 
 - **Terrain-stretching fix.** Terrain, trees and water no longer smear into streaks while you turn. The hand is no longer a black polygon.

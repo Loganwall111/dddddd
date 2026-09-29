@@ -48,6 +48,19 @@ public final class SiftContent {
         Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
         return block;
     }
+    private static Block portal(String name) {
+        var key = blockKey(name);
+        Block block = Registry.register(BuiltInRegistries.BLOCK, key,
+            new SiftPortalBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS).setId(key).lightLevel(state -> 15)));
+        Registry.register(BuiltInRegistries.ITEM, id(name), new BlockItem(block, itemProperties(name).useBlockDescriptionPrefix()));
+        return block;
+    }
+    /** 0.17 ancient-city block portal (sheet + glowing bottom row). */
+    public static final Block SIFT_PORTAL = portal("sift_portal");
+    public static final Block SIFT_PORTAL_BASE = portal("sift_portal_base");
+    /** 0.17 rift tunnel walls: unbreakable (bedrock properties), glowing reddish-gold. */
+    public static final Block TUNNEL_WALL = block("tunnel_wall", Blocks.BEDROCK, 15);
+    public static final Block TUNNEL_RIB = block("tunnel_rib", Blocks.BEDROCK, 15);
     public static final Block SONOROUS_DEEPSLATE = block("sonorous_deepslate", Blocks.DEEPSLATE, 5);
     public static final Block SOULWOOD = block("soulwood", Blocks.DEEPSLATE, 0);
     public static final Block SOUL_CANOPY = block("soul_canopy", Blocks.MOSS_BLOCK, 7);

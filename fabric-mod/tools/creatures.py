@@ -37,12 +37,13 @@ SPECS: dict[str, dict] = {}
 
 # Blub — (0.13, user correction) an icy-blue jelly bunny: pale blue cube body, RED slit eyes and a small red
 # mouth, short upright ears in the body blue (lighter blue inside). No pink, no purple.
-BLUB_EYE, BLUB_MOUTH = (206, 38, 52), (176, 30, 44)
+# 0.17 (user): eyes and mouth are the SAME darker red (#7a1020), not bright red, and not emissive.
+BLUB_EYE, BLUB_MOUTH = (122, 16, 32), (122, 16, 32)
 BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (196, 234, 250), (148, 206, 236), (184, 228, 248), (120, 178, 214)
 BLUB_BLUE = (156, 214, 240)
 SPECS["blub"] = dict(tex=64, egg=(BLUB_BLUE, BLUB_EYE), parts=[
     P("body", (0, 21, 0), [B(-5, -8, -5, 10, 8, 10, BLUB_BLUE, "speckle", faces={
-        "north": [(1, 3, 3, 1, BLUB_EYE, True), (6, 3, 3, 1, BLUB_EYE, True), (4, 5, 2, 1, BLUB_MOUTH, False)],
+        "north": [(1, 3, 3, 1, BLUB_EYE, False), (6, 3, 3, 1, BLUB_EYE, False), (4, 5, 2, 1, BLUB_MOUTH, False)],
         "top": [(0, 0, 10, 10, BLUB_TOP, False)]})]),
     P("ear_l", (-3, 13, 1), [B(-1.5, -5, -0.5, 3, 5, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 3, BLUB_EAR_IN, False)]})],
       parent="body", rot=(0.12, 0, -0.14)),
@@ -129,27 +130,29 @@ SPECS["overseer"] = dict(tex=128, egg=(OV, OVE), parts=[
 ] + [P(f"tentacle_{i}", (x, 4, z), [B(-0.5, 0, -0.5, 1, 18, 1, (62, 46, 84), "plain", faces={"north": [(0, 14, 1, 4, (170, 110, 220), True)]})])
      for i, (x, z) in enumerate([(-1.5, -1.5), (1.5, -1.5), (-1.5, 1.5), (1.5, 1.5), (0, 0)])])
 
-# Twisted Warden — matches the MCD2 "work in progress" ref: void-dark cube body with faint cyan
-# fissures, glowing cyan bracket antlers, a brass-toothed chest maw with a cyan glow inside, brass knuckles.
-TW, TWL, TWG, BRASS, HOLLOW = (22, 32, 44), (34, 50, 64), (80, 244, 236), (184, 156, 72), (6, 10, 14)
+# Twisted Warden (0.17, frame0.jpg ref): dark navy speckled body, glowing teal bracket-shaped horns,
+# green-yellow striped chest plates around a glowing teal maw, green arms with olive knuckles.
+TW, TWL, TWG, PLATE, HOLLOW = (24, 34, 60), (36, 50, 80), (80, 244, 236), (156, 170, 62), (6, 10, 14)
+ARM, KNUCKLE = (52, 100, 66), (132, 146, 56)
+BRASS = PLATE
 def antler(side):
     s_ = -1 if side == "l" else 1
     def bx(x, y, w, h):  # mirror boxes for the right antler
         return B(x if s_ < 0 else -x - w, y, -1, w, h, 2, TWG, "plain", glow=True)
     return [bx(-1, -10, 2, 10), bx(-10, -10, 9, 2), bx(-10, -20, 2, 10), bx(-10, -20, 7, 2), bx(-5, -16, 2, 6), bx(-14, -15, 4, 2), bx(-14, -18, 2, 3)]
 SPECS["twisted_warden"] = dict(tex=128, egg=(TW, TWG), parts=[
-    P("leg_0", (-5, 11, 0), [B(-3, 0, -3, 6, 13, 6, TW, "cracks", dark=TWG)]),
-    P("leg_1", (5, 11, 0), [B(-3, 0, -3, 6, 13, 6, TW, "cracks", dark=TWG)]),
-    P("body", (0, 11, 0), [B(-9, -21, -5, 18, 21, 10, TW, "cracks", dark=TWG, faces={"north": [(2, 5, 14, 12, (40, 206, 206), True), (4, 7, 10, 8, (150, 255, 250), True)]})]),
-    P("chest_upper", (0, -5, -5), [B(-8, 0, -2, 16, 3, 2, BRASS, "noise"), B(-7, 3, -2, 2, 2, 1, BRASS, "plain"), B(-3, 3, -2, 2, 2, 1, BRASS, "plain"),
-                                   B(1, 3, -2, 2, 2, 1, BRASS, "plain"), B(5, 3, -2, 2, 2, 1, BRASS, "plain")], parent="body"),
-    P("chest_lower", (0, 7, -5), [B(-8, -3, -2, 16, 3, 2, BRASS, "noise"), B(-5, -5, -2, 2, 2, 1, BRASS, "plain"), B(-1, -5, -2, 2, 2, 1, BRASS, "plain"),
-                                  B(3, -5, -2, 2, 2, 1, BRASS, "plain")], parent="body"),
-    P("head", (0, -10, 0), [B(-7, -12, -6, 14, 12, 12, TW, "cracks", dark=TWG, faces={"north": [(5, 4, 4, 4, HOLLOW, False), (6, 5, 2, 2, TWG, True)]})], parent="body"),
+    P("leg_0", (-5, 11, 0), [B(-3, 0, -3, 6, 13, 6, TW, "starry", dark=TWG)]),
+    P("leg_1", (5, 11, 0), [B(-3, 0, -3, 6, 13, 6, TW, "starry", dark=TWG)]),
+    P("body", (0, 11, 0), [B(-9, -21, -5, 18, 21, 10, TW, "starry", dark=TWG, faces={"north": [(2, 5, 14, 12, (40, 206, 206), True), (4, 7, 10, 8, (150, 255, 250), True)]})]),
+    P("chest_upper", (0, -5, -5), [B(-8, 0, -2, 16, 3, 2, PLATE, "stripes"), B(-7, 3, -2, 2, 2, 1, PLATE, "stripes"), B(-3, 3, -2, 2, 2, 1, PLATE, "stripes"),
+                                   B(1, 3, -2, 2, 2, 1, PLATE, "stripes"), B(5, 3, -2, 2, 2, 1, PLATE, "stripes")], parent="body"),
+    P("chest_lower", (0, 7, -5), [B(-8, -3, -2, 16, 3, 2, PLATE, "stripes"), B(-5, -5, -2, 2, 2, 1, PLATE, "stripes"), B(-1, -5, -2, 2, 2, 1, PLATE, "stripes"),
+                                  B(3, -5, -2, 2, 2, 1, PLATE, "stripes")], parent="body"),
+    P("head", (0, -10, 0), [B(-7, -12, -6, 14, 12, 12, TW, "starry", dark=TWG, faces={"north": [(5, 4, 4, 4, HOLLOW, False), (6, 5, 2, 2, TWG, True)]})], parent="body"),
     P("horn_l", (-4, -22, 0), antler("l"), parent="head"),
     P("horn_r", (4, -22, 0), antler("r"), parent="head"),
-    P("arm_l", (-13, -6, 1), [B(-4, 0, -4, 8, 26, 8, TW, "cracks", dark=TWG), B(-5, 19, -5, 10, 3, 10, BRASS, "noise")], parent="body"),
-    P("arm_r", (13, -6, 1), [B(-4, 0, -4, 8, 26, 8, TW, "cracks", dark=TWG), B(-5, 19, -5, 10, 3, 10, BRASS, "noise")], parent="body"),
+    P("arm_l", (-13, -6, 1), [B(-4, 0, -4, 8, 26, 8, ARM, "speckle"), B(-5, 19, -5, 10, 3, 10, KNUCKLE, "stripes")], parent="body"),
+    P("arm_r", (13, -6, 1), [B(-4, 0, -4, 8, 26, 8, ARM, "speckle"), B(-5, 19, -5, 10, 3, 10, KNUCKLE, "stripes")], parent="body"),
 ])
 
 # Note bird — small mint songbird that flies over the Sift; glowing note-coloured wing tips.
@@ -276,6 +279,13 @@ def paint(kind, spec):
                     elif b["pat"] == "patches":
                         n = (hash((part["name"], fname, xx // 3, yy // 3)) % 7)
                         c = b["dark"] if n == 0 else ((206, 152, 150) if n == 1 else shade(c, 0.95 + 0.1 * r))
+                    elif b["pat"] == "starry":  # 0.17 twisted warden: navy with pale-blue and teal specks
+                        c = shade(c, 0.9 + 0.15 * r)
+                        if r < 0.07:
+                            c = (118, 164, 196)
+                        elif r > 0.975 and b.get("dark"):
+                            c = b["dark"]
+                            gx[fx + xx, fy + yy] = b["dark"] + (255,)
                     elif b["pat"] == "cracks":
                         c = shade(c, 0.9 + 0.2 * r)
                     c = shade(c, light)

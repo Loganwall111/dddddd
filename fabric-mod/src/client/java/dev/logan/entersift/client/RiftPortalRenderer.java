@@ -104,7 +104,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float w, h, age, yaw, time;
         long seed;
         double ex, ey, ez;
-        boolean inSift;
+        boolean inSift, night;
         Identifier view = VIEW_SIFT;
         int frame = RiftType.SIFT.edge;
     }
@@ -125,6 +125,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         s.ex = e.getX(); s.ey = e.getY(); s.ez = e.getZ();
         var level = net.minecraft.client.Minecraft.getInstance().level;
         s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
+        long day = level == null ? 0L : level.getOverworldClockTime() % 24000L;
+        s.night = day >= 12800L && day <= 23200L; // 0.17: aura glow only at night
         s.view = view(s.type, s.inSift);
         s.frame = frame(s.type, s.inSift);
     }
@@ -325,6 +327,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float dist = cam.length(), z = zoom(dist);
             float facing = Math.max(1.5f, Math.abs(cam.z));
             float pu = -clamp(cam.x / facing, -2f, 2f) * 0.045f, pv = clamp((cam.y - sh.cy()) / facing, -2f, 2f) * 0.03f;
+            // 0.17: the interior is drawn by our own GLSL core shader (wavy marble, per-pixel parallax,
+            // fake lens), unless it is switched off or an Iris shader pack replaces pipelines.
+            boolean gpu = SiftBudget.riftShader && !SiftRenderTypes.shaderPackInUseCached();
+            if (gpu) {
+                float fade = Math.min(1f, (age - CLUSTER_START) / 20f);
+                float[] code = {0f, 0f, 0f, (s.type.id + 0.5f) / 8f}; // length 4 = GPU mode for canvas()
+                collector.submitCustomGeometry(pose, SiftRenderTypes.RIFT, (p, vc) -> interior(p, vc, sh, s, age, 1f, 0f, 0f, 0f, 0f, code, fade));
+                if (SiftBudget.riftEffects) collector.submitCustomGeometry(pose, SiftRenderTypes.RIFT_HALO, (p, vc) -> lensHalo(p, vc, sh, code[3], fade));
+            } else {
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(s.view), (p, vc) -> interior(p, vc, sh, s, age, z, pu, pv));
             // 0.16 sinkhole: two translucent voxel veils float between the canvas and the rim. Each one
             // zooms from large to small (recedes) on a loop, half a cycle apart, fading in and out, and
@@ -339,6 +350,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 if (la > 0.01f) collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(VEIL), (p, vc) ->
                     interior(p, vc, sh, s, age, lz, pu * par, pv * par, dz, scroll, veilTint, la));
             }
+            }
+            if (s.night && age >= GROWN && SiftBudget.auraGlow)
+                collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> nightAura(p, vc, sh, s, cam));
             collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> walls(p, vc, sh, s, edge, age));
             collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> flashes(p, vc, sh, age));
             if (SiftBudget.riftEffects) collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
@@ -400,6 +414,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static void canvas(PoseStack.Pose p, VertexConsumer vc, Shape sh, float x0, float y0, float x1, float y1, float z, float scroll,
                                float zoom, float pu, float pv, float[] tint, float alpha) {
         if (x1 <= x0 || y1 <= y0) return;
+        if (tint.length == 4) { gpuQuad(p, vc, sh, x0, y0, x1, y1, z, tint[3], alpha); return; }
         float span = Math.max(sh.w(), sh.h()) * 2f;
         float ua = x0 / span / zoom + 0.5f + scroll + pu, ub = x1 / span / zoom + 0.5f + scroll + pu;
         float v0 = clamp(0.5f - (y0 - sh.cy()) / (sh.h() * 1.3f) / zoom + pv, 0, 1), v1 = clamp(0.5f - (y1 - sh.cy()) / (sh.h() * 1.3f) / zoom + pv, 0, 1);
@@ -410,6 +425,44 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float xs = x0 + (x1 - x0) * (1f - ua) / (ub - ua);
         texQuad(p, vc, x0, y0, xs, y1, z, ua, v0, 1f, v1, tint, alpha);
         texQuad(p, vc, xs, y0, x1, y1, z, 0f, v0, ub - 1f, v1, tint, alpha);
+    }
+
+    /** 0.17 GPU canvas: colour = (face u, face v, type code, fade); aspect-true u/v across the whole rift. */
+    private static void gpuQuad(PoseStack.Pose p, VertexConsumer vc, Shape sh, float x0, float y0, float x1, float y1, float z, float code, float fade) {
+        float span = Math.max(sh.w(), sh.h()) * 1.15f;
+        float u0 = clamp(0.5f + x0 / span, 0f, 1f), u1 = clamp(0.5f + x1 / span, 0f, 1f);
+        float v0 = clamp(0.5f + (y0 - sh.cy()) / span, 0f, 1f), v1 = clamp(0.5f + (y1 - sh.cy()) / span, 0f, 1f);
+        gv(p, vc, x0, y0, z, u0, v0, code, fade); gv(p, vc, x1, y0, z, u1, v0, code, fade);
+        gv(p, vc, x1, y1, z, u1, v1, code, fade); gv(p, vc, x0, y1, z, u0, v1, code, fade);
+    }
+
+    private static void gv(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v, float code, float fade) {
+        if (!SiftBudget.take(vc)) return;
+        if (!Float.isFinite(x + y + z + u + v)) { x = 0f; y = 0f; z = 0f; u = 0f; v = 0f; }
+        vc.addVertex(p, x, y, z).setColor(u, v, code, clamp(fade, 0f, 1f));
+    }
+
+    /** 0.17 lens halo: one quad behind the rift; the RIFT_HALO shader draws outward ripples and bloom on it. */
+    private static void lensHalo(PoseStack.Pose p, VertexConsumer vc, Shape sh, float code, float fade) {
+        float half = Math.max(sh.w(), sh.h()) * 1.05f, z = -DEPTH - 0.04f, cy = sh.cy();
+        gv(p, vc, -half, cy - half, z, 0f, 0f, code, fade); gv(p, vc, half, cy - half, z, 1f, 0f, code, fade);
+        gv(p, vc, half, cy + half, z, 1f, 1f, code, fade); gv(p, vc, -half, cy + half, z, 0f, 1f, code, fade);
+    }
+
+    /** 0.17 night aura: soft coloured columns rising behind the rift (teal, purple, magenta, pink). */
+    private static final float[][] AURA = {rgb(0x4FF0D8), rgb(0x9A6CFF), rgb(0xFF4FD0), rgb(0xFF8FC0), rgb(0x5FD8FF)};
+
+    private static void nightAura(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, Vector3f cam) {
+        int n = 5;
+        for (int k = 0; k < n; k++) {
+            float hx = hash(s.seed, k, 71), hz = hash(s.seed, k, 72), hh = hash(s.seed, k, 73);
+            float x = (-0.5f + (k + 0.2f + 0.6f * hx) / n) * (sh.w() + 3f);
+            float z = -DEPTH - 0.6f - 1.4f * hz;
+            float height = sh.h() * 2.2f + 6f + 6f * hh;
+            float[] c = AURA[(k + (int) (s.seed & 3)) % AURA.length];
+            float[] top = mix(c, AURA[(k + 2) % AURA.length], 0.45f);
+            AuraColumns.column(p, vc, x, -0.6f, z, height, 0.45f + 0.35f * hh, c, top, 0.42f, cam.x, cam.z, s.time, hx * 7f + k);
+        }
     }
 
     private static void texQuad(PoseStack.Pose p, VertexConsumer vc, float x0, float y0, float x1, float y1, float z, float u0, float v0, float u1, float v1,

@@ -1,1 +1,1 @@
-#include "/program/gbuffers_plain.vsh"
+#include "/program/gbuffers_siftlit.vsh"

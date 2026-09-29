@@ -38,6 +38,13 @@ public final class SiftEntities {
             .clientTrackingRange(12).updateInterval(20)
             .build(ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("rift_portal"))));
 
+    /** 0.17 short-lived soft light column (note blocks' aura glow), drawn by the client AuraColumnRenderer. */
+    public static final EntityType<AuraColumnEntity> AURA_COLUMN = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+        ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("aura_column")),
+        EntityType.Builder.<AuraColumnEntity>of(AuraColumnEntity::new, MobCategory.MISC).sized(0.5f, 0.5f).fireImmune()
+            .clientTrackingRange(8).updateInterval(40)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("aura_column"))));
+
     public static void initialize() {
         for (SiftKind kind : SiftKind.values()) {
             var key = ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id(kind.id));

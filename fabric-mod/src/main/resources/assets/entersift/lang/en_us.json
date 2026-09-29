@@ -154,5 +154,11 @@
   "subtitles.entersift.entity.watchling.ambient": "Watchling calls",
   "subtitles.entersift.entity.watchling.hurt": "Watchling hurts",
   "subtitles.entersift.entity.watchling.death": "Watchling dies",
-  "effect.entersift.rift_transit": "Rift Transit"
+  "effect.entersift.rift_transit": "Rift Transit",
+  "block.entersift.sift_portal": "Sift Portal",
+  "block.entersift.sift_portal_base": "Sift Portal",
+  "block.entersift.tunnel_wall": "Rift Tunnel Wall",
+  "block.entersift.tunnel_rib": "Rift Tunnel Rib",
+  "entity.entersift.aura_column": "Aura Glow",
+  "biome.entersift.rift_tunnel": "Rift Tunnel"
 }

@@ -11,24 +11,6 @@
       "argument": [
         {
           "particle": {
-            "type": "minecraft:white_ash"
-          },
-          "probability": 0.012
-        },
-        {
-          "particle": {
-            "type": "minecraft:ash"
-          },
-          "probability": 0.008
-        },
-        {
-          "particle": {
-            "type": "minecraft:white_smoke"
-          },
-          "probability": 0.003
-        },
-        {
-          "particle": {
             "type": "minecraft:lava"
           },
           "probability": 0.0008

@@ -11,12 +11,6 @@
       "argument": [
         {
           "particle": {
-            "type": "minecraft:white_ash"
-          },
-          "probability": 0.01
-        },
-        {
-          "particle": {
             "type": "minecraft:glow"
           },
           "probability": 0.004

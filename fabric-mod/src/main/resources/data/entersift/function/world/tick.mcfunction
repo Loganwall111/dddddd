@@ -25,3 +25,5 @@ execute as @e[type=minecraft:marker,tag=sift.ready] at @s if entity @a[distance=
 execute as @e[type=entersift:twisted_warden,tag=sift.guardian,limit=1] store result bossbar entersift:guardian value run data get entity @s Health
 execute as @e[type=entersift:twisted_warden,tag=sift.guardian,limit=1] at @s run bossbar set entersift:guardian players @a[distance=..48]
 execute as @e[type=entersift:rift_portal,tag=sift.return_anchor] at @s unless entity @e[type=minecraft:marker,tag=sift.return_gate,distance=..1] run kill @s
+# 0.17 rift tunnel (built once)
+execute unless data storage entersift:tunnel {built:1b} in entersift:rift_tunnel run function entersift:tunnel/maybe_build

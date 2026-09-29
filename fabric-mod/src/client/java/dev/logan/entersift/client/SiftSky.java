@@ -50,20 +50,30 @@ public final class SiftSky {
     /** Horizon / fog colour per stage (identical to the timeline's fog_color and sky_color). */
     static final float[][] HORIZON = {rgb(0x7FD3CF), rgb(0x8FC2C4), rgb(0xC86A92), rgb(0xDB7840)}; // 0.16 spec: cyan, mint, magenta-rose, amber
     /** 0.12 middle band per stage: radiant mint-green by day, lilac at evening, deeper amber at night. */
-    private static final float[][] MID = {rgb(0x9FEFC8), rgb(0xC4F4E4), rgb(0xD884AE), rgb(0xE08E4C)}; // noon: mint + pearl white
+    /** 0.17: deeper, saturated teal toward the zenith (the ref sky is teal, not milky white). */
+    private static final float[][] MID = {rgb(0x5CC8C4), rgb(0x78C6C0), rgb(0xB45C8C), rgb(0xC8683A)};
     /** Zenith base colour per stage. */
     /** Zenith per stage: pale violet overhead by day and noon, soft blue-violet at evening, hazy gold at night. */
-    private static final float[][] ZENITH = {rgb(0xC6B8EC), rgb(0xECEAF6), rgb(0x9C5A8E), rgb(0xE8A860)}; // evening crimson-magenta overhead
+    private static final float[][] ZENITH = {rgb(0x2E9AA6), rgb(0x4AA8AC), rgb(0x7A3C7C), rgb(0x9A4A30)}; // 0.17 teal overhead
     /** Four soft lava-lamp tints per stage (0.12: pastel and faint; they only shimmer over the gradient). */
     private static final float[][][] BLOBS = {
-        {rgb(0xB8F5E0), rgb(0xA8DCF2), rgb(0xD8CAF4), rgb(0xF2CCDE)},
-        {rgb(0xC8FFE6), rgb(0xF0FFF8), rgb(0xB4F2DE), rgb(0xE0D6FA)},
-        {rgb(0xF0B0CC), rgb(0xB8E0E4), rgb(0xD2B4EA), rgb(0xF4C4B4)},
-        {rgb(0xFFCC74), rgb(0xF2AE56), rgb(0xFFE0A4), rgb(0xCC6E5E)}};
+        {rgb(0xF08CB4), rgb(0x7FF0D0), rgb(0x4FD0E0), rgb(0xFFA8C8)},   // 0.17: pink / mint / teal, no pastel white
+        {rgb(0x9CF0D8), rgb(0xF0A0C0), rgb(0x60D0D0), rgb(0xB8F0DC)},
+        {rgb(0xFF8CB8), rgb(0x70D0D8), rgb(0xD080C0), rgb(0xFFA890)},
+        {rgb(0xFFB060), rgb(0xE86A50), rgb(0xFFD08A), rgb(0xC05A70)}};
     /** Dusty crimson highlights in the night haze. */
     private static final float[] PILLAR = rgb(0xA84E56);
     /** Aurora curtain colours from the trailer: mint green, pale white-cyan, soft pink, pale violet. */
-    private static final float[][] AURORA = {rgb(0x7DFFC4), rgb(0xCFFFF4), rgb(0xFFA6CC), rgb(0xC8B4FF)};
+    private static final float[][] AURORA = {rgb(0x7DFFC4), rgb(0x5FE0E0), rgb(0xFF8CC0), rgb(0xB89CFF)};
+    /** 0.17 panel sky (rose / frost biomes): teal, green and pink translucent rectangles. */
+    private static final float[][] PANEL_COLS = {rgb(0x3FE0C0), rgb(0x7FF0A0), rgb(0xFF8FC0), rgb(0x2FB8C8), rgb(0xFFB0D0)};
+    /** 0.17 swirl sky (coral / tidepool biomes): soft pink and teal blobs. */
+    private static final float[][] SWIRL_COLS = {rgb(0xFF9CC4), rgb(0x4FD6CF), rgb(0xFF7FB0), rgb(0x3FB8C0), rgb(0xFFC0D8)};
+    /** Biomes that get the swirl sky; every other Sift biome gets the panel sky. */
+    static final java.util.Set<String> SWIRL_BIOMES = java.util.Set.of("coral_expanse", "tidepool_reef", "singer_meadow", "soul_valley");
+    /** 0 = panel sky, 1 = swirl sky; eased toward the camera biome's target so crossing a border blends. */
+    private static float swirl = -1f;
+    private static long swirlAt;
 
     private static final int AZ = 72, EL = 36;
     private static int lastRadius = -1;
@@ -88,6 +98,8 @@ public final class SiftSky {
                 lastRadius = (int) radius;
                 org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] lava-lamp sky radius {} blocks", lastRadius);
             }
+            updateMode(mc, context.levelState().cameraRenderState.pos);
+            final float sw = swirl;
             Palette pal = palette(tick);
             Vec3 cam = context.levelState().cameraRenderState.pos;
             float beamRange = Math.min(chunks * 16f, 176f);
@@ -97,10 +109,14 @@ public final class SiftSky {
             try {
                 var out = context.submitNodeCollector();
                 // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
-                out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds));
-                // Layers 2-3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
+                out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds, sw));
+                // 0.17 layer 2 (alpha blended, keeps colours saturated): panels or swirling blobs by biome.
+                out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
+                    if (sw < 0.98f) softPanels(p, vc, radius * 0.985f, pal, seconds, 1f - sw);
+                    if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw);
+                });
+                // Layer 3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
-                    softPanels(p, vc, radius * 0.985f, pal, seconds);   // 0.16 layer 2: blurred voxel panels in arcs
                     auroraCurtains(p, vc, radius * 0.98f, pal, seconds);
                     skyRays(p, vc, radius * 0.96f, pal, seconds);
                 });
@@ -110,6 +126,21 @@ public final class SiftSky {
                 pose.popPose();
             }
         });
+    }
+
+    /** 0.17: which of the two Sift skies the camera's biome uses, eased over ~3 s. */
+    private static void updateMode(Minecraft mc, Vec3 camPos) {
+        float target = 0f;
+        try {
+            var key = mc.level.getBiome(net.minecraft.core.BlockPos.containing(camPos)).unwrapKey();
+            if (key.isPresent() && SWIRL_BIOMES.contains(key.get().identifier().getPath())) target = 1f;
+        } catch (Throwable ignored) { }
+        long now = System.nanoTime();
+        if (swirl < 0f) { swirl = target; swirlAt = now; return; }
+        float dt = Math.min(0.25f, (now - swirlAt) / 1.0e9f);
+        swirlAt = now;
+        float step = dt / 3f;
+        swirl = swirl < target ? Math.min(target, swirl + step) : Math.max(target, swirl - step);
     }
 
     // ------------------------------------------------------------------ cycle
@@ -203,17 +234,26 @@ public final class SiftSky {
 
     // ------------------------------------------------------------------ geometry
 
-    private static float[] skyColour(float x, float y, float z, Palette pal, float t) {
+    private static float[] skyColour(float x, float y, float z, Palette pal, float t, float sw) {
         float up = Math.max(0f, y);
         // 0.12: smooth three-stop gradient (horizon -> mid -> zenith), like the trailer frames.
         float[] c = lerp(pal.horizon(), pal.mid(), smooth(0.02f, 0.45f, up));
         c = lerp(c, pal.zenith(), smooth(0.4f, 0.95f, up));
+        // 0.17 swirl sky: rotate the sample around the vertical by a noise-driven angle, so the blobs
+        // wind into slow pink / teal spirals; the panel sky keeps only a faint shimmer.
+        float sx = x, sz = z;
+        if (sw > 0.01f) {
+            float ang = sw * 2.4f * noise(x * 0.9f + t * 0.004f, y * 1.1f, z * 0.9f - t * 0.003f);
+            float ca = (float) Math.cos(ang), sa = (float) Math.sin(ang);
+            sx = x * ca - z * sa; sz = x * sa + z * ca;
+        }
         for (int k = 0; k < 4; k++) {
-            float w = smooth(0.05f, 0.7f, blob(k, x, y, z, t)) * 0.3f; // faint pastel shimmer only
-            c = lerp(c, pal.blobs()[k], w);
+            float w = smooth(0.05f, 0.7f, blob(k, sx, y, sz, t)) * (0.22f + 0.5f * sw);
+            float[] tint = sw > 0.01f ? lerp(pal.blobs()[k], lerp(SWIRL_COLS[k], pal.blobs()[k], 0.35f), sw) : pal.blobs()[k];
+            c = lerp(c, tint, w);
         }
         if (pal.noon() > 0.01f) { // pearl sheen around the zenith at noon
-            float pearl = smooth(0.55f, 1f, up) * 0.35f * pal.noon();
+            float pearl = smooth(0.55f, 1f, up) * 0.12f * pal.noon(); // 0.17: much fainter (was washing the sky white)
             c = lerp(c, new float[]{0.96f, 1f, 0.97f}, pearl);
         }
         if (pal.pillars() > 0.01f) { // soft crimson vertical pillars at night: columns in azimuth, fading upward
@@ -228,7 +268,7 @@ public final class SiftSky {
         return lerp(c, pal.horizon(), haze);
     }
 
-    private static void dome(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+    private static void dome(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float sw) {
         float[][][] cache = new float[AZ + 1][EL + 1][];
         float[][][] pos = new float[AZ + 1][EL + 1][];
         for (int i = 0; i <= AZ; i++) for (int j = 0; j <= EL; j++) {
@@ -238,7 +278,7 @@ public final class SiftSky {
             double el = Math.signum(s) * Math.pow(Math.abs(s), 1.35) * Math.PI / 2;
             float x = (float) (Math.cos(el) * Math.cos(az)), y = (float) Math.sin(el), z = (float) (Math.cos(el) * Math.sin(az));
             pos[i][j] = new float[]{x, y, z};
-            cache[i][j] = skyColour(x, y, z, pal, t);
+            cache[i][j] = skyColour(x, y, z, pal, t, sw);
         }
         for (int i = 0; i < AZ; i++) for (int j = 0; j < EL; j++) {
             v(p, vc, pos[i][j], r, cache[i][j], 1f);
@@ -328,7 +368,7 @@ public final class SiftSky {
         }
     }
 
-    private static final int ARCS = 3, PANELS = 9, PANEL_GRID = 6;
+    private static final int ARCS = 4, PANELS = 10, PANEL_GRID = 6;
 
     /**
      * 0.16 sky layer 2 (new Sift refs): semi-transparent rectangular "voxel" panels laid along sweeping
@@ -337,8 +377,8 @@ public final class SiftSky {
      * blurred glowing block, never a hard-edged quad (the 0.13 rule still holds). Additive (GLOW),
      * base alpha 0.14, mint / pearl / pink / violet, so the gradient sky always shows through.
      */
-    private static void softPanels(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
-        float strength = auroraStrength(pal);
+    private static void softPanels(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float weight) {
+        float strength = auroraStrength(pal) * weight;
         float[][] grid = new float[(PANEL_GRID + 1) * (PANEL_GRID + 1)][];
         float[] ga = new float[grid.length];
         for (int k = 0; k < ARCS; k++) {
@@ -351,11 +391,11 @@ public final class SiftSky {
                 double az = arcAz + arcSpan * (slide - 0.5);
                 double el = arcEl + bow * Math.sin(Math.PI * slide) - bow * 0.5 + 0.03 * Math.sin(t * 0.07 + i);
                 double rot = Math.atan2(bow * Math.PI * Math.cos(Math.PI * slide), arcSpan) + 0.25 * (hash(k, i, 15) - 0.5);
-                double hw = 0.07 + 0.08 * hash(k, i, 16), hh = 0.035 + 0.05 * hash(k, i, 17);
+                double hw = 0.09 + 0.12 * hash(k, i, 16), hh = 0.05 + 0.07 * hash(k, i, 17); // 0.17: bigger panels
                 float ends = smooth(0f, 0.15f, slide) * smooth(1f, 0.85f, slide);
-                float alpha = 0.14f * strength * ends * (0.6f + 0.4f * (float) Math.sin(t * 0.21f + i * 1.3f + k));
+                float alpha = 0.42f * strength * ends * (0.7f + 0.3f * (float) Math.sin(t * 0.21f + i * 1.3f + k)); // translucent, not additive
                 if (alpha < 0.004f) continue;
-                float[] c = lerp(AURORA[(k + i) % 4], pal.blobs()[i % 4], 0.3f);
+                float[] c = lerp(PANEL_COLS[(k * 3 + i) % PANEL_COLS.length], pal.blobs()[i % 4], 0.2f);
                 double cr = Math.cos(rot), sr = Math.sin(rot), ce = Math.max(0.2, Math.cos(el));
                 for (int gy = 0; gy <= PANEL_GRID; gy++) for (int gx = 0; gx <= PANEL_GRID; gx++) {
                     float sx = gx / (float) PANEL_GRID * 2 - 1, sy = gy / (float) PANEL_GRID * 2 - 1;
@@ -372,6 +412,43 @@ public final class SiftSky {
             }
         }
     }
+
+    private static final int SWIRL_BLOBS = 22, BLOB_RINGS = 3;
+
+    /**
+     * 0.17 swirl sky layer (coral / tidepool refs): big soft pink and teal blobs, alpha blended, that
+     * orbit slowly around a few drifting swirl centres and stretch along their path. Each blob is a
+     * disc whose alpha falls to zero at the rim (three rings), so nothing has an edge.
+     */
+    private static void swirlBlobs(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float weight) {
+        for (int k = 0; k < SWIRL_BLOBS; k++) {
+            int centre = k % 3;
+            double cAz = hash(centre, 81, 0) * Math.PI * 2 + t * 0.003 * (centre % 2 == 0 ? 1 : -1);
+            double cEl = 0.35 + 0.3 * hash(centre, 82, 0);
+            double orbit = 0.18 + 0.32 * hash(k, 83, 0), w = (0.02 + 0.02 * hash(k, 84, 0)) * (k % 2 == 0 ? 1 : -1);
+            double ph = hash(k, 85, 0) * Math.PI * 2 + t * w;
+            double az = cAz + orbit * Math.cos(ph) / Math.max(0.3, Math.cos(cEl));
+            double el = Math.max(0.03, Math.min(1.35, cEl + orbit * 0.6 * Math.sin(ph)));
+            float size = 0.1f + 0.12f * hash(k, 86, 0);
+            float[] c = lerp(SWIRL_COLS[k % SWIRL_COLS.length], pal.blobs()[k % 4], 0.25f);
+            float alpha = weight * (0.3f + 0.12f * (float) Math.sin(t * 0.17f + k * 1.7f));
+            float[] f = dir(az, el);
+            float[] a = norm(cross(f, new float[]{0f, 1f, 0f}));
+            float[] b = norm(cross(a, f));
+            // Stretch along the orbit direction a little (streaky swirl).
+            float[] along = norm(new float[]{a[0] * (float) -Math.sin(ph) + b[0] * (float) Math.cos(ph) * 0.6f,
+                a[1] * (float) -Math.sin(ph) + b[1] * (float) Math.cos(ph) * 0.6f, a[2] * (float) -Math.sin(ph) + b[2] * (float) Math.cos(ph) * 0.6f});
+            float[] across = norm(cross(along, f));
+            float[] la = {along[0] * 1.6f, along[1] * 1.6f, along[2] * 1.6f};
+            for (int ringIdx = 0; ringIdx < BLOB_RINGS; ringIdx++) {
+                float in = size * ringIdx / BLOB_RINGS, out = size * (ringIdx + 1) / BLOB_RINGS;
+                float aIn = alpha * falloff(ringIdx / (float) BLOB_RINGS), aOut = alpha * falloff((ringIdx + 1) / (float) BLOB_RINGS);
+                ring(p, vc, r, f, la, across, in, out, c, aIn, aOut);
+            }
+        }
+    }
+
+    private static float falloff(float x) { return 1f - smooth(0f, 1f, x); }
 
     /** 0.13 god-ray hues from the trailer: rainbow light columns (red, orange, yellow, green, teal, blue, violet, magenta). */
     static final float[][] RAYS = {rgb(0xFF6B7A), rgb(0xFFA54F), rgb(0xFFE070), rgb(0x8CFF9E),

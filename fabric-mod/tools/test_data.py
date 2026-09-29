@@ -287,7 +287,7 @@ class DataContracts(unittest.TestCase):
         for gone in ['shardRibbons','auroraStreaks','void panel(']: self.assertNotIn(gone,sky)   # no hard rectangles
         self.assertIn('CURTAIN_ALPHA = 0.18f',sky)
         self.assertIn('smooth(0f, 0.18f, v)',sky)                                   # soft vertical margins
-        self.assertIn('rgb(0x7FD3CF)',sky); self.assertIn('rgb(0xC6B8EC)',sky)       # teal-blue horizon, pale violet zenith
+        self.assertIn('rgb(0x7FD3CF)',sky); self.assertIn('rgb(0x2E9AA6)',sky)       # teal-blue horizon, pale violet zenith
     def test_v013_pre_beta_fixes(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         sky=(c/'client/SiftSky.java').read_text()
@@ -309,7 +309,7 @@ class DataContracts(unittest.TestCase):
         self.assertNotIn('cloudHash(c.xz * 0.37)',vc)            # the random 0/1 base made a checkerboard
         # Blub: red eyes and mouth, wobbly waddle.
         cr=(ROOT/'tools/creatures.py').read_text()
-        self.assertIn('BLUB_EYE, BLUB_MOUTH = (206, 38, 52), (176, 30, 44)',cr)
+        self.assertIn('BLUB_EYE, BLUB_MOUTH = (122, 16, 32), (122, 16, 32)',cr)
         md=(c/'client/SiftCreatureModel.java').read_text()
         self.assertIn('body.zRot += waddle',md)
         # Gigantic multi-tier trees.
@@ -348,7 +348,7 @@ class DataContracts(unittest.TestCase):
             self.assertIn('minecraft:visual/fog_color', json.loads(f.read_text()).get('attributes',{}), f.name)
         pack=ROOT/'shaderpack/shaders'
         self.assertIn('SIFT_DIM_FOG',(pack/'shaders.properties').read_text())
-        self.assertIn('gbuffers_plain',(pack/'world_sift/gbuffers_terrain.fsh').read_text())
+        self.assertIn('gbuffers_siftlit',(pack/'world_sift/gbuffers_terrain.fsh').read_text())
         # Wandering souls, ichor bubbles and the rift light spill.
         souls=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSouls.java').read_text()
         self.assertIn('SiftRenderTypes.GLOW',souls); self.assertIn('the_sift',souls)
@@ -379,10 +379,11 @@ class DataContracts(unittest.TestCase):
         client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
         self.assertLess(client.index('SiftBudget.reset()'),client.index('SiftSky.register()'))
         tr=(C/'SiftTransition.java').read_text()
-        self.assertIn('RIFT_TRANSIT',tr); self.assertIn('0.15f',tr); self.assertIn('afterExtract',tr)
+        self.assertIn('RIFT_TRANSIT',tr); self.assertIn('0.55f',tr); self.assertIn('afterExtract',tr)
         self.assertIn('rift_transit',(ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text())
         begin=fn('travel/begin')
-        self.assertIn('effect give @s entersift:rift_transit 4 0 true',begin)
+        self.assertIn('function entersift:tunnel/enter',begin)                # 0.17: walk the tunnel, no cutscene
+        self.assertIn('effect give @s entersift:rift_transit 2 0 true',fn('travel/legacy_begin'))
         self.assertIn('matches 61..',fn('travel/transit_tick'))               # teleport at tick 60, under the flare
         for f in ('rift/transport','portal/cross','portal/return_tick'):
             self.assertIn('travel/begin {dest:',fn(f)); self.assertNotIn('travel/destination_',fn(f))
@@ -411,6 +412,42 @@ class DataContracts(unittest.TestCase):
             self.assertEqual(im.size,(256,128))
             px=list(im.getdata()); mean=sum(sum(p) for p in px)/len(px)/3
             self.assertGreater(mean,150,n)                       # luminous canvases, like the trailer
+    def test_v017_two_skies_gpu_rifts_tunnel_block_portal(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        sky=(C/'SiftSky.java').read_text()
+        for k in ('SWIRL_BIOMES','swirlBlobs','softPanels','SKY_BLEND','updateMode'): self.assertIn(k,sky)
+        for b in ('coral_expanse','tidepool_reef','singer_meadow','soul_valley'):
+            self.assertIn(f'"{b}"',sky); self.assertTrue((D/f'worldgen/biome/{b}.json').exists(),b)
+        self.assertIn('SKY_BLEND',(C/'SiftRenderTypes.java').read_text())
+        # GPU rift shader with lensing, night aura and aura columns instead of beacon beams.
+        S=R/'assets/entersift/shaders/core'
+        self.assertTrue((S/'rift.vsh').exists()); self.assertIn('void main',(S/'rift.fsh').read_text())
+        self.assertIn('RIFT',(C/'SiftRenderTypes.java').read_text())
+        self.assertTrue((ROOT/'src/main/java/dev/logan/entersift/AuraColumnEntity.java').exists())
+        for f in (D/'function/notes').glob('*.mcfunction'):
+            self.assertNotIn('beacon',f.read_text().lower().replace('beacon_power',''),f.name)
+        # Walkable rift tunnel dimension, no cutscene.
+        self.assertTrue((D/'dimension/rift_tunnel.json').exists())
+        self.assertIn('tunnel/enter',fn('travel/begin'))
+        for f in ('build','enter','exit','player_tick'): self.assertTrue((D/f'function/tunnel/{f}.mcfunction').exists(),f)
+        # Real breakable block portal with an animated texture and a glowing base.
+        content=(ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text()
+        self.assertIn('SIFT_PORTAL',content); self.assertIn('SIFT_PORTAL_BASE',content)
+        self.assertIn('entersift:sift_portal',fn('portal/fill'))
+        T=R/'assets/entersift/textures/block'
+        for t in ('sift_portal','sift_portal_base','tunnel_wall'): self.assertTrue((T/f'{t}.png.mcmeta').exists(),t)
+        # Souls: denser with blue trails.
+        souls=(C/'SiftSouls.java').read_text(); self.assertIn('CELL = 32',souls)
+        # Blub: matching dark eyes and mouth; twisted warden navy/teal/green.
+        cr=(ROOT/'tools/creatures.py').read_text()
+        self.assertIn('BLUB_EYE, BLUB_MOUTH = (122, 16, 32), (122, 16, 32)',cr); self.assertIn('"starry"',cr)
+        # Shader pack: Sift shadows + sky-tinted light; iris.properties is never touched.
+        sp=ROOT/'shaderpack/shaders'
+        comp=(sp/'world_sift/composite.fsh').read_text()
+        self.assertIn('sunVisibility',comp); self.assertIn('skyColor',comp)
+        self.assertTrue((sp/'world_sift/shadow.vsh').exists())
+        self.assertIn('SIFT_SIFT_LIGHT',(sp/'shaders.properties').read_text())
+        self.assertIn('MAX_H = 24f',(C/'SiftClouds.java').read_text())
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

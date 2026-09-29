@@ -31,7 +31,7 @@ public final class SiftClouds {
     private SiftClouds() {}
 
     private static final int CELL = 10; // 0.16: was 6 (up to ~150k vertices per frame, see SiftBudget)
-    private static final float BASE_Y = 192f, LAYER = 4f, MAX_H = 16f;
+    private static final float BASE_Y = 192f, LAYER = 4f, MAX_H = 24f; // 0.17: up to 6 terraces (24 blocks)
 
     private static CloudStatus saved;
     private static boolean holding;
@@ -88,11 +88,13 @@ public final class SiftClouds {
     // ------------------------------------------------------------------ geometry
 
     private static int height(int i, int j, float morph) {
-        float n = SiftSky.noise(i * 0.11f, j * 0.11f, 7.3f + morph)
-            + 0.5f * SiftSky.noise(i * 0.27f, j * 0.27f, 1.7f + morph * 1.7f)
-            + 0.22f * SiftSky.noise(i * 0.6f, j * 0.6f, 4.1f);
-        if (n < 0.16f) return 0;
-        return Math.min(4, 1 + (int) ((n - 0.16f) / 0.12f));
+        // 0.17 (Dungeons ref): bigger, rounder masses. Lower frequency; the height climbs toward the middle
+        // of each mass in 4-block terraces, so a cloud reads as one soft heap rather than scattered blocks.
+        float n = SiftSky.noise(i * 0.075f, j * 0.075f, 7.3f + morph)
+            + 0.45f * SiftSky.noise(i * 0.19f, j * 0.19f, 1.7f + morph * 1.7f)
+            + 0.18f * SiftSky.noise(i * 0.5f, j * 0.5f, 4.1f);
+        if (n < 0.14f) return 0;
+        return Math.min(6, 1 + (int) ((n - 0.14f) / 0.08f));
     }
 
     private static void clouds(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, float range, float tick, float seconds) {
@@ -111,9 +113,11 @@ public final class SiftClouds {
         float sun = (float) Math.cos(ang);
         float day = smooth(-0.2f, 0.25f, sun), dusk = Math.max(0f, 1f - Math.abs(sun) / 0.3f);
         float[] peach = {1f, 0.70f, 0.56f};
-        float[] top = mix(mix(new float[]{0.20f, 0.23f, 0.36f}, new float[]{1f, 0.985f, 0.96f}, day), peach, dusk * 0.45f);
-        float[] low = mix(mix(new float[]{0.14f, 0.16f, 0.28f}, new float[]{0.80f, 0.80f, 0.93f}, day), peach, dusk * 0.3f);
-        float[] bottom = mix(mix(new float[]{0.11f, 0.12f, 0.22f}, new float[]{0.72f, 0.72f, 0.86f}, day), peach, dusk * 0.2f);
+        // 0.17 Dungeons look: bright white tops, sides fading down into a cool bluish grey, and a
+        // shadowed blue-grey underside.
+        float[] top = mix(mix(new float[]{0.22f, 0.25f, 0.38f}, new float[]{1f, 1f, 1f}, day), peach, dusk * 0.45f);
+        float[] low = mix(mix(new float[]{0.13f, 0.15f, 0.27f}, new float[]{0.62f, 0.70f, 0.86f}, day), peach, dusk * 0.3f);
+        float[] bottom = mix(mix(new float[]{0.10f, 0.11f, 0.21f}, new float[]{0.52f, 0.60f, 0.78f}, day), peach, dusk * 0.2f);
 
         float y0 = (float) (BASE_Y - cam.y);
         for (int a = 1; a < size - 1; a++) {
@@ -149,7 +153,8 @@ public final class SiftClouds {
 
     /** Side colour at a height above the cloud base: lavender at the bottom, white at the top. */
     private static float[] shade(float[] low, float[] top, float above) {
-        return mix(low, top, smooth(0f, MAX_H, above) * 0.85f + 0.15f);
+        // 0.17: the blue-grey shadow holds for the lower third, then brightens quickly to white.
+        return mix(low, top, smooth(0f, MAX_H * 0.55f, above) * 0.9f + 0.1f);
     }
 
     /** Quad; the first two vertices get colour c0, the last two c1. */

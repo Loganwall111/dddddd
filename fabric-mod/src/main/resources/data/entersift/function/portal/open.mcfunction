@@ -8,4 +8,6 @@ kill @e[type=entersift:singer,distance=..14]
 tag @s remove sift.ritual
 tag @s add sift.portal
 playsound minecraft:block.end_portal.spawn ambient @a[distance=..48] ~ ~ ~ 0.7 0.7
-function entersift:portal/visual with entity @s data
+function entersift:portal/migrate
+function entersift:portal/glow_centre
+function entersift:portal/fill with entity @s data

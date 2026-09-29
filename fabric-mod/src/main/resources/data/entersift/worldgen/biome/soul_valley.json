@@ -26,12 +26,6 @@
             "type": "minecraft:soul"
           },
           "probability": 0.0015
-        },
-        {
-          "particle": {
-            "type": "minecraft:white_ash"
-          },
-          "probability": 0.003
         }
       ]
     },

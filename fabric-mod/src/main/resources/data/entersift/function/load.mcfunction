@@ -29,3 +29,7 @@ execute unless score #souls_fx sift.roll matches 0..2 run scoreboard players set
 scoreboard objectives add sift.link dummy
 scoreboard players add #encounter sift.link 0
 scoreboard players add #riftcycle sift.clock 0
+
+# 0.17 rift tunnel
+scoreboard objectives add sift.tz dummy
+execute in entersift:rift_tunnel run forceload add -16 -16 15 63

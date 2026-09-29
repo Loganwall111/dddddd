@@ -142,9 +142,15 @@ final class SiftSmokeTest {
         boolean ritualMarker = false;
         for (net.minecraft.world.entity.Entity e : level.getAllEntities())
             if (e.distanceToSqr(RX + 0.5, RY + 1.0, RZ + 7.5) <= 4 && e.entityTags().contains("sift.ritual")) ritualMarker = true;
-        EnterTheSift.LOGGER.info("SIFT-SMOKE ritual: portalMarker={} portalAnchor={} stillOpening={} frameBlock={}", portalMarker, portalAnchor,
-            ritualMarker, level.getBlockState(new net.minecraft.core.BlockPos(RX - 5, RY, RZ + 7)));
-        if (!portalMarker || !portalAnchor)
+        // 0.17: the open portal is a block portal; filling the frame retires the old anchor entity.
+        boolean portalBlocks = false;
+        for (int y = RY + 1; y <= RY + 6; y++) {
+            var st = level.getBlockState(new net.minecraft.core.BlockPos(RX, y, RZ + 7));
+            if (st.is(SiftContent.SIFT_PORTAL) || st.is(SiftContent.SIFT_PORTAL_BASE)) portalBlocks = true;
+        }
+        EnterTheSift.LOGGER.info("SIFT-SMOKE ritual: portalMarker={} portalAnchor={} portalBlocks={} stillOpening={} frameBlock={}", portalMarker, portalAnchor,
+            portalBlocks, ritualMarker, level.getBlockState(new net.minecraft.core.BlockPos(RX - 5, RY, RZ + 7)));
+        if (!portalMarker || !(portalAnchor || portalBlocks))
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL ritual 1,3,7,6,5,2,4,8 did not open the portal (marker={}, anchor={})", portalMarker, portalAnchor);
     }
 

@@ -4,6 +4,8 @@ import com.mojang.renderpearl.api.pipeline.BlendFunction;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.CompareOp;
 import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import dev.logan.entersift.SiftContent;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -65,6 +67,50 @@ public final class SiftRenderTypes {
             .withCull(false)
             .build());
 
+    /**
+     * 0.17 GPU rift interior: our own core shader (assets/entersift/shaders/core/rift.vsh/.fsh).
+     * Built on MATRICES_FOG_SNIPPET, which binds Globals (GameTime), Projection, DynamicTransforms
+     * and Fog. Vertex colour carries rift data (face u/v, type, fade), not a colour. Opaque, writes depth.
+     */
+    public static final RenderPipeline RIFT_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/rift"))
+            .withVertexShader(SiftContent.id("core/rift"))
+            .withFragmentShader(SiftContent.id("core/rift"))
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withCull(false)
+            .build());
+
+    /** 0.17 lens halo behind a rift: same shader with RIFT_HALO, additive, depth-tested, no depth write. */
+    public static final RenderPipeline RIFT_HALO_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/rift_halo"))
+            .withVertexShader(SiftContent.id("core/rift"))
+            .withFragmentShader(SiftContent.id("core/rift"))
+            .withShaderDefine("RIFT_HALO")
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withCull(false)
+            .build());
+
+    public static final RenderType RIFT = RenderType.create("entersift_rift", RenderSetup.builder(RIFT_PIPELINE).createRenderSetup());
+    public static final RenderType RIFT_HALO = RenderType.create("entersift_rift_halo", RenderSetup.builder(RIFT_HALO_PIPELINE).createRenderSetup());
+
+    /** 0.17 sky overlays (panels, swirl blobs): normal alpha blend so colours stay saturated instead of adding up to white. */
+    public static final RenderPipeline SKY_BLEND_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/sift_sky_blend"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withCull(false)
+            .build());
+    public static final RenderType SKY_BLEND = RenderType.create("entersift_sky_blend", RenderSetup.builder(SKY_BLEND_PIPELINE).createRenderSetup());
+
     public static final RenderType SKY = RenderType.create("entersift_sky", RenderSetup.builder(SKY_PIPELINE).createRenderSetup());
     public static final RenderType SOLID = RenderType.create("entersift_solid", RenderSetup.builder(SOLID_PIPELINE).createRenderSetup());
     public static final RenderType GLOW = RenderType.create("entersift_glow", RenderSetup.builder(GLOW_PIPELINE).createRenderSetup());
@@ -90,7 +136,7 @@ public final class SiftRenderTypes {
             Class<? extends Enum> program = (Class<? extends Enum>) Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
             Object iris = api.getMethod("getInstance").invoke(null);
             java.lang.reflect.Method assign = api.getMethod("assignPipeline", RenderPipeline.class, program);
-            Object[][] pairs = {{SKY_PIPELINE, "SKY_BASIC"}, {SOLID_PIPELINE, "BASIC"}, {GLOW_PIPELINE, "BASIC"}, {CLOUD_PIPELINE, "BASIC"}};
+            Object[][] pairs = {{SKY_PIPELINE, "SKY_BASIC"}, {SOLID_PIPELINE, "BASIC"}, {GLOW_PIPELINE, "BASIC"}, {CLOUD_PIPELINE, "BASIC"}, {SKY_BLEND_PIPELINE, "SKY_BASIC"}};
             for (Object[] pair : pairs) {
                 try {
                     assign.invoke(iris, pair[0], Enum.valueOf(program, (String) pair[1]));
@@ -104,6 +150,16 @@ public final class SiftRenderTypes {
             org.slf4j.LoggerFactory.getLogger("entersift").warn("[Sift] Iris found but its pipeline API is unavailable; shader packs may draw the Sift sky oddly", error);
         }
         return n;
+    }
+
+    private static long packCheckedAt;
+    private static boolean packCached;
+
+    /** 0.17: {@link #shaderPackInUse()} re-checked at most every 500 ms (it uses reflection; rifts ask every frame). */
+    public static boolean shaderPackInUseCached() {
+        long now = System.currentTimeMillis();
+        if (now - packCheckedAt > 500) { packCached = shaderPackInUse(); packCheckedAt = now; }
+        return packCached;
     }
 
     /** True while an Iris shader pack is active (false without Iris). */

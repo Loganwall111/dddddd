@@ -11,6 +11,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 /**
+ * 0.17: far more frequent, with fully blue trails (no white).
  * 0.14 wandering souls (Dungeons II ref): small white skull-like heads with dark eyes that swoop in
  * long loops through the Sift, each dragging a glowing blue comet trail with thin white streaks.
  *
@@ -22,8 +23,8 @@ import net.minecraft.world.phys.Vec3;
 public final class SiftSouls {
     private SiftSouls() {}
 
-    private static final int CELL = 64, TRAIL = 22;
-    private static final float TRAIL_DT = 0.055f;
+    private static final int CELL = 32, TRAIL = 18;
+    private static final float TRAIL_DT = 0.06f;
 
     private record Soul(double cx, double cy, double cz, double r, double squash, double tilt, double w, double phase, double bobPhase) {
         double[] at(double t) {
@@ -42,7 +43,7 @@ public final class SiftSouls {
             if (mc.level == null || !mc.level.dimension().identifier().equals(SiftContent.id("the_sift"))) return;
             Vec3 cam = context.levelState().cameraRenderState.pos;
             double t = (System.nanoTime() / 1.0e9) % 100000.0;
-            float range = Math.min(mc.options.renderDistance().get() * 16f, 144f);
+            float range = Math.min(mc.options.renderDistance().get() * 16f, 112f);
             List<Soul> souls = collect(mc, cam, range);
             if (souls.isEmpty()) return;
             PoseStack pose = context.poseStack();
@@ -68,8 +69,8 @@ public final class SiftSouls {
         int x0 = (int) Math.floor((cam.x - range) / CELL), x1 = (int) Math.floor((cam.x + range) / CELL);
         int z0 = (int) Math.floor((cam.z - range) / CELL), z1 = (int) Math.floor((cam.z + range) / CELL);
         for (int i = x0; i <= x1; i++) for (int j = z0; j <= z1; j++) {
-            for (int k = 0; k < 2; k++) {
-                if (hash(i, j, 300 + k) > (k == 0 ? 0.6f : 0.25f)) continue;
+            for (int k = 0; k < 3; k++) { // 0.17: much more frequent (32-block grid, up to 3 per cell)
+                if (hash(i, j, 300 + k) > (k == 0 ? 0.9f : k == 1 ? 0.6f : 0.35f)) continue;
                 double cx = (i + 0.2 + 0.6 * hash(i, j, 310 + k)) * CELL, cz = (j + 0.2 + 0.6 * hash(i, j, 320 + k)) * CELL;
                 double dx = cx - cam.x, dz = cz - cam.z;
                 if (dx * dx + dz * dz > (range + 30) * (range + 30)) continue;
@@ -84,7 +85,7 @@ public final class SiftSouls {
     }
 
     // ------------------------------------------------------------------ trail
-    private static final float[] HEAD_C = {0.86f, 0.97f, 1f}, MID_C = {0.36f, 0.66f, 1f}, TAIL_C = {0.18f, 0.32f, 0.95f};
+    private static final float[] HEAD_C = {0.55f, 0.84f, 1f}, MID_C = {0.22f, 0.52f, 1f}, TAIL_C = {0.1f, 0.2f, 0.9f}, STREAK_C = {0.62f, 0.9f, 1f};
 
     private static void trail(PoseStack.Pose p, VertexConsumer vc, Soul s, double t, Vec3 cam, float range) {
         double[][] pts = new double[TRAIL][];
@@ -101,11 +102,11 @@ public final class SiftSouls {
             float a0 = (1 - f0) * (1 - f0) * 0.85f * fade, a1 = (1 - f1) * (1 - f1) * 0.85f * fade;
             float[] c0 = grad(f0), c1 = grad(f1);
             float[] side0 = side(pts, i), side1 = side(pts, i + 1);
-            ribbon(p, vc, pts[i], pts[i + 1], side0, side1, w0 * 3.2f, w1 * 3.2f, c0, c1, a0 * 0.22f, a1 * 0.22f); // soft glow
+            ribbon(p, vc, pts[i], pts[i + 1], side0, side1, w0 * 3.2f, w1 * 3.2f, c0, c1, a0 * 0.3f, a1 * 0.3f); // soft blue glow
             ribbon(p, vc, pts[i], pts[i + 1], side0, side1, w0, w1, c0, c1, a0, a1);                              // core
-            for (float off : new float[]{-0.45f, 0.4f}) {                                                        // thin white streaks
+            for (float off : new float[]{0.42f}) {                                                        // thin white streaks
                 double[] q0 = shift(pts[i], side0, off * w0 * 1.6f), q1 = shift(pts[i + 1], side1, off * w1 * 1.6f);
-                ribbon(p, vc, q0, q1, side0, side1, 0.035f, 0.03f, HEAD_C, HEAD_C, a0 * 0.6f, a1 * 0.6f);
+                ribbon(p, vc, q0, q1, side0, side1, 0.035f, 0.03f, STREAK_C, STREAK_C, a0 * 0.5f, a1 * 0.5f);
             }
         }
     }

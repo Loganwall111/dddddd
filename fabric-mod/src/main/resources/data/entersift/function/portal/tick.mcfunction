@@ -1,4 +1,6 @@
-particle minecraft:reverse_portal ~ ~2 ~ 1.5 2 0.1 0.025 5 normal
+# 0.17 block portal: compute the interior once (also migrates pre-0.17 markers), fill it, then check it.
+execute unless data entity @s data.ix0 run function entersift:portal/migrate
+execute unless data entity @s data.gx run function entersift:portal/glow_centre
+execute unless data entity @s {data:{filled:1b}} run function entersift:portal/fill with entity @s data
 function entersift:portal/cross with entity @s data
-execute if predicate {type:"minecraft:random_chance",chance:0.15} run particle minecraft:electric_spark ~ ~2 ~ 1.5 2 0.1 0.3 4 normal
-execute unless entity @e[type=entersift:rift_portal,tag=sift.portal_anchor,distance=..1] run function entersift:portal/upgrade
+function entersift:portal/check with entity @s data

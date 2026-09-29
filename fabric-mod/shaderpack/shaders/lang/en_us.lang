@@ -21,3 +21,5 @@ option.SIFT_SKY_GLOW=Sift sky glow
 option.SIFT_SKY_GLOW.comment=Soft bloom around the aurora, sun ray and rift rims in the Sift. The sky colours themselves are never changed.
 option.SIFT_DIM_FOG=Dimension & Biome Fog
 option.SIFT_DIM_FOG.comment=Subtle biome-tinted fog in the Sift, Nether and End (purple, green, amber...). 0 turns it off.
+option.SIFT_SIFT_LIGHT=Sift lighting
+option.SIFT_SIFT_LIGHT.comment=Soft shadows and sky-coloured light in the Sift (teal-violet shadows, cyan / magenta / amber light that follows the Sift cycle).
