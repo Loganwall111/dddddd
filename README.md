@@ -123,6 +123,20 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.18.2
+- **The 0.18 GLSL rifts now work under Iris shader packs.** Before, turning on a pack dropped rifts back to
+  the old CPU texture interior. Probing Iris 1.11.6 showed that a pipeline with no pack program assigned
+  is drawn with its own shader, so the rift pipelines (interior, walls, glow, lens, warp tunnel) are
+  deliberately left unassigned. With a pack on, you get the same lensing, per-destination views, jitter
+  and neon columns. Iris logs a one-time "missing program" line for these pipelines; this is expected.
+- The rift shaders also write a full-bright lightmap and a "not world geometry" normal to
+  colortex1/colortex2. The Dungeons II composite therefore does not shadow or re-tint the self-lit rift.
+- Rifts and the warp tunnel are skipped during the Iris shadow pass (no rift-coloured shadow map).
+- **The bundled Dungeons II pack now updates itself.** It keeps the file name `Dungeons-II-Overworld-0.15.zip`
+  (so your Iris selection stays) and is replaced whenever the jar ships a different version. Before, an
+  existing copy was never replaced, so 0.15 installs never received the Sift lighting, sunset god rays and
+  other pack changes. The zip is built reproducibly, so an unchanged pack is not rewritten.
+
 ### 0.18.1
 
 - **A different window for each destination.** In GPU mode the rift interior now shows the world it leads to, with camera parallax across several depth layers:

@@ -28,6 +28,12 @@ layout(location = 2) in float sphericalVertexDistance;
 layout(location = 3) in float cylindricalVertexDistance;
 
 layout(location = 0) out vec4 fragColor;
+// 0.18.2 shader-pack masks. Without a pack only attachment 0 exists and GL discards these writes. Under
+// an Iris pack (the rift pipelines are deliberately NOT assigned to a pack program, so Iris draws them
+// with THIS shader) they land in colortex1 (lightmap) and colortex2 (normal, a = 0 = "not world
+// geometry"), so the Dungeons II composite never re-shades or shadows the self-lit rift.
+layout(location = 1) out vec4 packLight;
+layout(location = 2) out vec4 packNormal;
 
 // 5 colours per rift type: vein (lightest), base A, base B, accent, deep.
 const vec3 PAL[30] = vec3[](
@@ -189,6 +195,13 @@ float fogFade() {
 
 void main() {
     float t = GameTime * 1200.0;            // seconds (GameTime is the day fraction)
+#if defined(RIFT_GLOW) || defined(RIFT_LENS)
+    packLight = vec4(0.0);                  // blended passes: zero leaves the pack buffers untouched
+    packNormal = vec4(0.0);
+#else
+    packLight = vec4(1.0, 1.0, 0.0, 1.0);   // opaque passes: full-bright, flagged as non-world
+    packNormal = vec4(0.5, 0.5, 1.0, 0.0);
+#endif
 
 #if defined(RIFT_WALL)
     // Real colour; a slow breath plus a soft light sweep running diagonally over the cluster.

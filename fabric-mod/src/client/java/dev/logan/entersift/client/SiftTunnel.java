@@ -29,9 +29,10 @@ public final class SiftTunnel {
         LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null || !mc.level.dimension().identifier().equals(TUNNEL_DIM)) return;
+            if (SiftRenderTypes.irisShadowPass()) return;
             Vec3 cam = context.levelState().cameraRenderState.pos;
             float seconds = (float) ((System.nanoTime() / 1.0e9) % 3600.0);
-            boolean gpu = SiftBudget.riftShader && !SiftRenderTypes.shaderPackInUseCached();
+            boolean gpu = SiftBudget.riftShader; // 0.18.2: also under Iris packs
             PoseStack pose = context.poseStack();
             pose.pushPose(); // balanced
             try {

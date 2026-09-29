@@ -301,6 +301,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     @Override
     public void submit(State s, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+        if (SiftRenderTypes.irisShadowPass()) return; // 0.18.2: rifts are self-lit and cast no shadow-map geometry
         Shape sh = shape(s);
         // 0.15: warm rifts glow peach with white rims like the trailer, never lemon yellow.
         float[] edge = s.frame == RiftType.OVERWORLD.edge ? new float[]{1f, 0.74f, 0.6f} : rgb(s.frame);
@@ -311,8 +312,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
         float age = s.age;
         // 0.18: in GPU mode EVERY part of the rift goes through the rift GLSL program (walls, rims, glow,
-        // interior and lens). Under an Iris shader pack or with rift_shader=false, plain pipelines are used.
-        boolean gpu = SiftBudget.riftShader && !SiftRenderTypes.shaderPackInUseCached();
+        // interior and lens). 0.18.2: this now also runs under an Iris shader pack (see SiftRenderTypes);
+        // only rift_shader=false falls back to the plain pipelines.
+        boolean gpu = SiftBudget.riftShader;
         RenderType wallT = gpu ? SiftRenderTypes.RIFT_WALL : SiftRenderTypes.SOLID;
         RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
         if (age < RIPPLE_END + 8) {

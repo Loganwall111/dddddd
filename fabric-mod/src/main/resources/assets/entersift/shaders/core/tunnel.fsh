@@ -14,6 +14,8 @@
 layout(location = 0) in vec4 dirData;
 
 layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec4 packLight;   // 0.18.2: shader-pack masks (see rift.fsh)
+layout(location = 2) out vec4 packNormal;
 
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -65,4 +67,6 @@ void main() {
     col += vec3(1.0, 0.6, 0.3) * pulse;
     col += core * exp(-ang * ang * 900.0) * 0.8;               // blinding centre
     fragColor = vec4(min(col, vec3(1.0)), 1.0) * ColorModulator;
+    packLight = vec4(1.0, 1.0, 0.0, 1.0);
+    packNormal = vec4(0.5, 0.5, 1.0, 0.0);
 }

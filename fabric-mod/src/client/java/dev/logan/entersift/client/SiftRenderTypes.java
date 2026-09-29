@@ -31,6 +31,12 @@ import net.minecraft.client.renderer.rendertype.RenderType;
  * under the Dungeons II pack. {@link #registerWithIris()} assigns our pipelines through the public
  * Iris API (reflection, so Iris stays optional): SKY -> gbuffers_skybasic, SOLID/GLOW ->
  * gbuffers_basic. Iris also flips the reverse-Z compare ops for us, so the depth states stay valid.
+ *
+ * 0.18.2: the GLSL rift pipelines (RIFT, RIFT_WALL, RIFT_GLOW, RIFT_LENS, TUNNEL) are deliberately NOT
+ * assigned. Probing Iris 1.11.6 showed that an unassigned pipeline only logs "missing program" once
+ * and is then drawn with its OWN compiled shader, so the full 0.18 rift (lensing, destination views,
+ * jitter) renders unchanged under a shader pack. The rift shaders also write colortex1/colortex2
+ * masks so the pack composite does not re-shade them.
  */
 public final class SiftRenderTypes {
     private SiftRenderTypes() {}
@@ -187,6 +193,36 @@ public final class SiftRenderTypes {
             org.slf4j.LoggerFactory.getLogger("entersift").warn("[Sift] Iris found but its pipeline API is unavailable; shader packs may draw the Sift sky oddly", error);
         }
         return n;
+    }
+
+    private static java.lang.reflect.Method shadowPassMethod;
+    private static Object irisApi;
+    private static boolean shadowPassProbed;
+
+    /**
+     * 0.18.2: true while Iris renders its shadow map. The GPU rift pipelines are intentionally left
+     * unassigned (Iris then draws them with our own rift shader instead of a pack program), so during
+     * the shadow pass they would paint rift colours into the shadow map; the renderers skip that pass.
+     */
+    public static boolean irisShadowPass() {
+        if (!shadowPassProbed) {
+            shadowPassProbed = true;
+            if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("iris")) {
+                try {
+                    Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+                    irisApi = api.getMethod("getInstance").invoke(null);
+                    shadowPassMethod = api.getMethod("isRenderingShadowPass");
+                } catch (Throwable error) {
+                    shadowPassMethod = null;
+                }
+            }
+        }
+        if (shadowPassMethod == null) return false;
+        try {
+            return (Boolean) shadowPassMethod.invoke(irisApi);
+        } catch (Throwable error) {
+            return false;
+        }
     }
 
     private static long packCheckedAt;

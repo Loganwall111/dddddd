@@ -29,6 +29,8 @@ test { useJUnitPlatform() }
 tasks.register('bundleShaders', Zip) {
     from 'shaderpack'
     archiveFileName = 'Dungeons-II-Overworld-0.15.zip'
+    preserveFileTimestamps = false // 0.18.2: identical content -> identical bytes (the client updates the pack only on change)
+    reproducibleFileOrder = true
     destinationDirectory = layout.buildDirectory.dir('generated/sift-shaders/assets/entersift/shaderpacks')
 }
 sourceSets.main.resources.srcDir layout.buildDirectory.dir('generated/sift-shaders')

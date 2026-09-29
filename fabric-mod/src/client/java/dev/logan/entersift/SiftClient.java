@@ -76,16 +76,20 @@ public final class SiftClient implements ClientModInitializer {
         } catch (Exception error) {
             EnterTheSift.LOGGER.warn("Could not clean old Sift shader packs", error);
         }
-        // 0.12/0.13: installed under a new name so existing installs get the fixed programs (0.13: no
-        // checkerboard cloud undersides; select the 0.13 pack in Iris). Older copies
-        // are left alone (one may be selected in Iris, and Iris settings are never touched).
+        // 0.18.2: the pack keeps ONE file name (so the user's Iris selection survives) and is updated in
+        // place whenever the bundled copy differs. Before this, an existing file was never replaced, so
+        // installs from 0.15 never received the Sift lighting, sunset god rays or rift support.
         var target = packs.resolve(PACK);
-        if (Files.exists(target)) return;
         try (var in = SiftClient.class.getResourceAsStream("/assets/entersift/shaderpacks/" + PACK)) {
             if (in == null) { EnterTheSift.LOGGER.error("[Sift] bundled shader pack {} is missing from the jar", PACK); return; }
+            byte[] bundled = in.readAllBytes();
+            if (Files.exists(target) && java.util.Arrays.equals(Files.readAllBytes(target), bundled)) return;
+            boolean update = Files.exists(target);
             Files.createDirectories(packs);
-            Files.copy(in, target);
-            EnterTheSift.LOGGER.info("[Sift] installed optional shader pack {} (off by default)", PACK);
+            var tmp = packs.resolve(PACK + ".tmp");
+            Files.write(tmp, bundled);
+            Files.move(tmp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            EnterTheSift.LOGGER.info(update ? "[Sift] updated shader pack {} to this mod version" : "[Sift] installed optional shader pack {} (off by default)", PACK);
         } catch (Exception error) {
             EnterTheSift.LOGGER.warn("Could not install optional shader pack {}", PACK, error);
         }

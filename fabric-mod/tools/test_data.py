@@ -167,8 +167,8 @@ class DataContracts(unittest.TestCase):
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
         self.assertIn('Sift-Cinematic-',code)
         self.assertIn('deleteIfExists',code)
-        # The optional Overworld pack is installed only if absent and never enabled.
-        self.assertIn('if (Files.exists(target)) return;',code)
+        # 0.18.2: the optional pack is kept up to date in place (same name) and never enabled.
+        self.assertIn('Arrays.equals(Files.readAllBytes(target), bundled)',code)
         self.assertNotIn('iris.properties',code)   # never touches Iris config (pack stays off)
         self.assertIn("Dungeons-II-Overworld-0.15.zip",(ROOT/'build.gradle').read_text())
     def test_guardian_unlock_requires_death_and_link(self):
@@ -413,6 +413,38 @@ class DataContracts(unittest.TestCase):
             self.assertEqual(im.size,(256,128))
             px=list(im.getdata()); mean=sum(sum(p) for p in px)/len(px)/3
             self.assertGreater(mean,150,n)                       # luminous canvases, like the trailer
+    def test_v0182_gpu_rifts_under_iris_and_pack_updates(self):
+        c=ROOT/'src/client/java/dev/logan/entersift'
+        types=(c/'client/SiftRenderTypes.java').read_text()
+        rend=(c/'client/RiftPortalRenderer.java').read_text()
+        tun=(c/'client/SiftTunnel.java').read_text()
+        # GPU rifts are no longer disabled by a shader pack; only the rift_shader option turns them off.
+        self.assertNotIn('shaderPackInUseCached()',rend); self.assertNotIn('shaderPackInUseCached()',tun)
+        self.assertIn('boolean gpu = SiftBudget.riftShader;',rend)
+        self.assertIn('irisShadowPass()',rend); self.assertIn('irisShadowPass()',tun)
+        self.assertIn('"isRenderingShadowPass"',types)
+        # The GLSL rift pipelines must stay unassigned (Iris then draws them with our own shader).
+        pairs=types[types.index('Object[][] pairs'):].split(';')[0]
+        for p in ['RIFT_PIPELINE','RIFT_WALL_PIPELINE','RIFT_GLOW_PIPELINE','RIFT_LENS_PIPELINE','TUNNEL_PIPELINE']:
+            self.assertNotIn(p,pairs)
+        # Pack masks: full-bright lightmap + non-world normal on opaque passes, zeros on blended ones.
+        core=ROOT/'src/main/resources/assets/entersift/shaders/core'
+        for f in ['rift.fsh','tunnel.fsh']:
+            t=(core/f).read_text()
+            self.assertIn('layout(location = 1) out vec4 packLight;',t)
+            self.assertIn('layout(location = 2) out vec4 packNormal;',t)
+            self.assertIn('packNormal = vec4(0.5, 0.5, 1.0, 0.0);',t)
+        self.assertIn('#if defined(RIFT_GLOW) || defined(RIFT_LENS)',(core/'rift.fsh').read_text())
+        # The pack composites skip pixels whose normal alpha is 0.
+        pack=ROOT/'shaderpack/shaders'
+        self.assertIn('if (nb.a > 0.5)',(pack/'program/composite.fsh').read_text())
+        self.assertIn('if (nb.a < 0.5) return base;',(pack/'world_sift/composite.fsh').read_text())
+        # Pack auto-updates in place, reproducible zip so unchanged packs are not rewritten.
+        client=(c/'SiftClient.java').read_text()
+        self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
+        g=(ROOT/'build.gradle').read_text()
+        self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
+        self.assertIn('mod_version=0.18.2-alpha',(ROOT/'gradle.properties').read_text())
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
