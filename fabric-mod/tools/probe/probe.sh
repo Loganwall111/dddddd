@@ -43,3 +43,14 @@ for j in "${JARS[@]}"; do case "$j" in *.jar)
   esac; done > $OUT/material_samples.txt
 javap -protected -cp "$CP" net.minecraft.world.level.material.Fluid 2>&1 | grep -iE "animateTick|getDripParticle" >> $OUT/material_samples.txt
 javap -protected -cp "$CP" net.minecraft.world.level.material.LavaFluid 2>&1 | grep -iE "animateTick" >> $OUT/material_samples.txt
+# 0.16: HUD / GUI drawing / screen events for the rift transition overlay.
+{
+for c in net.minecraft.client.gui.GuiGraphicsExtractor net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry \
+         net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements \
+         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents 'net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterRender' \
+         'net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterExtract' 'net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterInit' \
+         net.minecraft.client.gui.screens.LevelLoadingScreen net.minecraft.client.DeltaTracker net.minecraft.client.renderer.RenderPipelines \
+         net.minecraft.client.gui.screens.Screen net.minecraft.client.Minecraft net.minecraft.client.renderer.GameRenderer; do
+  echo "===== $c"; javap -public -cp "$CP" "$c" 2>&1 | head -150
+done
+} > $OUT/hud_api.txt
