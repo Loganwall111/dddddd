@@ -52,6 +52,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     };
 
     /** 0.12 views: the Sift sunset seen from outside the Sift, the Overworld panorama seen from inside it. */
+    static final Identifier VEIL = SiftContent.id("textures/rift/veil.png");
     static final Identifier VIEW_SIFT = SiftContent.id("textures/rift/view_sift.png");
     static final Identifier VIEW_OVERWORLD = SiftContent.id("textures/rift/view_overworld.png");
     static final Identifier THE_SIFT = SiftContent.id("the_sift");
@@ -325,10 +326,23 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float facing = Math.max(1.5f, Math.abs(cam.z));
             float pu = -clamp(cam.x / facing, -2f, 2f) * 0.045f, pv = clamp((cam.y - sh.cy()) / facing, -2f, 2f) * 0.03f;
             collector.submitCustomGeometry(pose, RenderTypes.entityCutout(s.view), (p, vc) -> interior(p, vc, sh, s, age, z, pu, pv));
+            // 0.16 sinkhole: two translucent voxel veils float between the canvas and the rim. Each one
+            // zooms from large to small (recedes) on a loop, half a cycle apart, fading in and out, and
+            // shifts more with parallax the nearer it is, so the face reads as a tunnel, not a sheet.
+            float[] veilTint = mix(edge, WHITE, 0.55f);
+            for (int layer = 0; layer < 2; layer++) {
+                float cycle = (float) ((s.time * 0.125 + layer * 0.5) % 1.0);
+                float lz = z * (2.1f - 1.5f * cycle);
+                float la = (float) Math.sin(Math.PI * cycle) * (layer == 0 ? 0.55f : 0.42f) * Math.min(1f, (age - CLUSTER_START) / 20f);
+                float dz = DEPTH * (layer == 0 ? 0.3f : 0.62f), par = layer == 0 ? 1.6f : 2.4f;
+                float scroll = -s.time * (layer == 0 ? 0.02f : 0.035f);
+                if (la > 0.01f) collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(VEIL), (p, vc) ->
+                    interior(p, vc, sh, s, age, lz, pu * par, pv * par, dz, scroll, veilTint, la));
+            }
             collector.submitCustomGeometry(pose, SiftRenderTypes.SOLID, (p, vc) -> walls(p, vc, sh, s, edge, age));
             collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> flashes(p, vc, sh, age));
-            collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
-            if (age >= GROWN) collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> spill(p, vc, sh, s, edge, age));
+            if (SiftBudget.riftEffects) collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> glow(p, vc, sh, s, cam, edge, age));
+            if (age >= GROWN && SiftBudget.riftEffects) collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> spill(p, vc, sh, s, edge, age));
         }
         } finally {
             pose.popPose();
@@ -343,7 +357,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * edge that meets a wall is inset by {@link #INSET}, so frame, walls and canvas never share an edge.
      */
     private static void interior(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, float age, float zoom, float pu, float pv) {
-        float scroll = s.time * 0.012f;
+        interior(p, vc, sh, s, age, zoom, pu, pv, 0f, s.time * 0.012f, WHITE, 1f);
+    }
+
+    private static final float[] WHITE = {1f, 1f, 1f};
+
+    /** 0.16: the canvas cells at depth offset {@code dz}, with a tint and alpha (veil layers reuse the cell layout). */
+    private static void interior(PoseStack.Pose p, VertexConsumer vc, Shape sh, State s, float age, float zoom, float pu, float pv,
+                                 float dz, float scroll, float[] tint, float alpha) {
         for (int j = 0; j < sh.rows(); j++) {
             int i = 0;
             while (i < sh.cols()) {
@@ -352,7 +373,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 if (k <= 0) { i++; continue; }
                 if (k < 1f) { // still popping in: its own inset quad
                     float[] r = scaled(sh.x(i), sh.y(j), sh.x(i) + sh.cw(), sh.y(j) + sh.ch(), k);
-                    canvas(p, vc, sh, r[0] + INSET, r[1] + INSET, r[2] - INSET, r[3] - INSET, -DEPTH, scroll, zoom, pu, pv);
+                    canvas(p, vc, sh, r[0] + INSET, r[1] + INSET, r[2] - INSET, r[3] - INSET, -DEPTH + dz, scroll, zoom, pu, pv, tint, alpha);
                     i++;
                     continue;
                 }
@@ -362,7 +383,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 float x0 = sh.x(from) + (visible(sh, from - 1, j, age) ? 0 : INSET);
                 float x1 = sh.x(i) - (visible(sh, i, j, age) ? 0 : INSET);
                 float y0 = sh.y(j) + (below ? 0 : INSET), y1 = sh.y(j) + sh.ch() - (above ? 0 : INSET);
-                canvas(p, vc, sh, x0, y0, x1, y1, -DEPTH, scroll, zoom, pu, pv);
+                canvas(p, vc, sh, x0, y0, x1, y1, -DEPTH + dz, scroll, zoom, pu, pv, tint, alpha);
             }
         }
         for (float[] b : sh.sats()) {
@@ -371,36 +392,38 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float[] r = scaled(b[0], b[1], b[2], b[3], k);
             int m = (int) b[7];
             canvas(p, vc, sh, r[0] + ((m & 1) != 0 ? 0 : INSET), r[1] + ((m & 4) != 0 ? 0 : INSET),
-                r[2] - ((m & 2) != 0 ? 0 : INSET), r[3] - ((m & 8) != 0 ? 0 : INSET), b[5], scroll + 0.07f, zoom, pu, pv);
+                r[2] - ((m & 2) != 0 ? 0 : INSET), r[3] - ((m & 8) != 0 ? 0 : INSET), b[5] + dz, scroll + 0.07f, zoom, pu, pv, tint, alpha);
         }
     }
 
     /** One canvas rectangle. UVs are divided by the distance zoom and shifted by the parallax offset. */
     private static void canvas(PoseStack.Pose p, VertexConsumer vc, Shape sh, float x0, float y0, float x1, float y1, float z, float scroll,
-                               float zoom, float pu, float pv) {
+                               float zoom, float pu, float pv, float[] tint, float alpha) {
         if (x1 <= x0 || y1 <= y0) return;
         float span = Math.max(sh.w(), sh.h()) * 2f;
         float ua = x0 / span / zoom + 0.5f + scroll + pu, ub = x1 / span / zoom + 0.5f + scroll + pu;
         float v0 = clamp(0.5f - (y0 - sh.cy()) / (sh.h() * 1.3f) / zoom + pv, 0, 1), v1 = clamp(0.5f - (y1 - sh.cy()) / (sh.h() * 1.3f) / zoom + pv, 0, 1);
         float base = (float) Math.floor(ua);
         ua -= base; ub -= base;
-        if (ub <= 1f) { texQuad(p, vc, x0, y0, x1, y1, z, ua, v0, ub, v1); return; }
+        if (ub <= 1f) { texQuad(p, vc, x0, y0, x1, y1, z, ua, v0, ub, v1, tint, alpha); return; }
         // Split exactly at the texture's wrap point, so any sampler address mode shows no seam.
         float xs = x0 + (x1 - x0) * (1f - ua) / (ub - ua);
-        texQuad(p, vc, x0, y0, xs, y1, z, ua, v0, 1f, v1);
-        texQuad(p, vc, xs, y0, x1, y1, z, 0f, v0, ub - 1f, v1);
+        texQuad(p, vc, x0, y0, xs, y1, z, ua, v0, 1f, v1, tint, alpha);
+        texQuad(p, vc, xs, y0, x1, y1, z, 0f, v0, ub - 1f, v1, tint, alpha);
     }
 
-    private static void texQuad(PoseStack.Pose p, VertexConsumer vc, float x0, float y0, float x1, float y1, float z, float u0, float v0, float u1, float v1) {
-        emit(p, vc, x0, y0, z, u0, v0, 0, 0, 1); emit(p, vc, x1, y0, z, u1, v0, 0, 0, 1);
-        emit(p, vc, x1, y1, z, u1, v1, 0, 0, 1); emit(p, vc, x0, y1, z, u0, v1, 0, 0, 1);
-        emit(p, vc, x0, y1, z, u0, v1, 0, 0, -1); emit(p, vc, x1, y1, z, u1, v1, 0, 0, -1);
-        emit(p, vc, x1, y0, z, u1, v0, 0, 0, -1); emit(p, vc, x0, y0, z, u0, v0, 0, 0, -1);
+    private static void texQuad(PoseStack.Pose p, VertexConsumer vc, float x0, float y0, float x1, float y1, float z, float u0, float v0, float u1, float v1,
+                                float[] c, float a) {
+        emit(p, vc, x0, y0, z, u0, v0, 0, 0, 1, c, a); emit(p, vc, x1, y0, z, u1, v0, 0, 0, 1, c, a);
+        emit(p, vc, x1, y1, z, u1, v1, 0, 0, 1, c, a); emit(p, vc, x0, y1, z, u0, v1, 0, 0, 1, c, a);
+        emit(p, vc, x0, y1, z, u0, v1, 0, 0, -1, c, a); emit(p, vc, x1, y1, z, u1, v1, 0, 0, -1, c, a);
+        emit(p, vc, x1, y0, z, u1, v0, 0, 0, -1, c, a); emit(p, vc, x0, y0, z, u0, v0, 0, 0, -1, c, a);
     }
 
-    private static void emit(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v, float nx, float ny, float nz) {
+    private static void emit(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v, float nx, float ny, float nz, float[] c, float a) {
+        if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
         if (!Float.isFinite(x + y + z + u + v)) { x = 0f; y = 0f; z = 0f; u = 0f; v = 0f; } // 0.13: never emit NaN streaks
-        vc.addVertex(p, x, y, z).setColor(1f, 1f, 1f, 1f).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LIGHT).setNormal(p, nx, ny, nz);
+        vc.addVertex(p, x, y, z).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LIGHT).setNormal(p, nx, ny, nz);
     }
 
     // ------------------------------------------------------------------ walls (pale cream, tinted)
@@ -703,6 +726,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     private static void col(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
+        if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
         if (!Float.isFinite(x + y + z)) { x = 0f; y = 0f; z = 0f; a = 0f; } // 0.13: collapse, keep the quad count intact
         vc.addVertex(p, x, y, z).setColor(c[0], c[1], c[2], a);
     }

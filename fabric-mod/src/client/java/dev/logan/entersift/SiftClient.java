@@ -39,6 +39,10 @@ public final class SiftClient implements ClientModInitializer {
         creature(SiftKind.SINGER, SiftModelDefs::singer, SiftModelDefs.SINGER_PARTS);
         SiftRenderTypes.initialize();
         SiftRenderTypes.registerWithIris(); // 0.12: shader packs draw the Sift sky and rifts with known programs
+        // 0.16: render switches + per-frame vertex budget (terrain-stretching fix); must run before the passes below.
+        dev.logan.entersift.client.SiftBudget.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
+        net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context -> dev.logan.entersift.client.SiftBudget.reset());
+        dev.logan.entersift.client.SiftTransition.register(); // 0.16 chromatic + orange-flash rift transition overlay
         SiftSky.register();
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
         dev.logan.entersift.client.SiftSouls.register(); // 0.14 wandering souls with blue comet trails (Sift only)

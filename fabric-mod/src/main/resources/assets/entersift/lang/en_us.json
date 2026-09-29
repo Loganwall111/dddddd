@@ -153,5 +153,6 @@
   "item.entersift.watchling_spawn_egg": "Watchling Spawn Egg",
   "subtitles.entersift.entity.watchling.ambient": "Watchling calls",
   "subtitles.entersift.entity.watchling.hurt": "Watchling hurts",
-  "subtitles.entersift.entity.watchling.death": "Watchling dies"
+  "subtitles.entersift.entity.watchling.death": "Watchling dies",
+  "effect.entersift.rift_transit": "Rift Transit"
 }

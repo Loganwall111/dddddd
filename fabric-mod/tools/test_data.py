@@ -287,7 +287,7 @@ class DataContracts(unittest.TestCase):
         for gone in ['shardRibbons','auroraStreaks','void panel(']: self.assertNotIn(gone,sky)   # no hard rectangles
         self.assertIn('CURTAIN_ALPHA = 0.18f',sky)
         self.assertIn('smooth(0f, 0.18f, v)',sky)                                   # soft vertical margins
-        self.assertIn('rgb(0x7CC6D8)',sky); self.assertIn('rgb(0xC6B8EC)',sky)       # teal-blue horizon, pale violet zenith
+        self.assertIn('rgb(0x7FD3CF)',sky); self.assertIn('rgb(0xC6B8EC)',sky)       # teal-blue horizon, pale violet zenith
     def test_v013_pre_beta_fixes(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         sky=(c/'client/SiftSky.java').read_text()
@@ -365,6 +365,36 @@ class DataContracts(unittest.TestCase):
         self.assertIn('Result.IGNORED',r); self.assertIn('{1, 3, 7, 6, 5, 2, 4, 8}',r)
         smoke=(ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text()
         self.assertIn('playRitual',smoke); self.assertIn('SIFT-SMOKE FAIL ritual',smoke)
+    def test_v016_stretch_fix_transition_and_sinkhole(self):
+        import re
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        budget=(C/'SiftBudget.java').read_text()
+        limit=int(re.search(r'MAX_VERTICES = ([0-9_]+);',budget).group(1).replace('_',''))
+        self.assertLess(limit,65536); self.assertEqual(limit%4,0)          # 16-bit quad indices, whole quads only
+        for f in ('SiftSky.java','SiftSouls.java','SiftClouds.java','RiftPortalRenderer.java'):
+            code=(C/f).read_text()
+            self.assertIn('SiftBudget.take(vc)',code,f)  # every emitter is budgeted
+        clouds=(C/'SiftClouds.java').read_text()
+        self.assertIn('CELL = 10',clouds); self.assertIn('SiftBudget.overworldClouds',clouds)
+        client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
+        self.assertLess(client.index('SiftBudget.reset()'),client.index('SiftSky.register()'))
+        tr=(C/'SiftTransition.java').read_text()
+        self.assertIn('RIFT_TRANSIT',tr); self.assertIn('0.15f',tr); self.assertIn('afterExtract',tr)
+        self.assertIn('rift_transit',(ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text())
+        begin=fn('travel/begin')
+        self.assertIn('effect give @s entersift:rift_transit 4 0 true',begin)
+        self.assertIn('matches 61..',fn('travel/transit_tick'))               # teleport at tick 60, under the flare
+        for f in ('rift/transport','portal/cross','portal/return_tick'):
+            self.assertIn('travel/begin {dest:',fn(f)); self.assertNotIn('travel/destination_',fn(f))
+        self.assertIn('transit_tick',fn('player/tick'))
+        rift=(C/'RiftPortalRenderer.java').read_text()
+        self.assertIn('entityTranslucentEmissive(VEIL)',rift)
+        T=ROOT/'src/main/resources/assets/entersift/textures'
+        for f in ('rift/veil.png','gui/rift_flash.png','gui/rift_glitch.png','mob_effect/rift_transit.png','rift/interior_portal.png'):
+            self.assertTrue((T/f).is_file(),f)
+        sky=(C/'SiftSky.java').read_text()
+        self.assertIn('softPanels(',sky); self.assertIn('rgb(0xC86A92)',sky)
+
     def test_v015_portal_rifts_and_bundled_pack(self):
         import re
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()

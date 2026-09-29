@@ -65,6 +65,16 @@ jobs:
           PYLOG
             exit 1
           fi
+      - name: Verify the built-in shader pack is inside the jar
+        shell: bash
+        run: |
+          jar=$(ls build/libs/*.jar | grep -v sources | head -1)
+          pack=$(grep -o 'Dungeons-II-Overworld-[0-9.]*\.zip' src/client/java/dev/logan/entersift/SiftClient.java | head -1)
+          echo "jar=$jar pack=$pack"
+          unzip -l "$jar" | grep "assets/entersift/shaderpacks/$pack" || { echo "::error title=Shader pack missing::$pack is not in $jar"; exit 1; }
+          unzip -p "$jar" "assets/entersift/shaderpacks/$pack" > "$RUNNER_TEMP/pack.zip"
+          unzip -l "$RUNNER_TEMP/pack.zip" | grep -E "shaders/(shaders.properties|composite|gbuffers_terrain)" | head -5
+          echo "::notice title=Shader pack bundled::$pack ($(stat -c %s "$RUNNER_TEMP/pack.zip") bytes) is inside $(basename "$jar")"
       - uses: actions/upload-artifact@v4
         with:
           name: Enter-the-Sift-26.3-alpha

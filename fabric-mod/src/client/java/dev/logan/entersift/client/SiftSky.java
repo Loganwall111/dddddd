@@ -48,12 +48,12 @@ public final class SiftSky {
     static final int[] STAGE_AT = {0, 0, 1, 1, 2, 2, 3, 3};
 
     /** Horizon / fog colour per stage (identical to the timeline's fog_color and sky_color). */
-    static final float[][] HORIZON = {rgb(0x7CC6D8), rgb(0x86D6DC), rgb(0xC89AB8), rgb(0xD9A450)};
+    static final float[][] HORIZON = {rgb(0x7FD3CF), rgb(0x8FC2C4), rgb(0xC86A92), rgb(0xDB7840)}; // 0.16 spec: cyan, mint, magenta-rose, amber
     /** 0.12 middle band per stage: radiant mint-green by day, lilac at evening, deeper amber at night. */
-    private static final float[][] MID = {rgb(0x9FEFC8), rgb(0xAAF7D4), rgb(0xC0A8DA), rgb(0xE0A858)};
+    private static final float[][] MID = {rgb(0x9FEFC8), rgb(0xC4F4E4), rgb(0xD884AE), rgb(0xE08E4C)}; // noon: mint + pearl white
     /** Zenith base colour per stage. */
     /** Zenith per stage: pale violet overhead by day and noon, soft blue-violet at evening, hazy gold at night. */
-    private static final float[][] ZENITH = {rgb(0xC6B8EC), rgb(0xD4C8F4), rgb(0xA4B0E2), rgb(0xE8B868)};
+    private static final float[][] ZENITH = {rgb(0xC6B8EC), rgb(0xECEAF6), rgb(0x9C5A8E), rgb(0xE8A860)}; // evening crimson-magenta overhead
     /** Four soft lava-lamp tints per stage (0.12: pastel and faint; they only shimmer over the gradient). */
     private static final float[][][] BLOBS = {
         {rgb(0xB8F5E0), rgb(0xA8DCF2), rgb(0xD8CAF4), rgb(0xF2CCDE)},
@@ -100,6 +100,7 @@ public final class SiftSky {
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds));
                 // Layers 2-3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
+                    softPanels(p, vc, radius * 0.985f, pal, seconds);   // 0.16 layer 2: blurred voxel panels in arcs
                     auroraCurtains(p, vc, radius * 0.98f, pal, seconds);
                     skyRays(p, vc, radius * 0.96f, pal, seconds);
                 });
@@ -248,6 +249,7 @@ public final class SiftSky {
     }
 
     private static void v(PoseStack.Pose p, VertexConsumer vc, float[] d, float r, float[] c, float a) {
+        if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
         // 0.13 guard: a NaN/infinite vertex would stretch across the screen; collapse it instead (keeps quads intact).
         if (!Float.isFinite(d[0] + d[1] + d[2])) { vc.addVertex(p, 0f, 0f, 0f).setColor(0f, 0f, 0f, 0f); return; }
         vc.addVertex(p, d[0] * r, d[1] * r, d[2] * r).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
@@ -322,6 +324,51 @@ public final class SiftSky {
                 if (prev == null) { prev = new float[CURTAIN_ROWS + 1][]; prevA = new float[CURTAIN_ROWS + 1]; }
                 System.arraycopy(row, 0, prev, 0, row.length);
                 System.arraycopy(rowA, 0, prevA, 0, rowA.length);
+            }
+        }
+    }
+
+    private static final int ARCS = 3, PANELS = 9, PANEL_GRID = 6;
+
+    /**
+     * 0.16 sky layer 2 (new Sift refs): semi-transparent rectangular "voxel" panels laid along sweeping
+     * arcs that drift diagonally across the sky. Each panel is a tilted rectangle tessellated into a
+     * 6x6 grid whose vertex alpha falls off with smoothstep toward every edge, so it reads as a soft,
+     * blurred glowing block, never a hard-edged quad (the 0.13 rule still holds). Additive (GLOW),
+     * base alpha 0.14, mint / pearl / pink / violet, so the gradient sky always shows through.
+     */
+    private static void softPanels(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float strength = auroraStrength(pal);
+        float[][] grid = new float[(PANEL_GRID + 1) * (PANEL_GRID + 1)][];
+        float[] ga = new float[grid.length];
+        for (int k = 0; k < ARCS; k++) {
+            double arcAz = hash(k, 11, 0) * Math.PI * 2 + t * 0.006 * (k % 2 == 0 ? 1 : -1);
+            double arcEl = 0.28 + 0.34 * hash(k, 12, 0), arcSpan = 1.6 + 0.9 * hash(k, 13, 0), bow = 0.18 + 0.2 * hash(k, 14, 0);
+            for (int i = 0; i < PANELS; i++) {
+                float f = (i + 0.5f) / PANELS;
+                // Panels slide along their arc (scrolling diagonal stripes) and wrap around.
+                float slide = (float) ((f + t * 0.004 * (1 + k * 0.3)) % 1.0);
+                double az = arcAz + arcSpan * (slide - 0.5);
+                double el = arcEl + bow * Math.sin(Math.PI * slide) - bow * 0.5 + 0.03 * Math.sin(t * 0.07 + i);
+                double rot = Math.atan2(bow * Math.PI * Math.cos(Math.PI * slide), arcSpan) + 0.25 * (hash(k, i, 15) - 0.5);
+                double hw = 0.07 + 0.08 * hash(k, i, 16), hh = 0.035 + 0.05 * hash(k, i, 17);
+                float ends = smooth(0f, 0.15f, slide) * smooth(1f, 0.85f, slide);
+                float alpha = 0.14f * strength * ends * (0.6f + 0.4f * (float) Math.sin(t * 0.21f + i * 1.3f + k));
+                if (alpha < 0.004f) continue;
+                float[] c = lerp(AURORA[(k + i) % 4], pal.blobs()[i % 4], 0.3f);
+                double cr = Math.cos(rot), sr = Math.sin(rot), ce = Math.max(0.2, Math.cos(el));
+                for (int gy = 0; gy <= PANEL_GRID; gy++) for (int gx = 0; gx <= PANEL_GRID; gx++) {
+                    float sx = gx / (float) PANEL_GRID * 2 - 1, sy = gy / (float) PANEL_GRID * 2 - 1;
+                    double lx = sx * hw, ly = sy * hh;
+                    grid[gy * (PANEL_GRID + 1) + gx] = dir(az + (lx * cr - ly * sr) / ce, el + lx * sr + ly * cr);
+                    ga[gy * (PANEL_GRID + 1) + gx] = alpha * smooth(1f, 0.35f, Math.abs(sx)) * smooth(1f, 0.35f, Math.abs(sy));
+                }
+                for (int gy = 0; gy < PANEL_GRID; gy++) for (int gx = 0; gx < PANEL_GRID; gx++) {
+                    int a0 = gy * (PANEL_GRID + 1) + gx, a1 = a0 + 1, a2 = a0 + PANEL_GRID + 2, a3 = a0 + PANEL_GRID + 1;
+                    if (ga[a0] + ga[a1] + ga[a2] + ga[a3] < 0.002f) continue;
+                    v(p, vc, grid[a0], r, c, ga[a0]); v(p, vc, grid[a1], r, c, ga[a1]);
+                    v(p, vc, grid[a2], r, c, ga[a2]); v(p, vc, grid[a3], r, c, ga[a3]);
+                }
             }
         }
     }
@@ -439,6 +486,7 @@ public final class SiftSky {
     }
 
     private static void bv(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
+        if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
         if (!Float.isFinite(x + y + z)) { x = 0f; y = 0f; z = 0f; a = 0f; }
         vc.addVertex(p, x, y, z).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
     }

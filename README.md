@@ -123,6 +123,28 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.16.0
+
+- **Terrain-stretching fix.** Terrain, trees and water no longer smear into streaks while you turn. The hand is no longer a black polygon.
+  - Cause: the 0.13 Overworld clouds could send about 150,000 vertices in one draw. That forces the game's shared quad index buffer past 16 bits, which Sodium/Iris and some drivers mishandle.
+  - Every Sift draw (sky, souls, clouds, rifts) is now capped at 48,000 vertices per batch, dropping whole quads only.
+  - The clouds use 10-block cells, which makes them about 3x cheaper.
+- **Render switches** in `config/entersift-client.properties`: `overworld_clouds`, `rift_effects`, `transition_hud`. Set one to `false` to turn that pass off.
+- **Rift transition** replaces the loading screen. Stepping in gives an un-skippable 80-tick sequence:
+  - ticks 0-40: RGB channel split jitter (`sin(t)*0.15`);
+  - ticks 41-60: a solid orange-red lens flare;
+  - tick 60: a silent teleport under the flare;
+  - ticks 61-80: the flare fades out.
+  
+  It is driven by the hidden `entersift:rift_transit` effect and is drawn over the level-loading screen.
+- **Sinkhole faces.** Rifts and the blue portal now have two translucent voxel veils in front of their canvas. They zoom inward at different depths and parallax rates, so the face reads as a receding tunnel.
+- **Portal mosaic v3.** Brighter cyan-white, larger blocky cells, frosted grain.
+- **Sift sky.**
+  - New soft rectangular panel layer: blurred glowing panels sweep across the sky in arcs.
+  - The 4-stage colours follow the spec: day `#7FD3CF`, noon `#8FC2C4` with pearl white, evening magenta-rose `#C86A92`, night amber `#DB7840`.
+  - The lightmap tint follows each stage.
+- **CI** now fails if the built-in shader pack is missing from the jar.
+
 ### 0.15.0: trailer-accurate portal and rifts, shader pack install fixed
 - **Portal (blue portal ref).** The portal is now a clean glowing rectangle with square tabs on the top and sides, instead of a jagged outline. Inside is a bright, soft mosaic of pale cyan and white squares, like frosted glass. It has a thicker white rim and a wide cyan bloom around it, and looks the same from both dimensions.
 - **Rifts (pink and warm rift refs).** Rift interiors are now glowing marble instead of a flat picture of the other world. From the Overworld they look rose-pink and cream with lavender hints; from inside the Sift, coral, peach and gold. A soft bloom band surrounds every edge. Rifts that glowed yellow now glow peach with white rims.

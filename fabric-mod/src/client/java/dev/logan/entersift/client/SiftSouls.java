@@ -175,6 +175,7 @@ public final class SiftSouls {
 
     // ------------------------------------------------------------------ helpers
     private static void v(PoseStack.Pose p, VertexConsumer vc, double x, double y, double z, float[] c, float a) {
+        if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
         if (!Double.isFinite(x + y + z)) { x = 0; y = 0; z = 0; a = 0f; }
         vc.addVertex(p, (float) x, (float) y, (float) z).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
     }

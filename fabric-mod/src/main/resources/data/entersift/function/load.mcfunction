@@ -1,6 +1,8 @@
 scoreboard objectives add sift.souls dummy
 scoreboard objectives add sift.ghost dummy
 scoreboard objectives add sift.cooldown dummy
+scoreboard objectives add sift.transit dummy
+scoreboard objectives add sift.dest dummy
 scoreboard objectives add sift.age dummy
 scoreboard objectives add sift.target dummy
 scoreboard objectives add sift.clock dummy

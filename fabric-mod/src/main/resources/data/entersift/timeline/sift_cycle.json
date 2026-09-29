@@ -6,35 +6,35 @@
       "keyframes": [
         {
           "ticks": 0,
-          "value": "#7cc6d8"
+          "value": "#7fd3cf"
         },
         {
           "ticks": 3500,
-          "value": "#7cc6d8"
+          "value": "#7fd3cf"
         },
         {
           "ticks": 5000,
-          "value": "#86d6dc"
+          "value": "#8fc2c4"
         },
         {
           "ticks": 8500,
-          "value": "#86d6dc"
+          "value": "#8fc2c4"
         },
         {
           "ticks": 11000,
-          "value": "#c89ab8"
+          "value": "#c86a92"
         },
         {
           "ticks": 14500,
-          "value": "#c89ab8"
+          "value": "#c86a92"
         },
         {
           "ticks": 16500,
-          "value": "#d9a450"
+          "value": "#db7840"
         },
         {
           "ticks": 22500,
-          "value": "#d9a450"
+          "value": "#db7840"
         }
       ]
     },
@@ -42,35 +42,35 @@
       "keyframes": [
         {
           "ticks": 0,
-          "value": "#7cc6d8"
+          "value": "#7fd3cf"
         },
         {
           "ticks": 3500,
-          "value": "#7cc6d8"
+          "value": "#7fd3cf"
         },
         {
           "ticks": 5000,
-          "value": "#86d6dc"
+          "value": "#8fc2c4"
         },
         {
           "ticks": 8500,
-          "value": "#86d6dc"
+          "value": "#8fc2c4"
         },
         {
           "ticks": 11000,
-          "value": "#c89ab8"
+          "value": "#c86a92"
         },
         {
           "ticks": 14500,
-          "value": "#c89ab8"
+          "value": "#c86a92"
         },
         {
           "ticks": 16500,
-          "value": "#d9a450"
+          "value": "#db7840"
         },
         {
           "ticks": 22500,
-          "value": "#d9a450"
+          "value": "#db7840"
         }
       ],
       "modifier": "multiply"
@@ -79,35 +79,35 @@
       "keyframes": [
         {
           "ticks": 0,
-          "value": "#5aa8bc"
+          "value": "#5cb0aa"
         },
         {
           "ticks": 3500,
-          "value": "#5aa8bc"
+          "value": "#5cb0aa"
         },
         {
           "ticks": 5000,
-          "value": "#62b8c0"
+          "value": "#6aa0a4"
         },
         {
           "ticks": 8500,
-          "value": "#62b8c0"
+          "value": "#6aa0a4"
         },
         {
           "ticks": 11000,
-          "value": "#a87898"
+          "value": "#a0587a"
         },
         {
           "ticks": 14500,
-          "value": "#a87898"
+          "value": "#a0587a"
         },
         {
           "ticks": 16500,
-          "value": "#c08a3a"
+          "value": "#b8622e"
         },
         {
           "ticks": 22500,
-          "value": "#c08a3a"
+          "value": "#b8622e"
         }
       ]
     },
@@ -167,19 +167,19 @@
         },
         {
           "ticks": 11000,
-          "value": "#f6d6e6"
+          "value": "#f4c6dc"
         },
         {
           "ticks": 14500,
-          "value": "#f6d6e6"
+          "value": "#f4c6dc"
         },
         {
           "ticks": 16500,
-          "value": "#ffd89a"
+          "value": "#ffc88a"
         },
         {
           "ticks": 22500,
-          "value": "#ffd89a"
+          "value": "#ffc88a"
         }
       ],
       "modifier": "multiply"

@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 public final class SiftClouds {
     private SiftClouds() {}
 
-    private static final int CELL = 6;
+    private static final int CELL = 10; // 0.16: was 6 (up to ~150k vertices per frame, see SiftBudget)
     private static final float BASE_Y = 192f, LAYER = 4f, MAX_H = 16f;
 
     private static CloudStatus saved;
@@ -45,14 +45,14 @@ public final class SiftClouds {
             boolean overworld = mc.level.dimension().identifier().toString().equals("minecraft:overworld");
             long now = System.nanoTime();
             if (now - packCheckAt > 1_000_000_000L) { packCheckAt = now; pack = SiftRenderTypes.shaderPackInUse(); }
-            if (!overworld || pack) { release(mc); return; }
+            if (!overworld || pack || !SiftBudget.overworldClouds) { release(mc); return; }
             if (!hold(mc)) return;
 
             float partial = context.levelState().worldPartialTicks;
             float tick = (float) (mc.level.getOverworldClockTime() % 24000L) + partial;
             float seconds = (float) ((System.nanoTime() / 1.0e9) % 100000.0);
             int chunks = mc.options.renderDistance().get();
-            float range = Math.min(chunks * 16f, 224f);
+            float range = Math.min(chunks * 16f, 192f);
             Vec3 cam = context.levelState().cameraRenderState.pos;
             PoseStack pose = context.poseStack();
             pose.pushPose();
@@ -88,9 +88,9 @@ public final class SiftClouds {
     // ------------------------------------------------------------------ geometry
 
     private static int height(int i, int j, float morph) {
-        float n = SiftSky.noise(i * 0.085f, j * 0.085f, 7.3f + morph)
-            + 0.5f * SiftSky.noise(i * 0.21f, j * 0.21f, 1.7f + morph * 1.7f)
-            + 0.22f * SiftSky.noise(i * 0.47f, j * 0.47f, 4.1f);
+        float n = SiftSky.noise(i * 0.11f, j * 0.11f, 7.3f + morph)
+            + 0.5f * SiftSky.noise(i * 0.27f, j * 0.27f, 1.7f + morph * 1.7f)
+            + 0.22f * SiftSky.noise(i * 0.6f, j * 0.6f, 4.1f);
         if (n < 0.16f) return 0;
         return Math.min(4, 1 + (int) ((n - 0.16f) / 0.12f));
     }
@@ -160,6 +160,7 @@ public final class SiftClouds {
     }
 
     private static void vert(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float[] c, float a) {
+        if (!SiftBudget.take(vc)) return; // 0.16: never exceed 16-bit quad indices in one batch
         if (!Float.isFinite(x + y + z)) { x = 0f; y = 0f; z = 0f; a = 0f; }
         vc.addVertex(p, x, y, z).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), a);
     }

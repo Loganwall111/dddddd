@@ -132,6 +132,16 @@ public final class SiftContent {
         new LiquidBlock(ICHOR, BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).setId(blockKey("ichor")).lightLevel(s -> 11)) {});
     public static final Item ICHOR_BUCKET = Registry.register(BuiltInRegistries.ITEM, id("ichor_bucket"),
         new BucketItem(ICHOR, itemProperties("ichor_bucket").craftRemainder(Items.BUCKET).stacksTo(1)));
+    /**
+     * 0.16 rift transition marker: a hidden 4-second effect given when a player steps into a rift. It is
+     * synced to the client automatically; SiftTransition draws the chromatic jitter / orange flare from
+     * its remaining duration and the server teleports at tick 60 (travel/transit_go).
+     */
+    public static final net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> RIFT_TRANSIT =
+        Registry.<net.minecraft.world.effect.MobEffect, net.minecraft.world.effect.MobEffect>registerForHolder(
+            BuiltInRegistries.MOB_EFFECT, id("rift_transit"),
+            new net.minecraft.world.effect.MobEffect(net.minecraft.world.effect.MobEffectCategory.NEUTRAL, 0xFF6A2A) {});
+
     public static final Item GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("rift_gauntlet"),
         new Item(itemProperties("rift_gauntlet").stacksTo(1)));
     public static final Item RED_GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("red_rift_gauntlet"),
