@@ -52,7 +52,7 @@ public final class SiftClient implements ClientModInitializer {
         installOverworldShaderPack();
     }
 
-    private static final String PACK = "Dungeons-II-Overworld-0.15.zip" // must match build.gradle archiveFileName (test_data enforces it);
+    private static final String PACK = "Dungeons-II-Overworld-0.15.zip"; // must match build.gradle archiveFileName (test_data enforces it)
 
     /**
      * 0.11: ship the optional Dungeons II Overworld Iris pack. It is copied into shaderpacks/ only if
