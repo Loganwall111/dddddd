@@ -65,10 +65,10 @@ public final class SiftSky {
     private static final float[] PILLAR = rgb(0xA84E56);
     /** Aurora curtain colours from the trailer: mint green, pale white-cyan, soft pink, pale violet. */
     private static final float[][] AURORA = {rgb(0x7DFFC4), rgb(0x5FE0E0), rgb(0xFF8CC0), rgb(0xB89CFF)};
-    /** 0.17 panel sky (rose / frost biomes): teal, green and pink translucent rectangles. */
-    private static final float[][] PANEL_COLS = {rgb(0x3FE0C0), rgb(0x7FF0A0), rgb(0xFF8FC0), rgb(0x2FB8C8), rgb(0xFFB0D0)};
-    /** 0.17 swirl sky (coral / tidepool biomes): soft pink and teal blobs. */
-    private static final float[][] SWIRL_COLS = {rgb(0xFF9CC4), rgb(0x4FD6CF), rgb(0xFF7FB0), rgb(0x3FB8C0), rgb(0xFFC0D8)};
+    /** 0.24 curved ribbon-tile sky panels (Images 9, 15, 29, 30): luminous mint-green, aqua-white, chartreuse-mint, and soft rose-pink. */
+    private static final float[][] PANEL_COLS = {rgb(0x68FFD0), rgb(0xC8FFF4), rgb(0x98FF8C), rgb(0xFF88BC), rgb(0x48E8D8)};
+    /** 0.24 swirl sky (Images 18, 29, 32): soft rose-pink and vivid aqua-teal aurora swirls. */
+    private static final float[][] SWIRL_COLS = {rgb(0xFF8CC0), rgb(0x48E0D4), rgb(0xFF78B0), rgb(0x38C4CC), rgb(0xFFB4D8)};
     /** Biomes that get the swirl sky; every other Sift biome gets the panel sky. */
     static final java.util.Set<String> SWIRL_BIOMES = java.util.Set.of("coral_expanse", "tidepool_reef", "singer_meadow", "soul_valley");
     /** 0 = panel sky, 1 = swirl sky; eased toward the camera biome's target so crossing a border blends. */
@@ -120,10 +120,10 @@ public final class SiftSky {
                 var out = context.submitNodeCollector();
                 // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds, sw));
-                // 0.17 layer 2 (alpha blended, keeps colours saturated): panels or swirling blobs by biome.
+                // 0.24 layer 2 (alpha blended): curved mint/aqua/pink ribbon-tile panels + aurora swirls across all biomes.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
-                    if (sw < 0.98f) softPanels(p, vc, radius * 0.985f, pal, seconds, 1f - sw);
-                    if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw);
+                    softPanels(p, vc, radius * 0.985f, pal, seconds, Math.max(0.68f, 1f - sw * 0.32f));
+                    if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw * 0.85f);
                 });
                 // Layer 3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
@@ -294,8 +294,9 @@ public final class SiftSky {
         if (basin > 0.01f) {
             float[] b = lerp(BASIN_CRIMSON, BASIN_ROSE, smooth(0f, 0.4f, up));
             b = lerp(b, BASIN_MAGENTA, smooth(0.35f, 0.95f, up));
-            c = lerp(c, b, basin * 0.8f * dayK);
-            horizon = lerp(horizon, BASIN_ROSE, basin * 0.7f * dayK);
+            float basinBand = smooth(0.01f, 0.28f, up) * (1f - smooth(0.36f, 0.72f, up));
+            c = lerp(c, b, basin * (0.22f + 0.42f * basinBand) * dayK);
+            horizon = lerp(horizon, BASIN_ROSE, basin * 0.38f * dayK);
         }
         // Melt into the fog colour at and below the horizon: no seam against distant terrain.
         float haze = 1 - smooth(-0.02f, 0.2f, y);

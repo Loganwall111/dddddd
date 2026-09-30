@@ -10,9 +10,35 @@ Colours are sampled by eye from the reference crops in art/ref_crops.
     python3 tools/creatures.py
 """
 from __future__ import annotations
-import random
+import random, struct, zlib
 from pathlib import Path
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    class _RawImg:
+        def __init__(self, mode, size, bg=(0, 0, 0, 0)):
+            self.w, self.h = size
+            self.buf = [[tuple(bg) for _ in range(self.w)] for _ in range(self.h)]
+        def load(self):
+            b = self.buf
+            class _Px:
+                def __getitem__(self, xy): return b[xy[1]][xy[0]]
+                def __setitem__(self, xy, val): b[xy[1]][xy[0]] = tuple(val)
+            return _Px()
+        def save(self, path):
+            raw = bytearray()
+            for y in range(self.h):
+                raw.append(0)
+                for x in range(self.w):
+                    raw.extend(self.buf[y][x])
+            def chunk(tag, data):
+                return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+            ihdr = struct.pack(">IIBBBBB", self.w, self.h, 8, 6, 0, 0, 0)
+            Path(path).write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
+    class Image:
+        @staticmethod
+        def new(mode, size, bg=(0, 0, 0, 0)):
+            return _RawImg(mode, size, bg)
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "src/main/resources/assets/entersift/textures"
@@ -35,20 +61,19 @@ BLUE = (156, 214, 232)
 RED_EYE = (224, 44, 62)
 SPECS: dict[str, dict] = {}
 
-# Blub — (0.13, user correction) an icy-blue jelly bunny: pale blue cube body, RED slit eyes and a small red
-# mouth, short upright ears in the body blue (lighter blue inside). No pink, no purple.
-# 0.17 (user): eyes and mouth are the SAME darker red (#7a1020), not bright red, and not emissive.
+# Blub — (0.24, Image 40 ref) sky-blue to aqua-mint cube critter with stubby vertical ears, dark eyes & flat mouth.
 BLUB_EYE, BLUB_MOUTH = (122, 16, 32), (122, 16, 32)
-BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (196, 234, 250), (148, 206, 236), (184, 228, 248), (120, 178, 214)
-BLUB_BLUE = (156, 214, 240)
+BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (166, 224, 252), (118, 194, 238), (164, 222, 250), (78, 188, 206)
+BLUB_BLUE = (112, 198, 238)
 SPECS["blub"] = dict(tex=64, egg=(BLUB_BLUE, BLUB_EYE), parts=[
     P("body", (0, 21, 0), [B(-5, -8, -5, 10, 8, 10, BLUB_BLUE, "speckle", faces={
-        "north": [(1, 3, 3, 1, BLUB_EYE, False), (6, 3, 3, 1, BLUB_EYE, False), (4, 5, 2, 1, BLUB_MOUTH, False)],
+        "north": [(1, 3, 2, 1, BLUB_EYE, False), (7, 3, 2, 1, BLUB_EYE, False), (3, 5, 4, 1, BLUB_MOUTH, False),
+                  (0, 6, 10, 2, BLUB_LEG, False)],
         "top": [(0, 0, 10, 10, BLUB_TOP, False)]})]),
-    P("ear_l", (-3, 13, 1), [B(-1.5, -5, -0.5, 3, 5, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 3, BLUB_EAR_IN, False)]})],
-      parent="body", rot=(0.12, 0, -0.14)),
-    P("ear_r", (3, 13, 1), [B(-1.5, -5, -0.5, 3, 5, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 3, BLUB_EAR_IN, False)]})],
-      parent="body", rot=(0.12, 0, 0.14)),
+    P("ear_l", (-3, 13, 0), [B(-1.5, -4, -1, 3, 4, 2, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 2, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.06, 0, -0.08)),
+    P("ear_r", (3, 13, 0), [B(-1.5, -4, -1, 3, 4, 2, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 2, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.06, 0, 0.08)),
     P("leg_0", (-3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
     P("leg_1", (3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
     P("leg_2", (-3, 21, 3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
@@ -72,16 +97,19 @@ SPECS["sculker"] = dict(tex=128, egg=(SLATE, MOUTH), parts=[
     P("antenna_r", (2, 3, 0), [B(-0.5, -6, -0.5, 1, 6, 1, (126, 156, 172), "plain"), B(0.5, -4, -0.5, 2, 1, 1, (126, 156, 172), "plain")], parent="head"),
 ])
 
-# Sculkling — little tan critter with a teal head and a sprout.
-TAN, TEAL = (226, 192, 144), (104, 170, 158)
+# Sculkling — (0.24, Images 6, 11, 34, 42 ref) chiseled stone totem golem with a glowing Mint-Cyan Cube head in a 4-pronged cradle.
+TAN, TEAL = (76, 88, 102), (64, 255, 212)
 SPECS["sculkling"] = dict(tex=64, egg=(TAN, TEAL), parts=[
-    P("body", (0, 21, 0), [B(-3, -4, -3, 6, 5, 6, TAN, "speckle")]),
-    P("head", (0, 17, -1), [B(-3, -5, -3, 6, 5, 5, TEAL, faces={"north": [(1, 2, 1, 1, (20, 30, 30), False), (4, 2, 1, 1, (20, 30, 30), False), (2, 4, 2, 1, (60, 100, 90), False)]})], parent="body"),
-    P("antenna_0", (0, 12, -1), [B(-0.5, -3, -0.5, 1, 3, 1, (120, 200, 170), "plain"), B(-1.5, -4, -0.5, 3, 1, 1, (150, 226, 196), "plain")], parent="head"),
-    P("leg_0", (-2, 22, -2), [B(-1, 0, -1, 2, 2, 2, (200, 166, 120))]),
-    P("leg_1", (2, 22, -2), [B(-1, 0, -1, 2, 2, 2, (200, 166, 120))]),
-    P("leg_2", (-2, 22, 2), [B(-1, 0, -1, 2, 2, 2, (200, 166, 120))]),
-    P("leg_3", (2, 22, 2), [B(-1, 0, -1, 2, 2, 2, (200, 166, 120))]),
+    P("body", (0, 21, 0), [B(-3, -5, -3, 6, 6, 6, TAN, "speckle", faces={
+        "north": [(1, 1, 1, 2, (36, 44, 54), False), (4, 1, 1, 2, (36, 44, 54), False), (2, 4, 2, 1, (48, 220, 190), True)]})]),
+    P("head", (0, 16, 0), [B(-2.5, -5, -2.5, 5, 5, 5, TEAL, "plain", glow=True, faces={
+        "north": [(1, 1, 3, 3, (176, 255, 240), True)],
+        "top": [(1, 1, 3, 3, (200, 255, 246), True)]})], parent="body"),
+    P("antenna_0", (0, 11, 0), [B(-3.5, 3, -3.5, 1, 2, 1, (58, 70, 84), "plain"), B(2.5, 3, -3.5, 1, 2, 1, (58, 70, 84), "plain")], parent="head"),
+    P("leg_0", (-2, 22, -2), [B(-1, 0, -1, 2, 2, 2, (58, 68, 82))]),
+    P("leg_1", (2, 22, -2), [B(-1, 0, -1, 2, 2, 2, (58, 68, 82))]),
+    P("leg_2", (-2, 22, 2), [B(-1, 0, -1, 2, 2, 2, (58, 68, 82))]),
+    P("leg_3", (2, 22, 2), [B(-1, 0, -1, 2, 2, 2, (58, 68, 82))]),
 ])
 
 # Antlerling — small villager-like figure with two antlers on top.
@@ -192,30 +220,30 @@ SPECS["watchling"] = dict(tex=64, egg=(WSLATE, WEYE), parts=[
 ] + [P(f"tentacle_{i}", (x, 12, z), [B(-0.5, 0, -0.5, 1, 11, 1, WTENT, "plain", faces={"north": [(0, 8, 1, 3, (90, 150, 230), True)]})], parent="head")
      for i, (x, z) in enumerate([(-2.5, -2.5), (2.5, -2.5), (-2.5, 2.5), (2.5, 2.5)])])
 
-# Singer — (0.9, MCD2 appearance art) tall sea-green figure: scaled teal robe, pale ridged mask face,
-# branching cream antlers, wide teal feathered wing-arms spread downward, a peach flower on the chest.
-SG, SGD, SGL = (104, 196, 176), (66, 146, 136), (164, 232, 212)
-MASK, MASKD, ANT = (214, 240, 226), (160, 206, 192), (242, 234, 212)
+# Singer — (0.24, Images 41 & 42 ref) tall seafoam-mint figure: scaled turquoise robe, cream bone collar,
+# pale ridged mask face, feathered white wing-antlers fanning diagonally, chunky scaled forearms.
+SG, SGD, SGL = (88, 224, 192), (52, 162, 144), (168, 250, 226)
+MASK, MASKD, ANT = (224, 248, 236), (154, 212, 194), (244, 250, 242)
 PEACH, ORANGE, PETAL = (244, 196, 160), (232, 146, 104), (252, 236, 222)
 SPECS["singer"] = dict(tex=128, egg=(SG, PEACH), parts=[
     P("body", (0, 24, 0), [
         B(-4, -22, -3, 8, 22, 6, SG, "speckle", faces={"north": [
-            (0, 11, 8, 1, SGD, False), (0, 16, 8, 1, SGD, False), (3, 6, 1, 16, SGD, False),
+            (0, 0, 8, 2, ANT, False), (0, 11, 8, 1, SGD, False), (0, 16, 8, 1, SGD, False), (3, 6, 1, 16, SGD, False),
             (2, 3, 4, 3, PEACH, True), (3, 4, 2, 1, ORANGE, True), (1, 4, 1, 1, PETAL, True), (6, 4, 1, 1, PETAL, True),
             (3, 2, 2, 1, PETAL, True)],
-            "south": [(0, 8, 8, 1, SGD, False), (0, 14, 8, 1, SGD, False)]}),
+            "south": [(0, 0, 8, 2, ANT, False), (0, 8, 8, 1, SGD, False), (0, 14, 8, 1, SGD, False)]}),
         B(-5, -7, -4, 10, 7, 8, SGD, "speckle", faces={"north": [(0, 0, 10, 1, SGL, False)]})]),
     P("head", (0, 2, 0), [B(-3, -8, -3, 6, 8, 6, MASK, "plain", faces={"north": [
-        (1, 1, 1, 6, MASKD, False), (4, 1, 1, 6, MASKD, False), (2, 7, 2, 1, MASKD, False),
-        (2, 3, 1, 1, (70, 200, 186), True), (3, 3, 1, 1, (70, 200, 186), True)]})], parent="body"),
-    P("antler_l", (-2, -5, 0), [B(-0.5, -9, -0.5, 1, 9, 1, ANT, "plain"), B(-3.5, -6, -0.5, 3, 1, 1, ANT, "plain"),
-        B(-3.5, -9, -0.5, 1, 3, 1, ANT, "plain"), B(0.5, -8, -0.5, 2, 1, 1, ANT, "plain")], parent="head", rot=(0, 0, -0.45)),
-    P("antler_r", (2, -5, 0), [B(-0.5, -9, -0.5, 1, 9, 1, ANT, "plain"), B(0.5, -6, -0.5, 3, 1, 1, ANT, "plain"),
-        B(2.5, -9, -0.5, 1, 3, 1, ANT, "plain"), B(-2.5, -8, -0.5, 2, 1, 1, ANT, "plain")], parent="head", rot=(0, 0, 0.45)),
-    P("arm_l", (-4, 4, 0), [B(-2, 0, -4, 2, 16, 8, SG, "speckle", faces={
+        (0, 0, 6, 2, SG, False), (1, 2, 1, 5, MASKD, False), (4, 2, 1, 5, MASKD, False), (2, 7, 2, 1, MASKD, False),
+        (1, 3, 2, 1, (54, 190, 172), True), (3, 3, 2, 1, (54, 190, 172), True)]})], parent="body"),
+    P("antler_l", (-2, -5, 0), [B(-0.5, -10, -0.5, 1, 10, 1, ANT, "plain"), B(-4.5, -6, -0.5, 4, 1, 1, ANT, "plain"),
+        B(-4.5, -9, -0.5, 1, 3, 1, ANT, "plain"), B(-2.5, -10, -0.5, 2, 1, 1, ANT, "plain")], parent="head", rot=(0, 0, -0.52)),
+    P("antler_r", (2, -5, 0), [B(-0.5, -10, -0.5, 1, 10, 1, ANT, "plain"), B(0.5, -6, -0.5, 4, 1, 1, ANT, "plain"),
+        B(3.5, -9, -0.5, 1, 3, 1, ANT, "plain"), B(0.5, -10, -0.5, 2, 1, 1, ANT, "plain")], parent="head", rot=(0, 0, 0.52)),
+    P("arm_l", (-4, 4, 0), [B(-3, 0, -4, 3, 16, 8, SG, "speckle", faces={
         "west": [(0, 4, 8, 1, SGL, False), (0, 8, 8, 1, SGL, False), (0, 12, 8, 1, SGL, False)],
         "east": [(0, 4, 8, 1, SGD, False), (0, 10, 8, 1, SGD, False)]})], parent="body", rot=(0, 0, 0.55)),
-    P("arm_r", (4, 4, 0), [B(0, 0, -4, 2, 16, 8, SG, "speckle", faces={
+    P("arm_r", (4, 4, 0), [B(0, 0, -4, 3, 16, 8, SG, "speckle", faces={
         "east": [(0, 4, 8, 1, SGL, False), (0, 8, 8, 1, SGL, False), (0, 12, 8, 1, SGL, False)],
         "west": [(0, 4, 8, 1, SGD, False), (0, 10, 8, 1, SGD, False)]})], parent="body", rot=(0, 0, -0.55)),
 ])

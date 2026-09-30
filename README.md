@@ -123,6 +123,30 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.24.0
+Complete *Minecraft Dungeons II* / *Minecraft Live 2026* trailer-accuracy overhaul across Rifts, the Dungeons II Overworld shaderpack, the Ancient City Note-Block Portal, and The Sift dimension:
+- **Unified Stepped-Cross Rift Cavity & Wavy Sides (`RiftShape.java`, `RiftPortalRenderer.java`, `rift.fsh`).** The main rift is now a single unified stepped-cross window (`box.id() == 0`) with recessed perimeter walls and detached floating hollow square & L-shaped satellite boxes around the corners. Inner walls, outer rims, side curtains (`wavySideVeils`), and the destination viewport (`wavyCoords`) undulate with a real-time multi-frequency sine wave, and rifts open with an expanding crescent flash and concentric spatial ripple ring.
+- **Dungeons II Overworld Shaderpack & Voxel Clouds (`voxel_clouds.glsl`, `overworld.glsl`, `composite.fsh`, `SiftClouds.java`).** Rebuilt 3D stepped voxel cumulus clouds (sunlit ivory-peach tops, soft lavender-blue mid-tiers, and two-tone periwinkle-indigo undersides), cerulean-to-peach sky grading, periwinkle-indigo cliff shadows, warm golden-apricot sunlight, golden-lime foliage grading, and diagonal volumetric sunbeams across mid-ground terrain.
+- **Ancient City Cyan Tetris-Mosaic Portal & Rainbow Note Columns (`rift.fsh`, `AuraColumns.java`, `SiftSouls.java`, `phase24_textures.py`).** Layered 3D cyan/teal pixel-mosaic portal with a white stepped silhouette core, crenellated cyan-inlaid portal frame (`sonorous_deepslate`), center stone totem statue (`sculkling` / `soul_lantern_stone`), floating pixel musical note glyphs inside the 7-spectrum rainbow Note Block columns, and electric cyan-to-blue soul comet trails.
+- **Sift Sky, Iridescent Ichor, Terrain & Creatures (`SiftSky.java`, `creatures.py`, `phase24_textures.py`).** Glowing mint-green & pink diamond aurora panels in a vivid turquoise-teal sky dome; pastel iridescent pink/peach/cyan/mint swirling Ichor bordered by wavy mint-patterned stone tiles (`sinter` / `pale_crust`); salmon-terracotta striated cliffs with mint-turquoise grass tops; cerulean-blue stepped plateaus with pink/chartreuse foliage; and trailer-accurate `blub`, `sculkling`, and `singer` models and textures.
+
+### 0.23.0
+Master Architecture Override & trailer-accurate rift orientation, depth, and colour fixes.
+- **Front-facing recessed window orientation.** Rifts automatically orient their recessed hollow opening
+  toward the viewer (`cam.z < 0` flip), fixing the inside-out protruding centre box when punching a rift
+  with the gauntlet or placing a Rift Seed block.
+- **Shallow, crisp voxel step depths (`0.18–0.58` blocks).** Nested hollow rectangular boxes frame a wide-open
+  destination window with white neon rims instead of deep tunnel walls that obscure the view.
+- **High-contrast hazy destination viewport.** Multi-pass 3x3 box-blur matrix loop over the live destination
+  viewpoint (`yaw` & `pitch`) with balanced Vibrant Pink (Day) and Deep Amber (Night) emissive overlays.
+- **Non-clipped 3D voxel energy cubes.** `RiftEnergyCubeParticle` and `energyCubes` render with translucent
+  alpha-blending (`SKY_BLEND`) so Saturated Mint-Green, Electric Cyan, and Pale Pink cubes keep their vivid
+  colours against bright daytime skies while drifting strictly upward (`velocity.y += 0.04`) and flattening
+  horizontally at `age >= 0.75 * maxAge`.
+
+### 0.22.0
+Pure voxel mesh over spheres, secondary FBO viewport engine, and 60-tick R/G/B warp gate into the voxel-ring tunnel.
+
 ### 0.21.0
 Biome skies, rift awakening, voxel particles and the warp overlay.
 - **Biome sky states.** The Sift sky blends between biomes over about 3 s:

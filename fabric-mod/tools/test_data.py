@@ -461,6 +461,27 @@ class DataContracts(unittest.TestCase):
         self.assertIn('matches 160.. run function entersift:travel/warp_go',fn('travel/transit_tick'))
         self.assertIn('matches 61..99 run function entersift:travel/transit_go',fn('travel/transit_tick'))
         self.assertIn('private static void warp(',hud); self.assertIn('Math.sin(seconds * 9.0) * 0.15f',hud)
+    def test_v022_master_architecture_override(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        rift=(C/'RiftPortalRenderer.java').read_text(); shape=(C/'RiftShape.java').read_text()
+        part=(C/'RiftEnergyCubeParticle.java').read_text(); hud=(C/'SiftTransition.java').read_text()
+        tun=(C/'SiftTunnel.java').read_text(); fsh=(S/'rift.fsh').read_text(); tfsh=(S/'tunnel.fsh').read_text()
+        # Part 1: Pure voxel geometry over spheres + 100-tick timeline + upward-only RiftEnergyCubeParticle
+        self.assertNotIn('private static void ring(',rift); self.assertIn('hollowVoxelRect(',rift)
+        self.assertNotIn('Math.cos(a)',shape); self.assertIn('rimCells',shape)
+        self.assertIn('RiftEnergyCubeParticle.register()',(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
+        self.assertIn('velocity.y += 0.04f',part); self.assertIn('currentAge >= 0.75f * totalMaxAge',part)
+        self.assertIn('SIFT_PALETTE',part); self.assertIn('velocityY = 0.04f',rift)
+        # Part 2: Immersive Viewport Multi-Dimension Engine (secondary FBO pass + multi-pass box-blur + emissive overlay)
+        self.assertIn('renderSecondaryFboViewportPass(',rift); self.assertIn('boxBlurPass(',rift)
+        self.assertIn('getYaw(',rift); self.assertIn('getPitch(',rift)
+        self.assertIn('VIBRANT_PINK_DAY',rift); self.assertIn('DEEP_AMBER_NIGHT',rift)
+        self.assertIn('boxBlurViewport(',fsh); self.assertIn('vibrantPinkDay',fsh); self.assertIn('deepAmberNight',fsh)
+        # Part 3: Seamless Transition (Ticks 0-40 RGB split, 41-60 orange flare, Tick 60 tunnel) & Voxel Corridor
+        self.assertIn('Math.sin(gameTime) * 0.15',hud)
+        self.assertNotIn('private static void sphere(',tun)
+        self.assertIn('voxelSkybox(',tun); self.assertIn('voxelRings(',tun)
+        self.assertIn('voxelRing',tfsh)
     def test_v0182_gpu_rifts_under_iris_and_pack_updates(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         types=(c/'client/SiftRenderTypes.java').read_text()
@@ -492,7 +513,21 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.21',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.24',(ROOT/'gradle.properties').read_text())
+    def test_v024_trailer_accuracy_overhaul(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        shape=(C/'RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
+        fsh=(S/'rift.fsh').read_text(); sky=(C/'SiftSky.java').read_text()
+        aura=(C/'AuraColumns.java').read_text(); clouds=(C/'SiftClouds.java').read_text()
+        # Unified stepped-cross cavity + wavy side walls & wavy interior vistas
+        self.assertIn('box[i][j] = 0;',shape); self.assertIn('rectSub(',rift); self.assertIn('wavySideVeils(',rift)
+        self.assertIn('wavyCoords(',fsh); self.assertIn('canopyTreesAndMesas(',fsh)
+        # Sift aurora panels + floating musical note glyphs inside rainbow columns
+        self.assertIn('0x68FFD0',sky); self.assertIn('noteGlyphs(',aura)
+        # Dungeons II Overworld stepped voxel clouds + periwinkle shadows
+        self.assertIn('bottomCore',clouds)
+        ow=(ROOT/'shaderpack/shaders/lib/overworld.glsl').read_text()
+        self.assertIn('periwinkle',ow)
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
