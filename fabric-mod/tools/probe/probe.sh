@@ -133,6 +133,7 @@ javap -c -p -cp "/tmp/irisx:$CP" net.irisshaders.iris.mixin.MixinShaderManager_O
 # 0.18.2d: does Iris flip depth compare ops for every pipeline?
 { for c in net.irisshaders.iris.mixin.MixinRenderPipeline net.irisshaders.iris.mixin.MixinGlRenderPipeline; do echo "=== $c"; javap -c -p -cp "/tmp/irisx:$CP" $c 2>&1 | head -120; done
   echo "=== reverseZ refs"; cd /tmp/irisx && grep -rl "isReverseZ\|reverseZ\|ReverseZ" --include=*.class . | head -20; } > $OUT/iris_depth.txt 2>&1
+cd "${GITHUB_WORKSPACE:-$HOME}/fabric-mod" || true
 # 0.22: real destination previews (panorama capture), fluid tint, particle groups, environment attributes.
 {
 echo "=== grabPanoramixScreenshot bytecode"
