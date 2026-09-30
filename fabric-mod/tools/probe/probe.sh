@@ -133,3 +133,23 @@ javap -c -p -cp "/tmp/irisx:$CP" net.irisshaders.iris.mixin.MixinShaderManager_O
 # 0.18.2d: does Iris flip depth compare ops for every pipeline?
 { for c in net.irisshaders.iris.mixin.MixinRenderPipeline net.irisshaders.iris.mixin.MixinGlRenderPipeline; do echo "=== $c"; javap -c -p -cp "/tmp/irisx:$CP" $c 2>&1 | head -120; done
   echo "=== reverseZ refs"; cd /tmp/irisx && grep -rl "isReverseZ\|reverseZ\|ReverseZ" --include=*.class . | head -20; } > $OUT/iris_depth.txt 2>&1
+# 0.22: real destination previews (panorama capture), fluid tint, particle groups, environment attributes.
+{
+echo "=== grabPanoramixScreenshot bytecode"
+javap -c -p -cp "$CP" net.minecraft.client.Minecraft 2>&1 | sed -n '/grabPanoramixScreenshot(java.io.File)/,/^  [a-z].*(/p' | head -220
+for c in net.minecraft.client.Screenshot com.mojang.blaze3d.platform.NativeImage net.minecraft.client.renderer.texture.TextureManager \
+         net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler 'net.minecraft.client.renderer.block.FluidModel$Unbaked' \
+         net.minecraft.client.particle.Particle net.minecraft.client.particle.ParticleGroup net.minecraft.client.particle.SingleQuadParticle \
+         net.minecraft.client.particle.ParticleRenderType net.minecraft.client.particle.ItemPickupParticleGroup net.minecraft.client.particle.ItemPickupParticle \
+         net.minecraft.client.particle.ParticleEngine net.fabricmc.fabric.api.client.particle.v1.ParticleGroupRegistry \
+         net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry net.minecraft.client.particle.ParticleProvider \
+         net.minecraft.world.attribute.EnvironmentAttributes net.minecraft.client.renderer.GameRenderer net.minecraft.client.renderer.LevelRenderer; do
+  echo "===== $c"; javap -p -cp "$CP" "$c" 2>&1 | head -120
+done
+echo "=== ItemPickupParticleGroup bytecode"; javap -c -p -cp "$CP" net.minecraft.client.particle.ItemPickupParticleGroup 2>&1 | head -160
+echo "=== ItemPickupParticle bytecode"; javap -c -p -cp "$CP" net.minecraft.client.particle.ItemPickupParticle 2>&1 | head -120
+echo "=== smartCull users"; for c in net.minecraft.client.renderer.LevelRenderer net.minecraft.client.renderer.SectionOcclusionGraph; do javap -c -p -cp "$CP" $c 2>&1 | grep -n -B3 -A3 smartCull | head -30; done
+echo "=== water fluid model registration"; javap -c -p -cp "$CP" net.minecraft.client.renderer.block.FluidStateModelSet 2>&1 | head -80
+javap -c -p -cp "$CP" net.minecraft.client.renderer.block.FluidModel 2>&1 | head -60
+unzip -Z1 $(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly') 2>/dev/null | grep -i 'tint\|Fluid' | head -40
+} > $OUT/portal_api.txt 2>&1
