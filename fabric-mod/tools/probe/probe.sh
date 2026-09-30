@@ -153,3 +153,4 @@ echo "=== water fluid model registration"; javap -c -p -cp "$CP" net.minecraft.c
 javap -c -p -cp "$CP" net.minecraft.client.renderer.block.FluidModel 2>&1 | head -60
 unzip -Z1 $(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly') 2>/dev/null | grep -i 'tint\|Fluid' | head -40
 } > $OUT/portal_api.txt 2>&1
+exit 0
