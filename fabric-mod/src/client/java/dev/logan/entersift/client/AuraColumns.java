@@ -70,10 +70,10 @@ public final class AuraColumns {
             float f0 = k / (float) SEGS, f1 = (k + 1) / (float) SEGS;
             float a0 = alpha * profile(f0), a1 = alpha * profile(f1);
             if (a0 + a1 < 0.003f) continue;
-            // Gentle sway that grows with height; the column also widens a little as it rises.
-            float o0 = 0.25f * f0 * (float) Math.sin(time * 0.7f + seed * 5f + f0 * 3f);
-            float o1 = 0.25f * f1 * (float) Math.sin(time * 0.7f + seed * 5f + f1 * 3f);
-            float w0 = hw * (1f + 0.35f * f0), w1 = hw * (1f + 0.35f * f1);
+            // Crisp vertical stage-light column (Images 5, 6, 10, 29) with subtle shimmer.
+            float o0 = 0.04f * f0 * (float) Math.sin(time * 0.9f + seed * 5f + f0 * 3f);
+            float o1 = 0.04f * f1 * (float) Math.sin(time * 0.9f + seed * 5f + f1 * 3f);
+            float w0 = hw * (1f + 0.08f * f0), w1 = hw * (1f + 0.08f * f1);
             float ya = y0 + height * f0, yb = y0 + height * f1;
             float[] c0 = mix(bottom, top, f0), c1 = mix(bottom, top, f1);
             float ax = cx + sx * o0, az = cz + sz * o0, bx = cx + sx * o1, bz = cz + sz * o1;

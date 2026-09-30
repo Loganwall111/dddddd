@@ -200,9 +200,9 @@ def make_terracotta_and_turf() -> None:
                 rows[y][x] = (*c, 255)
         save_png(TEX / name, 16, 16, rows)
 
-    # Glowing mint-white and pastel-pink/lavender blossom canopy leaves (Images 9, 12, 20, 21, 35)
+    # Glowing mint-white (White Willow leaves) and pastel-pink/lavender blossom canopy leaves
     for name, base, hi, lo in (
-        ("pale_canopy.png", (212, 252, 238), (244, 255, 250), (156, 228, 208)),
+        ("pale_canopy.png", (236, 252, 248), (252, 255, 254), (188, 228, 220)),
         ("soul_canopy.png", (244, 192, 224), (255, 228, 244), (212, 148, 194)),
     ):
         rows = [[(0, 0, 0, 255) for _ in range(16)] for _ in range(16)]
@@ -212,6 +212,52 @@ def make_terracotta_and_turf() -> None:
                 c = hi if h in (0, 1) else (lo if h == 6 else base)
                 rows[y][x] = (*c, 255)
         save_png(TEX / name, 16, 16, rows)
+
+    # Minecraft LIVE 2026 Vanilla Sift Reveal blocks (https://minecraft.wiki/w/The_Sift#Blocks):
+    # - sift_earth.png: "Orange healthy sculk — a dark orange sculk block that generates below sculk grass blocks"
+    # - pink_turf_top.png / pink_turf_side.png / rose_path.png: "Orange/salmon & baby-pink sculk grass block"
+    # - crag_moss.png / valley_turf_top.png: "Green healthy sculk — dark grayish green sculk with a turquoise tint"
+    # - soulwood.png: "White Willow log — a gray tree trunk block comparable to pale oak log"
+    # - carapace.png: "The Carapace — dark-blue stone walls"
+    for name, base, hi, lo in (
+        ("sift_earth.png", (196, 98, 68), (224, 126, 88), (156, 72, 50)),
+        ("pink_turf_top.png", (238, 142, 136), (252, 178, 172), (206, 112, 108)),
+        ("rose_path.png", (244, 164, 162), (254, 196, 194), (214, 128, 126)),
+        ("crag_moss.png", (58, 112, 108), (84, 148, 142), (38, 82, 80)),
+        ("valley_turf_top.png", (64, 138, 128), (96, 176, 164), (44, 102, 96)),
+        ("carapace.png", (46, 78, 126), (68, 106, 162), (32, 56, 94)),
+    ):
+        rows = [[(0, 0, 0, 255) for _ in range(16)] for _ in range(16)]
+        for y in range(16):
+            for x in range(16):
+                # Sculk-like organic cell pattern
+                h = ((x * 7 + y * 13) ^ ((x // 2) * 5 + (y // 2) * 11)) % 11
+                c = hi if h in (0, 1) else (lo if h in (9, 10) else base)
+                rows[y][x] = (*c, 255)
+        save_png(TEX / name, 16, 16, rows)
+
+    # pink_turf_side.png: salmon/baby-pink sculk grass fringe over dark-orange healthy sculk dirt
+    rows_pside = [[(0, 0, 0, 255) for _ in range(16)] for _ in range(16)]
+    for y in range(16):
+        for x in range(16):
+            fringe = 5 + ((x * 7) % 3)
+            if y < fringe:
+                c = (246, 158, 152) if (x + y) % 3 else (228, 132, 126)
+            elif y == fringe:
+                c = (198, 104, 98)
+            else:
+                c = (196, 98, 68) if (x * 3 + y) % 4 else (164, 78, 54)
+            rows_pside[y][x] = (*c, 255)
+    save_png(TEX / "pink_turf_side.png", 16, 16, rows_pside)
+
+    # soulwood.png: White Willow log (dark weathered grey bark with vertical ridges)
+    rows_wood = [[(0, 0, 0, 255) for _ in range(16)] for _ in range(16)]
+    for y in range(16):
+        for x in range(16):
+            ridge = (x % 4 == 0) or ((x + (y // 4)) % 5 == 0)
+            c = (74, 80, 88) if ridge else ((108, 114, 122) if (x + y) % 3 == 0 else (92, 98, 106))
+            rows_wood[y][x] = (*c, 255)
+    save_png(TEX / "soulwood.png", 16, 16, rows_wood)
 
 
 def make_foliage() -> None:

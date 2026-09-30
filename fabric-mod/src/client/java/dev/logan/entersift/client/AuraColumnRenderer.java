@@ -53,14 +53,14 @@ public final class AuraColumnRenderer extends EntityRenderer<AuraColumnEntity, A
         float camX = (float) (camera.pos.x - s.ex), camZ = (float) (camera.pos.z - s.ez);
         float[] base = {(s.color >> 16 & 255) / 255f, (s.color >> 8 & 255) / 255f, (s.color & 255) / 255f};
         float hue = hueOf(base);
-        float[] top = s.rainbow ? AuraColumns.hue(hue + 0.33f) : base;
+        // 0.24 (Images 5, 6, 10, 29): each Note Block emits a pure, straight vertical stage-light column in its
+        // own vivid note color (Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink) with a bright white-tinted
+        // inner core so the 8 Note Blocks together form the crisp rainbow array in front of the portal.
+        float[] core = {base[0] + (1f - base[0]) * 0.52f, base[1] + (1f - base[1]) * 0.52f, base[2] + (1f - base[2]) * 0.52f};
+        float[] top = s.rainbow ? AuraColumns.hue(hue + 0.04f) : base;
         collector.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
-            AuraColumns.column(p, vc, 0f, -0.2f, 0f, s.height, 0.32f, base, top, 0.62f * fade, camX, camZ, s.time, hue * 9f);
-            if (s.rainbow) for (int k = 0; k < 2; k++) {
-                float off = k == 0 ? -0.75f : 0.75f;
-                float[] c0 = AuraColumns.hue(hue + (k == 0 ? -0.12f : 0.12f)), c1 = AuraColumns.hue(hue + (k == 0 ? 0.2f : 0.45f));
-                AuraColumns.column(p, vc, off, 0f, off * 0.3f, s.height * 0.7f, 0.18f, c0, c1, 0.35f * fade, camX, camZ, s.time, hue * 9f + k + 1);
-            }
+            AuraColumns.column(p, vc, 0f, -0.15f, 0f, s.height, 0.36f, base, top, 0.78f * fade, camX, camZ, s.time, hue * 9f);
+            AuraColumns.column(p, vc, 0f, -0.15f, 0f, s.height * 0.96f, 0.16f, core, base, 0.55f * fade, camX, camZ, s.time, hue * 9f + 0.5f);
         });
     }
 
