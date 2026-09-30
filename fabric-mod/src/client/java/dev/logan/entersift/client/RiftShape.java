@@ -6,19 +6,19 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 0.20 clean-slate rift layout (pure data, no rendering).
+ * 0.22 Master Architecture Override: Pure Voxel Rift Layout (zero spherical/radial equations).
  *
- * A rift is a voxel "puzzle cluster" like the Dungeons II trailer: a body of ~1-block cells on a grid,
- * split into rectangular hollow BOXES recessed to different depths, plus satellite boxes and L/Z
- * tetrominoes sticking out of the rim. Every cell remembers its recess depth and the growth tier at
- * which it snaps in (tiers run from the centre outward; all cells of one box share a tier).
+ * A rift is constructed strictly from sharp, nested, hollow rectangular voxel borders on a discrete
+ * grid of ~1-block cells, split into tiered rectangular hollow BOXES recessed to stepped depths,
+ * plus floating hollow satellite voxel cubes and L/Z tetrominoes anchored to the outer rectangular
+ * perimeter edges.
  *
- * The mesh built from this layout is T-junction free (one canvas per cell, one wall per cell edge), so
- * the slow wave applied per vertex can never tear seams between neighbouring pieces.
+ * The mesh built from this layout is T-junction free (one canvas per cell, one wall per cell edge),
+ * so the slow wave applied per vertex can never tear seams between neighbouring pieces.
  */
 final class RiftShape {
     static final float BASE = 0.25f;     // bottom of the cluster above the anchor
-    static final int TIERS = 4;          // body tiers (one every 10 ticks); satellites snap in with the last
+    static final int TIERS = 4;          // 4 nested voxel tiers (one every 10 ticks over ticks 61-100)
 
     final int cols, rows;
     final float cw, ch, w, h;
@@ -60,8 +60,9 @@ final class RiftShape {
             float u = (i + 0.5f) / cols * 2 - 1, v = (j + 0.5f) / rows * 2 - 1;
             float xb = -w / 2 + (i + 0.5f) * cw, yb = -h / 2 + (j + 0.5f) * ch;
             body[i][j] = inBody(type, seed, u, v, xb, yb, i, j, cols, rows, w, h);
-            float dist = Math.max(Math.abs(u), Math.abs(v)) * 0.85f + 0.15f * hash(seed, i, j + 97);
-            tier[i][j] = Math.min(TIERS - 1, (int) (dist * TIERS));
+            // Pure rectangular Chebyshev voxel ring distance (nested hollow rectangular borders, zero radial equations)
+            float rectDist = Math.max(Math.abs(u), Math.abs(v)) * 0.88f + 0.12f * hash(seed, i, j + 97);
+            tier[i][j] = Math.min(TIERS - 1, (int) (rectDist * TIERS));
         }
         float[][] depth = new float[cols][rows];
         float max = boxes(type, seed, cols, rows, body, tier, depth);
@@ -70,25 +71,26 @@ final class RiftShape {
         return s;
     }
 
-    // ------------------------------------------------------------------ silhouettes per destination
+    // ------------------------------------------------------------------ stepped rectangular voxel silhouettes
 
     private static boolean inBody(RiftType type, long seed, float u, float v, float xb, float yb, int i, int j, int cols, int rows, float xspan, float yspan) {
         switch (type) {
             case SIFT: {
-                // The trailer cross: tall centre column with a stepped cap, a squat heart, wide jagged arms.
-                float arm = 0.82f + 0.15f * hash(seed, j / 2, 7);
+                // Trailer stepped voxel cross: nested hollow rectangular core, tall vertical spine, wide stepped arms,
+                // lower-left rectangular step, and upper-right stepped bracket.
+                float arm = 0.84f + 0.14f * hash(seed, j / 2, 7);
                 float lean = hash(seed, 3, 3) > 0.5f ? 1f : -1f;
-                boolean in = (Math.abs(u) < 0.36f && Math.abs(v) < 0.58f)
-                    || (Math.abs(u) < 0.19f && v > -0.96f && v < 0.98f)
-                    || (u * lean > -0.3f && u * lean < 0.1f && v > 0.5f && v < 0.8f)
-                    || (Math.abs(v) < 0.26f && Math.abs(u) < arm)
-                    || (Math.abs(u) > 0.5f && Math.abs(u) < arm - 0.12f && v > 0.2f && v < 0.4f);
-                if (hash(seed, 1, 1) > 0.35f) in |= u < -0.48f && u > -0.8f && v < -0.28f && v > -0.72f;
-                if (hash(seed, 2, 2) > 0.35f) in |= u > 0.5f && u < 0.82f && v > 0.28f && v < 0.58f;
+                boolean in = (Math.abs(u) < 0.38f && Math.abs(v) < 0.60f)
+                    || (Math.abs(u) < 0.20f && v > -0.96f && v < 0.98f)
+                    || (u * lean > -0.32f && u * lean < 0.12f && v > 0.50f && v < 0.82f)
+                    || (Math.abs(v) < 0.28f && Math.abs(u) < arm)
+                    || (Math.abs(u) > 0.50f && Math.abs(u) < arm - 0.10f && v > 0.20f && v < 0.44f);
+                if (hash(seed, 1, 1) > 0.30f) in |= u < -0.46f && u > -0.82f && v < -0.26f && v > -0.74f;
+                if (hash(seed, 2, 2) > 0.30f) in |= u > 0.48f && u < 0.84f && v > 0.26f && v < 0.60f;
                 return in;
             }
             case NETHER: {
-                // Tall burning slab with a notched, box-lined top (Nether trailer frames).
+                // Tall burning rectangular slab with stepped box notches along top and sides.
                 boolean slab = Math.abs(u) < 0.62f && v < 0.55f;
                 boolean notch = v >= 0.55f && Math.abs(u) < 0.7f && hash(seed, i, 51) > 0.35f;
                 boolean side = Math.abs(u) >= 0.62f && Math.abs(u) < 0.85f && v > -0.3f && v < 0.35f && hash(seed, j, 52) > 0.3f;
@@ -99,12 +101,12 @@ final class RiftShape {
                     || (u > 0.15f && u < 0.86f && v > 0.05f && v < 0.75f) || (u > -0.35f && u < 0.1f && v > 0.4f && v < 0.96f)
                     || (u > 0.3f && u < 0.95f && v < -0.2f && v > -0.62f);
             case END: {
-                // Tall wall-like sheet with boxes stepping out along its edges (blue/pink trailer frames).
+                // Tall stepped rectangular sheet with hollow voxel boxes stepping out along its edges.
                 int band = Math.min(4, (int) ((v + 1) / 2 * 5));
                 float off = (hash(seed, band, 21) - 0.5f) * 0.3f, half = 0.5f + 0.3f * hash(seed, band, 22);
                 return Math.abs(u - off) < half;
             }
-            default: { // PORTAL: a clean rectangle with square tabs on the top and sides
+            default: { // PORTAL: clean rectangle with square voxel tabs on the top and sides
                 int ci = Math.min(i, cols - 1 - i), cj = Math.min(j, rows - 1 - j);
                 if (ci >= 1 && j >= 1 && cj >= 1) return true;
                 if (j == 0) return false;
@@ -115,12 +117,12 @@ final class RiftShape {
         }
     }
 
-    // ------------------------------------------------------------------ boxes at different depths
+    // ------------------------------------------------------------------ nested hollow rectangular boxes
 
     /**
-     * Splits the body into rectangular boxes (greedy, centre first, 2-5 cells wide, 2-4 tall) with their own
-     * recess depth. The centre box is the deepest; touching boxes differ by at least 0.22 blocks, so every
-     * seam shows a real step. The ritual PORTAL stays one rectangle at a single depth.
+     * Splits the body into sharp, nested, hollow rectangular voxel boxes (centre first, 2-5 cells wide,
+     * 2-4 tall) with stepped recess depths. The centre seed box is the deepest; touching boxes differ by
+     * at least 0.22 blocks so every seam shows a crisp 3D rectangular voxel step.
      */
     static float boxes(RiftType type, long seed, int cols, int rows, boolean[][] body, int[][] tier, float[][] depth) {
         if (type == RiftType.PORTAL) {
@@ -132,7 +134,10 @@ final class RiftShape {
         List<int[]> order = new ArrayList<>();
         for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) if (body[i][j]) order.add(new int[]{i, j});
         float ci = (cols - 1) / 2f, cj = (rows - 1) / 2f;
-        order.sort((a, b) -> Float.compare(Math.abs(a[0] - ci) + Math.abs(a[1] - cj) * 1.1f, Math.abs(b[0] - ci) + Math.abs(b[1] - cj) * 1.1f));
+        // Order by rectangular Chebyshev box distance from center (sharp nested hollow rectangles)
+        order.sort((a, b) -> Float.compare(
+            Math.max(Math.abs(a[0] - ci), Math.abs(a[1] - cj) * 1.05f),
+            Math.max(Math.abs(b[0] - ci), Math.abs(b[1] - cj) * 1.05f)));
         List<Float> depths = new ArrayList<>();
         float max = 0f;
         for (int[] start : order) {
@@ -176,24 +181,34 @@ final class RiftShape {
         return true;
     }
 
-    // ------------------------------------------------------------------ satellites
+    // ------------------------------------------------------------------ rectangular perimeter satellites
 
+    /**
+     * Anchors satellite hollow voxel boxes and L/Z tetrominoes strictly to the outer rectangular border
+     * edges of the voxel silhouette (zero spherical/radial equations).
+     */
     private void satellites(RiftType type, long seed) {
-        int count = switch (type) { case SIFT -> 8; case NETHER -> 9; case OVERWORLD -> 7; case END -> 9; default -> 4; };
-        for (int k = 0; k < count; k++) {
-            // March from the centre along a random direction to the rim; the satellite straddles it.
-            double a = hash(seed, k, 31) * Math.PI * 2;
-            float px = 0, py = 0;
-            for (float r = 0; r < 1.5f; r += 0.02f) {
-                float u = (float) Math.cos(a) * r, v = (float) Math.sin(a) * r;
-                int i = (int) ((u + 1) / 2 * cols), j = (int) ((v + 1) / 2 * rows);
-                if (!on(i, j)) break;
-                px = u * w / 2; py = v * h / 2;
+        List<int[]> rimCells = new ArrayList<>();
+        for (int i = 0; i < cols; i++) {
+            for (int j = 0; j < rows; j++) {
+                if (!on(i, j)) continue;
+                if (!on(i - 1, j) || !on(i + 1, j) || !on(i, j - 1) || !on(i, j + 1)) {
+                    rimCells.add(new int[]{i, j});
+                }
             }
-            px += (float) Math.cos(a) * 0.45f; py += (float) Math.sin(a) * 0.45f;
+        }
+        int count = switch (type) { case SIFT -> 8; case NETHER -> 9; case OVERWORLD -> 7; case END -> 9; default -> 4; };
+        if (rimCells.isEmpty()) return;
+        for (int k = 0; k < count; k++) {
+            int idx = Math.floorMod((int) (hash(seed, k, 31) * rimCells.size()) + k * (rimCells.size() / Math.max(1, count)), rimCells.size());
+            int[] rc = rimCells.get(idx);
+            int ri = rc[0], rj = rc[1];
+            float oxDir = !on(ri - 1, rj) ? -1f : (!on(ri + 1, rj) ? 1f : 0f);
+            float oyDir = !on(ri, rj - 1) ? -1f : (!on(ri, rj + 1) ? 1f : 0f);
+            float px = x(ri) + cw * 0.5f + oxDir * cw * 0.55f;
+            float cyy = y(rj) + ch * 0.5f + oyDir * ch * 0.55f;
             float zf = 0.2f + 0.9f * hash(seed, k, 34), zb = zf - (0.6f + 0.5f * hash(seed, k, 35));
-            float cyy = cy() + py;
-            int piece = type == RiftType.PORTAL ? 0 : k % 3;                     // 0 box, 1 L, 2 Z tetromino
+            int piece = type == RiftType.PORTAL ? 0 : k % 3;                     // 0 hollow box, 1 L, 2 Z tetromino
             if (piece == 0) {
                 float sw = 0.9f + 0.8f * hash(seed, k, 32), sh = 0.8f + 0.8f * hash(seed, k, 33);
                 sats.add(new float[]{px - sw / 2, cyy - sh / 2, px + sw / 2, cyy + sh / 2, zf, zb, k, 0});

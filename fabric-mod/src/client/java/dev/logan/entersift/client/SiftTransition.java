@@ -10,15 +10,20 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffectInstance;
 
 /**
- * 0.17 rift flash. Rifts no longer play a 4-second cutscene: the player walks through the rift
- * tunnel. Entering and leaving it gives the hidden {@code entersift:rift_transit} effect for 1 s
- * (2 s in the pre-tunnel fallback). While it runs, a brief warm gold/orange flash covers the screen:
- * fully opaque for the first ~55 % (that is when the dimension changes) and then fading out, with
- * thin red/cyan fringes as it clears.
+ * 0.22 Master Architecture Override: Fullscreen HUD Cam Overlay (The Transition Gate).
  *
- * It is also drawn over any screen, so the level-loading screen the dimension change may open is
- * hidden. When the effect disappears for a moment (the new dimension's player object is created),
- * the flash keeps going on the wall clock for up to 1.5 s.
+ * When a player collides with the rift bounds, initiates an un-skippable 60-tick fullscreen HUD
+ * render overlay (followed by a 20-tick smooth fade-out inside the walkable warp corridor):
+ * <ul>
+ *   <li><b>Ticks 0 - 40</b>: Gradually separates the screen's Red, Green, and Blue rendering passes
+ *       using an oscillating vertex pixel offset ({@code Math.sin(gameTime) * 0.15}) to replicate
+ *       the trailer's chromatic jitter distortion directly over the world blocks.</li>
+ *   <li><b>Ticks 41 - 60</b>: Explodes the screen into a blinding, solid orange-and-red lens flare
+ *       burst overlay that completely covers the client player's view (100% full-screen opacity at Tick 60).</li>
+ *   <li><b>Tick 60+</b>: At 100% opacity, seamlessly teleports the player into the 3D walkthrough warp
+ *       corridor ({@code entersift:rift_tunnel}) and smoothly fades the orange HUD opacity back down
+ *       to {@code 0.0} inside the tunnel without throwing a loading screen.</li>
+ * </ul>
  */
 public final class SiftTransition {
     private SiftTransition() {}
@@ -26,7 +31,7 @@ public final class SiftTransition {
     private static final Identifier FLASH = SiftContent.id("textures/gui/rift_flash.png");
     private static final Identifier GLITCH = SiftContent.id("textures/gui/rift_glitch.png");
     private static final float MAX = 100f;
-    /** 0.21: effects this long (80 ticks from travel/warp) play the full rift warp overlay. */
+    /** 0.22: effects this long (80 ticks from travel/warp) play the full 60-tick warp gate + 20-tick tunnel fade. */
     private static final float WARP = 70f;
 
     private static float lastF = -1f, lengthTicks = 20f;
@@ -62,7 +67,7 @@ public final class SiftTransition {
         return -1f;
     }
 
-    /** Opacity of the flash at progress f: instant on, hold, then ease out. */
+    /** Opacity of the short exit flash at progress f: instant on, hold, then ease out. */
     static float alpha(float f) {
         if (f < 0f || f >= 1f) return 0f;
         if (f < 0.55f) return 1f;
@@ -90,43 +95,80 @@ public final class SiftTransition {
     }
 
     /**
-     * 0.21 rift warp overlay, t = ticks since stepping in (80 total, un-skippable):
-     *   0-40   chromatic jitter: red and cyan copies of glitch slices and screen fringes slide apart by an
-     *          oscillating offset (sin(time) * 0.15 of the fringe width scale), growing stronger;
-     *   40-60  a blinding solid orange-and-red lens flare covers the whole screen (tunnel swap at 60);
-     *   60-80  the flare fades out, revealing the tunnel.
-     * The game exposes no post-processing hook to mods, so the channel split is drawn as tinted overlays.
+     * 0.22 rift warp overlay, t = ticks since stepping in (80 total, un-skippable):
+     *   Ticks 0 - 40:  Gradually separate Red, Green, and Blue rendering passes using an oscillating
+     *                  vertex pixel offset (Math.sin(gameTime) * 0.15) over the world blocks;
+     *   Ticks 41 - 60: Explode the screen into a blinding, solid orange-and-red lens flare burst overlay
+     *                  that reaches 100% full-screen opacity at Tick 60 (when tunnel teleport occurs);
+     *   Ticks 60 - 80: Smoothly fade the orange HUD opacity back down to 0.0 inside the walkable tunnel.
      */
     private static void warp(GuiGraphicsExtractor g, float t) {
         int w = g.guiWidth(), h = g.guiHeight();
         double seconds = (System.nanoTime() / 1.0e9) % 10000.0;
-        if (t < 40f) {
-            float ramp = t / 40f;
-            float o = (float) Math.sin(seconds * 9.0) * 0.15f * w * 0.12f * (0.3f + 0.7f * ramp);
-            int off = Math.round(o), fringe = Math.max(2, Math.round(w * (0.01f + 0.03f * ramp))) + Math.abs(off);
-            g.fill(0, 0, w, h, argb(0.08f + 0.22f * ramp, 1f, 0.45f, 0.25f));
-            g.fill(0, 0, fringe, h, argb(0.45f * ramp + 0.1f, off >= 0 ? 1f : 0.2f, off >= 0 ? 0.15f : 0.95f, off >= 0 ? 0.25f : 1f));
-            g.fill(w - fringe, 0, w, h, argb(0.45f * ramp + 0.1f, off >= 0 ? 0.2f : 1f, off >= 0 ? 0.95f : 0.15f, off >= 0 ? 1f : 0.25f));
-            long frame = (long) (seconds * 10.0);                 // glitch slices re-roll 10 times a second
-            for (int k = 0; k < 7; k++) {
+        double gameTime = seconds * 9.0;
+        if (t <= 40f) {
+            float ramp = Math.max(0f, Math.min(1f, t / 40f));
+            // Oscillating vertex pixel offset: Math.sin(gameTime) * 0.15
+            float osc = (float) (Math.sin(gameTime) * 0.15);
+            float o = (float) Math.sin(seconds * 9.0) * 0.15f * w * 0.14f * (0.3f + 0.7f * ramp);
+            int offR = Math.round(o);
+            int offG = Math.round(-o * 0.65f + osc * h * 0.08f * ramp);
+            int offB = -offR;
+            int fringe = Math.max(2, Math.round(w * (0.012f + 0.035f * ramp))) + Math.abs(offR);
+
+            // Base warm chromatic veil
+            g.fill(0, 0, w, h, argb(0.06f + 0.20f * ramp, 1f, 0.42f, 0.22f));
+            // Separated Red, Green, and Blue full-screen chromatic passes
+            g.fill(Math.max(0, offR), 0, Math.min(w, w + offR), h, argb(0.18f * ramp, 1.0f, 0.12f, 0.18f));
+            g.fill(0, Math.max(0, offG), w, Math.min(h, h + offG), argb(0.14f * ramp, 0.15f, 1.0f, 0.45f));
+            g.fill(Math.max(0, offB), 0, Math.min(w, w + offB), h, argb(0.18f * ramp, 0.15f, 0.82f, 1.0f));
+
+            // Left & right separated RGB edge fringes
+            g.fill(0, 0, fringe, h, argb(0.48f * ramp + 0.1f, offR >= 0 ? 1f : 0.15f, 0.20f, offR >= 0 ? 0.22f : 1f));
+            g.fill(w - fringe, 0, w, h, argb(0.48f * ramp + 0.1f, offR >= 0 ? 0.15f : 1f, 0.88f, offR >= 0 ? 1f : 0.22f));
+
+            // Horizontal world-block R/G/B separation slices
+            long frame = (long) (seconds * 12.0);
+            for (int k = 0; k < 9; k++) {
                 long r = mixBits(frame * 31 + k);
-                if ((r & 3) == 0 && ramp < 0.5f) continue;
-                int y = (int) ((r >>> 8 & 0xFFFF) / 65535f * h), sh = Math.max(2, (int) (h * (0.01f + 0.05f * ((r >>> 24 & 255) / 255f))));
-                g.fill(off, y, w + off, y + sh, argb(0.22f * (0.4f + ramp), 1f, 0.2f, 0.3f));
-                g.fill(-off, y + sh / 3, w - off, y + sh / 3 + sh, argb(0.22f * (0.4f + ramp), 0.2f, 0.9f, 1f));
+                if ((r & 3) == 0 && ramp < 0.45f) continue;
+                int y = (int) ((r >>> 8 & 0xFFFF) / 65535f * h);
+                int sh = Math.max(2, (int) (h * (0.012f + 0.055f * ((r >>> 24 & 255) / 255f))));
+                g.fill(offR, y, w + offR, y + sh, argb(0.26f * (0.35f + ramp), 1.0f, 0.16f, 0.24f));
+                g.fill(offG, y + sh / 4, w + offG, y + sh / 4 + sh, argb(0.20f * (0.35f + ramp), 0.20f, 0.96f, 0.48f));
+                g.fill(offB, y + sh / 2, w + offB, y + sh / 2 + sh, argb(0.26f * (0.35f + ramp), 0.18f, 0.86f, 1.0f));
             }
-            blitTinted(g, GLITCH, off, 0, w, h, 256, 128, argb(0.3f * ramp, 1f, 0.3f, 0.35f));
-            blitTinted(g, GLITCH, -off, 0, w, h, 256, 128, argb(0.3f * ramp, 0.3f, 0.95f, 1f));
+            blitTinted(g, GLITCH, offR, 0, w, h, 256, 128, argb(0.34f * ramp, 1.0f, 0.24f, 0.30f));
+            blitTinted(g, GLITCH, offG, offG / 2, w, h, 256, 128, argb(0.24f * ramp, 0.25f, 1.0f, 0.55f));
+            blitTinted(g, GLITCH, offB, 0, w, h, 256, 128, argb(0.34f * ramp, 0.24f, 0.90f, 1.0f));
             return;
         }
-        float a = t < 60f ? Math.min(1f, 0.6f + (t - 40f) / 4f * 0.4f) : 1f - smoothK((t - 60f) / 20f);
+
+        // Ticks 41 - 60: Blinding solid orange-and-red lens flare burst overlay (100% opacity at Tick 60).
+        // Ticks 60 - 80: Smoothly fade orange HUD opacity back down to 0.0 inside the walkable tunnel.
+        float a = t < 60f ? Math.min(1f, 0.72f + (t - 40f) / 12f * 0.28f) : 1f - smoothK((t - 60f) / 20f);
         if (a <= 0f) return;
-        g.fill(0, 0, w, h, argb(a, 1f, 0.45f, 0.12f));
-        float pulse = 1.05f + 0.05f * (float) Math.sin(seconds * 10.0) + Math.max(0f, t - 40f) / 40f * 0.3f;
+
+        // Solid blinding orange-and-red base covering the entire viewport
+        g.fill(0, 0, w, h, argb(a, 1.0f, 0.42f, 0.08f));
+        // Deep crimson-red outer lens-flare bands (top, bottom, left, right)
+        int bandY = Math.max(4, h / 4);
+        int bandX = Math.max(4, w / 6);
+        g.fill(0, 0, w, bandY, argb(a * 0.55f, 0.92f, 0.14f, 0.05f));
+        g.fill(0, h - bandY, w, h, argb(a * 0.55f, 0.92f, 0.14f, 0.05f));
+        g.fill(0, 0, bandX, h, argb(a * 0.40f, 0.94f, 0.18f, 0.06f));
+        g.fill(w - bandX, 0, w, h, argb(a * 0.40f, 0.94f, 0.18f, 0.06f));
+
+        // Expanding radial lens-flare texture + white-gold core burst
+        float pulse = 1.06f + 0.06f * (float) Math.sin(seconds * 10.0) + Math.max(0f, t - 40f) / 40f * 0.32f;
         int fw = Math.round(w * pulse), fh = Math.round(h * pulse);
-        blitTinted(g, FLASH, (w - fw) / 2, (h - fh) / 2, fw, fh, argb(a, 1f, 0.85f, 0.45f));
-        g.fill(0, 0, w, h / 5, argb(a * 0.35f, 0.95f, 0.15f, 0.1f));          // red flare bands top and bottom
-        g.fill(0, h - h / 5, w, h, argb(a * 0.35f, 0.95f, 0.15f, 0.1f));
+        blitTinted(g, FLASH, (w - fw) / 2, (h - fh) / 2, fw, fh, argb(a, 1.0f, 0.86f, 0.42f));
+
+        // Horizontal golden-white lens-flare streak across the center
+        int streakH = Math.max(4, h / 14);
+        g.fill(0, (h - streakH) / 2, w, (h + streakH) / 2, argb(a * 0.65f, 1.0f, 0.94f, 0.72f));
+        int coreW = Math.max(12, w / 3), coreH = Math.max(12, h / 3);
+        g.fill((w - coreW) / 2, (h - coreH) / 2, (w + coreW) / 2, (h + coreH) / 2, argb(a * 0.55f, 1.0f, 0.96f, 0.82f));
     }
 
     private static float smoothK(float k) { k = Math.max(0f, Math.min(1f, k)); return k * k * (3f - 2f * k); }

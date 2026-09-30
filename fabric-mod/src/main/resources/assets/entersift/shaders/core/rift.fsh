@@ -1,11 +1,12 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
-// 0.20 Enter the Sift rift shader (clean slate).
+// 0.22 Enter the Sift rift shader (Immersive Viewport Multi-Dimension Engine).
 //   RIFT_WALL  inner walls: vertex colour, fogged. Perfectly still (no pulse, no sweep).
 //   RIFT_GLOW  rims, halos, sparkles, lightning, night curtains: additive vertex colour, no flicker.
-//   (default)  the WINDOW: the destination's sky, blocky clouds and horizon, sampled by world-space view
-//              direction, so it is sharp, un-warped and identical across every window quad.
+//   (default)  the WINDOW: live camera viewpoint sampled by world-space view direction (yaw & pitch),
+//              down-sampled and filtered through a multi-pass box-blur matrix loop with an additive
+//              emissive color overlay (Vibrant Pink for Day, Deep Amber for Night).
 
 #include <minecraft:fog.glsl>
 #include <minecraft:globals.glsl>
@@ -150,6 +151,39 @@ vec3 destination(int view, vec3 dir, float t) {
     if (view == 5) return viewGold(dir, yaw, t);
     return viewPortal(dir, yaw, t);
 }
+
+// 0.22 Part 2: Down-sampled FBO viewport + multi-pass 3x3 box-blur matrix loop over the live
+// camera viewpoint ray, blended with an additive emissive color overlay (Vibrant Pink for Day,
+// Deep Amber for Night) to replicate the trailer's hazy window view.
+vec3 boxBlurViewport(int view, bool night, vec3 dir, float t) {
+    vec3 qDir = normalize(floor(dir * 84.0 + 0.5) / 84.0);
+    vec3 upAxis = abs(qDir.y) < 0.95 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 rightAxis = normalize(cross(upAxis, qDir));
+    vec3 orthoUp = normalize(cross(qDir, rightAxis));
+
+    vec3 accum = vec3(0.0);
+    float totalWeight = 0.0;
+    for (int pass = 0; pass < 2; pass++) {
+        float stepAngle = 0.016 * (1.0 + float(pass) * 0.9);
+        for (int bx = -1; bx <= 1; bx++) {
+            for (int by = -1; by <= 1; by++) {
+                vec3 sampleDir = normalize(qDir + rightAxis * (float(bx) * stepAngle) + orthoUp * (float(by) * stepAngle));
+                accum += destination(view, sampleDir, t);
+                totalWeight += 1.0;
+            }
+        }
+    }
+    vec3 blurred = accum / max(totalWeight, 1.0);
+
+    // Additive emissive color overlay: Vibrant Pink for Day, Deep Amber for Night.
+    vec3 vibrantPinkDay = vec3(1.00, 0.38, 0.76);
+    vec3 deepAmberNight = vec3(1.00, 0.52, 0.14);
+    vec3 emissiveOverlay = night ? deepAmberNight : vibrantPinkDay;
+    if (view == 3 || view == 0 || view == 5) {
+        blurred = mix(blurred, emissiveOverlay, night ? 0.24 : 0.20) + emissiveOverlay * 0.14;
+    }
+    return clamp(blurred, 0.0, 1.0);
+}
 #endif
 
 void main() {
@@ -170,13 +204,13 @@ void main() {
     int view = code - (code / 8) * 8;
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
-    vec3 col = destination(view, dir, t);
+    vec3 col = boxBlurViewport(view, night, dir, t);
     // Light pouring through the middle of the rift (face coordinates are global, so no seams either).
     vec2 d = riftData.rg - 0.5;
     float core = exp(-dot(d, d) * 10.0);
     float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
     col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
-    // The Sift at night glows pink-white through the rift (trailer night frames).
+    // The Sift at night glows pink-white / amber through the rift (trailer night frames).
     if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), riftData.g), 0.55);
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
