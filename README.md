@@ -123,6 +123,23 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.23.0
+Master Architecture Override & trailer-accurate rift orientation, depth, and colour fixes.
+- **Front-facing recessed window orientation.** Rifts automatically orient their recessed hollow opening
+  toward the viewer (`cam.z < 0` flip), fixing the inside-out protruding centre box when punching a rift
+  with the gauntlet or placing a Rift Seed block.
+- **Shallow, crisp voxel step depths (`0.18–0.58` blocks).** Nested hollow rectangular boxes frame a wide-open
+  destination window with white neon rims instead of deep tunnel walls that obscure the view.
+- **High-contrast hazy destination viewport.** Multi-pass 3x3 box-blur matrix loop over the live destination
+  viewpoint (`yaw` & `pitch`) with balanced Vibrant Pink (Day) and Deep Amber (Night) emissive overlays.
+- **Non-clipped 3D voxel energy cubes.** `RiftEnergyCubeParticle` and `energyCubes` render with translucent
+  alpha-blending (`SKY_BLEND`) so Saturated Mint-Green, Electric Cyan, and Pale Pink cubes keep their vivid
+  colours against bright daytime skies while drifting strictly upward (`velocity.y += 0.04`) and flattening
+  horizontally at `age >= 0.75 * maxAge`.
+
+### 0.22.0
+Pure voxel mesh over spheres, secondary FBO viewport engine, and 60-tick R/G/B warp gate into the voxel-ring tunnel.
+
 ### 0.21.0
 Biome skies, rift awakening, voxel particles and the warp overlay.
 - **Biome sky states.** The Sift sky blends between biomes over about 3 s:

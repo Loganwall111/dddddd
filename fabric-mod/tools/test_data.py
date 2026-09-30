@@ -513,7 +513,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.21',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.23',(ROOT/'gradle.properties').read_text())
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
