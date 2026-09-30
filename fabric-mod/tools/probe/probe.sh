@@ -154,6 +154,18 @@ echo "=== water fluid model registration"; javap -c -p -cp "$CP" net.minecraft.c
 javap -c -p -cp "$CP" net.minecraft.client.renderer.block.FluidModel 2>&1 | head -60
 unzip -Z1 $(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly') 2>/dev/null | grep -i 'tint\|Fluid' | head -40
 } > $OUT/portal_api.txt 2>&1
+# 0.22c: tint source, panorama assets, readback, fov.
+{
+for c in net.minecraft.client.color.block.BlockTintSource net.minecraft.client.color.block.BlockTintSources net.minecraft.client.OptionInstance \
+         net.minecraft.client.Camera net.minecraft.client.renderer.state.level.CameraRenderState net.minecraft.server.packs.resources.ResourceManager \
+         net.minecraft.server.packs.resources.ResourceProvider net.minecraft.server.packs.resources.Resource com.mojang.blaze3d.pipeline.RenderTarget; do
+  echo "===== $c"; javap -p -cp "$CP" "$c" 2>&1 | head -90; done
+echo "===== BlockTintSources bytecode"; javap -c -p -cp "$CP" net.minecraft.client.color.block.BlockTintSources 2>&1 | head -120
+echo "===== takeScreenshot bytecode"; javap -c -p -cp "$CP" net.minecraft.client.Screenshot 2>&1 | sed -n '/takeScreenshot(com.mojang.blaze3d.pipeline.RenderTarget, int, java.util.function.Consumer/,/^  [a-z].*(/p' | head -120
+echo "===== Options fov"; javap -p -cp "$CP" net.minecraft.client.Options 2>&1 | grep -iE "fov|cameraType|hideGui|getCameraType" | head
+echo "===== GameRenderer fov"; javap -p -cp "$CP" net.minecraft.client.renderer.GameRenderer 2>&1 | grep -iE "fov|projection" | head
+echo "===== panorama assets"; unzip -Z1 $(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly') 2>/dev/null | grep -iE 'panorama|title/background' | head -20
+} > $OUT/tint_capture.txt 2>&1
 exit 0
 # 0.22b: particle group render state contract (custom-rendered particle group).
 cd "$(dirname "$0")/../.." 2>/dev/null || true
