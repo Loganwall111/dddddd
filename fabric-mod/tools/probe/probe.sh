@@ -155,3 +155,14 @@ javap -c -p -cp "$CP" net.minecraft.client.renderer.block.FluidModel 2>&1 | head
 unzip -Z1 $(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly') 2>/dev/null | grep -i 'tint\|Fluid' | head -40
 } > $OUT/portal_api.txt 2>&1
 exit 0
+# 0.22b: particle group render state contract (custom-rendered particle group).
+cd "$(dirname "$0")/../.." 2>/dev/null || true
+{
+for c in net.minecraft.client.renderer.state.level.ParticleGroupRenderState 'net.minecraft.client.particle.ItemPickupParticleGroup$State' \
+         'net.minecraft.client.particle.ItemPickupParticleGroup$ParticleInstance' net.minecraft.client.renderer.state.level.ParticlesRenderState \
+         'net.minecraft.client.particle.ElderGuardianParticleGroup$State' net.fabricmc.fabric.api.particle.v1.FabricParticleTypes; do
+  echo "===== $c"; javap -p -cp "$CP" "$c" 2>&1 | head -60
+done
+echo "=== ItemPickupParticleGroup\$State bytecode"; javap -c -p -cp "$CP" 'net.minecraft.client.particle.ItemPickupParticleGroup$State' 2>&1 | head -120
+echo "=== ParticlesRenderState bytecode"; javap -c -p -cp "$CP" net.minecraft.client.renderer.state.level.ParticlesRenderState 2>&1 | head -120
+} > build/probe/particles.txt 2>&1
