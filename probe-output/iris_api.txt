@@ -1,4 +1,4 @@
-IRIS_URL=https://cdn.modrinth.com/data/YL57xq9U/versions/bAdKrpw8/iris-fabric-1.11.6%2Bmc26.3.jar
+IRIS_URL=https://cdn.modrinth.com/data/YL57xq9U/versions/vTN4NRGW/iris-fabric-1.11.7%2Bmc26.3.jar
 META-INF/jars/antlr4-runtime-4.13.1.jar
 META-INF/jars/fabric-api-base-2.0.6+fcdff87f02.jar
 META-INF/jars/fabric-key-mapping-api-v1-2.0.8+3434d6d902.jar
@@ -86,6 +86,8 @@ public class net.irisshaders.iris.pipeline.IrisPipelines {
   public static void copyPipeline(com.mojang.renderpearl.api.pipeline.RenderPipeline, com.mojang.renderpearl.api.pipeline.RenderPipeline);
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$assignPipelineShadow$0(net.irisshaders.iris.pipeline.programs.ShaderKey, java.lang.Object);
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$assignPipeline$0(net.irisshaders.iris.pipeline.programs.ShaderKey, java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$105(java.lang.Object);
+  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$104(java.lang.Object);
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$103(java.lang.Object);
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$102(java.lang.Object);
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$101(java.lang.Object);
@@ -134,8 +136,6 @@ public class net.irisshaders.iris.pipeline.IrisPipelines {
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$58(java.lang.Object);
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$57(java.lang.Object);
   private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$56(java.lang.Object);
-  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$55(java.lang.Object);
-  private static net.irisshaders.iris.pipeline.programs.ShaderKey lambda$static$54(java.lang.Object);
 ===== net.irisshaders.iris.pipeline.IrisPipelines$1
 Compiled from "IrisPipelines.java"
 class net.irisshaders.iris.pipeline.IrisPipelines$1 {

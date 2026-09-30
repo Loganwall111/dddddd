@@ -243,11 +243,9 @@ public class net.irisshaders.iris.mixin.MixinGlRenderPipeline implements net.iri
 === reverseZ refs
 ./net/irisshaders/iris/apiimpl/IrisApiV0Impl.class
 ./net/irisshaders/iris/mixin/UndoReverseZFive.class
-./net/irisshaders/iris/mixin/MixinGameRenderer.class
 ./net/irisshaders/iris/mixin/UndoReverseZThree.class
 ./net/irisshaders/iris/mixin/UndoReverseZFour.class
 ./net/irisshaders/iris/mixin/UndoReverseZOne.class
-./net/irisshaders/iris/mixin/MixinCamera.class
 ./net/irisshaders/iris/mixin/UndoReverseZThree$1.class
 ./net/irisshaders/iris/mixin/UndoReverseZTwo.class
 ./net/irisshaders/iris/api/v0/IrisApi.class

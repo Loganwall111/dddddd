@@ -101,21 +101,21 @@
 288-         3: aload_0
 289-         4: invokeinterface #55,  2           // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
 --
-925-        17: putstatic     #96                 // Field coreShaderMapShadow:Ljava/util/Map;
-926-        20: invokedynamic #403,  0            // InvokeDynamic #6:get:()Lit/unimi/dsi/fastutil/Function;
-927:        25: putstatic     #238                // Field FAKE_FUNCTION:Lit/unimi/dsi/fastutil/Function;
-928-        28: getstatic     #406                // Field net/minecraft/client/renderer/RenderPipelines.SOLID_BLOCK:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
-929-        31: invokedynamic #412,  0            // InvokeDynamic #7:get:()Lit/unimi/dsi/fastutil/Function;
-930-        36: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
-931-        39: getstatic     #417                // Field net/minecraft/client/renderer/RenderPipelines.CUTOUT_BLOCK:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
-932-        42: invokedynamic #420,  0            // InvokeDynamic #8:get:()Lit/unimi/dsi/fastutil/Function;
-933-        47: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
-934-        50: getstatic     #421                // Field net/minecraft/client/renderer/RenderPipelines.SOLID_TERRAIN:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
-935-        53: invokedynamic #424,  0            // InvokeDynamic #9:get:()Lit/unimi/dsi/fastutil/Function;
-936-        58: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
-937-        61: getstatic     #425                // Field net/minecraft/client/renderer/RenderPipelines.CUTOUT_TERRAIN:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
-938-        64: invokedynamic #428,  0            // InvokeDynamic #10:get:()Lit/unimi/dsi/fastutil/Function;
-939-        69: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+936-        17: putstatic     #96                 // Field coreShaderMapShadow:Ljava/util/Map;
+937-        20: invokedynamic #403,  0            // InvokeDynamic #6:get:()Lit/unimi/dsi/fastutil/Function;
+938:        25: putstatic     #238                // Field FAKE_FUNCTION:Lit/unimi/dsi/fastutil/Function;
+939-        28: getstatic     #406                // Field net/minecraft/client/renderer/RenderPipelines.SOLID_BLOCK:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+940-        31: invokedynamic #412,  0            // InvokeDynamic #7:get:()Lit/unimi/dsi/fastutil/Function;
+941-        36: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+942-        39: getstatic     #417                // Field net/minecraft/client/renderer/RenderPipelines.CUTOUT_BLOCK:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+943-        42: invokedynamic #420,  0            // InvokeDynamic #8:get:()Lit/unimi/dsi/fastutil/Function;
+944-        47: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+945-        50: getstatic     #421                // Field net/minecraft/client/renderer/RenderPipelines.SOLID_TERRAIN:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+946-        53: invokedynamic #424,  0            // InvokeDynamic #9:get:()Lit/unimi/dsi/fastutil/Function;
+947-        58: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
+948-        61: getstatic     #425                // Field net/minecraft/client/renderer/RenderPipelines.CUTOUT_TERRAIN:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+949-        64: invokedynamic #428,  0            // InvokeDynamic #10:get:()Lit/unimi/dsi/fastutil/Function;
+950-        69: invokestatic  #413                // Method assignToMain:(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lit/unimi/dsi/fastutil/Function;)V
 === Overrides mixin
 Compiled from "MixinShaderManager_Overrides.java"
 public abstract class net.irisshaders.iris.mixin.MixinShaderManager_Overrides {
