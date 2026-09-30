@@ -166,7 +166,6 @@ echo "===== Options fov"; javap -p -cp "$CP" net.minecraft.client.Options 2>&1 |
 echo "===== GameRenderer fov"; javap -p -cp "$CP" net.minecraft.client.renderer.GameRenderer 2>&1 | grep -iE "fov|projection" | head
 echo "===== panorama assets"; unzip -Z1 $(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly') 2>/dev/null | grep -iE 'panorama|title/background' | head -20
 } > $OUT/tint_capture.txt 2>&1
-exit 0
 # 0.22b: particle group render state contract (custom-rendered particle group).
 cd "$(dirname "$0")/../.." 2>/dev/null || true
 {
@@ -178,3 +177,19 @@ done
 echo "=== ItemPickupParticleGroup\$State bytecode"; javap -c -p -cp "$CP" 'net.minecraft.client.particle.ItemPickupParticleGroup$State' 2>&1 | head -120
 echo "=== ParticlesRenderState bytecode"; javap -c -p -cp "$CP" net.minecraft.client.renderer.state.level.ParticlesRenderState 2>&1 | head -120
 } > build/probe/particles.txt 2>&1
+# 0.22d: destination snapshot (worldgen columns + map colours), biome tint getter, particle render state.
+cd "${GITHUB_WORKSPACE:-$HOME}/fabric-mod" 2>/dev/null || true
+{
+for c in net.minecraft.world.level.chunk.ChunkGenerator net.minecraft.world.level.NoiseColumn net.minecraft.server.level.ServerChunkCache \
+         net.minecraft.world.level.material.MapColor net.minecraft.world.level.EmptyBlockGetter 'net.minecraft.world.level.levelgen.Heightmap$Types' \
+         'net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase' net.minecraft.client.renderer.block.BlockAndTintGetter \
+         net.minecraft.client.renderer.BiomeColors net.minecraft.world.level.ColorResolver net.minecraft.server.MinecraftServer \
+         net.minecraft.client.renderer.state.level.ParticleGroupRenderState net.minecraft.client.renderer.state.level.ParticlesRenderState \
+         'net.minecraft.client.particle.ItemPickupParticleGroup$State' net.fabricmc.fabric.api.particle.v1.FabricParticleTypes \
+         net.minecraft.core.particles.SimpleParticleType net.minecraft.core.particles.ParticleType net.minecraft.client.particle.Particle \
+         net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry net.minecraft.client.particle.ParticleProvider \
+         'net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry$PendingParticleFactory' net.minecraft.world.level.levelgen.RandomState; do
+  echo "===== $c"; javap -protected -cp "$CP" "$c" 2>&1 | head -140
+done
+echo "=== ItemPickupParticleGroup\$State bytecode"; javap -c -p -cp "$CP" 'net.minecraft.client.particle.ItemPickupParticleGroup$State' 2>&1 | head -140
+} > build/probe/snapshot_api.txt 2>&1
