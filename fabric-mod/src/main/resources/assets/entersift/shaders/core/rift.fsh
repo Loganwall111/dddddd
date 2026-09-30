@@ -115,23 +115,25 @@ vec3 viewEnd(vec3 dir, float yaw, float t) {
     return c;
 }
 
-// 3 Sift: pale mint sky, soft pink panels, rows of pink and teal pillars on the horizon.
+// 3 Sift: vivid rose-pink and mint-cyan sky, blocky clouds, and high-contrast rose spires & teal pillars on the horizon.
 vec3 viewSift(vec3 dir, float yaw, float t) {
     float el = dir.y;
-    vec3 c = mix(vec3(0.62, 0.90, 0.86), vec3(0.88, 0.97, 0.95), smoothstep(-0.05, 0.6, el));
+    vec3 c = mix(vec3(0.94, 0.46, 0.72), vec3(0.36, 0.88, 0.84), smoothstep(-0.04, 0.52, el));
+    c = mix(c, vec3(0.98, 0.72, 0.86), clouds(dir, t, 1.8, 0.52, 2.0) * 0.75);
     vec2 pg = vec2(yaw * 5.0 + t * 0.01, el * 7.0);
     float panel = smoothstep(0.55, 0.7, vnoise(floor(pg) * 0.7 + 3.0)) * smoothstep(0.02, 0.15, el);
-    c = mix(c, vec3(0.98, 0.80, 0.90), panel * 0.45);
+    c = mix(c, vec3(1.00, 0.84, 0.92), panel * 0.38);
     for (int i = 2; i >= 0; i--) {
         float cols = 36.0 + 24.0 * float(i);
         float cid = floor((yaw + PI) / (2.0 * PI) * cols);
         float f = fract((yaw + PI) / (2.0 * PI) * cols);
-        float hgt = 0.02 + (0.10 + 0.06 * float(2 - i)) * hash21(vec2(cid, float(i)));
-        float on = step(0.45, hash21(vec2(cid, 3.0 + float(i)))) * step(abs(f - 0.5), 0.3) * step(el, hgt);
-        vec3 pillar = mix(vec3(0.85, 0.42, 0.44), vec3(0.40, 0.72, 0.70), float(i) * 0.5);
-        c = mix(c, mix(pillar, c, 0.15 * float(2 - i)), on);
+        float hgt = 0.03 + (0.12 + 0.07 * float(2 - i)) * hash21(vec2(cid, float(i)));
+        float on = step(0.42, hash21(vec2(cid, 3.0 + float(i)))) * step(abs(f - 0.5), 0.32) * step(el, hgt);
+        vec3 pillar = mix(vec3(0.76, 0.26, 0.46), vec3(0.20, 0.64, 0.62), float(i) * 0.5);
+        c = mix(c, mix(pillar, c, 0.12 * float(2 - i)), on);
     }
-    if (el < -0.08) c = mix(c, vec3(0.55, 0.80, 0.72), 0.6);
+    if (el < ridge(yaw, 5.0, 70.0, -0.02, 0.08)) c = mix(c, vec3(0.62, 0.24, 0.44), 0.68);
+    if (el < -0.08) c = mix(c, vec3(0.24, 0.62, 0.56), 0.72);
     return c;
 }
 
@@ -180,7 +182,7 @@ vec3 boxBlurViewport(int view, bool night, vec3 dir, float t) {
     vec3 deepAmberNight = vec3(1.00, 0.52, 0.14);
     vec3 emissiveOverlay = night ? deepAmberNight : vibrantPinkDay;
     if (view == 3 || view == 0 || view == 5) {
-        blurred = mix(blurred, emissiveOverlay, night ? 0.24 : 0.20) + emissiveOverlay * 0.14;
+        blurred = mix(blurred, emissiveOverlay, night ? 0.18 : 0.14) + emissiveOverlay * 0.06;
     }
     return clamp(blurred, 0.0, 1.0);
 }
@@ -205,13 +207,12 @@ void main() {
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
     vec3 col = boxBlurViewport(view, night, dir, t);
-    // Light pouring through the middle of the rift (face coordinates are global, so no seams either).
+    // Subtle core glow that preserves destination terrain/cloud contrast across the window.
     vec2 d = riftData.rg - 0.5;
     float core = exp(-dot(d, d) * 10.0);
-    float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
-    col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
-    // The Sift at night glows pink-white / amber through the rift (trailer night frames).
-    if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), riftData.g), 0.55);
+    float coreK = view == 5 ? 0.32 : (view == 3 ? (night ? 0.26 : 0.12) : (view == 0 ? 0.18 : (view == 4 ? 0.20 : 0.12)));
+    col = mix(col, view == 3 ? vec3(1.0, 0.86, 0.94) : vec3(1.0, 0.96, 0.88), core * coreK);
+    if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.62, 0.78), vec3(1.0, 0.88, 0.94), riftData.g), 0.28);
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif

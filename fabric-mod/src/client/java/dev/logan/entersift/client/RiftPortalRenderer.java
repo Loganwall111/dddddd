@@ -302,6 +302,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         pose.pushPose();
         try {
             pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
+            // Always orient the recessed hollow opening toward the viewer (prevents inside-out / backwards boxes
+            // when a rift is punched with yaw = player.getYRot(), where cam.z < 0).
+            if (cam.z < 0f) {
+                pose.rotate(new Quaternionf().rotationY((float) Math.PI));
+                cam.x = -cam.x;
+                cam.z = -cam.z;
+            }
             if (age < RIPPLE_END + 6 && age < GROWN) {
                 float a = age;
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> { ripple(p, vc, still, sh, look, a); spark(p, vc, still, sh, s, cam, look, a); });
@@ -317,7 +324,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look, a, s));
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> rims(p, vc, wv, sh, look, cam, a, s));
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, a));
-                if (SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
+                if (SiftBudget.riftEffects) out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> energyCubes(p, vc, sh, s, a));
                 if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look, cam, s));
                 if (age >= GROWN && s.night && SiftBudget.auraGlow) out.submitCustomGeometry(pose, glowT, (p, vc) -> curtains(p, vc, sh, s, cam));
             }
@@ -565,16 +572,17 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (a < 0.03f) continue;
             line(p, vc, wv, cam, new float[]{x, y - q, z}, new float[]{x, y + q, z}, q * 2f, white, a);
         }
-        // Occasional lightning arc from the rectangular voxel rim into the air (anchored to rectangular border).
-        float cycle = s.time * 20f / 80f;
-        int n = (int) cycle;
-        if (cycle - n < 6f / 80f) {
-            float side = RiftShape.hash(s.seed, n, 91) > 0.5f ? 1f : -1f;
-            float ax = side * sh.w * 0.42f;
-            float ay = sh.cy() + (RiftShape.hash(s.seed, n, 92) - 0.5f) * sh.h * 0.75f;
-            float bx = ax + side * (2.0f + 1.8f * RiftShape.hash(s.seed, n, 93));
-            float by = ay + (RiftShape.hash(s.seed, n, 94) - 0.35f) * 2.5f;
-            bolt(p, vc, wv, cam, new float[]{ax, ay, 0.05f}, new float[]{bx, by, 0.3f}, s.seed + n * 17L, look, 0.9f);
+        // Crackling jagged white lightning arcs across the rectangular voxel rims and floating cubes.
+        int burst = (int) (s.time * 5f);
+        for (int b = 0; b < 2; b++) {
+            long bSeed = s.seed + burst * 17L + b * 31L;
+            if (RiftShape.hash(bSeed, b, 90) < 0.22f) continue;
+            float side = (b == 0 ? 1f : -1f) * (RiftShape.hash(bSeed, b, 91) > 0.5f ? 1f : -1f);
+            float ax = side * sh.w * (0.28f + 0.18f * RiftShape.hash(bSeed, b, 92));
+            float ay = sh.cy() + (RiftShape.hash(bSeed, b, 93) - 0.5f) * sh.h * 0.78f;
+            float bx = ax + side * (1.1f + 1.4f * RiftShape.hash(bSeed, b, 94));
+            float by = ay + (RiftShape.hash(bSeed, b, 95) - 0.42f) * 1.8f;
+            bolt(p, vc, wv, cam, new float[]{ax, ay, 0.12f}, new float[]{bx, by, 0.28f}, bSeed, look, 0.92f);
         }
     }
 

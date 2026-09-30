@@ -52,7 +52,7 @@ final class RiftShape {
 
     static RiftShape build(RiftType type, long seed, float w, float h) {
         float c = cell(w, h);
-        int cols = Math.max(4, Math.round(w / c)), rows = Math.max(4, Math.round(h / c));
+        int cols = Math.max(5, Math.round(w / c)), rows = Math.max(5, Math.round(h / c));
         float cw = w / cols, ch = h / rows;
         boolean[][] body = new boolean[cols][rows];
         int[][] tier = new int[cols][rows];
@@ -76,17 +76,18 @@ final class RiftShape {
     private static boolean inBody(RiftType type, long seed, float u, float v, float xb, float yb, int i, int j, int cols, int rows, float xspan, float yspan) {
         switch (type) {
             case SIFT: {
-                // Trailer stepped voxel cross: nested hollow rectangular core, tall vertical spine, wide stepped arms,
-                // lower-left rectangular step, and upper-right stepped bracket.
-                float arm = 0.84f + 0.14f * hash(seed, j / 2, 7);
+                // Trailer stepped voxel cross (IMG_5849, IMG_5850, IMG_5846, IMG_5856, IMG_5861):
+                // Wide open central window, tall stepped top cap, wide horizontal arms, lower-left stepped box,
+                // and right-hand stepped bracket.
+                float arm = 0.86f + 0.12f * hash(seed, j / 2, 7);
                 float lean = hash(seed, 3, 3) > 0.5f ? 1f : -1f;
-                boolean in = (Math.abs(u) < 0.38f && Math.abs(v) < 0.60f)
-                    || (Math.abs(u) < 0.20f && v > -0.96f && v < 0.98f)
-                    || (u * lean > -0.32f && u * lean < 0.12f && v > 0.50f && v < 0.82f)
-                    || (Math.abs(v) < 0.28f && Math.abs(u) < arm)
-                    || (Math.abs(u) > 0.50f && Math.abs(u) < arm - 0.10f && v > 0.20f && v < 0.44f);
-                if (hash(seed, 1, 1) > 0.30f) in |= u < -0.46f && u > -0.82f && v < -0.26f && v > -0.74f;
-                if (hash(seed, 2, 2) > 0.30f) in |= u > 0.48f && u < 0.84f && v > 0.26f && v < 0.60f;
+                boolean in = (Math.abs(u) < 0.44f && Math.abs(v) < 0.62f)
+                    || (Math.abs(u) < 0.24f && v > -0.96f && v < 0.98f)
+                    || (u * lean > -0.34f && u * lean < 0.16f && v > 0.52f && v < 0.86f)
+                    || (Math.abs(v) < 0.30f && Math.abs(u) < arm)
+                    || (Math.abs(u) > 0.48f && Math.abs(u) < arm - 0.08f && v > 0.20f && v < 0.46f);
+                if (hash(seed, 1, 1) > 0.25f) in |= u < -0.44f && u > -0.82f && v < -0.24f && v > -0.74f;
+                if (hash(seed, 2, 2) > 0.25f) in |= u > 0.46f && u < 0.84f && v > 0.24f && v < 0.62f;
                 return in;
             }
             case NETHER: {
@@ -121,13 +122,13 @@ final class RiftShape {
 
     /**
      * Splits the body into sharp, nested, hollow rectangular voxel boxes (centre first, 2-5 cells wide,
-     * 2-4 tall) with stepped recess depths. The centre seed box is the deepest; touching boxes differ by
-     * at least 0.22 blocks so every seam shows a crisp 3D rectangular voxel step.
+     * 2-4 tall) with shallow, crisp stepped recess depths (0.18 to 0.58 blocks). This gives every nested
+     * box a clean 3D voxel step and white neon rim while keeping the destination window wide open.
      */
     static float boxes(RiftType type, long seed, int cols, int rows, boolean[][] body, int[][] tier, float[][] depth) {
         if (type == RiftType.PORTAL) {
-            for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) depth[i][j] = 1.0f;
-            return 1.0f;
+            for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) depth[i][j] = 0.45f;
+            return 0.45f;
         }
         int[][] box = new int[cols][rows];
         for (int[] col : box) Arrays.fill(col, -1);
@@ -144,7 +145,7 @@ final class RiftShape {
             if (box[start[0]][start[1]] >= 0) continue;
             int id = depths.size();
             int maxW = 2 + (int) (hash(seed, id, 41) * 4f), maxH = 2 + (int) (hash(seed, id, 42) * 3f);
-            if (id == 0) { maxW += 1; maxH += 1; }
+            if (id == 0) { maxW += 2; maxH += 2; }
             int x0 = start[0], x1 = start[0], y0 = start[1], y1 = start[1];
             boolean grew = true;
             while (grew) {
@@ -154,17 +155,18 @@ final class RiftShape {
                 if (y1 - y0 + 1 < maxH && free(body, box, x0, x1, y1 + 1, y1 + 1)) { y1++; grew = true; }
                 if (y1 - y0 + 1 < maxH && free(body, box, x0, x1, y0 - 1, y0 - 1)) { y0--; grew = true; }
             }
-            float d = id == 0 ? 1.45f : 0.55f + 0.7f * hash(seed, id, 43);
+            // Shallow crisp voxel steps (0.20..0.58 blocks) so inner walls frame the window without blocking it
+            float d = id == 0 ? 0.58f : 0.20f + 0.30f * hash(seed, id, 43);
             for (int attempt = 0; attempt < 4; attempt++) {
                 boolean clash = false;
                 for (int i = x0 - 1; i <= x1 + 1; i++) for (int j = y0 - 1; j <= y1 + 1; j++) {
                     if (i < 0 || j < 0 || i >= cols || j >= rows || box[i][j] < 0) continue;
                     if ((i >= x0 && i <= x1) == (j >= y0 && j <= y1)) continue;   // edge neighbours only
-                    if (Math.abs(depths.get(box[i][j]) - d) < 0.22f) clash = true;
+                    if (Math.abs(depths.get(box[i][j]) - d) < 0.11f) clash = true;
                 }
                 if (!clash) break;
-                d = d + 0.29f > 1.3f ? d - 0.53f : d + 0.29f;
-                d = Math.max(0.45f, d);
+                d = d + 0.14f > 0.56f ? d - 0.22f : d + 0.14f;
+                d = Math.max(0.18f, d);
             }
             d = Math.round(d * 40f) / 40f + 0.0037f;                               // never coplanar with satellites
             depths.add(d);
@@ -172,7 +174,7 @@ final class RiftShape {
             int t = tier[start[0]][start[1]];
             for (int i = x0; i <= x1; i++) for (int j = y0; j <= y1; j++) { box[i][j] = id; depth[i][j] = d; tier[i][j] = t; }
         }
-        return Math.max(max, 0.5f);
+        return Math.max(max, 0.45f);
     }
 
     private static boolean free(boolean[][] body, int[][] box, int x0, int x1, int y0, int y1) {
@@ -185,7 +187,8 @@ final class RiftShape {
 
     /**
      * Anchors satellite hollow voxel boxes and L/Z tetrominoes strictly to the outer rectangular border
-     * edges of the voxel silhouette (zero spherical/radial equations).
+     * edges of the voxel silhouette (zero spherical/radial equations), pushed outward so they frame
+     * the perimeter without covering the central window.
      */
     private void satellites(RiftType type, long seed) {
         List<int[]> rimCells = new ArrayList<>();
@@ -197,24 +200,24 @@ final class RiftShape {
                 }
             }
         }
-        int count = switch (type) { case SIFT -> 8; case NETHER -> 9; case OVERWORLD -> 7; case END -> 9; default -> 4; };
+        int count = switch (type) { case SIFT -> 6; case NETHER -> 7; case OVERWORLD -> 6; case END -> 7; default -> 4; };
         if (rimCells.isEmpty()) return;
         for (int k = 0; k < count; k++) {
             int idx = Math.floorMod((int) (hash(seed, k, 31) * rimCells.size()) + k * (rimCells.size() / Math.max(1, count)), rimCells.size());
             int[] rc = rimCells.get(idx);
             int ri = rc[0], rj = rc[1];
-            float oxDir = !on(ri - 1, rj) ? -1f : (!on(ri + 1, rj) ? 1f : 0f);
+            float oxDir = !on(ri - 1, rj) ? -1f : (!on(ri + 1, rj) ? 1f : (ri < cols / 2 ? -1f : 1f));
             float oyDir = !on(ri, rj - 1) ? -1f : (!on(ri, rj + 1) ? 1f : 0f);
-            float px = x(ri) + cw * 0.5f + oxDir * cw * 0.55f;
-            float cyy = y(rj) + ch * 0.5f + oyDir * ch * 0.55f;
-            float zf = 0.2f + 0.9f * hash(seed, k, 34), zb = zf - (0.6f + 0.5f * hash(seed, k, 35));
+            float px = x(ri) + cw * 0.5f + oxDir * cw * 0.85f;
+            float cyy = y(rj) + ch * 0.5f + oyDir * ch * 0.75f;
+            float zf = 0.12f + 0.26f * hash(seed, k, 34), zb = zf - (0.22f + 0.18f * hash(seed, k, 35));
             int piece = type == RiftType.PORTAL ? 0 : k % 3;                     // 0 hollow box, 1 L, 2 Z tetromino
             if (piece == 0) {
-                float sw = 0.9f + 0.8f * hash(seed, k, 32), sh = 0.8f + 0.8f * hash(seed, k, 33);
+                float sw = 0.55f + 0.40f * hash(seed, k, 32), sh = 0.50f + 0.40f * hash(seed, k, 33);
                 sats.add(new float[]{px - sw / 2, cyy - sh / 2, px + sw / 2, cyy + sh / 2, zf, zb, k, 0});
             } else {
                 int[][] cells = piece == 1 ? new int[][]{{0, 0}, {0, 1}, {0, 2}, {1, 0}} : new int[][]{{0, 1}, {1, 1}, {1, 0}, {2, 0}};
-                float q = 0.45f + 0.15f * hash(seed, k, 32);
+                float q = 0.32f + 0.10f * hash(seed, k, 32);
                 int flip = hash(seed, k, 33) > 0.5f ? -1 : 1;
                 float ox = px - q * 1.5f * flip, oy = cyy - q * 1.5f;
                 for (int[] c : cells) {

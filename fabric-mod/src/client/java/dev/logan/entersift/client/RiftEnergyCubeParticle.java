@@ -38,9 +38,9 @@ public final class RiftEnergyCubeParticle extends Particle {
 
     /** Sift rift multi-colored palette: Saturated Mint-Green, Electric Cyan, Pale Pink. */
     public static final float[][] SIFT_PALETTE = {
-        {0.31f, 0.96f, 0.67f}, // Saturated Mint-Green (#4FF5AB)
-        {0.16f, 0.95f, 1.00f}, // Electric Cyan (#29F2FF)
-        {1.00f, 0.72f, 0.88f}  // Pale Pink (#FFB8E0)
+        {0.18f, 0.92f, 0.58f}, // Saturated Mint-Green (#2EEB94)
+        {0.10f, 0.86f, 1.00f}, // Electric Cyan (#1ADCFF)
+        {1.00f, 0.48f, 0.78f}  // Pale Pink (#FF7AC7)
     };
 
     private static final float[][] OVERWORLD_PALETTE = {
@@ -247,7 +247,7 @@ public final class RiftEnergyCubeParticle extends Particle {
         public void submit(SubmitNodeCollector collector, CameraRenderState camera) {
             if (instances.isEmpty()) return;
             PoseStack pose = new PoseStack();
-            collector.submitCustomGeometry(pose, SiftRenderTypes.RIFT_GLOW, (p, vc) -> {
+            collector.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
                 for (Instance inst : instances) {
                     emitVoxelBlock(p, vc, inst.x, inst.y, inst.z, inst.sx, inst.sy, inst.sz, inst.color, inst.alpha);
                 }
