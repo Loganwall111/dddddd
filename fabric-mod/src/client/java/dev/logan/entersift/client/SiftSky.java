@@ -74,6 +74,16 @@ public final class SiftSky {
     /** 0 = panel sky, 1 = swirl sky; eased toward the camera biome's target so crossing a border blends. */
     private static float swirl = -1f;
     private static long swirlAt;
+    /**
+     * 0.21 biome states, eased like the swirl weight:
+     *  A  Singer Meadow: pale mint (#8FC2C4) and pearl-white lava lamp with electric-cyan aurora arcs;
+     *  B  red canyon biomes (Rose Spires, Frostbloom Spires): heavy magenta / dusty rose / crimson.
+     */
+    static final java.util.Set<String> MEADOW_BIOMES = java.util.Set.of("singer_meadow");
+    static final java.util.Set<String> BASIN_BIOMES = java.util.Set.of("rose_spires", "titan_crags");
+    private static final float[] MEADOW_MINT = rgb(0x8FC2C4), PEARL = rgb(0xF2F8F4), ELECTRIC_CYAN = rgb(0x3FF3FF);
+    private static final float[] BASIN_CRIMSON = rgb(0xB8384A), BASIN_ROSE = rgb(0xC87A8A), BASIN_MAGENTA = rgb(0x9A2F78);
+    static float meadow = 0f, basin = 0f;
 
     private static final int AZ = 72, EL = 36;
     private static int lastRadius = -1;
@@ -130,17 +140,26 @@ public final class SiftSky {
 
     /** 0.17: which of the two Sift skies the camera's biome uses, eased over ~3 s. */
     private static void updateMode(Minecraft mc, Vec3 camPos) {
-        float target = 0f;
+        float target = 0f, tMeadow = 0f, tBasin = 0f;
         try {
             var key = mc.level.getBiome(net.minecraft.core.BlockPos.containing(camPos)).unwrapKey();
-            if (key.isPresent() && SWIRL_BIOMES.contains(key.get().identifier().getPath())) target = 1f;
+            String path = key.isPresent() ? key.get().identifier().getPath() : "";
+            if (SWIRL_BIOMES.contains(path)) target = 1f;
+            if (MEADOW_BIOMES.contains(path)) tMeadow = 1f;
+            if (BASIN_BIOMES.contains(path)) tBasin = 1f;
         } catch (Throwable ignored) { }
         long now = System.nanoTime();
-        if (swirl < 0f) { swirl = target; swirlAt = now; return; }
+        if (swirl < 0f) { swirl = target; meadow = tMeadow; basin = tBasin; swirlAt = now; return; }
         float dt = Math.min(0.25f, (now - swirlAt) / 1.0e9f);
         swirlAt = now;
         float step = dt / 3f;
-        swirl = swirl < target ? Math.min(target, swirl + step) : Math.max(target, swirl - step);
+        swirl = ease(swirl, target, step);
+        meadow = ease(meadow, tMeadow, step);
+        basin = ease(basin, tBasin, step);
+    }
+
+    private static float ease(float v, float target, float step) {
+        return v < target ? Math.min(target, v + step) : Math.max(target, v - step);
     }
 
     // ------------------------------------------------------------------ cycle
@@ -263,9 +282,24 @@ public final class SiftSky {
             float edge = smooth(0.02f, 0.6f, col) * (1 - smooth(0.25f, 0.95f, up)) * smooth(-0.1f, 0.12f, y);
             c = lerp(c, PILLAR, edge * 0.45f * pal.pillars());
         }
+        // 0.21 biome states (kept weaker at night so the amber night stage still reads).
+        float dayK = 1f - 0.5f * pal.pillars();
+        float[] horizon = pal.horizon();
+        if (meadow > 0.01f) {
+            float[] m = lerp(MEADOW_MINT, PEARL, smooth(0.15f, 0.95f, up) * 0.7f);
+            m = lerp(m, PEARL, smooth(0.1f, 0.7f, blob(1, sx, y, sz, t)) * 0.35f);      // pearl lava-lamp blobs
+            c = lerp(c, m, meadow * 0.75f * dayK);
+            horizon = lerp(horizon, MEADOW_MINT, meadow * 0.6f * dayK);
+        }
+        if (basin > 0.01f) {
+            float[] b = lerp(BASIN_CRIMSON, BASIN_ROSE, smooth(0f, 0.4f, up));
+            b = lerp(b, BASIN_MAGENTA, smooth(0.35f, 0.95f, up));
+            c = lerp(c, b, basin * 0.8f * dayK);
+            horizon = lerp(horizon, BASIN_ROSE, basin * 0.7f * dayK);
+        }
         // Melt into the fog colour at and below the horizon: no seam against distant terrain.
         float haze = 1 - smooth(-0.02f, 0.2f, y);
-        return lerp(c, pal.horizon(), haze);
+        return lerp(c, horizon, haze);
     }
 
     private static void dome(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float sw) {
@@ -310,7 +344,7 @@ public final class SiftSky {
     private static float[] bright(float[] c, float w) { return lerp(c, new float[]{1f, 1f, 1f}, w); }
 
     /** How strongly the aurora shows: a little fainter at noon, strongest in the evening and at night. */
-    private static float auroraStrength(Palette pal) { return 0.7f + 0.3f * (1 - pal.noon()); }
+    private static float auroraStrength(Palette pal) { return (0.7f + 0.3f * (1 - pal.noon())) * (1f + 0.8f * meadow); }
 
     private static final int CURTAINS = 7, CURTAIN_SEGS = 56, CURTAIN_ROWS = 8;
     /** 0.12: base transparency of every curtain (strict additive blending, SiftRenderTypes.GLOW). */
@@ -333,9 +367,9 @@ public final class SiftSky {
         for (int k = 0; k < CURTAINS; k++) {
             double a0 = hash(k, 1, 0) * Math.PI * 2 + t * (0.004 + 0.003 * (k % 3)) * (k % 2 == 0 ? 1 : -1);
             double span = 1.3 + 1.1 * hash(k, 2, 0);
-            double e0 = 0.1 + 0.55 * hash(k, 3, 0), height = 0.3 + 0.32 * hash(k, 4, 0);
-            float[] bottom = lerp(AURORA[k % 3], pal.blobs()[k % 4], 0.2f);          // mint, white-cyan or pink
-            float[] top = lerp(AURORA[(k + 2) % 4], pal.blobs()[(k + 1) % 4], 0.2f);
+            double e0 = 0.1 + 0.55 * hash(k, 3, 0) + 0.25 * meadow, height = 0.3 + 0.32 * hash(k, 4, 0);  // meadow: high ceiling arcs
+            float[] bottom = lerp(lerp(AURORA[k % 3], pal.blobs()[k % 4], 0.2f), ELECTRIC_CYAN, meadow * 0.6f);  // mint, white-cyan or pink
+            float[] top = lerp(lerp(AURORA[(k + 2) % 4], pal.blobs()[(k + 1) % 4], 0.2f), PEARL, meadow * 0.3f);
             float pulse = 0.8f + 0.2f * (float) Math.sin(t * 0.17f + k * 1.9f);
             prev = null;
             for (int sgi = 0; sgi <= CURTAIN_SEGS; sgi++) {

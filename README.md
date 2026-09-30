@@ -123,6 +123,35 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.21.0
+Biome skies, rift awakening, voxel particles and the warp overlay.
+- **Biome sky states.** The Sift sky blends between biomes over about 3 s:
+  - Singer Meadow: pale mint (#8FC2C4) and pearl-white lava lamp, with bright electric-cyan aurora arcs
+    high overhead.
+  - Rose Spires and Frostbloom Spires: a heavy magenta, dusty rose and crimson gradient, with much denser
+    coloured fog (the fog starts at 12 and ends at 110 blocks).
+  - The sky still only draws in the Sift, and every push is paired with a pop.
+- **100-tick awakening.**
+  - Ticks 0-30: a ripple spreads while erratic lightning flashes. The structure is still invisible.
+  - Ticks 31-60: only the tiny centre box, its glow pulsing rapidly.
+  - Ticks 61-100: one ring of boxes every 10 ticks, from the centre outward.
+  - The rift becomes passable at tick 100.
+- **Dissolving voxel energy cubes.** Large 3D cubes (0.25-0.5 blocks) drift out of every rift, glowing
+  additively in colours set by the rift type:
+  - Sift: mint, cyan and pink.
+  - Nether: crimson, orange and ash gold.
+  - Overworld: coral and cream. End: blue and violet. Portal: cyan.
+  - At 75 % of their life they flatten into wide, thin slabs and fade out.
+- **Recessed alcove.** The rift's outer lip stands 0.3 blocks out from the wall with a chunky frame face,
+  so the opening sits in a thick alcove.
+- **Rim shimmer.** Ghost copies of the rims vibrate on top of the real rims. They are additive overlays,
+  so the geometry can never tear.
+- **Warp overlay.** Stepping into a rift plays an 80-tick overlay:
+  - Ticks 0-40: red/cyan chromatic jitter.
+  - Ticks 40-60: a solid orange-and-red flare.
+  - Tick 60: you are moved into the walk-through tunnel under the flare.
+  - Ticks 60-80: the flare fades out.
+
 ### 0.20.0
 Rifts rewritten from scratch. The old renderer, textured interiors, veils, screen-copy lens and
 per-vertex jitter are all deleted. The walk-through tunnel is unchanged.

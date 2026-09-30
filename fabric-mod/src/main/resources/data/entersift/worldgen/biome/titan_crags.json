@@ -42,7 +42,9 @@
         "spawns_by_category": {}
       }
     },
-    "minecraft:visual/fog_color": "#f4dfe6"
+    "minecraft:visual/fog_color": "#f4dfe6",
+    "minecraft:visual/fog_start_distance": 12.0,
+    "minecraft:visual/fog_end_distance": 110.0
   },
   "carvers": [],
   "features": [

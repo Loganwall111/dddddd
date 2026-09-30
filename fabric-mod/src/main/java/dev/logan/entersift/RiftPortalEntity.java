@@ -17,16 +17,16 @@ import net.minecraft.world.level.storage.ValueOutput;
  * It is a hollow, collision-free, unpickable volume with no model of its own. All visuals come from
  * the client {@code RiftPortalRenderer}. The server only ticks its age, which is synced so every
  * client plays the same growth timeline:
- *   ticks 0-20   puddle ripple (space buckles in the wall plane)
- *   ticks 21-50  incubation seed: one glowing box with erratic lightning
- *   ticks 51-80  voxel cluster expansion, tier by tier
- *   ticks 80+    stable: lens jitter, sparkles, floating hollow cubes, occasional arcs
+ *   ticks 0-30   puddle ripple with erratic lightning (the structure is still invisible)
+ *   ticks 31-60  incubation seed: one tiny pulsing box
+ *   ticks 61-100 voxel cluster fracture, one ring of boxes every 10 ticks
+ *   ticks 100+   stable: dissolving voxel energy cubes, floating hollow cubes, rim shimmer
  *
  * NBT (summon): RiftType (int, see {@link RiftType}), Width, Height (blocks), Rotation[0] = facing yaw.
  * Travel and lifetime stay in the data pack (marker tagged sift.rift), which owns these entities.
  */
 public class RiftPortalEntity extends Entity {
-    public static final int GROWN = 80;
+    public static final int GROWN = 100;
     private static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.FLOAT);

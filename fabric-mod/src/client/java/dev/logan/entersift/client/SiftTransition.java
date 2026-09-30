@@ -24,7 +24,10 @@ public final class SiftTransition {
     private SiftTransition() {}
 
     private static final Identifier FLASH = SiftContent.id("textures/gui/rift_flash.png");
-    private static final float MAX = 60f;
+    private static final Identifier GLITCH = SiftContent.id("textures/gui/rift_glitch.png");
+    private static final float MAX = 100f;
+    /** 0.21: effects this long (80 ticks from travel/warp) play the full rift warp overlay. */
+    private static final float WARP = 70f;
 
     private static float lastF = -1f, lengthTicks = 20f;
     private static long lastSeen;
@@ -70,6 +73,7 @@ public final class SiftTransition {
     private static void draw(GuiGraphicsExtractor g) {
         if (!SiftBudget.transitionHud) return;
         float f = progress();
+        if (f >= 0f && f < 1f && lengthTicks >= WARP) { warp(g, f * lengthTicks); return; }
         float a = alpha(f);
         if (a <= 0f) return;
         int w = g.guiWidth(), h = g.guiHeight();
@@ -83,6 +87,53 @@ public final class SiftTransition {
             g.fill(0, 0, fringe, h, argb(0.5f * a, 1f, 0.2f, 0.3f));
             g.fill(w - fringe, 0, w, h, argb(0.5f * a, 0.2f, 0.9f, 1f));
         }
+    }
+
+    /**
+     * 0.21 rift warp overlay, t = ticks since stepping in (80 total, un-skippable):
+     *   0-40   chromatic jitter: red and cyan copies of glitch slices and screen fringes slide apart by an
+     *          oscillating offset (sin(time) * 0.15 of the fringe width scale), growing stronger;
+     *   40-60  a blinding solid orange-and-red lens flare covers the whole screen (tunnel swap at 60);
+     *   60-80  the flare fades out, revealing the tunnel.
+     * The game exposes no post-processing hook to mods, so the channel split is drawn as tinted overlays.
+     */
+    private static void warp(GuiGraphicsExtractor g, float t) {
+        int w = g.guiWidth(), h = g.guiHeight();
+        double seconds = (System.nanoTime() / 1.0e9) % 10000.0;
+        if (t < 40f) {
+            float ramp = t / 40f;
+            float o = (float) Math.sin(seconds * 9.0) * 0.15f * w * 0.12f * (0.3f + 0.7f * ramp);
+            int off = Math.round(o), fringe = Math.max(2, Math.round(w * (0.01f + 0.03f * ramp))) + Math.abs(off);
+            g.fill(0, 0, w, h, argb(0.08f + 0.22f * ramp, 1f, 0.45f, 0.25f));
+            g.fill(0, 0, fringe, h, argb(0.45f * ramp + 0.1f, off >= 0 ? 1f : 0.2f, off >= 0 ? 0.15f : 0.95f, off >= 0 ? 0.25f : 1f));
+            g.fill(w - fringe, 0, w, h, argb(0.45f * ramp + 0.1f, off >= 0 ? 0.2f : 1f, off >= 0 ? 0.95f : 0.15f, off >= 0 ? 1f : 0.25f));
+            long frame = (long) (seconds * 10.0);                 // glitch slices re-roll 10 times a second
+            for (int k = 0; k < 7; k++) {
+                long r = mixBits(frame * 31 + k);
+                if ((r & 3) == 0 && ramp < 0.5f) continue;
+                int y = (int) ((r >>> 8 & 0xFFFF) / 65535f * h), sh = Math.max(2, (int) (h * (0.01f + 0.05f * ((r >>> 24 & 255) / 255f))));
+                g.fill(off, y, w + off, y + sh, argb(0.22f * (0.4f + ramp), 1f, 0.2f, 0.3f));
+                g.fill(-off, y + sh / 3, w - off, y + sh / 3 + sh, argb(0.22f * (0.4f + ramp), 0.2f, 0.9f, 1f));
+            }
+            blitTinted(g, GLITCH, off, 0, w, h, 256, 128, argb(0.3f * ramp, 1f, 0.3f, 0.35f));
+            blitTinted(g, GLITCH, -off, 0, w, h, 256, 128, argb(0.3f * ramp, 0.3f, 0.95f, 1f));
+            return;
+        }
+        float a = t < 60f ? Math.min(1f, 0.6f + (t - 40f) / 4f * 0.4f) : 1f - smoothK((t - 60f) / 20f);
+        if (a <= 0f) return;
+        g.fill(0, 0, w, h, argb(a, 1f, 0.45f, 0.12f));
+        float pulse = 1.05f + 0.05f * (float) Math.sin(seconds * 10.0) + Math.max(0f, t - 40f) / 40f * 0.3f;
+        int fw = Math.round(w * pulse), fh = Math.round(h * pulse);
+        blitTinted(g, FLASH, (w - fw) / 2, (h - fh) / 2, fw, fh, argb(a, 1f, 0.85f, 0.45f));
+        g.fill(0, 0, w, h / 5, argb(a * 0.35f, 0.95f, 0.15f, 0.1f));          // red flare bands top and bottom
+        g.fill(0, h - h / 5, w, h, argb(a * 0.35f, 0.95f, 0.15f, 0.1f));
+    }
+
+    private static float smoothK(float k) { k = Math.max(0f, Math.min(1f, k)); return k * k * (3f - 2f * k); }
+
+    private static void blitTinted(GuiGraphicsExtractor g, Identifier texture, int x, int y, int w, int h, int tw, int th, int color) {
+        if (((color >>> 24) & 255) == 0) return;
+        g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0f, 0f, w, h, tw, th, tw, th, color);
     }
 
     private static void blitTinted(GuiGraphicsExtractor g, Identifier texture, int x, int y, int w, int h, int color) {

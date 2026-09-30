@@ -382,7 +382,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:tunnel/enter',begin)                # 0.17: walk the tunnel, no cutscene
         self.assertIn('effect give @s entersift:rift_transit 2 0 true',fn('travel/legacy_begin'))
         self.assertIn('matches 61..',fn('travel/transit_tick'))               # teleport at tick 60, under the flare
-        for f in ('rift/transport','portal/cross','portal/return_tick'):
+        for f in ('travel/warp_go','portal/cross','portal/return_tick'):   # 0.21: rifts go through travel/warp first
             self.assertIn('travel/begin {dest:',fn(f)); self.assertNotIn('travel/destination_',fn(f))
         self.assertIn('transit_tick',fn('player/tick'))
         T=ROOT/'src/main/resources/assets/entersift/textures'
@@ -424,10 +424,8 @@ class DataContracts(unittest.TestCase):
         self.assertIn('vec3 dir = normalize(worldRay);',fsh)
         self.assertIn('float clouds(vec3 dir',fsh); self.assertIn('float ridge(float yaw',fsh)
         self.assertNotIn('Sampler0',fsh)
-        # 2. 0-80 lifecycle: ripple, seed + lightning, tiered snap; ripple hard-stopped, nothing pulses.
-        self.assertIn('RIPPLE_END = 20, SEED_START = 21, CLUSTER_START = 51, GROWN = 80',rift)
-        self.assertIn('age < RIPPLE_END + 8 && age < GROWN',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
-        self.assertIn('TIERS = 5',shape)
+        # 2. Lifecycle (0.21: 0-100): ripple hard-stopped, tiered snap.
+        self.assertIn('age < RIPPLE_END + 6 && age < GROWN',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
         # 3. Wide soft additive night curtains replace laser poles.
         self.assertIn('private static void curtains(',rift)
         for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
@@ -435,6 +433,34 @@ class DataContracts(unittest.TestCase):
         # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
         self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
         self.assertIn('no T-junctions',rift)
+    def test_v021_biome_skies_awakening_voxels_warp_overlay(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        rift=(C/'RiftPortalRenderer.java').read_text(); sky=(C/'SiftSky.java').read_text(); hud=(C/'SiftTransition.java').read_text()
+        # Directive 1: dimension guard, balanced push/pop, biome states A (meadow) and B (red canyons) + denser fog.
+        self.assertIn('dim.equals(SiftContent.id("the_sift"))',sky)
+        self.assertEqual(sky.count('pose.pushPose()'),sky.count('pose.popPose()'))
+        self.assertIn('rgb(0x8FC2C4)',sky); self.assertIn('ELECTRIC_CYAN',sky); self.assertIn('BASIN_MAGENTA',sky)
+        self.assertIn('"singer_meadow"',sky); self.assertIn('"rose_spires", "titan_crags"',sky)
+        for b in ('rose_spires','titan_crags'):
+            a=read(f'worldgen/biome/{b}.json')['attributes']
+            self.assertLess(a['minecraft:visual/fog_end_distance'],200)
+        # Directive 2: 100-tick awakening, one tier every 10 ticks, large dissolving voxel cubes per rift type.
+        self.assertIn('RIPPLE_END = 30, SEED_START = 31, CLUSTER_START = 61, GROWN = 100',rift)
+        self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f',rift)
+        self.assertIn('TIERS = 4',(C/'RiftShape.java').read_text())
+        self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
+        self.assertIn('(0.25f + 0.25f * RiftShape.hash(g, k, 7)) / 2f',rift)        # 0.25-0.5 block cubes
+        self.assertIn('if (f >= 0.75f)',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
+        self.assertIn('rgb(0xC0142A), rgb(0xFF6A1A), rgb(0xE0B040)',rift)
+        self.assertIn('GROWN = 100',(ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
+        self.assertIn('matches 100..5990',fn('rift/tick'))
+        # Directive 3: direction window kept, safe rim shimmer, recessed alcove frame, warp overlay then tunnel.
+        self.assertIn('float[] jit',rift); self.assertIn('private static void frame(',rift); self.assertIn('COLLAR = 0.3f',rift)
+        self.assertIn('travel/warp {dest:',fn('rift/transport'))
+        self.assertIn('effect give @s entersift:rift_transit 4 0 true',fn('travel/warp'))
+        self.assertIn('matches 160.. run function entersift:travel/warp_go',fn('travel/transit_tick'))
+        self.assertIn('matches 61..99 run function entersift:travel/transit_go',fn('travel/transit_tick'))
+        self.assertIn('private static void warp(',hud); self.assertIn('Math.sin(seconds * 9.0) * 0.15f',hud)
     def test_v0182_gpu_rifts_under_iris_and_pack_updates(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         types=(c/'client/SiftRenderTypes.java').read_text()
@@ -466,7 +492,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.20',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.21',(ROOT/'gradle.properties').read_text())
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()

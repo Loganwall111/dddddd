@@ -18,7 +18,7 @@ import java.util.List;
  */
 final class RiftShape {
     static final float BASE = 0.25f;     // bottom of the cluster above the anchor
-    static final int TIERS = 5;          // body tiers; satellites snap in as tier TIERS
+    static final int TIERS = 4;          // body tiers (one every 10 ticks); satellites snap in with the last
 
     final int cols, rows;
     final float cw, ch, w, h;
