@@ -8,7 +8,6 @@ import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import dev.logan.entersift.SiftContent;
-import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -32,10 +31,10 @@ import net.minecraft.client.renderer.rendertype.RenderType;
  * Iris API (reflection, so Iris stays optional): SKY -> gbuffers_skybasic, SOLID/GLOW ->
  * gbuffers_basic. Iris also flips the reverse-Z compare ops for us, so the depth states stay valid.
  *
- * 0.18.2: the GLSL rift pipelines (RIFT, RIFT_WALL, RIFT_GLOW, RIFT_LENS, TUNNEL) are deliberately NOT
+ * 0.18.2: the GLSL rift pipelines (RIFT, RIFT_WALL, RIFT_GLOW, TUNNEL) are deliberately NOT
  * assigned. Probing Iris 1.11.6 showed that an unassigned pipeline only logs "missing program" once
  * and is then drawn with its OWN compiled shader, so the full 0.18 rift (lensing, destination views,
- * jitter) renders unchanged under a shader pack. The rift shaders also write colortex1/colortex2
+ * curtains) renders unchanged under a shader pack. The rift shaders also write colortex1/colortex2
  * masks so the pack composite does not re-shade them.
  */
 public final class SiftRenderTypes {
@@ -103,16 +102,6 @@ public final class SiftRenderTypes {
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .build());
 
-    /**
-     * 0.18 REAL gravitational lens: RIFT_LENS samples the scene copy made by {@link SiftLens} (Sampler0) and
-     * bends it with the point-mass lens equation. Alpha-blended, depth-tested, no depth write.
-     */
-    public static final RenderPipeline RIFT_LENS_PIPELINE = RenderPipelines.register(riftVariant("rift_lens", "RIFT_LENS")
-            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
-            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
-            .build());
-
     /** 0.18 warp tunnel sphere around the camera inside the rift tunnel (core/tunnel). Always behind everything. */
     public static final RenderPipeline TUNNEL_PIPELINE = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
@@ -140,8 +129,6 @@ public final class SiftRenderTypes {
     public static final RenderType RIFT = RenderType.create("entersift_rift", RenderSetup.builder(RIFT_PIPELINE).createRenderSetup());
     public static final RenderType RIFT_WALL = RenderType.create("entersift_rift_wall", RenderSetup.builder(RIFT_WALL_PIPELINE).createRenderSetup());
     public static final RenderType RIFT_GLOW = RenderType.create("entersift_rift_glow", RenderSetup.builder(RIFT_GLOW_PIPELINE).createRenderSetup());
-    public static final RenderType RIFT_LENS = RenderType.create("entersift_rift_lens",
-        RenderSetup.builder(RIFT_LENS_PIPELINE).withTexture("Sampler0", SiftLens.ID).createRenderSetup());
     public static final RenderType TUNNEL = RenderType.create("entersift_tunnel", RenderSetup.builder(TUNNEL_PIPELINE).createRenderSetup());
 
     /** 0.17 sky overlays (panels, swirl blobs): normal alpha blend so colours stay saturated instead of adding up to white. */

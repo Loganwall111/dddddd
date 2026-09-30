@@ -116,7 +116,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('sift.rift_visual',fn('rift/anchor'))
         client=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('submitCustomGeometry',client)
-        self.assertIn('SiftRenderTypes.RIFT_LENS',client)  # 0.18: real lens pass replaces the jitter shell
+        self.assertIn('SiftRenderTypes.RIFT_GLOW',client)  # 0.20: window + walls + additive rims
         self.assertNotIn('lensHalo',client)
         self.assertFalse((ROOT/'src/client/java/dev/logan/entersift/client/RiftRenderer.java').exists())
         self.assertIn('tag=sift.rift_visual',fn('world/tick'))
@@ -254,8 +254,7 @@ class DataContracts(unittest.TestCase):
                     if tag in line and 'summon' in line:
                         self.assertIn('entersift:rift_portal',line,f'{path.name}: {line}')
         self.assertIn('matches 0 run scoreboard players set @s sift.target 3',fn('rift/create'))
-        for t in ['overworld','nether','end','sift','portal']:
-            self.assertTrue((R/f'assets/entersift/textures/rift/interior_{t}.png').exists())
+        self.assertFalse((R/'assets/entersift/textures/rift').exists())   # 0.20: interiors are procedural GLSL
         self.assertIn('RIFT_PORTAL',(ROOT/'src/main/java/dev/logan/entersift/SiftEntities.java').read_text())
     def test_new_scenery_generates_in_biomes(self):
         b=read('worldgen/biome/singer_meadow.json')
@@ -279,10 +278,8 @@ class DataContracts(unittest.TestCase):
         self.assertIn('SIFT_SKY_GLOW',(sp/'shaders.properties').read_text())
         # Rifts: dimension-dependent views, inset canvas, gradient rim, distance zoom + parallax.
         rift=(c/'client/RiftPortalRenderer.java').read_text()
-        for k in ['view_sift.png','view_overworld.png','INSET = 0.01f','the_sift','void band(','hollowCube(','zoom(float dist)','0.8f * t * t','RenderTypes.entityCutout(s.view)','RiftType.OVERWORLD.edge']:
+        for k in ['the_sift','void band(','float[] cube(']:
             self.assertIn(k,rift)
-        for n in ['view_sift','view_overworld']:
-            self.assertTrue((R/f'assets/entersift/textures/rift/{n}.png').exists())
     def test_v012_soft_aurora_curtains(self):
         sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
         for gone in ['shardRibbons','auroraStreaks','void panel(']: self.assertNotIn(gone,sky)   # no hard rectangles
@@ -355,7 +352,6 @@ class DataContracts(unittest.TestCase):
         self.assertIn('SiftRenderTypes.GLOW',souls); self.assertIn('the_sift',souls)
         self.assertIn('SiftSouls.register()',(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
         self.assertIn('animateTick',(ROOT/'src/main/java/dev/logan/entersift/IchorFluid.java').read_text())
-        self.assertIn('spill(',(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text())
         ents=(ROOT/'src/main/java/dev/logan/entersift/SiftEntities.java').read_text()
         self.assertIn('spawn("soul_valley"',ents); self.assertIn('spawn("campaign_peaks"',ents)
     def test_v0141_ritual_survives_duplicate_clicks(self):
@@ -389,10 +385,8 @@ class DataContracts(unittest.TestCase):
         for f in ('rift/transport','portal/cross','portal/return_tick'):
             self.assertIn('travel/begin {dest:',fn(f)); self.assertNotIn('travel/destination_',fn(f))
         self.assertIn('transit_tick',fn('player/tick'))
-        rift=(C/'RiftPortalRenderer.java').read_text()
-        self.assertIn('entityTranslucentEmissive(VEIL)',rift)
         T=ROOT/'src/main/resources/assets/entersift/textures'
-        for f in ('rift/veil.png','gui/rift_flash.png','gui/rift_glitch.png','mob_effect/rift_transit.png','rift/interior_portal.png'):
+        for f in ('gui/rift_flash.png','gui/rift_glitch.png','mob_effect/rift_transit.png'):
             self.assertTrue((T/f).is_file(),f)
         sky=(C/'SiftSky.java').read_text()
         self.assertIn('softPanels(',sky); self.assertIn('rgb(0xC86A92)',sky)
@@ -404,31 +398,43 @@ class DataContracts(unittest.TestCase):
         pack=re.search(r'PACK = "([^"]+)"',code).group(1)
         self.assertIn(f"archiveFileName = '{pack}'",gradle)      # 0.14 shipped mismatched names: no pack installed
         r=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
-        self.assertIn('case PORTAL -> INTERIOR[type.id];',r)
-        self.assertIn('outer bloom',r)
-        try: from PIL import Image
-        except ImportError: return                               # CI may lack Pillow; the name check above still runs
-        for n in ['interior_portal','view_sift','view_overworld']:
-            im=Image.open(R/f'assets/entersift/textures/rift/{n}.png').convert('RGB')
-            self.assertEqual(im.size,(256,128))
-            px=list(im.getdata()); mean=sum(sum(p) for p in px)/len(px)/3
-            self.assertGreater(mean,150,n)                       # luminous canvases, like the trailer
+        self.assertIn('4 ritual portal (cyan mosaic)',r)
+        self.assertIn('vec3 viewPortal(',(R/'assets/entersift/shaders/core/rift.fsh').read_text())
     def test_v019_stacked_box_rifts_crack_free_and_coral_interior(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
         # Stacked hollow boxes at different depths, with step walls and lip rims between them.
-        self.assertIn('static float boxes(',rift); self.assertIn('float[][] depth, float maxDepth',rift)
-        self.assertIn('private static float wallTop(',rift); self.assertIn('boolean lip)',rift)
-        self.assertIn('private static boolean same(',rift)
-        self.assertIn('-sh.maxDepth() - 0.05f',rift)
-        # Uniform jitter (no per-position phase -> no cracks between interior strips).
-        self.assertIn('return x + (float) Math.sin(gameTime() * 0.4f) * 0.05f;',rift)
-        self.assertNotIn('y * 1.9f + z * 0.7f',rift)
-        # Coral pixel interior without horizontal cloud bands; the whole view on a chunky grid.
-        self.assertIn('destination(type, px(lens, 56.0)',fsh)
-        self.assertIn('vec3(0.97, 0.43, 0.30)',fsh)
-        self.assertNotIn('bright horizon band',fsh)
-        self.assertNotIn('0.012 * vec2(sin(lens.y * 9.0',fsh)
+        shape=(C/'RiftShape.java').read_text()
+        self.assertIn('boxes(',shape); self.assertIn('maxDepth',shape)
+        # 0.20: no per-vertex jitter and no pixelated lens view; the window is sampled by view direction.
+        self.assertNotIn('gameTime() * 0.4f',rift); self.assertNotIn('px(lens',fsh)
+    def test_v020_clean_slate_rifts(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        rift=(C/'RiftPortalRenderer.java').read_text(); shape=(C/'RiftShape.java').read_text()
+        fsh=(S/'rift.fsh').read_text(); vsh=(S/'rift.vsh').read_text(); types=(C/'SiftRenderTypes.java').read_text()
+        # Everything from the old renderer is gone.
+        self.assertFalse((C/'SiftLens.java').exists()); self.assertNotIn('RIFT_LENS',types)
+        self.assertNotIn('SiftLens',(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
+        self.assertNotIn('riftLens',(C/'SiftBudget.java').read_text())
+        for t in ('rift_interiors.py','rift_scenes.py','preview_rifts.py'): self.assertFalse((ROOT/'tools'/t).exists())
+        self.assertFalse(list((D/'function/rift').glob('pose_*.mcfunction')))
+        self.assertNotIn('#riftphase',fn('rift/tick'))
+        # 1. Direction-sampled window: sharp, un-warped, moves only with yaw and pitch.
+        self.assertIn('worldRay = Position;',vsh)
+        self.assertIn('vec3 dir = normalize(worldRay);',fsh)
+        self.assertIn('float clouds(vec3 dir',fsh); self.assertIn('float ridge(float yaw',fsh)
+        self.assertNotIn('Sampler0',fsh)
+        # 2. 0-80 lifecycle: ripple, seed + lightning, tiered snap; ripple hard-stopped, nothing pulses.
+        self.assertIn('RIPPLE_END = 20, SEED_START = 21, CLUSTER_START = 51, GROWN = 80',rift)
+        self.assertIn('age < RIPPLE_END + 8 && age < GROWN',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
+        self.assertIn('TIERS = 5',shape)
+        # 3. Wide soft additive night curtains replace laser poles.
+        self.assertIn('private static void curtains(',rift)
+        for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
+        self.assertIn('age >= GROWN && s.night',rift)
+        # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
+        self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
+        self.assertIn('no T-junctions',rift)
     def test_v0182_gpu_rifts_under_iris_and_pack_updates(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         types=(c/'client/SiftRenderTypes.java').read_text()
@@ -441,7 +447,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('"isRenderingShadowPass"',types)
         # The GLSL rift pipelines must stay unassigned (Iris then draws them with our own shader).
         pairs=types[types.index('Object[][] pairs'):].split(';')[0]
-        for p in ['RIFT_PIPELINE','RIFT_WALL_PIPELINE','RIFT_GLOW_PIPELINE','RIFT_LENS_PIPELINE','TUNNEL_PIPELINE']:
+        for p in ['RIFT_PIPELINE','RIFT_WALL_PIPELINE','RIFT_GLOW_PIPELINE','TUNNEL_PIPELINE']:
             self.assertNotIn(p,pairs)
         # Pack masks: full-bright lightmap + non-world normal on opaque passes, zeros on blended ones.
         core=ROOT/'src/main/resources/assets/entersift/shaders/core'
@@ -450,7 +456,7 @@ class DataContracts(unittest.TestCase):
             self.assertIn('layout(location = 1) out vec4 packLight;',t)
             self.assertIn('layout(location = 2) out vec4 packNormal;',t)
             self.assertIn('packNormal = vec4(0.5, 0.5, 1.0, 0.0);',t)
-        self.assertIn('#if defined(RIFT_GLOW) || defined(RIFT_LENS)',(core/'rift.fsh').read_text())
+        self.assertIn('#if defined(RIFT_GLOW)',(core/'rift.fsh').read_text())
         # The pack composites skip pixels whose normal alpha is 0.
         pack=ROOT/'shaderpack/shaders'
         self.assertIn('if (nb.a > 0.5)',(pack/'program/composite.fsh').read_text())
@@ -460,25 +466,20 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.19',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.20',(ROOT/'gradle.properties').read_text())
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
         for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
-        self.assertIn('static int viewCode(State s)',rift); self.assertIn('(viewCode(s) + 0.5f) / 8f',rift)
-        self.assertIn('Math.sin(gameTime() * 0.4f',rift); self.assertIn(') * 0.05f',rift)   # edge jitter
+        self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
         self.assertIn('day >= 11500L && day <= 23300L',rift)                               # evening + night only
-        self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xFF3FD8)',rift)            # blue / magenta columns
+        self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
     def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); types=(C/'SiftRenderTypes.java').read_text()
         # The whole rift goes through the rift GLSL program; real lensing samples a scene copy.
-        for k in ('RIFT_WALL','RIFT_GLOW','RIFT_LENS'): self.assertIn(k,types); self.assertIn(k,(S/'rift.fsh').read_text())
-        self.assertIn('withTexture("Sampler0", SiftLens.ID)',types); self.assertNotIn('RIFT_HALO',types)
-        self.assertIn('thE * thE',(S/'rift.fsh').read_text())                 # point-mass lens equation
-        lens=(C/'SiftLens.java').read_text()
-        for k in ('copyTextureToTexture','USAGE_COPY_SRC','HudElementRegistry.addFirst','extends AbstractTexture'): self.assertIn(k,lens)
-        self.assertIn('DEPTH = 1.0f',rift); self.assertIn('static float cell(',rift); self.assertNotIn('LENS JITTER',rift)
+        for k in ('RIFT_WALL','RIFT_GLOW'): self.assertIn(k,types); self.assertIn(k,(S/'rift.fsh').read_text())
+        self.assertNotIn('RIFT_HALO',types); self.assertNotIn('LENS JITTER',rift)
         self.assertIn('random value 6..9',fn('rift/style')); self.assertIn('distance=..3.0',fn('rift/transport'))
         # Warp tunnel: invisible barriers, shorter, client-drawn burst.
         self.assertIn('minecraft:barrier hollow',fn('tunnel/build')); self.assertNotIn('tunnel_rib',fn('tunnel/build'))

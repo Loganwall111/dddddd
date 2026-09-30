@@ -123,6 +123,31 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
 
+### 0.20.0
+Rifts rewritten from scratch. The old renderer, textured interiors, veils, screen-copy lens and
+per-vertex jitter are all deleted. The walk-through tunnel is unchanged.
+- **True window interior.** Every back face samples the destination (sky, blocky Minecraft clouds,
+  blocky horizon) by the **world-space view direction** of each pixel. The view moves only with your yaw
+  and pitch, stays sharp and un-warped, and is identical across every box, so it never splits at the
+  crosshair and there is no flat peach texture. Destinations:
+  - Overworld: coral sky with cream clouds.
+  - Nether: crimson smoke, a fortress skyline and embers.
+  - End: blue starlight, a nebula and islands.
+  - Sift: mint sky with pink panels and pillars, glowing pink-white at night.
+  - Portal: a cyan mosaic.
+  - Overworld seen from inside the Sift: gold.
+- **0-80 tick lifecycle.**
+  - Ticks 0-20: a puddle ripple expands. It fades by tick 28 and never plays again.
+  - Ticks 21-50: a small glowing seed box appears, with lightning snapping to nearby block positions.
+  - Ticks 51-80: the boxes snap in tier by tier from the centre outward, each with a white flash.
+  - After tick 80 nothing pulses. Sparkles drift, hollow cubes float, and an arc appears now and then.
+- **Night curtains.** In the evening and at night, wide, soft curtains glow on the rift's flanks in
+  electric blue, pale cyan, deep magenta and purple, replacing the thin laser poles. They are gone by day.
+- **Slow wave.** The whole rift sways slowly (periods of 10-15 s), most strongly along the bottom. The
+  mesh has no T-junctions (one window per cell, one wall per cell edge), so the wave cannot crack it.
+- Removed: the `rift_lens` option, the rift PNGs, the old interior generators and dead datapack pose
+  functions.
+
 ### 0.19.0
 Rifts rebuilt against the trailer frames:
 - **Stacked hollow boxes.** The cluster is split into rectangular boxes (big deep centre box, arms and side
