@@ -55,9 +55,10 @@ final class SiftSmokeTest {
         });
     }
 
-    /** Places a walker, then starts the same entry function a crossing player runs. */
+    /** Places a walker, then starts the same entry function a crossing player runs. A zombie, not an
+     *  armor stand: it is a LivingEntity, so the tunnel's `effect give` line stays a valid command. */
     private static void enterRift(MinecraftServer server) {
-        run(server, "execute in minecraft:overworld run summon minecraft:armor_stand 0.5 120 0.5 {Tags:[\"sift.walker\"],NoGravity:1b,Invulnerable:1b}");
+        run(server, "execute in minecraft:overworld run summon minecraft:zombie 0.5 120 0.5 {Tags:[\"sift.walker\"],NoAI:1b,NoGravity:1b,Silent:1b,Invulnerable:1b,PersistenceRequired:1b}");
         run(server, "execute unless entity @e[tag=sift.walker] run say SIFT-SMOKE FAIL could not summon the rift walker");
         run(server, "scoreboard players set @e[tag=sift.walker] sift.cooldown 0");
         run(server, "execute in minecraft:overworld as @e[tag=sift.walker] at @s run function entersift:travel/begin {dest:3}");
@@ -67,24 +68,34 @@ final class SiftSmokeTest {
 
     /** Puts the walker at the far end of the corridor and ticks the tunnel logic that hands it over. */
     private static void walkTunnel(MinecraftServer server) {
+        // `execute in ...` is required for both: the function has to run inside the tunnel dimension.
         run(server, "execute in entersift:rift_tunnel as @e[tag=sift.walker] at @s run tp @s 0.5 64 30.0 0 0");
-        run(server, "as @e[tag=sift.walker] at @s run function entersift:tunnel/player_tick");
+        run(server, "execute in entersift:rift_tunnel as @e[tag=sift.walker] at @s run function entersift:tunnel/player_tick");
     }
 
     /** The walker must leave the tunnel, land in a real dimension and find a return rift waiting. */
     private static void checkArrival(MinecraftServer server) {
         int inTunnel = 0, elsewhere = 0, returnRifts = 0;
+        net.minecraft.world.phys.Vec3 arrived = null;
         for (net.minecraft.server.level.ServerLevel level : server.getAllLevels())
             for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
                 boolean walker = e.entityTags().contains("sift.walker");
                 boolean tunnel = level.dimension().identifier().equals(SiftContent.id("rift_tunnel"));
                 if (walker && tunnel) inTunnel++;
-                if (walker && !tunnel) elsewhere++;
-                if (!tunnel && e instanceof RiftPortalEntity) returnRifts++;
+                if (walker && !tunnel) { elsewhere++; arrived = e.position(); }
             }
+        // The exit rift has to be the one waiting at the walker's landing spot, not some other rift.
+        if (arrived != null)
+            for (net.minecraft.server.level.ServerLevel level : server.getAllLevels())
+                if (!level.dimension().identifier().equals(SiftContent.id("rift_tunnel")))
+                    for (net.minecraft.world.entity.Entity e : level.getAllEntities())
+                        if (e instanceof RiftPortalEntity && e.position().distanceTo(arrived) < 48.0)
+                            returnRifts++;
         EnterTheSift.LOGGER.info("SIFT-SMOKE crossing: walkerInTunnel={} walkerArrived={} riftsAtDestination={}", inTunnel, elsewhere, returnRifts);
         if (elsewhere == 0 || returnRifts == 0)
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL rift entry/arrival did not complete (inTunnel={}, arrived={}, returnRifts={})", inTunnel, elsewhere, returnRifts);
+        else
+            EnterTheSift.LOGGER.info("SIFT-SMOKE rift crossing completed: the walker left the tunnel and a rift is waiting there");
         run(server, "kill @e[tag=sift.walker]");
     }
 
