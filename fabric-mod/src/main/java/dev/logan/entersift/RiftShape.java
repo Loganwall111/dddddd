@@ -80,10 +80,28 @@ public final class RiftShape {
 
     // ------------------------------------------------------------------ trailer-exact stepped voxel silhouettes
 
+    /**
+     * 0.31 rift variants. Four of the eight styles are the usual stepped cross everyone sees; the other
+     * four are the TALL variant the references show — a very tall central wall that towers over the
+     * side boxes instead of the wide stepped arms. Chosen from the same seed the client renders with.
+     */
+    public static boolean tallVariant(float w, float h) {
+        return h >= w * 1.25f; // tall rift = taller than it is wide; derived from w/h so both sides agree
+    }
+
     private static boolean inBody(RiftType type, long seed, float u, float v, float xb, float yb, int i, int j, int cols, int rows, float xspan, float yspan) {
         switch (type) {
             case SIFT:
             case OVERWORLD: {
+                if (tallVariant(xspan, yspan)) {
+                    // Tall variant (references 17345525 / The_Nether): one very tall wall, a short base and
+                    // two small side boxes, so the silhouette is TALL and narrow instead of a wide cross.
+                    boolean tower = (i >= 4 && i <= 6 && j >= 0 && j <= 7);
+                    boolean baseSkirt = (i >= 3 && i <= 7 && j >= 0 && j <= 1);
+                    boolean leftStep = (i == 3 && j >= 2 && j <= 4);
+                    boolean rightStep = (i == 7 && j >= 1 && j <= 3);
+                    return tower || baseSkirt || leftStep || rightStep;
+                }
                 // Exact trailer stepped cross silhouette (Images 1, 2, 3, 14, 19, 27, 36):
                 // - Tall narrow top cap: col 5, rows 6..7
                 // - Upper stepped shoulders: cols 3..7, rows 4..5

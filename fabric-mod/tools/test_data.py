@@ -35,7 +35,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('return RIFT_BIRTH - 6f + Math.min(tier, RiftShape.TIERS - 1) * 2f;',rift)
         # 0.30: stepped frosted box with one small clear square window.
         self.assertIn('private static void boxFaces(',rift)
-        self.assertIn('float[] face = mix(mix(look.wallFront(), look.wallBack(), 0.30f), c(0.78f, 0.80f, 0.84f), 0.45f);',rift)
+        self.assertIn('float[] face = look.frost();',rift)
         self.assertIn('private static boolean isWindow(RiftShape sh, int i, int j)',rift)
         self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a, s);',rift)
         self.assertIn('public boolean windowCell(int i, int j)',shape)
@@ -57,6 +57,40 @@ class DataContracts(unittest.TestCase):
         for key in ('rift_bolts','rift_shockwave'):
             self.assertIn(key,budget)
 
+    def test_v031_styles_variants_frost_and_aura_squares(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; M=ROOT/'src/main/java/dev/logan/entersift'
+        rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        shape=(M/'RiftShape.java').read_text(); budget=(C/'SiftBudget.java').read_text()
+        style=fn('rift/style'); anchor=fn('rift/anchor')
+        # Eight rift styles: 0-5 destinations plus the white reference (6) and the steep olive wall (7),
+        # each with its own frost tone measured from the reference crops.
+        self.assertIn('private record Look(float[] core, float[] halo, float[] wallFront, float[] wallBack, float[] frost) {}',rift)
+        self.assertIn('private static Look lookFor(int value)',rift)
+        self.assertIn('c(0.86f, 0.44f, 0.40f)',rift)   # measured red frost #9a3d36
+        self.assertIn('c(0.92f, 0.88f, 0.66f)',rift)   # measured yellow frost #d9c96c
+        self.assertIn('c(0.52f, 0.55f, 0.60f)',rift)   # measured olive frost #6e7781
+        self.assertIn('const vec3 TINT[8] = vec3[8](',fsh); self.assertIn('const vec3 FROST[8] = vec3[8](',fsh)
+        # The frosted sheet clears as you walk up, and never goes fully clear.
+        self.assertIn('static final float FROST_NEAR = 7.5f, FROST_CLEAR = 1.6f, FROST_ALPHA = 0.5f;',rift)
+        self.assertIn('static float frostProximity(Vector3f cam)',rift)
+        self.assertIn('float frost = 0.55f * frostProximity(cam);',rift)
+        self.assertIn('float frostAmt = clamp(riftData.a * 2.0 - 1.0, 0.0, 1.0);',fsh)
+        self.assertIn('float a = max(0.50 * edgeFade * fogFade() * fade, frostAmt * 0.62 * edgeFade * fogFade());',fsh)
+        self.assertIn('riftProximity = flag(props, "rift_proximity", true)',budget)
+        # Two silhouette variants: the usual wide cross and the tall wall, decided by w/h on both sides.
+        self.assertIn('public static boolean tallVariant(float w, float h)',shape)
+        self.assertIn('return h >= w * 1.25f;',shape)
+        self.assertIn('boolean tower = (i >= 4 && i <= 6 && j >= 0 && j <= 7);',shape)
+        self.assertIn('random value 0..4',style); self.assertIn('random value 9..11',style)
+        # The aura is now one-pixel-thin luminous panes that rise above the rift and disintegrate halfway up.
+        self.assertIn('private static void thinSquare(',rift)
+        self.assertIn('float thin = 1f / 16f; // exactly one block-texture pixel thick',rift)
+        self.assertIn('float top = sh.y(sh.rows);',rift)
+        self.assertIn('float climb = clamp(f / 0.55f, 0f, 1f);',rift)
+        self.assertIn('half *= 1f - d * 0.85f;',rift)
+        # Style follows w/h, so a tall rift is drawn tall on the client and collided tall on the server.
+        self.assertIn('if (tallVariant(xspan, yspan)) {',shape)
+
     def test_v028_back_fade_dissolves_the_receding_structure(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
@@ -72,10 +106,10 @@ class DataContracts(unittest.TestCase):
         self.assertIn('spokeFade(sh, (q[0] + q[2]) * 0.5f, (q[1] + q[3]) * 0.5f)',rift)
         self.assertIn('0.95f * sp',rift)
         # The opening itself stays clear; only the detached window panels fade.
-        self.assertIn('winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade)',rift)
+        self.assertIn('winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade, frost);',rift)
         self.assertIn('* backFade(b[5])',rift)
         # The shader multiplies the window by the per-quad fade carried in the vertex colour.
-        self.assertIn('* riftData.a) * ColorModulator;',fsh)
+        self.assertIn('fragColor = vec4(mix(scene, tint, max(alpha, frostAmt * 0.5)), a) * ColorModulator;',fsh)
         self.assertIn('riftBackFade',budget); self.assertIn('"rift_back_fade"',budget)
 
     def test_rift_scene_capture_and_depth_guard(self):
@@ -551,7 +585,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn(f"archiveFileName = '{pack}'",gradle)      # 0.14 shipped mismatched names: no pack installed
         r=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('4 ritual portal (cyan mosaic)',r)
-        self.assertIn('view == 4', (R/'assets/entersift/shaders/core/rift.fsh').read_text())
+        self.assertIn('vec3(0.20, 0.80, 0.95), vec3(0.95, 0.85, 0.25), vec3(1.0, 0.97, 0.96), vec3(1.0, 0.78, 0.52));', (R/'assets/entersift/shaders/core/rift.fsh').read_text())
     def test_v019_stacked_box_rifts_crack_free_and_coral_interior(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
@@ -581,7 +615,7 @@ class DataContracts(unittest.TestCase):
         # 3. Wide soft additive night curtains replace laser poles.
         self.assertNotIn('private static void curtains(',rift)
         for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
-        self.assertIn('energyCubes(p, vc, sh, s, a)',rift)
+        self.assertIn('energyCubes(p, vc, sh, s, cam, a)',rift)
         # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
         self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
         self.assertIn('no T-junctions',rift)
@@ -601,8 +635,8 @@ class DataContracts(unittest.TestCase):
         self.assertIn('RIFT_BIRTH - 6f + Math.min(tier, RiftShape.TIERS - 1) * 2f',rift)
         self.assertIn('TIERS = 4',(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text())
         self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
-        self.assertIn('float hx = half, hy = half, hz = half;',rift)        # 0.25-0.5 block cubes
-        self.assertIn('if (f >= 0.68f)',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
+        self.assertIn('thinSquare(p, vc, cam, x, y, z, half, thin, pal[(int) (RiftShape.hash(g, k, 8) * 3f) % 3], a);',rift)  # 0.31: panes, not cubes
+        self.assertIn('if (f >= 0.34f) { // disintegrate: shrink to a spark, fade to nothing by the half-way mark',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
         self.assertIn('rgb(0xC0142A), rgb(0xFF6A1A), rgb(0xE0B040)',rift)
         self.assertIn('GROWN = 100',(ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
         self.assertIn('matches 100..5990',fn('rift/tick'))
@@ -666,7 +700,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.30.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.31.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -684,8 +718,8 @@ class DataContracts(unittest.TestCase):
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
-        for v in ('view == 0','view == 1','view == 2','view == 4'): self.assertIn(v,fsh)
-        self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
+        for v in ('const vec3 TINT[8] = vec3[8](','vec3(0.95, 0.25, 0.18)','vec3(0.65, 0.38, 0.85)','vec3(0.20, 0.80, 0.95)'): self.assertIn(v,fsh)
+        self.assertIn('static int viewCode(RiftType type, boolean inSift, long seed)',rift)
         self.assertIn('clock >= 13_000L && clock < 23_000L',rift)                         # strict local night; Endure in the Sift
         self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
     def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
@@ -805,7 +839,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.30.0-alpha',props)
+        self.assertIn('mod_version=0.31.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

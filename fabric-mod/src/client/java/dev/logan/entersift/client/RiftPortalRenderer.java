@@ -49,6 +49,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * white, and a few ticks later the white dissolves into the rift's colours.
      */
     static final float SHOCK_END = 40f, RIFT_BIRTH = 42f, RIFT_COLOUR = 48f;
+    /** Distance (blocks) at which the frosted layer starts to clear, and where it is as clear as it gets. */
+    static final float FROST_NEAR = 7.5f, FROST_CLEAR = 1.6f, FROST_ALPHA = 0.5f;
     static final int SUB = 4; // subdivisions per cell edge so vertical sides curve smoothly with the wave
     static final float[] VIBRANT_PINK_DAY = rgb(0xFF6FA8);
     static final float[] DEEP_AMBER_NIGHT = rgb(0xDB7840);
@@ -90,7 +92,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         long clock = SiftTides.ticks(level);
         // Endure is the Sift's night-like tide; outside the Sift, use the local world clock's night range.
         s.night = s.inSift ? SiftTides.isEndure(clock) : clock >= 13_000L && clock < 23_000L;
-        s.view = viewCode(s.type, s.inSift);
+        s.view = viewCode(s.type, s.inSift, s.seed);
     }
 
     @Override
@@ -107,27 +109,56 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * cream clouds), 1 Nether (crimson smoke, fortress), 2 End (blue starlit islands), 3 Sift (mint sky,
      * pillars; pink-white at night), 4 ritual portal (cyan mosaic), 5 the Overworld seen from the Sift (gold).
      */
-    static int viewCode(RiftType type, boolean inSift) {
+    /**
+     * The window's style index. 0-5 are the destinations; 6 and 7 are the reference styles (white cross and
+     * the steep olive wall). Rift types 1 and 2 alternate between the plain destination colour and a
+     * reference style so every world shows several colours of rift, as the references do.
+     */
+    static int viewCode(RiftType type, boolean inSift, long seed) {
+        float pick = RiftShape.hash(seed, 7, 233); // stable per rift, and the only source of the style
+        if (type == RiftType.SIFT || type == RiftType.OVERWORLD) return pick < 0.30f ? 6 : pick < 0.60f ? 0 : 5;
+        if (type == RiftType.NETHER) return pick < 0.30f ? 7 : pick < 0.60f ? 1 : 5;
+        if (type == RiftType.END) return pick < 0.40f ? 6 : 2;
         return type.id;
     }
 
     /** Per-destination colours: rim core, rim halo, wall at the lip, wall at the back (trailer frames). */
-    private record Look(float[] core, float[] halo, float[] wallFront, float[] wallBack) {}
+    private record Look(float[] core, float[] halo, float[] wallFront, float[] wallBack, float[] frost) {}
 
+    /**
+     * Eight rift styles. 0-5 are the destinations; 6 is the white reference rift (17345525) and 7 the
+     * steep green-grey wall (The_Nether). The last two are full-colour variants with a grey frosted layer
+     * so they stay close to the reference, which is what the references show: some rifts green, some
+     * lime, some red, some yellow, some orange. Frost tones are the measured averages of the reference
+     * crops (olive #6e7781, red #9a3d36, yellow #d9c96c, orange #daa687, pink #dfcfd5) lifted to a
+     * frosted brightness so they read as glass, not paint.
+     */
     private static final Look[] LOOKS = {
-        // 0 overworld: warm coral-peach inner walls + pure white neon rim (Images 1, 27, 36)
-        new Look(c(1f, 0.99f, 0.97f), c(1f, 0.58f, 0.46f), c(1f, 0.86f, 0.78f), c(0.88f, 0.42f, 0.44f)),
-        // 1 nether: fiery crimson-ruby inner walls + white-gold & orange neon rim (Images 8, 13, 25)
-        new Look(c(1f, 0.97f, 0.86f), c(1f, 0.38f, 0.18f), c(0.96f, 0.52f, 0.44f), c(0.58f, 0.12f, 0.20f)),
-        // 2 end: twilight rose-plum inner walls + pale lime-white & violet neon rim (Images 7, 8, 24)
-        new Look(c(0.98f, 1f, 0.92f), c(0.82f, 0.56f, 0.96f), c(0.94f, 0.68f, 0.86f), c(0.46f, 0.24f, 0.54f)),
-        // 3 sift: warm coral-rose & salmon-cream inner walls + crisp white neon rim (Images 1, 2, 3, 27, 36)
-        new Look(c(1f, 1f, 1f), c(1f, 0.62f, 0.58f), c(1f, 0.84f, 0.80f), c(0.84f, 0.38f, 0.48f)),
-        // 4 portal: electric cyan & deep turquoise walls + ice-white neon rim (Images 5, 6, 10, 31)
-        new Look(c(0.94f, 1f, 1f), c(0.22f, 0.94f, 1f), c(0.62f, 0.98f, 1f), c(0.08f, 0.46f, 0.64f)),
-        // 5 gold (Overworld seen from the Sift): blazing golden-yellow walls & lemon-white rim (Images 19, 20)
-        new Look(c(1f, 0.99f, 0.72f), c(1f, 0.86f, 0.18f), c(1f, 0.92f, 0.48f), c(0.78f, 0.54f, 0.12f)),
+        // 0 overworld: warm coral-peach inner walls + pure white neon rim + warm pink frost
+        new Look(c(1f, 0.99f, 0.97f), c(1f, 0.58f, 0.46f), c(1f, 0.86f, 0.78f), c(0.88f, 0.42f, 0.44f), c(0.90f, 0.75f, 0.76f)),
+        // 1 nether: fiery crimson-ruby walls + white-gold rim + measured red frost (#9a3d36)
+        new Look(c(1f, 0.97f, 0.86f), c(1f, 0.38f, 0.18f), c(0.96f, 0.52f, 0.44f), c(0.58f, 0.12f, 0.20f), c(0.86f, 0.44f, 0.40f)),
+        // 2 end: twilight rose-plum walls + pale lime-white & violet rim + blue-grey frost
+        new Look(c(0.98f, 1f, 0.92f), c(0.82f, 0.56f, 0.96f), c(0.94f, 0.68f, 0.86f), c(0.46f, 0.24f, 0.54f), c(0.52f, 0.44f, 0.58f)),
+        // 3 sift: warm coral-rose walls + crisp white rim + measured pink frost (#dfcfd5)
+        new Look(c(1f, 1f, 1f), c(1f, 0.62f, 0.58f), c(1f, 0.84f, 0.80f), c(0.84f, 0.38f, 0.48f), c(0.88f, 0.81f, 0.83f)),
+        // 4 portal: electric cyan walls + ice-white rim
+        new Look(c(0.94f, 1f, 1f), c(0.22f, 0.94f, 1f), c(0.62f, 0.98f, 1f), c(0.08f, 0.46f, 0.64f), c(0.40f, 0.70f, 0.78f)),
+        // 5 gold (Overworld seen from the Sift): blazing golden walls + lemon-white rim + measured yellow frost (#d9c96c)
+        new Look(c(1f, 0.99f, 0.72f), c(1f, 0.86f, 0.18f), c(1f, 0.92f, 0.48f), c(0.78f, 0.54f, 0.12f), c(0.92f, 0.88f, 0.66f)),
+        // 6 the white reference rift (17345525): everything white, the pure glowing cross
+        new Look(c(1f, 1f, 1f), c(1f, 0.92f, 0.94f), c(1f, 0.98f, 0.98f), c(0.96f, 0.88f, 0.90f), c(0.97f, 0.96f, 0.96f)),
+        // 7 the steep wall reference (The_Nether): measured olive-grey frost (#6e7781), orange inner glow
+        new Look(c(1f, 0.86f, 0.62f), c(1f, 0.62f, 0.30f), c(0.96f, 0.80f, 0.62f), c(0.52f, 0.30f, 0.18f), c(0.52f, 0.55f, 0.60f)),
     };
+
+    /** 0-5 come from the destination; 6 (white) and 7 (steep wall) are the reference styles, chosen per rift. */
+    private static Look lookFor(int value) {
+        if (value < 0 || value >= LOOKS.length) { // non-destructive guard: wrap instead of clamping to a wrong one
+            value = ((value % LOOKS.length) + LOOKS.length) % LOOKS.length;
+        }
+        return LOOKS[value];
+    }
 
     /** Night curtain colours: electric blue, pale cyan, deep magenta, purple. */
     static final float[][] CURTAIN = {rgb(0x2F6BFF), rgb(0x9FF6FF), rgb(0xD13CFF), rgb(0x7A3CFF)};
@@ -168,6 +199,18 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /** 1 at the front plane, 0 once the geometry has receded FADE_FAR behind it. */
+    /**
+     * 0.31 proximity: 1 while the camera is far from the rift, easing to 0 as it approaches, so the frosted
+     * layer clears as you walk up to the opening without ever becoming fully transparent. The distance is
+     * measured in the rift's own rotated frame: dz is how far the camera stands in front of the plane.
+     */
+    static float frostProximity(Vector3f cam) {
+        if (!SiftBudget.riftProximity) return 1f;
+        float dz = Math.abs(cam.z);
+        float f = clamp((dz - FROST_CLEAR) / (FROST_NEAR - FROST_CLEAR), 0f, 1f);
+        return f * f * (3f - 2f * f); // smoothstep, so it eases rather than snapping
+    }
+
     static float backFade(float z) {
         if (!SiftBudget.riftBackFade) return 1f;
         float f = clamp((-z - FADE_NEAR) / (FADE_FAR - FADE_NEAR), 0f, 1f);
@@ -195,14 +238,23 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         vc.addVertex(p, wx, wy, wz).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), Math.max(0f, Math.min(1f, a)));
     }
 
-    /** Window vertex: colour carries (face u, face v, view code, fade). The shader samples by view direction. */
+    /**
+     * Window vertex. Colour carries (face u, face v, view code, alpha) and alpha is split: the fraction
+     * above {@link #FROST_ALPHA} is the proximity term the shader turns into "the frosted layer clears as
+     * you get closer", the rest is the ordinary fade. A vertex with no proximity data packs 0 + fade/2.
+     */
     private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code, float fade) {
+        win(p, vc, wv, sh, x, y, z, code, fade, 0f);
+    }
+
+    private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code, float fade, float frostTint) {
         if (!SiftBudget.take(vc)) return;
         float span = Math.max(sh.w, sh.h) * 1.15f;
         float u = clamp(0.5f + x / span, 0f, 1f), v = clamp(0.5f + (y - sh.cy()) / span, 0f, 1f);
         float wx = x + wv.dx(x, y, z), wy = y + wv.dy(x, y, z), wz = z + wv.dz(x, y, z);
         if (!Float.isFinite(wx + wy + wz)) { wx = 0f; wy = 0f; wz = 0f; }
-        vc.addVertex(p, wx, wy, wz).setColor(u, v, code, clamp(fade, 0f, 1f));
+        float a = clamp(fade, 0f, 1f) * 0.5f + clamp(frostTint, 0f, 1f) * 0.5f;
+        vc.addVertex(p, wx, wy, wz).setColor(u, v, code, a);
     }
 
     // ------------------------------------------------------------------ submit
@@ -214,7 +266,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         // (curtains / energyCubes / spark / night motes) remains midnight-gated. The next line is kept as
         RiftShape sh = SHAPES.computeIfAbsent(s.seed * 1315423911L + Float.floatToIntBits(s.w) * 131L + Float.floatToIntBits(s.h),
             k -> RiftShape.build(s.type, s.seed, s.w, s.h));
-        Look look = LOOKS[Math.max(0, Math.min(LOOKS.length - 1, s.view))];
+        Look look = lookFor(s.view);
         // Fix front-face: the rift's +Z window must face the player direction, not away. The original
         // `-s.yaw` placed the bright fractured side behind the observer; adding 180 deg flips it so the
         // neon-rimmed cavity faces the camera (Image 2, 6, 7). Cam is rotated oppositely to stay consistent.
@@ -228,6 +280,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         // 0.29r: the rift snaps in white and dissolves into its colours a few ticks later.
         float fl = whiteFlash(age);
         Look look2 = fl > 0.001f ? whiten(look, fl) : look;
+        // 0.31: how frosted the glazed square is right now — full when you are away from it, light when close.
+        float frost = 0.55f * frostProximity(cam);
         float wf = 1f - 0.75f * fl;
         Warp wv = Warp.STILL; // crisp voxel edges; distortion belongs behind the opening
         Warp still = Warp.STILL;
@@ -249,8 +303,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (age <= SHOCK_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> shockwave(p, vc, still, sh, look, s, cam, age));
             if (age >= CLUSTER_START) {
                 float a = age;
-                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf));
-                else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf));
+                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf, frost));
+                else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf, frost, look2));
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look2, a, s));
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> {
                     boxFaces(p, vc, wv, sh, look2, cam, a, s);
@@ -265,7 +319,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 });
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look2, a));
                 if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
-                    out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
+                    out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, cam, a));
                 if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look2, cam, s));
             }
         } finally {
@@ -275,7 +329,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     /** Encodes palette and tide; framebuffer capture belongs to RiftScene, not this method. */
     private static float encodeView(State s) {
-        return (s.view + (s.night ? 8 : 0) + 0.5f) / 16f;
+        return (s.view + (s.night ? 8 : 0) + 0.5f) / 32f;
     }
 
     // ------------------------------------------------------------------ timeline
@@ -293,7 +347,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static Look whiten(Look look, float k) {
         float[] w = c(1f, 1f, 1f);
         return new Look(mix(look.core(), w, k * 0.85f), mix(look.halo(), w, k * 0.85f),
-            mix(look.wallFront(), w, k * 0.92f), mix(look.wallBack(), w, k * 0.92f));
+            mix(look.wallFront(), w, k * 0.92f), mix(look.wallBack(), w, k * 0.92f), mix(look.frost(), w, k * 0.80f));
     }
 
     private static boolean shown(RiftShape sh, int i, int j, float age) { return sh.on(i, j) && age >= appearAt(sh.tier[i][j]); }
@@ -566,21 +620,27 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     private static void winQuadSub(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh,
                                    float x0, float y0, float x1, float y1, float z, float code, float fade) {
+        winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade, 0f);
+    }
+
+    private static void winQuadSub(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh,
+                                   float x0, float y0, float x1, float y1, float z, float code, float fade, float frost) {
         for (int sx = 0; sx < SUB; sx++) for (int sy = 0; sy < SUB; sy++) {
             float xa = x0 + (x1 - x0) * (sx / (float) SUB), xb = x0 + (x1 - x0) * ((sx + 1) / (float) SUB);
             float ya = y0 + (y1 - y0) * (sy / (float) SUB), yb = y0 + (y1 - y0) * ((sy + 1) / (float) SUB);
-            win(p, vc, wv, sh, xa, ya, z, code, fade); win(p, vc, wv, sh, xb, ya, z, code, fade);
-            win(p, vc, wv, sh, xb, yb, z, code, fade); win(p, vc, wv, sh, xa, yb, z, code, fade);
+            win(p, vc, wv, sh, xa, ya, z, code, fade, frost); win(p, vc, wv, sh, xb, ya, z, code, fade, frost);
+            win(p, vc, wv, sh, xb, yb, z, code, fade, frost); win(p, vc, wv, sh, xa, yb, z, code, fade, frost);
         }
     }
 
-    private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s, float fade) {
+    private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s, float fade, float frost) {
         boolean boxFace = SiftBudget.riftBoxFace;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
             if (boxFace && !sh.windowCell(i, j)) continue; // the stepped box is frosted; boxFaces draws it
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
-            winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade); // opening stays clear
+            // The glazed square keeps a frosted sheet over it that clears (never fully) as the camera closes in.
+            winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade, frost);
         }
         if (boxFace) return; // satellites and cubes are frosted boxes too, drawn by boxFaces
         for (float[] b : sh.sats) {
@@ -604,13 +664,18 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      */
     private static void boxFaces(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, float age, State s) {
         if (!SiftBudget.riftBoxFace) return;
-        // Reference frames are grey-toned: the box mass is frosted cool white, the rims keep the type colour.
-        float[] face = mix(mix(look.wallFront(), look.wallBack(), 0.30f), c(0.78f, 0.80f, 0.84f), 0.45f);
+        // The frosted layer carries the rift's own colour (green / lime / red / yellow / orange), and the
+        // frosted tips are the cells furthest from the window, warmed towards the inner glow.
+        float[] face = look.frost();
+        float[] tip = mix(look.frost(), look.core(), 0.30f);
+        float[] pane = mix(face, tip, clamp((age - RIFT_BIRTH) / 30f, 0f, 1f));
         float[] edge = mix(look.core(), c(1f, 1f, 1f), 0.45f);
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age) || sh.windowCell(i, j)) continue;
             float z = -sh.d(i, j);
-            rectSub(p, vc, wv, sh.x(i), sh.y(j), sh.x(i + 1), sh.y(j + 1), z, face, 0.95f);
+            // Cells further from the glazed square stand taller and take the warm tip tone.
+            boolean tipCell = Math.abs(i - 5) + Math.abs(j - 3) >= 4;
+            rectSub(p, vc, wv, sh.x(i), sh.y(j), sh.x(i + 1), sh.y(j + 1), z, tipCell ? pane : face, 0.95f);
             // Lit border around the glazed square, so the hole reads as cut into the box.
             float bx0 = sh.x(i), bx1 = sh.x(i + 1), by0 = sh.y(j), by1 = sh.y(j + 1);
             if (isWindow(sh, i - 1, j)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx0, by1, z + 0.012f}, 0.05f, edge, 0.55f);
@@ -630,7 +695,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /** rift_shader=false fallback: flat vertical gradient in the destination colours (no shader). */
-    private static void windowsFlat(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, State s, float fade) {
+    private static void windowsFlat(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, State s, float fade, float frost, Look look) {
         float[][] g = switch (s.view) {
             case 1 -> new float[][]{c(0.95f, 0.30f, 0.12f), c(0.45f, 0.05f, 0.05f)};
             case 2 -> new float[][]{c(0.30f, 0.28f, 0.62f), c(0.05f, 0.06f, 0.18f)};
@@ -644,6 +709,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (SiftBudget.riftBoxFace && !sh.windowCell(i, j)) continue; // boxFaces draws the frosted panels
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
             float[] lo = mix(g[0], g[1], (float) j / sh.rows), hi = mix(g[0], g[1], (float) (j + 1) / sh.rows);
+            // No-shader path: the sheet takes the frost tone and thins towards the inner glow as you approach.
+            lo = mix(lo, mix(look.frost(), look.core(), 0.25f), frost * 2f);
+            hi = mix(hi, mix(look.frost(), look.core(), 0.25f), frost * 2f);
             col(p, vc, wv, x0, y0, z, lo, 0.18f * fade); col(p, vc, wv, x1, y0, z, lo, 0.18f * fade);
             col(p, vc, wv, x1, y1, z, hi, 0.18f * fade); col(p, vc, wv, x0, y1, z, hi, 0.18f * fade);
         }
@@ -906,43 +974,84 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * any time; this aura is the only midnight-gated element. The string `velocityY = -0.035f` is
      * Previously they were small opaque 0.25-0.5 cubes drifting down inside the window.
      */
-    private static void energyCubes(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float age) {
+    private static void energyCubes(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, Vector3f cam, float age) {
         // Trailer aura: only around midnight (s.night). Rifts themselves are 24 h.
         if (!s.night) return;
         float[][] pal = ENERGY[Math.max(0, Math.min(ENERGY.length - 1, s.type.id))];
         float ramp = clamp((age - CLUSTER_START) / (GROWN - CLUSTER_START), 0f, 1f);
         int count = Math.round(7 * (0.3f + 0.7f * ramp));
         if (age >= GROWN) count = Math.round(11 * (0.5f + 0.5f * ramp));
-        float velocityY = -0.035f; // magnitude — direction inverted below so cubes rise (see Image 6)
+        // The reference aura (Screenshot 2026-09-23 172138): large luminous panes, one texture pixel thin,
+        // that rise above the top of the rift and disintegrate around half way up their climb.
+        float top = sh.y(sh.rows);
         for (int k = 0; k < count; k++) {
-            float life = 2.2f + 1.6f * RiftShape.hash(s.seed, k, 120), period = life + 0.9f * RiftShape.hash(s.seed, k, 121);
+            float life = 3.4f + 2.2f * RiftShape.hash(s.seed, k, 120), period = life + 1.1f * RiftShape.hash(s.seed, k, 121);
             float tt = s.time + RiftShape.hash(s.seed, k, 122) * period;
             int gen = (int) (tt / period);
             float f = (tt - gen * period) / life;
             if (f >= 1f || f < 0f) continue;
             long g = s.seed + gen * 7919L;
-            float ticks = f * life * 20f;
-            // Surround the rift: sample on an expanded ellipse, not inside the window.
+            // Surround the rift, then climb from just above its top lip to a full rift-height above it.
             float ang = RiftShape.hash(g, k, 1) * (float) (Math.PI * 2.0);
-            float radX = (sh.w * 0.58f + 0.9f) * (0.85f + 0.3f * RiftShape.hash(g, k, 3));
-            float radY = (sh.h * 0.58f + 0.9f) * (0.85f + 0.3f * RiftShape.hash(g, k, 4));
+            float radX = (sh.w * 0.52f + 0.7f) * (0.80f + 0.4f * RiftShape.hash(g, k, 3));
+            float radY = 0.35f * RiftShape.hash(g, k, 4);
             float x = (float) Math.cos(ang) * radX;
-            // Rise upward: invert the stored negative velocity and start near bottom lip
-            float y = (RiftShape.BASE + RiftShape.hash(g, k, 2) * sh.h * 0.35f) + (-velocityY) * ticks * 1.8f;
-            float z = 0.15f + (RiftShape.hash(g, k, 5) - 0.5f) * 0.6f;
-            // Big, thin-tall stretching rectangles (Image 6): hx thin, hy tall
-            float half = (0.38f + 0.38f * RiftShape.hash(g, k, 7)) / 2f; // 0.19-0.38 -> ~0.38-0.76 diameter, bigger than before
-            float hx = half, hy = half, hz = half;
-            // Translucent aura — much softer than the previous 0.85
-            float a = 0.42f * Math.min(1f, f / 0.10f) * (0.55f + 0.45f * RiftShape.hash(g, k, 9));
-            // Late-life: stretch even taller & thinner while fading
-            if (f >= 0.68f) {
-                float d = (f - 0.68f) / 0.32f;
-                hx *= 1f - d * 0.5f; hy = hx; hz = hx;
+            float z = 0.15f + (RiftShape.hash(g, k, 5) - 0.5f) * 0.8f;
+            float climb = clamp(f / 0.55f, 0f, 1f); // dissolves around half way up, never reaching the top of its arc
+            float y = top + radY + climb * sh.h * 1.15f;
+            // MUCH bigger than the old cubes, and one texture pixel (1/16 block) thin.
+            float half = 0.42f + 0.42f * RiftShape.hash(g, k, 7);
+            float thin = 1f / 16f; // exactly one block-texture pixel thick
+            float a = 0.55f * Math.min(1f, f / 0.08f) * (0.55f + 0.45f * RiftShape.hash(g, k, 9));
+            if (f >= 0.34f) { // disintegrate: shrink to a spark, fade to nothing by the half-way mark
+                float d = clamp((f - 0.34f) / 0.28f, 0f, 1f);
+                half *= 1f - d * 0.85f;
                 a *= (1f - d) * (1f - d);
             }
-            if (a < 0.01f) continue;
-            voxel(p, vc, x, y, z, hx, hy, hz, pal[(int) (RiftShape.hash(g, k, 8) * 3f) % 3], a);
+            if (a < 0.012f) continue;
+            thinSquare(p, vc, cam, x, y, z, half, thin, pal[(int) (RiftShape.hash(g, k, 8) * 3f) % 3], a);
+        }
+    }
+
+    /**
+     * A luminous pane one texture pixel thin, always facing the camera, with a bright rim. This is the
+     * aura shape the references show above the rift (flat squares, not chunky cubes).
+     */
+    private static void thinSquare(PoseStack.Pose p, VertexConsumer vc, Vector3f cam, float x, float y, float z,
+                                   float half, float thin, float[] tone, float alpha) {
+        float nx = cam.x - x, ny = cam.y - y, nz = cam.z - z;
+        float nl = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (nl < 1e-4f) return;
+        nx /= nl; ny /= nl; nz /= nl;
+        // Camera basis: right = worldUp x normal, up = normal x right.
+        float rx = -nz, ry = 0f, rz = nx;
+        float rl = (float) Math.sqrt(rx * rx + rz * rz);
+        if (rl < 1e-4f) { rx = 1f; rz = 0f; } else { rx /= rl; rz /= rl; }
+        float ux = ny * rz - nz * ry, uy = nz * rx - nx * rz, uz = nx * ry - ny * rx;
+        float[] white = c(1f, 1f, 1f);
+        float ox = nx * thin * 0.5f, oy = ny * thin * 0.5f, oz = nz * thin * 0.5f;
+        for (int side = -1; side <= 1; side += 2) {
+            float cx = x + ox * side, cy = y + oy * side, cz = z + oz * side;
+            float[] v0 = {cx - rx * half - ux * half, cy - ry * half - uy * half, cz - rz * half - uz * half};
+            float[] v1 = {cx + rx * half - ux * half, cy + ry * half - uy * half, cz + rz * half - uz * half};
+            float[] v2 = {cx + rx * half + ux * half, cy + ry * half + uy * half, cz + rz * half + uz * half};
+            float[] v3 = {cx - rx * half + ux * half, cy - ry * half + uy * half, cz - rz * half + uz * half};
+            col(p, vc, Warp.STILL, v0[0], v0[1], v0[2], tone, alpha);
+            col(p, vc, Warp.STILL, v1[0], v1[1], v1[2], tone, alpha);
+            col(p, vc, Warp.STILL, v2[0], v2[1], v2[2], tone, alpha);
+            col(p, vc, Warp.STILL, v3[0], v3[1], v3[2], tone, alpha);
+        }
+        // Bright rim so a one-pixel-thin pane still reads as a square at distance.
+        float[][] loop = {
+            {-rx * half - ux * half, -ry * half - uy * half, -rz * half - uz * half},
+            { rx * half - ux * half,  ry * half - uy * half,  rz * half - uz * half},
+            { rx * half + ux * half,  ry * half + uy * half,  rz * half + uz * half},
+            {-rx * half + ux * half, -ry * half + uy * half, -rz * half + uz * half}
+        };
+        for (int i = 0; i < 4; i++) {
+            float[] a0 = {x + loop[i][0], y + loop[i][1], z + loop[i][2]};
+            float[] b0 = {x + loop[(i + 1) % 4][0], y + loop[(i + 1) % 4][1], z + loop[(i + 1) % 4][2]};
+            line(p, vc, Warp.STILL, cam, a0, b0, Math.max(thin, half * 0.06f), white, alpha * 0.9f);
         }
     }
 
