@@ -305,10 +305,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float x1 = (float) Math.cos(a1) * rx * wobble1, y1 = sh.cy() + (float) Math.sin(a1) * ry * wobble1;
             float z0 = 0.08f + 0.04f * (float) Math.sin(a0 * 2f + age * 0.16f);
             float z1 = 0.08f + 0.04f * (float) Math.sin(a1 * 2f + age * 0.16f);
-            win(p, vc, wv, sh, 0f, sh.cy(), 0.08f, code);
-            win(p, vc, wv, sh, x0, y0, z0, code);
-            win(p, vc, wv, sh, x1, y1, z1, code);
-            win(p, vc, wv, sh, 0f, sh.cy(), 0.08f, code);
+            win(p, vc, wv, sh, 0f, sh.cy(), 0.08f, code, 1f); // aperture fan: opening stays clear
+            win(p, vc, wv, sh, x0, y0, z0, code, 1f);
+            win(p, vc, wv, sh, x1, y1, z1, code, 1f);
+            win(p, vc, wv, sh, 0f, sh.cy(), 0.08f, code, 1f);
         }
     }
 
