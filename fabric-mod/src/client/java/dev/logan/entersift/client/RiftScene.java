@@ -52,7 +52,7 @@ public final class RiftScene {
             return;
         }
         try {
-            var main = client.getMainRenderTarget();
+            var main = client.gameRenderer.mainRenderTarget();
             if (!main.hasDepth() || main.width < 1 || main.height < 1) return;
             if (copy == null || copy.width != main.width || copy.height != main.height
                     || copy.getColorTexture().getFormat() != main.getColorTexture().getFormat()

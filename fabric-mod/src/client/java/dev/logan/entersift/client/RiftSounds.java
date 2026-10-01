@@ -65,6 +65,7 @@ public final class RiftSounds {
         Hum(Object owner) {
             super(SiftSounds.RIFT_HUM, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
             this.owner = owner;
+            volume = 0f;
             looping = true;
             delay = 0;
             attenuation = SoundInstance.Attenuation.LINEAR;

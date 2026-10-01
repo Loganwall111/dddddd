@@ -20,7 +20,7 @@ public final class RiftBlockEntity extends BlockEntity {
     public void setYaw(float yaw) { this.yaw = yaw; setChanged(); }
 
     public static void tick(Level world, BlockPos pos, BlockState state, RiftBlockEntity self) {
-        if (self.age < 100) self.age++;
+        if (self.age < 100) { self.age++; if (self.age == 100) self.setChanged(); }
         if (!(world instanceof ServerLevel server)) return;
         if (!self.opened) {
             self.opened = true;
@@ -42,6 +42,12 @@ public final class RiftBlockEntity extends BlockEntity {
         }
         int light = Math.min(15, 5 + Math.round((float) ((8 - closest) * 1.25)));
         if (state.getValue(RiftCoreBlock.POWER) != light) server.setBlock(pos, state.setValue(RiftCoreBlock.POWER, light), 3);
+    }
+    @Override public net.minecraft.nbt.CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        return saveWithoutMetadata(registries);
+    }
+    @Override public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
     }
     @Override protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
