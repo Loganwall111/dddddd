@@ -45,7 +45,9 @@ scoreboard players remove @s[scores={sift.cooldown=1..}] sift.cooldown 1
 scoreboard players remove @s[scores={sift.ghost=1..}] sift.ghost 1
 execute if score @s sift.ghost matches 1.. run function entersift:soul/ghost_tick
 execute if score @s sift.ghost matches 0 if entity @s[tag=sift.ghost] run function entersift:soul/end
-execute store result score #second sift.roll run time query gametime
+# 0.22: driven by the pack's own tick counter (#time, see entersift:tick). 26.x /time query takes a
+# TIMELINE id, so the legacy "gametime" keyword is a parse error that kills this whole function.
+scoreboard players operation #second sift.roll = #time sift.clock
 scoreboard players set #twenty sift.roll 20
 scoreboard players operation #second sift.roll %= #twenty sift.roll
 execute if score #second sift.roll matches 0 if block ~ ~ ~ entersift:ichor run function entersift:soul/ichor

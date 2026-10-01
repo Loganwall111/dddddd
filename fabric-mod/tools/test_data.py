@@ -560,6 +560,32 @@ class DataContracts(unittest.TestCase):
         self.assertTrue((sp/'world_sift/shadow.vsh').exists())
         self.assertIn('SIFT_SIFT_LIGHT',(sp/'shaders.properties').read_text())
         self.assertIn('MAX_H = 24f',(C/'SiftClouds.java').read_text())
+    def test_no_legacy_time_query_keywords(self):
+        # 26.x /time query takes a TIMELINE id ("time [of <clock>] query <timeline>"). The pre-26
+        # keywords daytime/gametime are a PARSE error, so the whole function fails to load and every
+        # caller (the rift gauntlet, the tick loop) silently stops working. v0.22 shipped both.
+        for p in (D/'function').rglob('*.mcfunction'):
+            body='\n'.join(l for l in p.read_text().splitlines() if not l.lstrip().startswith('#'))
+            for bad in ('time query daytime','time query gametime','time query day'):
+                self.assertNotIn(bad,body,str(p))
+            self.assertNotIn('run time query ',body,str(p))  # only valid form is "query <namespace:id>"
+    def test_per_second_logic_uses_own_tick_counter(self):
+        self.assertIn('scoreboard players operation #second sift.roll = #time sift.clock',fn('player/tick'))
+        self.assertIn('scoreboard players add #time sift.clock 1',fn('tick'))
+    def test_v022_renderers_use_the_level_render_api(self):
+        # 0.22 first shipped WorldRenderEvents/MultiBufferSource (removed in 26.3) plus the pre-26
+        # net.minecraft.client.renderer.RenderType package: the fabric check failed to compile.
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        for name in ('RiftStaffRenderer','GauntletWearRenderer'):
+            src=(C/f'{name}.java').read_text()
+            self.assertIn('LevelRenderEvents.COLLECT_SUBMITS',src,name)
+            self.assertIn('context.submitNodeCollector()',src,name)
+            self.assertIn('SiftRenderTypes.GLOW',src,name)
+            for bad in ('WorldRenderEvents','WorldRenderContext','MultiBufferSource',
+                        'net.minecraft.client.renderer.RenderType;','mc.renderBuffers()'):
+                self.assertNotIn(bad,src,f'{name}: {bad}')
+        self.assertIn('SiftContent.RIFT_STAFF',(C/'RiftStaffRenderer.java').read_text())
+        self.assertIn('SiftContent.GAUNTLET',(C/'GauntletWearRenderer.java').read_text())
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))
