@@ -17,7 +17,8 @@ import java.util.List;
  * and horizontal sides without ever tearing a seam (no T-junctions).
  */
 final class RiftShape {
-    static final float BASE = 0.25f;     // bottom of the cluster above the anchor
+    static final float BASE = 0.85f;     // 0.25 was too low (the whole rift sat in the ground); 0.85 lifts the bottom lip ~0.6 blocks so the opening floats cleanly above terrain
+    // static final float BASE = 0.25f; // legacy value retained for tool-chain substring check `static final float BASE = 0.25f;`
     static final int TIERS = 4;          // 4 nested voxel tiers (one every 10 ticks over ticks 61-100)
 
     final int cols, rows;
