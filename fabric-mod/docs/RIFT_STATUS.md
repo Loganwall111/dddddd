@@ -235,4 +235,5 @@ lattice of translucent glass slabs whose every beam is white on BOTH sides.
   `tools/rift_item_art.py`.
 
 Still source-level only: no GPU here, so the beam thickness, the wave and the block's in-hand size have
-not been seen rendered.
+not been seen rendered. The 26.3 client compile over the new `rim(...)` signature is confirmed green in
+CI (run 36941443986, 543a7d2).

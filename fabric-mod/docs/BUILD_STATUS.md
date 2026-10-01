@@ -205,3 +205,14 @@ Local gates: 69 data-contract tests, 613-file validation (157 functions), seven 
   1.5-unit gap above the collar, and `tools/rift_item_art.py` draws a block-face texture for it.
 - The staff textures and the gauntlet texture are no longer byte-identical (they were, which is what the
   user was looking at).
+
+## Sift Overhaul 0.33.0-alpha: CI verified (run 36941443986, 543a7d2)
+
+Green end to end on `543a7d2` — 69 data-contract tests, 613-file validation (157 functions), seven
+regenerated generators, 82 shader programs, the 26.3 client compile, shader-pack bundling and the
+dedicated-server smoke test (entry, corridor hand-off, destination search, arrival, return rift). Artifact
+`Sift-Overhaul-0.33.0-alpha-26.3`.
+
+The eight `rim(...)` call sites were changed in the same pass as the signature that now takes the cell
+centre; that combination is the one that broke CI once before, so it was checked here by grep and is now
+confirmed by the compiler.
