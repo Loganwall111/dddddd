@@ -125,7 +125,7 @@ Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` �
 
 ### 0.25.0-alpha — Sift Overhaul
 - Sift time now uses its own 24,000-tick Flow / Thrive / Endure clock; Overworld time no longer drives Sift skies or rift night checks.
-- Rifts only render and open at night (Endure inside the Sift). Their opening starts as a small circular lens, twists into an expanding aperture, and keeps the 0.24 warped stepped edges. White motes and server particles are reduced; energy drifts downward and lightning remains.
+- Rifts only render and open at night (Endure inside the Sift; the Overworld clock's night everywhere else, Nether and End included). Their opening starts as a small circular lens, twists into an expanding aperture, and keeps the 0.24 warped stepped edges. White motes and server particles are reduced; energy drifts downward and lightning remains.
 - Ichor aquifers are dry; tiny 1–2-block rainbow puddles/springs are rare. Animated still/flow/overlay sheets are mirrored and smoothly blended.
 - The Boneyard keeps its world key but is named **Canopy**, with a prominent skull, tusks and large ribcages built from visible bone blocks. Crags are smaller and less frequent.
 - Added **Jelly Lands**: dense blue distance fog, a deep-blue sky, pink turf/grass and pale trees, with frequent Blub groups.

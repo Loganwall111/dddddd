@@ -1,11 +1,7 @@
 scoreboard players add @s sift.age 1
-execute store result score #rift_time sift.day run time query daytime
-execute if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999 run function entersift:rift/close
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999 run function entersift:rift/close
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches 23000.. run function entersift:rift/close
-execute if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches 23000.. run return 0
+function entersift:rift/night
+execute unless score #rift_night sift.day matches 1 run function entersift:rift/close
+execute unless score #rift_night sift.day matches 1 run return 0
 # Sparse motes only; most of the rift's visible energy is drawn by the client renderer.
 execute if predicate {type:"minecraft:random_chance",chance:0.06} run particle minecraft:end_rod ~ ~0.5 ~ 0.9 0.7 0.12 0.003 1 normal
 # Passable once the voxel cluster has fully assembled (RiftPortalEntity growth = 100 ticks).

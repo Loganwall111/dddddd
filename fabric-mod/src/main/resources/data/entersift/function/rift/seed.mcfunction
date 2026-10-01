@@ -1,8 +1,8 @@
 # Creative rift seed block: a real, night-only rift (transport marker + client-rendered anchor), facing the placer.
-execute store result score #rift_time sift.day run time query daytime
-execute if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches 23000.. run return 0
+function entersift:rift/night
+execute if dimension entersift:the_sift unless score #rift_night sift.day matches 1 as @a[distance=..16] run title @s actionbar {"text":"Rifts open only during Endure in the Sift.","color":"dark_purple"}
+execute unless dimension entersift:the_sift unless score #rift_night sift.day matches 1 as @a[distance=..16] run title @s actionbar {"text":"Rifts open only at night.","color":"dark_purple"}
+execute unless score #rift_night sift.day matches 1 run return 0
 kill @e[type=minecraft:marker,tag=sift.rift,distance=..2.5]
 kill @e[type=entersift:rift_portal,tag=sift.rift_visual,distance=..2.5]
 summon minecraft:marker ~ ~ ~ {Tags:["sift.rift","sift.new_rift","sift.seeded"]}

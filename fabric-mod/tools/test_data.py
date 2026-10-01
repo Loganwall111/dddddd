@@ -6,6 +6,53 @@ R=ROOT/'src/main/resources'
 D=R/'data/entersift'
 def fn(name): return (D/f'function/{name}.mcfunction').read_text()
 def read(path): return json.loads((D/path).read_text())
+# Every function that opens, keeps or charges for a rift starts with the same two-line night gate.
+RIFT_GATED=('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at','rift/seed')
+GATE_LINE='execute unless score #rift_night sift.day matches 1 run return 0'
+def commands(text):
+    """Command lines of an .mcfunction file: comments and blanks dropped, macro `$` prefix stripped."""
+    return [l.lstrip('$').strip() for l in text.splitlines() if l.strip() and not l.lstrip().startswith('#')]
+
+def run_rift_night(dimension, overworld, sift):
+    """Tiny interpreter for the exact command subset rift/night.mcfunction is allowed to use.
+
+    Returns the final #rift_night score. It exists so the gate is tested by what it DOES (the first 0.25 gate
+    was text that passed string checks while two of its three lines were no-ops), and it raises on any command
+    outside the subset so the helper cannot quietly grow behaviour the test does not model.
+    """
+    scores={}
+    clocks={'minecraft:overworld':overworld,'entersift:sift':sift}
+    def in_range(value,spec):
+        lo,_,hi=spec.partition('..')
+        if not _: return value==int(spec)
+        return (lo=='' or value>=int(lo)) and (hi=='' or value<=int(hi))
+    def run(line):
+        w=line.split()
+        if w[0]=='scoreboard' and w[1:3]==['players','set']:
+            scores[(w[3],w[4])]=int(w[5]); return
+        if w[0]=='scoreboard' and w[1:3]==['players','operation'] and w[5]=='%=':
+            a,b=(w[3],w[4]),(w[6],w[7]); scores[a]=scores[a]%scores[b]; return
+        if w[0]=='time' and w[1]=='of' and w[3:5]==['query','time']:
+            return clocks[w[2]]
+        if w[0]!='execute': raise AssertionError('unsupported command in rift/night: '+line)
+        i=1; store=None
+        while True:
+            if i>=len(w): raise AssertionError('execute chain in rift/night never reaches `run`: '+line)
+            if w[i]=='run': break
+            kind=w[i]
+            if kind in ('if','unless') and w[i+1]=='dimension':
+                if (w[i+2]==dimension)!=(kind=='if'): return
+                i+=3
+            elif kind in ('if','unless') and w[i+1]=='score' and w[i+4]=='matches':
+                if in_range(scores[(w[i+2],w[i+3])],w[i+5])!=(kind=='if'): return
+                i+=6
+            elif kind=='store' and w[i+1:i+3]==['result','score']:
+                store=(w[i+3],w[i+4]); i+=5
+            else: raise AssertionError('unsupported execute clause in rift/night: '+line)
+        result=run(' '.join(w[i+1:]))
+        if store is not None: scores[store]=result if result is not None else 0
+    for line in commands(fn('rift/night')): run(line)
+    return scores[('#rift_night','sift.day')]
 class DataContracts(unittest.TestCase):
     def test_load_does_not_reset_existing_souls(self):
         self.assertNotIn('scoreboard players set @a sift.souls',fn('load'))
@@ -248,12 +295,9 @@ class DataContracts(unittest.TestCase):
         self.assertIn('tag @s add sift.awakened',fn('rift/punch'))
         self.assertIn('@s[tag=sift.awakened]',fn('world/roll'))
         self.assertIn('if dimension minecraft:the_nether',fn('rift/wave_player'))
-        for path in ('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at','rift/seed'):
-            text=fn(path)
-            self.assertIn('time query daytime',text,path)
-            self.assertIn('if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999',text,path)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999',text,path)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches 23000..',text,path)
+        for path in RIFT_GATED:
+            self.assertIn('function entersift:rift/night',fn(path),path)
+            self.assertIn(GATE_LINE,fn(path),path)
         renderer=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('if (!s.night && s.type != RiftType.PORTAL) return;',renderer)
         self.assertNotIn('getOverworldClockTime()',renderer)
@@ -551,7 +595,7 @@ class DataContracts(unittest.TestCase):
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
         for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
         self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
-        self.assertIn('clock >= 13_000L && clock < 23_000L',rift)                         # strict local night; Endure in the Sift
+        self.assertIn('SiftTides.isRiftNight(level, s.inSift)',rift)                      # strict local night; Endure in the Sift
         self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
     def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
@@ -659,18 +703,111 @@ class DataContracts(unittest.TestCase):
         self.assertIn('entersift:jelly_lands',fn('world/pulse'))
         # Rifts are gated to local night/Endure; the opening is circular, twisted, and less particle-heavy.
         rift=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
-        self.assertIn('SiftTides.isEndure(clock)',rift)
+        self.assertIn('SiftTides.isRiftNight(level, s.inSift)',rift)
+        self.assertIn('isEndure(ticks(level))',(ROOT/'src/client/java/dev/logan/entersift/client/SiftTides.java').read_text())
         self.assertIn('openingWindow(',rift); self.assertIn('rippleRing(',rift)
         self.assertIn('if (!s.night && s.type != RiftType.PORTAL) return;',rift)
         self.assertIn('int k = 0; k < 9; k++',rift)
         self.assertIn('int count = Math.round(7 *',rift)
-        for path in ('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at','rift/seed'):
-            text=fn(path)
-            self.assertIn('if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999',text)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999',text)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches 23000..',text)
+        for path in RIFT_GATED:
+            self.assertIn('function entersift:rift/night',fn(path),path)
+            self.assertIn(GATE_LINE,fn(path),path)
         self.assertIn('RiftType:4,Width:3f,Height:4f',fn('portal/return_tick'))
         props=(ROOT/'gradle.properties').read_text()
         self.assertIn('mod_version=0.25.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
+    # ------------------------------------------------------------------ 0.25.1: rifts must actually open
+    def test_no_legacy_time_query_keywords(self):
+        """26.x reads the word after `time query` as a TIMELINE id. `daytime`/`day` therefore fail to parse,
+        and one bad command stops the whole function from loading (0.25: rifts could not be created, punched,
+        seeded, spawned or ticked, and the CI server smoke test failed). `gametime` and `time` are still keywords."""
+        for p in sorted((R/'data').rglob('*.mcfunction')):
+            for n,line in enumerate(commands(p.read_text()),1):
+                for clock,word in re.findall(r'\btime(?:\s+of\s+(\S+))?\s+query\s+(\S+)',line):
+                    ok=word in ('gametime','time') or ':' in word
+                    self.assertTrue(ok,f'{p.relative_to(R)}: `time query {word}` is not valid on 26.x (use a timeline id or `of <clock> query time`): {line}')
+                    if word=='time': self.assertTrue(clock,f'{p.relative_to(R)}: `query time` needs an explicit `of <clock>`: {line}')
+
+    def test_execute_chains_always_run_something(self):
+        """A bare `execute if ...` with no `run` is a valid command that does nothing. 0.25 shipped night gates
+        written that way: two of their three lines were no-ops, so rifts could still open by day."""
+        for p in sorted((R/'data').rglob('*.mcfunction')):
+            for line in commands(p.read_text()):
+                if line.startswith('execute '):
+                    self.assertIn(' run ',line,f'{p.relative_to(R)}: execute chain never runs a command: {line}')
+
+    def test_rift_night_helper_reads_clocks_explicitly(self):
+        text=fn('rift/night')
+        self.assertIn('time of entersift:sift query time',text)       # the Sift's own clock
+        self.assertIn('time of minecraft:overworld query time',text)  # everyone else; Nether has no default clock
+        self.assertTrue((D/'world_clock/sift.json').exists())
+        self.assertEqual(read('timeline/sift_cycle.json')['clock'],'entersift:sift')
+        self.assertEqual(read('dimension_type/the_sift.json')['default_clock'],'entersift:sift')
+
+    def test_rift_night_gate_opens_only_at_night_in_every_dimension(self):
+        sift_clocks=list(range(0,24000,250))+[12999,13000,22999,23000,23999]
+        for offset in (0,24000,24000*40):  # total ticks keep growing; only the tick of the day matters
+            for tick in sift_clocks:
+                for overworld in (0,6000,14000):  # the Overworld clock must not decide the Sift
+                    got=run_rift_night('entersift:the_sift',overworld+offset,tick+offset)
+                    self.assertEqual(got,1 if tick>=13000 else 0,f'sift clock {tick}, overworld {overworld}')
+            for tick in sift_clocks:
+                for dim in ('minecraft:overworld','minecraft:the_nether','minecraft:the_end','entersift:rift_tunnel'):
+                    for sift in (0,14000):  # nor may the Sift's clock decide anyone else's night
+                        got=run_rift_night(dim,tick+offset,sift+offset)
+                        self.assertEqual(got,1 if 13000<=tick<23000 else 0,f'{dim} overworld clock {tick}, sift {sift}')
+
+    def test_rift_functions_stop_at_the_gate_before_any_side_effect(self):
+        """The gate must be the first real work: no summon, kill, soul charge, cooldown or particle before it."""
+        harmless=re.compile(r'^execute .* run (title @s actionbar|title @a\[distance=\.\.16\] actionbar|function entersift:rift/close)\b|^execute .* as @a\[distance=\.\.16\] run title @s actionbar\b')
+        for path in RIFT_GATED:
+            lines=commands(fn(path))
+            self.assertIn('function entersift:rift/night',lines,path)
+            at=lines.index('function entersift:rift/night')
+            self.assertIn(GATE_LINE,lines[at:],path)
+            gate=lines.index(GATE_LINE,at)
+            for before in lines[:at]:
+                self.assertEqual(before,'scoreboard players add @s sift.age 1',f'{path}: {before}')  # rift/tick ages itself first
+            for between in lines[at+1:gate]:
+                self.assertRegex(between,harmless,f'{path}: only messages/close may sit between the helper and the gate')
+        # A rift that is closing must not be charged for or keep ticking: close, then stop.
+        tick=commands(fn('rift/tick'))
+        self.assertLess(tick.index('execute unless score #rift_night sift.day matches 1 run function entersift:rift/close'),tick.index(GATE_LINE))
+        # The gauntlet charges souls and starts its cooldown only after the gate (never charge for a daytime attempt).
+        at_gate=commands(fn('rift/punch_at')).index(GATE_LINE)
+        for i,line in enumerate(commands(fn('rift/punch_at'))):
+            if 'sift.souls' in line or 'sift.cooldown' in line: self.assertGreater(i,at_gate,line)
+        at_gate=commands(fn('rift/punch')).index(GATE_LINE)
+        for i,line in enumerate(commands(fn('rift/punch'))):
+            if 'tag @s add sift.awakened' in line or 'player/init' in line: self.assertGreater(i,at_gate,line)
+
+    def test_rift_punch_and_seed_explain_a_closed_gate(self):
+        self.assertIn('Rifts open only at night.',fn('rift/punch'))
+        self.assertIn('Rifts open only during Endure in the Sift.',fn('rift/punch'))
+        # The creative seed block is consumed when placed, so it must say why nothing opened.
+        self.assertIn('Rifts open only at night.',fn('rift/seed'))
+        self.assertIn('Rifts open only during Endure in the Sift.',fn('rift/seed'))
+
+    def test_client_and_server_agree_on_when_rifts_are_open(self):
+        """The client hides rifts outside the window the data pack enforces; the numbers must be the same."""
+        tides=(ROOT/'src/client/java/dev/logan/entersift/client/SiftTides.java').read_text()
+        const=lambda name: int(re.search(name+r'\s*=\s*([0-9_]+)L',tides).group(1).replace('_',''))
+        self.assertEqual((const('ENDURE_START'),const('NIGHT_START'),const('NIGHT_END'),const('PERIOD')),(13000,13000,23000,24000))
+        text=fn('rift/night')
+        self.assertIn('#day_ticks sift.day 24000',text)
+        self.assertIn('if dimension entersift:the_sift if score #rift_time sift.day matches 13000..23999',text)
+        self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches 13000..22999',text)
+        # Non-Sift dimensions follow the Overworld clock on the client too (the Nether has no default clock at all).
+        self.assertIn('isEndure(ticks(level))',tides)
+        self.assertIn('level.getOverworldClockTime()',tides)
+        renderer=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('s.night = SiftTides.isRiftNight(level, s.inSift);',renderer)
+
+    def test_smoke_test_drives_the_rift_gate_on_a_real_server(self):
+        smoke=(ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text()
+        for needle in ('checkRiftGate(server);','checkRiftSeedAndClose(server);','checkGauntlet(server);',
+                       'entersift:rift/seed {style:3,target:3,yaw:0.0}','SIFT-SMOKE FAIL rift gate'):
+            self.assertIn(needle,smoke)
+        # The open rift the later anchor check needs requires the Sift to be at Endure when it is created.
+        self.assertLess(smoke.index('"time of entersift:sift set 14000"'),smoke.index('rift/natural");\n        run(server, "execute in entersift:the_sift run function entersift:world/tick");'))
 if __name__=='__main__': unittest.main(verbosity=2)

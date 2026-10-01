@@ -17,6 +17,7 @@ scoreboard objectives add sift.deaths deathCount
 scoreboard objectives add sift.seen dummy
 scoreboard players add #time sift.clock 0
 scoreboard players add #rift_time sift.day 0
+scoreboard players add #rift_night sift.day 0
 execute unless score #rifts sift.roll matches 0..1 run scoreboard players set #rifts sift.roll 1
 execute unless score #haunt sift.roll matches 0..1 run scoreboard players set #haunt sift.roll 0
 

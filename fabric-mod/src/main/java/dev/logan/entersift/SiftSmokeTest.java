@@ -71,6 +71,11 @@ final class SiftSmokeTest {
             x += 8;
         }
         run(server, "execute in entersift:the_sift positioned 0 140 -20 run function entersift:creature/twisted_warden/spawn");
+        // 0.25.1: rifts are night-only. Prove the gate works both ways before the checks below rely on an open rift.
+        checkRiftGate(server);
+        checkRiftSeedAndClose(server);
+        checkGauntlet(server);
+        run(server, "time of entersift:sift set 14000"); // Endure: the natural rift below must open
         run(server, "execute in entersift:the_sift positioned 10 140 -20 run function entersift:rift/natural");
         run(server, "execute in entersift:the_sift run function entersift:world/tick");
         // Client-rendered rifts/portals: the invisible anchor display must actually spawn.
@@ -80,6 +85,89 @@ final class SiftSmokeTest {
         for (SiftKind kind : SiftKind.values())
             run(server, "execute in entersift:the_sift store result score #smoke_" + kind.id + " sift.clock if entity @e[type=entersift:" + kind.id + "]");
         run(server, "scoreboard players list");
+    }
+
+    // ------------------------------------------------------------------ rift night gate (0.25.1)
+    // Rifts open only at night: Endure (13000-23999) on the Sift's own clock, 13000-22999 on the Overworld clock
+    // everywhere else. 26.x removed "time query daytime", which made every rift function fail to load, and a
+    // half-written gate once let rifts open by day. So drive the real functions through day and night.
+
+    /** Runs a condition command ("execute ... if entity ...") and reports whether it succeeded. */
+    private static boolean holds(MinecraftServer server, String command) {
+        java.util.concurrent.atomic.AtomicBoolean found = new java.util.concurrent.atomic.AtomicBoolean(false);
+        var source = server.createCommandSourceStack().withSuppressedOutput()
+            .withCallback((success, value) -> found.set(success && value > 0));
+        server.getCommands().performPrefixedCommand(source, command);
+        return found.get();
+    }
+
+    private static void expectRift(MinecraftServer server, String what, String where, boolean open) {
+        boolean marker = holds(server, where + "if entity @e[type=minecraft:marker,tag=sift.rift,distance=..8]");
+        boolean anchor = holds(server, where + "if entity @e[type=entersift:rift_portal,tag=sift.rift_anchor,distance=..8]");
+        EnterTheSift.LOGGER.info("SIFT-SMOKE rift gate: {} -> marker={} anchor={} (expected {})", what, marker, anchor, open ? "open" : "closed");
+        if (marker != open || anchor != open)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL rift gate: {} should be {} (marker={}, anchor={})", what, open ? "open" : "closed", marker, anchor);
+    }
+
+    private static void clearRifts(MinecraftServer server, String dim) {
+        run(server, "execute in " + dim + " run kill @e[type=minecraft:marker,tag=sift.rift]");
+        run(server, "execute in " + dim + " run kill @e[type=entersift:rift_portal,tag=sift.rift_visual]");
+    }
+
+    private static void riftGateCase(MinecraftServer server, String dim, String clock, int time, boolean open) {
+        String where = "execute in " + dim + " positioned 0 100 0 ";
+        run(server, "time of " + clock + " set " + time);
+        run(server, where + "run function entersift:rift/natural");
+        expectRift(server, dim + " with " + clock + " at " + time, where, open);
+        clearRifts(server, dim);
+    }
+
+    private static void checkRiftGate(MinecraftServer server) {
+        // The Sift keeps its own clock; the Nether has no clock at all and the End's is no day cycle, so every
+        // other dimension reads the Overworld clock.
+        int[] siftTicks = {0, 6000, 12999, 13000, 23999};
+        for (int time : siftTicks)
+            riftGateCase(server, "entersift:the_sift", "entersift:sift", time, time >= 13000);
+        int[] worldTicks = {0, 6000, 12999, 13000, 18000, 22999, 23000};
+        for (String dim : new String[] {"minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"})
+            for (int time : worldTicks)
+                riftGateCase(server, dim, "minecraft:overworld", time, time >= 13000 && time < 23000);
+        // The Overworld clock must not decide the Sift's night, nor the Sift's clock the Overworld's.
+        run(server, "time of minecraft:overworld set 6000");
+        riftGateCase(server, "entersift:the_sift", "entersift:sift", 14000, true);
+        run(server, "time of entersift:sift set 6000");
+        riftGateCase(server, "minecraft:overworld", "minecraft:overworld", 14000, true);
+    }
+
+    /** The creative seed block (a macro function) and the rift's own tick: open at Endure, closed when it ends. */
+    private static void checkRiftSeedAndClose(MinecraftServer server) {
+        String where = "execute in entersift:the_sift positioned 20.5 100.0 20.5 ";
+        run(server, "time of entersift:sift set 6000");
+        run(server, where + "run function entersift:rift/seed {style:3,target:3,yaw:0.0}");
+        expectRift(server, "rift/seed by day", where, false);
+        run(server, "time of entersift:sift set 14000");
+        run(server, where + "run function entersift:rift/seed {style:3,target:3,yaw:0.0}");
+        expectRift(server, "rift/seed at Endure", where, true);
+        // Dawn: the next rift/tick must retire the rift and its visual.
+        run(server, "time of entersift:sift set 6000");
+        run(server, "execute in entersift:the_sift run function entersift:world/tick");
+        expectRift(server, "rift/tick after Endure ended", where, false);
+        clearRifts(server, "entersift:the_sift");
+    }
+
+    /** The gauntlet function runs as the player; an armor stand stands in for one (the smoke server has no players). */
+    private static void checkGauntlet(MinecraftServer server) {
+        String where = "execute in entersift:the_sift positioned -30.5 300.0 30.5 ";
+        String punch = "execute as @e[type=minecraft:armor_stand,tag=smoke_gauntlet,limit=1] at @s run function entersift:rift/punch";
+        run(server, where + "run summon minecraft:armor_stand ~ ~ ~ {Tags:[\"smoke_gauntlet\"],NoGravity:1b,Invisible:1b,Marker:1b}");
+        run(server, "time of entersift:sift set 6000");
+        run(server, "execute in entersift:the_sift run " + punch);
+        expectRift(server, "rift/punch by day", where, false);
+        run(server, "time of entersift:sift set 14000");
+        run(server, "execute in entersift:the_sift run " + punch);
+        expectRift(server, "rift/punch at Endure", where, true);
+        run(server, "execute in entersift:the_sift run kill @e[type=minecraft:armor_stand,tag=smoke_gauntlet]");
+        clearRifts(server, "entersift:the_sift");
     }
 
     /** Rifts and portals are RiftPortalEntity instances (0.10); they must exist with the right variant. */

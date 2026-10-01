@@ -73,9 +73,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         s.ex = e.getX(); s.ey = e.getY(); s.ez = e.getZ();
         var level = net.minecraft.client.Minecraft.getInstance().level;
         s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
-        long clock = SiftTides.ticks(level);
-        // Endure is the Sift's night-like tide; outside the Sift, use the local world clock's night range.
-        s.night = s.inSift ? SiftTides.isEndure(clock) : clock >= 13_000L && clock < 23_000L;
+        // Rifts follow the Sift's own clock (Endure) inside the Sift and the Overworld clock everywhere else,
+        // exactly like the server-side gate in data/entersift/function/rift/night.mcfunction.
+        s.night = SiftTides.isRiftNight(level, s.inSift);
         s.view = viewCode(s.type, s.inSift);
     }
 

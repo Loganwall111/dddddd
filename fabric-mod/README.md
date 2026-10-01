@@ -7,7 +7,20 @@
 
 ## 0.25.0-alpha — Sift Overhaul
 
-- The Sift uses its own **Flow / Thrive / Endure** clock. Night-only rifts use the local world clock or Endure inside the Sift.
+- The Sift uses its own **Flow / Thrive / Endure** clock. Rifts open only during **Endure** inside the Sift and at **night on the
+  Overworld clock** everywhere else (the Nether and the End have no day cycle of their own, so they follow the Overworld's).
+  By day the gauntlet answers *"Rifts open only at night."* and a rift seed block says the same.
+
+### Testing rifts
+
+Rifts are night-only, so make it night first. Minecraft 26.x keeps a separate clock per dimension, so name the clock:
+
+| Where you test | Make it open |
+|---|---|
+| Overworld, Nether or End | `/time of minecraft:overworld set night` |
+| The Sift | `/time of entersift:sift set entersift:endure` |
+
+Then use the Rift gauntlet (right-click, or punch) or place a creative rift block. Rifts close again when the night ends.
 - Rift openings begin as a circular lens, twist and grow into the existing warped stepped-cross rift. Particle clutter is reduced; motes and energy drift downward, with lightning retained.
 - Ichor aquifers are dry. Tiny rainbow pools/springs are sparse, and the still/flow/overlay textures are symmetrically animated.
 - Boneyard is displayed as **Canopy**, with large visible bone-block skull, tusk and ribcage features; mountains are scaled down.
