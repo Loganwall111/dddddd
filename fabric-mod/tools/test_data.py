@@ -696,4 +696,20 @@ class DataContracts(unittest.TestCase):
             for line in p.read_text().splitlines():
                 if 'run time query ' in line:
                     self.assertIn('time query gametime',line,str(p))
+    def test_rift_opens_at_ground_level(self):
+        # RiftShape draws the cluster upward from BASE above its anchor, so the gauntlet must anchor a
+        # rift just above the player's feet (eyes - 1.5). 0.22 "raised" this to ~-0.5 and floated the
+        # whole rift a block above the ground.
+        text=fn('rift/punch')
+        self.assertIn('positioned ~ ~-1.5 ~',text)
+        self.assertIn('positioned ~ ~-1.2 ~',text)
+        self.assertNotIn('~ ~-0.5 ~',text); self.assertNotIn('~ ~-0.2 ~',text)
+        shape=(ROOT/'src/client/java/dev/logan/entersift/client/RiftShape.java').read_text()
+        self.assertIn('static final float BASE = 0.25f;',shape)
+    def test_rift_diagnostic_command(self):
+        text=fn('dev/riftcheck')
+        self.assertIn('function entersift:rift/gate',text)       # reports the window
+        self.assertIn('query entersift:sift_cycle',text)         # and the Sift clock
+        self.assertIn('function entersift:rift/seed with storage entersift:rift',text)
+        self.assertIn('scoreboard players set #rift_dest sift.target 3',text)  # never the current dimension
 if __name__=='__main__': unittest.main(verbosity=2)

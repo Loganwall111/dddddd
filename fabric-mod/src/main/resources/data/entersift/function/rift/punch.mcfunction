@@ -8,6 +8,9 @@ execute unless entity @s[gamemode=creative] if score @s sift.souls matches ..9 r
 execute unless entity @s[tag=sift.awakened] run title @s actionbar {"text":"The gauntlet wakes the veil. Rifts will bleed through every five minutes.","color":"light_purple"}
 tag @s add sift.awakened
 execute store result storage entersift:rift punch_yaw float 1 run data get entity @s Rotation[0]
+# Ground-level anchor: eyes - 1.5 = ~0.1 above the feet. RiftShape draws the cluster upward from
+# BASE = 0.25, so the rift's bottom lip lands ~0.37 above the ground and the rift reads as standing
+# in front of you. Do not "raise" this to ~-0.5: 0.22 did that and floated the whole rift a block up.
 execute anchored eyes positioned ^ ^ ^4 positioned ~ ~-1.5 ~ if block ~ ~1 ~ #entersift:rift_passable if block ~ ~2 ~ #entersift:rift_passable run return run function entersift:rift/punch_at
 execute anchored eyes positioned ^ ^ ^3 positioned ~ ~-1.5 ~ if block ~ ~1 ~ #entersift:rift_passable if block ~ ~2 ~ #entersift:rift_passable run return run function entersift:rift/punch_at
 execute anchored eyes positioned ^ ^ ^2.5 positioned ~ ~-1.2 ~ if block ~ ~1 ~ #entersift:rift_passable run return run function entersift:rift/punch_at

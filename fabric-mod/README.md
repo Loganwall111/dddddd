@@ -90,6 +90,7 @@ On client initialization, the mod installs `Dungeons-II-Overworld-0.15.zip` into
 
 ```mcfunction
 /function entersift:dev/kit
+/function entersift:dev/riftcheck
 /function entersift:blub/spawn
 /function entersift:illager/spawn
 /function entersift:travel/return
@@ -99,6 +100,8 @@ On client initialization, the mod installs `Dungeons-II-Overworld-0.15.zip` into
 ```
 
 Run biome location commands from the Sift. Summon/test functions execute at the invoking player's position. All `/function` and `/scoreboard` administration requires permission; normal interactions do not.
+
+`entersift:dev/riftcheck` is the rift troubleshooting command: run it as a player to print the local time of day and whether the rift window is open, then watch a debug rift open in front of you. The debug rift ignores the night/Endure window (creative-seed rules), so both the visuals and the travel route can be inspected at any hour.
 
 ### Crafting and survival
 
