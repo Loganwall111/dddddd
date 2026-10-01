@@ -20,7 +20,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * 0.24 Trailer-Exact Stepped-Cross Diorama Rift Renderer (Images 1, 2, 3, 7, 8, 13, 14, 19, 20, 22-28, 36-38).
+ * 0.27 reference-inspired stepped-cross rift renderer (visual parity unverified) (Images 1, 2, 3, 7, 8, 13, 14, 19, 20, 22-28, 36-38).
  *
  *  - Unified Open Stepped-Cross Cavity ({@link RiftShape}): the main cross shares a single recess depth so
  *    there are ZERO internal grid walls cutting through the middle of the window, while the attached left
@@ -33,7 +33,7 @@ import org.joml.Vector3f;
  */
 public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, RiftPortalRenderer.State> {
     static final Identifier THE_SIFT = SiftContent.id("the_sift");
-    static final float RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 61, GROWN = 100;
+    static final float RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 8, GROWN = 100;
     /** Recessed alcove constants; FLANGE is kept sleek so the glowing white neon rim stays razor-sharp. */
     static final float COLLAR = 0.12f, FLANGE = 0.018f;
     static final int SUB = 4; // subdivisions per cell edge so vertical sides curve smoothly with the wave
@@ -187,7 +187,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         boolean gpu = SiftBudget.riftShader;
         RenderType wallT = gpu ? SiftRenderTypes.RIFT_WALL : SiftRenderTypes.GLASS;
         RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
-        RenderType winT = gpu ? SiftRenderTypes.RIFT : SiftRenderTypes.GLASS;
+        RenderType winT = gpu ? (RiftScene.request() ? SiftRenderTypes.RIFT_REFRACT : SiftRenderTypes.RIFT) : SiftRenderTypes.GLASS;
         float age = s.age;
         Warp wv = Warp.STILL; // crisp voxel edges; distortion belongs behind the opening
         Warp still = Warp.STILL;
@@ -200,8 +200,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 float a = age;
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> {
                     seedBox(p, vc, still, sh, look, a);
-                    spark(p, vc, still, sh, s, cam, look, a);
-                    if (a > 52f) ripple(p, vc, still, sh, look, (a - 52f) * 3f);
+                    if (SiftBudget.riftEffects && SiftBudget.riftFlares) rotatingArcs(p, vc, sh, s, cam, a);
+                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) seedShell(p, vc, sh, s, a);
+                    if (a > 4f) ripple(p, vc, still, sh, look, (a - 4f) * 15f);
                 });
             }
             if (age >= CLUSTER_START) {
@@ -211,7 +212,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look, a, s));
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> {
                     rims(p, vc, wv, sh, look, cam, a, s);
-                    if (s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look, s);
+                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look, a);
+                    if (SiftBudget.riftEffects && SiftBudget.riftFlares) {
+                        glitchTeeth(p, vc, sh, s, a);
+                        clawRibbons(p, vc, sh, s, cam, a);
+                    }
+                    if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look, s);
                 });
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, a));
                 if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
@@ -223,15 +229,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
-    /** Encodes destination and tide in a vertex colour; this is NOT a framebuffer pass. */
+    /** Encodes palette and tide; framebuffer capture belongs to RiftScene, not this method. */
     private static float encodeView(State s) {
         return (s.view + (s.night ? 8 : 0) + 0.5f) / 16f;
     }
 
     // ------------------------------------------------------------------ timeline
 
-    /** One tier (ring of boxes) every 10 ticks: 61, 71, 81, 91. */
-    private static float appearAt(int tier) { return CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f; }
+    /** Seed explodes for 0–8 ticks; ravine tiers grow at 8, 33, 58, 83, settling by 100. */
+    private static float appearAt(int tier) { return CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 25f; }
 
     private static boolean shown(RiftShape sh, int i, int j, float age) { return sh.on(i, j) && age >= appearAt(sh.tier[i][j]); }
 
@@ -351,7 +357,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float k = seedScale(age);
         if (k <= 0f) return;
         float stretch = clamp(age / 40f, 0f, 1f);
-        float hx = 0.25f, hy = 0.25f + 0.80f * stretch, hz = 0.18f, cy = sh.cy();
+        float hx = 0.25f, hy = 0.25f, hz = 0.25f, cy = sh.cy();
         float tilt = 0.13f * age + 0.11f * (float) Math.sin(age * 0.22f);
         float[][] v = new float[8][];
         for (int n = 0; n < 8; n++) {
@@ -360,9 +366,99 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             v[n] = new float[]{rx, cy + ry, z};
         }
         int[][] faces = {{0, 1, 3, 2}, {4, 6, 7, 5}, {0, 4, 5, 1}, {2, 3, 7, 6}, {0, 2, 6, 4}, {1, 5, 7, 3}};
-        float[] hot = mix(look.core(), c(1f, 0.94f, 0.80f), 0.5f);
+        float[] hot = c(1f, 0.98f, 1f);
         float pulse = 0.55f + 0.45f * (0.5f + 0.5f * (float) Math.sin(age * 2.2f));
         for (int[] f : faces) for (int idx : f) col(p, vc, wv, v[idx][0], v[idx][1], v[idx][2], hot, pulse);
+    }
+
+    /** Six step-locked, rotating arcs, each six segments; pale pink tips. */
+    private static void rotatingArcs(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, Vector3f cam, float age) {
+        long seed = (long) (age / 4f) * 42107L;
+        var random = new java.util.Random(seed);
+        for (int arc = 0; arc < 6; arc++) {
+            float angle = arc * (float) Math.PI / 3f + age * 0.055f;
+            float[] prev = {0, sh.cy(), 0};
+            for (int segment = 1; segment <= 6; segment++) {
+                float radius = segment * 0.22f;
+                float[] next = {(float) Math.cos(angle) * radius + (random.nextFloat() - 0.5f) * 0.25f,
+                    sh.cy() + (float) Math.sin(angle) * radius + (random.nextFloat() - 0.5f) * 0.25f,
+                    (random.nextFloat() - 0.5f) * 0.3f};
+                line(p, vc, Warp.STILL, cam, prev, next, 0.027f, c(1f, 0.94f, 0.97f), 0.9f);
+                line(p, vc, Warp.STILL, cam, prev, next, 0.10f, c(1f, 0.52f, 0.76f), 0.14f);
+                prev = next;
+            }
+        }
+    }
+
+    /** Inflated six-face glare cubes, not an external post-processing bloom dependency. */
+    private static void seedShell(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float age) {
+        float drift = (float) Math.sin(age * 0.32f) * 0.06f;
+        for (int layer = 0; layer < 3; layer++) {
+            float r = 0.36f + layer * 0.12f;
+            shellBox(p, vc, drift - r, sh.cy() - r, -r, drift + r, sh.cy() + r, r,
+                layer == 1 ? c(0.55f, 0.96f, 1f) : c(1f, 0.62f, 0.86f), 0.07f / (layer + 1));
+        }
+        // Brief non-destructive white cross: clearing terrain here would damage player builds.
+        if (age < 3f) {
+            rect(p, vc, Warp.STILL, -0.9f, sh.cy() - 0.025f, 0.9f, sh.cy() + 0.025f, 0.1f, c(1, 1, 1), 0.8f);
+            rect(p, vc, Warp.STILL, -0.025f, sh.cy() - 0.9f, 0.025f, sh.cy() + 0.9f, 0.1f, c(1, 1, 1), 0.8f);
+        }
+    }
+
+    /** Rim-only inflated shell: no giant filled rectangle obscuring the clear interior. */
+    private static void bloomShell(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, Look look, float age) {
+        for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
+            if (!shown(sh, i, j, age)) continue;
+            float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
+            for (int layer = 1; layer <= 3; layer++) {
+                float r = layer * 0.045f, alpha = 0.045f / layer;
+                if (!shown(sh, i - 1, j, age)) shellBox(p, vc, x0 - r, y0 - r, -r, x0 + r, y1 + r, r, look.halo(), alpha);
+                if (!shown(sh, i + 1, j, age)) shellBox(p, vc, x1 - r, y0 - r, -r, x1 + r, y1 + r, r, look.halo(), alpha);
+                if (!shown(sh, i, j - 1, age)) shellBox(p, vc, x0 - r, y0 - r, -r, x1 + r, y0 + r, r, look.halo(), alpha);
+                if (!shown(sh, i, j + 1, age)) shellBox(p, vc, x0 - r, y1 - r, -r, x1 + r, y1 + r, r, look.halo(), alpha);
+            }
+        }
+    }
+
+    /** Fifteen small teeth along each exposed horizontal boundary, refreshed every four ticks. */
+    private static void glitchTeeth(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float age) {
+        int step = (int) (s.time * 5f);
+        for (int tooth = 0; tooth < 15; tooth++) {
+            int i = Math.min(sh.cols - 1, tooth * sh.cols / 15);
+            float x = sh.x(i) + sh.cw * ((tooth * 0.618f) % 1f);
+            float height = 0.025f + RiftShape.hash(s.seed, tooth, step) * 0.10f;
+            for (int j = 0; j < sh.rows; j++) {
+                if (!shown(sh, i, j, age)) continue;
+                if (!shown(sh, i, j + 1, age)) rect(p, vc, Warp.STILL, x, sh.y(j + 1), x + 0.035f, sh.y(j + 1) + height, 0.015f, c(1, 0.86f, 0.93f), 0.65f);
+                if (!shown(sh, i, j - 1, age)) rect(p, vc, Warp.STILL, x, sh.y(j) - height, x + 0.035f, sh.y(j), 0.015f, c(1, 0.86f, 0.93f), 0.65f);
+            }
+        }
+    }
+
+    /** Two curling ribbon tendrils. Opening-only sideways glitch leaves the collision plane unchanged. */
+    private static void clawRibbons(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, Vector3f cam, float age) {
+        float glitch = age >= 20 && age <= 60 ? 0.08f * (float) Math.sin(Math.floor(age / 4) * 2.7) : 0;
+        for (int side : new int[]{-1, 1}) {
+            float[] previous = {side * sh.w * 0.52f, sh.cy() - sh.h * 0.3f, 0.1f};
+            for (int segment = 1; segment <= 14; segment++) {
+                float f = segment / 14f;
+                float[] next = {side * (sh.w * 0.52f + 0.3f * (float) Math.sin(f * 5 + s.time)) + glitch,
+                    sh.cy() + sh.h * (f * 0.75f - 0.3f),
+                    0.1f + 0.22f * (float) Math.sin(f * 4 + s.time * 0.5f)};
+                band(p, vc, Warp.STILL, cam, previous, next, 0.012f, 0.14f * (1 - f) + 0.015f,
+                    c(1f, 0.92f, 0.95f), side < 0 ? c(1f, 0.45f, 0.65f) : c(0.45f, 0.85f, 1f), 0.3f * (1 - f));
+                previous = next;
+            }
+        }
+    }
+
+    private static void shellBox(PoseStack.Pose p, VertexConsumer vc, float x0, float y0, float z0,
+                                  float x1, float y1, float z1, float[] color, float alpha) {
+        float[][] v = {{x0,y0,z0},{x1,y0,z0},{x0,y1,z0},{x1,y1,z0},
+                       {x0,y0,z1},{x1,y0,z1},{x0,y1,z1},{x1,y1,z1}};
+        int[][] faces = {{0,1,3,2},{4,6,7,5},{0,4,5,1},{2,3,7,6},{0,2,6,4},{1,5,7,3}};
+        for (int[] face : faces) for (int index : face)
+            col(p, vc, Warp.STILL, v[index][0], v[index][1], v[index][2], color, alpha);
     }
 
     /** PHASE 1 spark: erratic lightning flashing over the ripple (re-aimed every 2 ticks). */

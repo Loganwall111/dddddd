@@ -1,0 +1,4 @@
+{
+  "parent": "entersift:block/rift_core",
+  "textures": {"all": "entersift:block/rift_pink"}
+}

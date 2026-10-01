@@ -166,5 +166,8 @@
   "time_marker.entersift.flow": "Flow",
   "time_marker.entersift.thrive": "Thrive",
   "time_marker.entersift.endure": "Endure",
-  "biome.entersift.jelly_lands": "Jelly Lands"
+  "biome.entersift.jelly_lands": "Jelly Lands",
+  "block.entersift.rift_core": "Rift Core",
+  "subtitles.entersift.rift.hum": "Rift hums",
+  "subtitles.entersift.rift.growth": "Rift fractures"
 }

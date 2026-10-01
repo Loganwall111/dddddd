@@ -172,6 +172,7 @@ public final class EnterTheSift implements ModInitializer {
     }
     @Override public void onInitialize() {
         SiftContent.initialize();
+        RiftBlockEntities.initialize();
         SiftSounds.initialize();
         SiftEntities.initialize();
         SiftSmokeTest.register();

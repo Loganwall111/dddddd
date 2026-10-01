@@ -53,6 +53,8 @@ public final class SiftBudget {
 
     public static boolean overworldClouds = true, riftEffects = true, transitionHud = true, riftShader = true, auraGlow = true;
 
+    public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = true;
+
     public static void load(Path configDir) {
         Path file = configDir.resolve("entersift-client.properties");
         Properties props = new Properties();
@@ -64,6 +66,14 @@ public final class SiftBudget {
         riftEffects = flag(props, "rift_effects", true);
         transitionHud = flag(props, "transition_hud", true);
         riftShader = flag(props, "rift_shader", true);   // 0.17 GPU rift interior (core shader)
+        riftRefraction = flag(props, "rift_refraction", true);
+        riftBloom = flag(props, "rift_glow", true);
+        riftFlares = flag(props, "enable_flares", true);
+        riftSpill = flag(props, "rift_spill", true);
+        props.setProperty("rift_refraction", Boolean.toString(riftRefraction));
+        props.setProperty("rift_glow", Boolean.toString(riftBloom));
+        props.setProperty("enable_flares", Boolean.toString(riftFlares));
+        props.setProperty("rift_spill", Boolean.toString(riftSpill));
         auraGlow = flag(props, "aura_glow", true);       // 0.17 night aura columns + note-block columns
         props.setProperty("overworld_clouds", Boolean.toString(overworldClouds));
         props.setProperty("rift_effects", Boolean.toString(riftEffects));

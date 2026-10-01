@@ -34,6 +34,14 @@ final class SiftSmokeTest {
             if (ticks == 110) buildRitual(server);
             if (ticks == 130) playRitual(server);
             if (ticks == 680) checkRitual(server);
+            if (ticks == 250) {
+                var level = server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, SiftContent.id("the_sift")));
+                var core = level == null ? null : level.getBlockEntity(new net.minecraft.core.BlockPos(12, 140, 12));
+                if (!(core instanceof RiftBlockEntity rift) || rift.age() != 100)
+                    EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL registered rift core missing or not ticking");
+                else EnterTheSift.LOGGER.info("SIFT-SMOKE rift core registered and grown");
+                run(server, "execute in entersift:the_sift run setblock 12 140 12 minecraft:air");
+            }
             if (ticks == 700) {
                 EnterTheSift.LOGGER.info("SIFT-SMOKE DONE");
                 server.halt(false);
@@ -58,6 +66,7 @@ final class SiftSmokeTest {
     }
 
     private static void stageTwo(MinecraftServer server) {
+        run(server, "execute in entersift:the_sift run setblock 12 140 12 entersift:rift_core");
         int x = -40;
         for (String feature : FEATURES) {
             // Plants need soil, like in real terrain: give every feature a little grass pad.

@@ -74,6 +74,11 @@ public final class SiftContent {
     public static final Block CARAPACE = block("carapace", Blocks.BONE_BLOCK, 0);
     public static final Block SINGER_MOSS = block("singer_moss", Blocks.MOSS_BLOCK, 3);
     public static final Block THRESHOLD = block("threshold", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_CORE = Registry.register(BuiltInRegistries.BLOCK, blockKey("rift_core"),
+        new RiftCoreBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.AMETHYST_BLOCK).setId(blockKey("rift_core"))
+            .lightLevel(state -> state.getValue(RiftCoreBlock.POWER))));
+    public static final Item RIFT_CORE_ITEM = Registry.register(BuiltInRegistries.ITEM, id("rift_core"),
+        new BlockItem(RIFT_CORE, itemProperties("rift_core").useBlockDescriptionPrefix()));
     public static final Block RIFT_OVERWORLD = riftSeed("rift_overworld", 0, 0);
     public static final Block RIFT_END = riftSeed("rift_end", 2, 2);
     public static final Block RIFT_SIFT = riftSeed("rift_sift", 1, 1);
@@ -193,7 +198,7 @@ public final class SiftContent {
             for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,NOTE_BIRD_EGG,SOUL_BEE_EGG,WATCHLING_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
-            output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(RIFT_STAFF); output.accept(RIFT_STAFF_BLUE); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
+            output.accept(RIFT_CORE_ITEM); output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(RIFT_STAFF); output.accept(RIFT_STAFF_BLUE); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS).register(output -> {
             output.accept(SONOROUS_DEEPSLATE); output.accept(SALT); output.accept(SOUL_SALT); output.accept(SOULWOOD); output.accept(SOUL_CANOPY);

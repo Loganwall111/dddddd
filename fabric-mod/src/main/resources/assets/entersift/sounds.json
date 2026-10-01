@@ -291,5 +291,24 @@
       "entersift:entity/watchling/death"
     ],
     "subtitle": "subtitles.entersift.entity.watchling.death"
+  },
+  "rift.hum": {
+    "subtitle": "subtitles.entersift.rift.hum",
+    "sounds": [
+      {
+        "name": "entersift:rift/hum",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "rift.growth": {
+    "subtitle": "subtitles.entersift.rift.growth",
+    "sounds": [
+      {
+        "name": "entersift:rift/growth",
+        "attenuation_distance": 24
+      }
+    ]
   }
 }

@@ -24,6 +24,10 @@
     {
       "script": "phase19.py",
       "owns": "0.25 tides, terrain, Canopy, Jelly Lands, Blub, ichor; crag shapes pinned in tools/overlays (idempotent)"
+    },
+    {
+      "script": "rift_audio.py",
+      "owns": "0.27 original rift hum/growth WAV sources; standard-library deterministic synthesis"
     }
   ],
   "known_drift": {},

@@ -13,13 +13,24 @@ for p in (r/'data').rglob('*.mcfunction'):
         if ref not in functions: errors.append(f'{p}: unresolved function {ref}')
     for line in p.read_text().splitlines():
         if '$(' in line and not line.startswith('$'): errors.append(f'{p}: macro line missing $')
+def asset_refs(value, key=""):
+    if isinstance(value, dict):
+        for name, child in value.items():
+            yield from asset_refs(child, name)
+    elif isinstance(value, list):
+        for child in value:
+            yield from asset_refs(child, key)
+    elif isinstance(value, str) and value.startswith("entersift:"):
+        yield key, value.split(":", 1)[1]
+
 for p in (r/'assets/entersift').rglob('*.json'):
-    if p.name == 'sounds.json': continue  # sound paths (entersift:entity/...) are not model refs
-    for kind,name in re.findall(r'entersift:(block|item|entity)/([a-z0-9_]+)',p.read_text()):
-        # Model JSON contains texture refs; item definitions/blockstates contain model refs.
-        folder='textures' if 'models' in p.parts else 'models'
-        ext='.png' if folder=='textures' else '.json'
-        if not (r/f'assets/entersift/{folder}/{kind}/{name}{ext}').exists(): errors.append(f'{p}: missing {folder} {name}')
+    if p.name == 'sounds.json': continue
+    for key, ref in asset_refs(json.loads(p.read_text())):
+        if not re.fullmatch(r'(block|item|entity)/[a-z0-9_/]+', ref): continue
+        # A model's parent is another model, NOT a texture. Preserve full subdirectories.
+        folder = 'models' if key in ('model', 'parent') or 'models' not in p.parts else 'textures'
+        ext = '.png' if folder == 'textures' else '.json'
+        if not (r/f'assets/entersift/{folder}/{ref}{ext}').exists(): errors.append(f'{p}: missing {folder} {ref}')
 for p in (r/'assets/entersift/textures').rglob('*.png'):
     b=p.read_bytes()
     if b[:8]!=b'\x89PNG\r\n\x1a\n': errors.append(f'{p}: bad PNG')

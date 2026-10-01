@@ -43,6 +43,8 @@ public final class SiftClient implements ClientModInitializer {
         dev.logan.entersift.client.SiftBudget.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
         net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context -> dev.logan.entersift.client.SiftBudget.reset());
         dev.logan.entersift.client.SiftTransition.register(); // 0.16 chromatic + orange-flash rift transition overlay
+        dev.logan.entersift.client.RiftScene.register();
+        dev.logan.entersift.client.RiftSounds.register();
         SiftSky.register();
         dev.logan.entersift.client.SiftTunnel.register(); // 0.18 warp-tunnel view inside the rift tunnel
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)

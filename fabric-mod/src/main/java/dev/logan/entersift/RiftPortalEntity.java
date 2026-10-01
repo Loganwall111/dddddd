@@ -55,6 +55,8 @@ public class RiftPortalEntity extends Entity {
     public void tick() {
         super.tick();
         if (this.level() instanceof ServerLevel level) {
+            if (age() == 8 || age() == 33 || age() == 58 || age() == 83)
+                level.playSound(null, blockPosition(), SiftSounds.RIFT_GROWTH, net.minecraft.sounds.SoundSource.AMBIENT, 0.55f, 0.65f + age() * 0.006f);
             if (lifetime > 0 && --lifetime == 0) { discard(); return; }
             if (shape == null) shape = RiftShape.build(riftType(), blockPosition().asLong() * 31 + riftType().id, riftWidth(), riftHeight());
             java.util.Set<java.util.UUID> seen = new java.util.HashSet<>();

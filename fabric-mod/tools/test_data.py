@@ -7,6 +7,40 @@ D=R/'data/entersift'
 def fn(name): return (D/f'function/{name}.mcfunction').read_text()
 def read(path): return json.loads((D/path).read_text())
 class DataContracts(unittest.TestCase):
+    def test_rift_scene_capture_and_depth_guard(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        scene=(C/'RiftScene.java').read_text(); shader=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        for token in ('AFTER_OPAQUE_TERRAIN', 'copyColorFrom(main)', 'copyDepthFrom(main)', 'destroyBuffers()',
+                      'shaderPackInUseCached()', 'CLIENT_STOPPING', 'DISCONNECT'):
+            self.assertIn(token,scene)
+        for token in ('textureSize(Sampler1', 'texture(Sampler1, sampleUv)', 'warpedDepth > gl_FragCoord.z', 'sampleUv = screen'):
+            self.assertIn(token,shader)
+        self.assertFalse((R/'assets/minecraft/shaders/core/rendertype_translucent.fsh').exists())
+        types=(C/'SiftRenderTypes.java').read_text()
+        self.assertIn('BindGroupLayouts.SAMPLER0_SAMPLER1',types)
+        self.assertIn('withTexture("Sampler1", RiftScene.COLOR)',types)
+        self.assertIn('RiftScene.request()', (C/'RiftPortalRenderer.java').read_text())
+
+    def test_rift_loop_assets_registration_and_cleanup(self):
+        import wave
+        sounds=json.loads((R/'assets/entersift/sounds.json').read_text())
+        for event in ('hum','growth'):
+            self.assertEqual(sounds['rift.'+event]['sounds'][0]['name'],'entersift:rift/'+event)
+            with wave.open(str(ROOT/f'art/audio/rift/{event}.wav')) as audio:
+                self.assertEqual(audio.getnchannels(),1)
+                self.assertEqual(audio.getframerate(),22050)
+                self.assertGreater(audio.getnframes(),20000)
+        code=(ROOT/'src/client/java/dev/logan/entersift/client/RiftSounds.java').read_text()
+        for token in ('looping = true', 'ENTITY_UNLOAD', 'BLOCK_ENTITY_UNLOAD', 'DISCONNECT', 'manager.isActive', 'SoundSource.AMBIENT'):
+            self.assertIn(token,code)
+        main=ROOT/'src/main/java/dev/logan/entersift'
+        self.assertIn('RiftBlockEntities.initialize()', (main/'EnterTheSift.java').read_text())
+        self.assertIn('BuiltInRegistries.BLOCK_ENTITY_TYPE', (main/'RiftBlockEntities.java').read_text())
+        self.assertIn('server.setBlock(pos, state.setValue(RiftCoreBlock.POWER, light)', (main/'RiftBlockEntity.java').read_text())
+        renderer=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        for token in ('bloomShell(p,', 'seedShell(p,', 'arc < 6', 'segment <= 6', '* 42107L', 'tooth < 15'):
+            self.assertIn(token,renderer)
+
     def test_staff_item_definition_model_texture_chain(self):
         assets = R/'assets/entersift'
         for name in ('rift_staff', 'rift_staff_blue'):
@@ -446,7 +480,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn(f"archiveFileName = '{pack}'",gradle)      # 0.14 shipped mismatched names: no pack installed
         r=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('4 ritual portal (cyan mosaic)',r)
-        self.assertIn('vec3 viewPortal(',(R/'assets/entersift/shaders/core/rift.fsh').read_text())
+        self.assertIn('view == 4', (R/'assets/entersift/shaders/core/rift.fsh').read_text())
     def test_v019_stacked_box_rifts_crack_free_and_coral_interior(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
@@ -468,11 +502,11 @@ class DataContracts(unittest.TestCase):
         self.assertNotIn('#riftphase',fn('rift/tick'))
         # 1. Direction-sampled window: sharp, un-warped, moves only with yaw and pitch.
         self.assertIn('worldRay = Position;',vsh)
-        self.assertIn('vec3 dir = normalize(worldRay);',fsh)
-        self.assertIn('float clouds(vec3 dir',fsh); self.assertIn('float ridge(float yaw',fsh)
-        self.assertNotIn('Sampler0',fsh)
+        self.assertIn('texture(Sampler1, sampleUv)',fsh)
+        self.assertIn('texture(Sampler0, sampleUv)',fsh)
+        self.assertNotIn('vec3 destination(',fsh)
         # 2. Lifecycle (0.21: 0-100): ripple hard-stopped, tiered snap.
-        self.assertIn('if (a > 52f) ripple(',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
+        self.assertIn('if (a > 4f) ripple(',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
         # 3. Wide soft additive night curtains replace laser poles.
         self.assertNotIn('private static void curtains(',rift)
         for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
@@ -492,8 +526,8 @@ class DataContracts(unittest.TestCase):
             a=read(f'worldgen/biome/{b}.json')['attributes']
             self.assertLess(a['minecraft:visual/fog_end_distance'],200)
         # Directive 2: 100-tick awakening, one tier every 10 ticks, large dissolving voxel cubes per rift type.
-        self.assertIn('RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 61, GROWN = 100',rift)
-        self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f',rift)
+        self.assertIn('RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 8, GROWN = 100',rift)
+        self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 25f',rift)
         self.assertIn('TIERS = 4',(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text())
         self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
         self.assertIn('float hx = half, hy = half, hz = half;',rift)        # 0.25-0.5 block cubes
@@ -524,7 +558,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('encodeView(',rift); self.assertNotIn('renderSecondaryFboViewportPass(',rift)
         self.assertIn('getYaw(',rift); self.assertIn('getPitch(',rift)
         self.assertIn('VIBRANT_PINK_DAY',rift); self.assertIn('DEEP_AMBER_NIGHT',rift)
-        self.assertIn('boxBlurViewport(',fsh); self.assertIn('vibrantPinkDay',fsh); self.assertIn('deepAmberNight',fsh)
+        self.assertIn('float edgeFade = exp(',fsh); self.assertIn('float phase = mod(t, 6.0)',fsh)
         # Part 3: Seamless Transition (Ticks 0-40 RGB split, 41-60 orange flare, Tick 60 tunnel) & Voxel Corridor
         self.assertIn('effect.getDuration() > 20',hud)
         self.assertNotIn('private static void sphere(',tun)
@@ -569,7 +603,7 @@ class DataContracts(unittest.TestCase):
         aura=(C/'AuraColumns.java').read_text(); clouds=(C/'SiftClouds.java').read_text()
         # Unified stepped-cross cavity + wavy side walls & wavy interior vistas
         self.assertIn('box[i][j] = 0;',shape); self.assertIn('rectSub(',rift); self.assertIn('wavySideVeils(',rift)
-        self.assertIn('wavyCoords(',fsh); self.assertIn('canopyTreesAndMesas(',fsh)
+        self.assertIn('vec2 bend =',fsh); self.assertNotIn('canopyTreesAndMesas(',fsh)
         # Sift aurora panels + floating musical note glyphs inside rainbow columns
         self.assertIn('0x68FFD0',sky); self.assertIn('noteGlyphs(',aura)
         # Dungeons II Overworld stepped voxel clouds + periwinkle shadows
@@ -579,7 +613,7 @@ class DataContracts(unittest.TestCase):
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
-        for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
+        for v in ('view == 0','view == 1','view == 2','view == 4'): self.assertIn(v,fsh)
         self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
         self.assertIn('clock >= 13_000L && clock < 23_000L',rift)                         # strict local night; Endure in the Sift
         self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
