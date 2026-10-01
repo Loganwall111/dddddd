@@ -159,6 +159,9 @@ public final class SiftContent {
         new Item(itemProperties("rift_gauntlet").stacksTo(1)));
     public static final Item RED_GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("red_rift_gauntlet"),
         new Item(itemProperties("red_rift_gauntlet").stacksTo(1)));
+    /** 0.22 Rift Staff: a staff with a gigantic floating animated blue cube above it. Works like the gauntlet. */
+    public static final Item RIFT_STAFF = Registry.register(BuiltInRegistries.ITEM, id("rift_staff"),
+        new Item(itemProperties("rift_staff").stacksTo(1)));
     private static Item egg(String creature) {
         String name = creature + "_spawn_egg";
         return Registry.register(BuiltInRegistries.ITEM, id(name), new CreatureEggItem(itemProperties(name), creature));
@@ -182,7 +185,7 @@ public final class SiftContent {
             for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,NOTE_BIRD_EGG,SOUL_BEE_EGG,WATCHLING_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
-            output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
+            output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(RIFT_STAFF); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS).register(output -> {
             output.accept(SONOROUS_DEEPSLATE); output.accept(SALT); output.accept(SOUL_SALT); output.accept(SOULWOOD); output.accept(SOUL_CANOPY);

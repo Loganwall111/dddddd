@@ -1,8 +1,7 @@
-execute in minecraft:overworld unless loaded 0 300 0 run return 0
-execute in minecraft:overworld positioned 0 300 0 unless block ~ ~ ~ minecraft:air run return 0
-execute in minecraft:overworld positioned 0 301 0 unless block ~ ~ ~ minecraft:air run return 0
+# 0.22: arrive on the Overworld surface instead of a sky pad at y=300 (which put players in caves or the void).
+execute in minecraft:overworld unless loaded 0 64 0 run return 0
 execute unless score @s sift.return matches 1 run function entersift:travel/save
-execute in minecraft:overworld positioned 0 300 0 run function entersift:travel/pad
-execute in minecraft:overworld run tp @s 0 300 0
+# Find the surface using motion_blocking_no_leaves (highest solid block at 0,0).
+execute in minecraft:overworld positioned 0 0 0 positioned over motion_blocking_no_leaves run function entersift:travel/arrive
 scoreboard players set @s sift.cooldown 100
-effect give @s minecraft:slow_falling 120 0 true
+effect give @s minecraft:slow_falling 4 0 true

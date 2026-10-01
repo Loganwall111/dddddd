@@ -14,8 +14,8 @@ public final class SiftModelDefs {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         PartDefinition p_body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-5.0f, -8.0f, -5.0f, 10.0f, 8.0f, 10.0f), PartPose.offsetAndRotation(0.0f, 21.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        PartDefinition p_ear_l = p_body.addOrReplaceChild("ear_l", CubeListBuilder.create().texOffs(40, 0).addBox(-1.5f, -5.0f, -0.5f, 3.0f, 5.0f, 1.0f), PartPose.offsetAndRotation(-3.0f, -8.0f, 1.0f, 0.12f, 0.0f, -0.14f));
-        PartDefinition p_ear_r = p_body.addOrReplaceChild("ear_r", CubeListBuilder.create().texOffs(48, 0).addBox(-1.5f, -5.0f, -0.5f, 3.0f, 5.0f, 1.0f), PartPose.offsetAndRotation(3.0f, -8.0f, 1.0f, 0.12f, 0.0f, 0.14f));
+        PartDefinition p_ear_l = p_body.addOrReplaceChild("ear_l", CubeListBuilder.create().texOffs(40, 0).addBox(-1.5f, -5.0f, -0.5f, 3.0f, 5.0f, 1.0f), PartPose.offsetAndRotation(-3.0f, -8.0f, 1.0f, 0.12f, 0.0f, 0.0f));
+        PartDefinition p_ear_r = p_body.addOrReplaceChild("ear_r", CubeListBuilder.create().texOffs(48, 0).addBox(-1.5f, -5.0f, -0.5f, 3.0f, 5.0f, 1.0f), PartPose.offsetAndRotation(3.0f, -8.0f, 1.0f, 0.12f, 0.0f, 0.0f));
         PartDefinition p_leg_0 = root.addOrReplaceChild("leg_0", CubeListBuilder.create().texOffs(56, 0).addBox(-1.0f, 0.0f, -1.0f, 2.0f, 3.0f, 2.0f), PartPose.offsetAndRotation(-3.0f, 21.0f, -3.0f, 0.0f, 0.0f, 0.0f));
         PartDefinition p_leg_1 = root.addOrReplaceChild("leg_1", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, 0.0f, -1.0f, 2.0f, 3.0f, 2.0f), PartPose.offsetAndRotation(3.0f, 21.0f, -3.0f, 0.0f, 0.0f, 0.0f));
         PartDefinition p_leg_2 = root.addOrReplaceChild("leg_2", CubeListBuilder.create().texOffs(8, 18).addBox(-1.0f, 0.0f, -1.0f, 2.0f, 3.0f, 2.0f), PartPose.offsetAndRotation(-3.0f, 21.0f, 3.0f, 0.0f, 0.0f, 0.0f));

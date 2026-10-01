@@ -49,7 +49,7 @@ public final class EnterTheSift implements ModInitializer {
         level.getServer().getCommands().performPrefixedCommand(source, query);
         return found.get();
     }
-    private static boolean gauntlet(ItemStack stack) { return stack.is(SiftContent.GAUNTLET) || stack.is(SiftContent.RED_GAUNTLET); }
+    private static boolean gauntlet(ItemStack stack) { return stack.is(SiftContent.GAUNTLET) || stack.is(SiftContent.RED_GAUNTLET) || stack.is(SiftContent.RIFT_STAFF); }
     private static boolean note(Level world, BlockPos pos) {
         return world.getBlockState(pos).is(Blocks.NOTE_BLOCK) && world.getBlockState(pos.below()).is(SiftContent.SONOROUS_DEEPSLATE);
     }

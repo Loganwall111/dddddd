@@ -50,6 +50,8 @@ public final class SiftClient implements ClientModInitializer {
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
         EntityRendererRegistry.register(SiftEntities.AURA_COLUMN, dev.logan.entersift.client.AuraColumnRenderer::new);
+        dev.logan.entersift.client.RiftStaffRenderer.register(); // 0.22 floating animated blue cube above the rift staff
+        dev.logan.entersift.client.GauntletWearRenderer.register(); // 0.22 wearable gauntlet arm effects
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,
             new FluidModel.Unbaked(
                 new Material(SiftContent.id("block/ichor_still")),
