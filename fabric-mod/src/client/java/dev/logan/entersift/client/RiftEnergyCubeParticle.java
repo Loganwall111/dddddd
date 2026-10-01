@@ -25,7 +25,7 @@ import org.joml.Vector3f;
  * 0.22 Master Architecture Override: 3D voxel energy cube particle for rifts.
  *
  * <ul>
- *   <li>Drifts strictly UPWARD along the positive Y-axis ({@code velocity.y += 0.04f}) with zero horizontal X/Z drift.</li>
+ *   <li>Drifts DOWNWARD along the negative Y-axis ({@code velocity.y -= 0.04f}) with zero horizontal X/Z drift.</li>
  *   <li>Renders as prominent 3D voxel blocks ({@code 0.25} to {@code 0.5} blocks in size).</li>
  *   <li>For Sift rifts, spawns in a multi-colored palette of Saturated Mint-Green, Electric Cyan, and Pale Pink.</li>
  *   <li>Horizontal dissolve: when {@code age >= 0.75 * maxAge}, compresses Y-scale while expanding X/Z scales
@@ -86,10 +86,10 @@ public final class RiftEnergyCubeParticle extends Particle {
         this.lifetime = 24 + this.random.nextInt(16);
         this.maxAge = this.lifetime;
         this.alpha = 1.0f;
-        // Zero horizontal X/Z drift; strictly upward positive Y-axis velocity.
-        this.velocity.set(0.0f, 0.04f, 0.0f);
+        // Zero horizontal X/Z drift; begin falling down through the rift.
+        this.velocity.set(0.0f, -0.04f, 0.0f);
         this.xd = 0.0;
-        this.yd = 0.04;
+        this.yd = -0.04;
         this.zd = 0.0;
         this.color = paletteFor(type, colorIndex);
         this.setSize(this.baseScale, this.baseScale);
@@ -125,13 +125,13 @@ public final class RiftEnergyCubeParticle extends Particle {
             this.remove();
             return;
         }
-        // Force strictly upward positive Y-axis path (velocity.y += 0.04); zero horizontal X/Z drift.
+        // Force a downward negative-Y path; zero horizontal X/Z drift.
         velocity.x = 0.0f;
         velocity.z = 0.0f;
-        velocity.y += 0.04f;
+        velocity.y -= 0.04f;
         this.xd = 0.0;
         this.zd = 0.0;
-        this.yd = Math.min(0.28f, velocity.y);
+        this.yd = Math.max(-0.28f, velocity.y);
         this.setPos(this.x, this.y + this.yd, this.z);
         applyDissolve(this.age, this.maxAge);
     }

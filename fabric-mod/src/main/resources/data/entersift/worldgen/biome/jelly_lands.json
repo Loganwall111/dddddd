@@ -3,7 +3,7 @@
   "temperature": 0.5,
   "downfall": 0,
   "effects": {
-    "water_color": "#8fb8b0"
+    "water_color": "#2869b8"
   },
   "attributes": {
     "minecraft:visual/ambient_particles": {
@@ -13,7 +13,13 @@
           "particle": {
             "type": "minecraft:glow"
           },
-          "probability": 0.002
+          "probability": 0.004
+        },
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.006
         }
       ]
     },
@@ -24,7 +30,11 @@
         "spawns_by_category": {}
       }
     },
-    "minecraft:visual/fog_color": "#ece4da"
+    "minecraft:visual/fog_color": "#173b95",
+    "minecraft:visual/sky_color": "#091b55",
+    "minecraft:visual/fog_start_distance": 5.0,
+    "minecraft:visual/fog_end_distance": 54.0,
+    "minecraft:visual/water_fog_color": "#123078"
   },
   "carvers": [],
   "features": [
@@ -38,11 +48,11 @@
     [],
     [],
     [
-      "entersift:bones",
-      "entersift:soul_salt",
-      "entersift:boneyard_ribcage",
-      "entersift:giant_skull",
-      "entersift:bone_tusk"
+      "entersift:pale_tree",
+      "entersift:glow_bulb",
+      "entersift:pink_grass_pale_grove",
+      "entersift:glow_tuft_pale_grove",
+      "entersift:sift_bloom_pale_grove"
     ],
     []
   ]

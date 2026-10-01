@@ -1,4 +1,11 @@
-# Rift gauntlet (right-click, or left-click): tear a rift open in front of the player.
+# Rift gauntlet (right-click, or left-click): tear a rift open in front of the player, at night only.
+execute store result score #rift_time sift.day run time query daytime
+execute if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999 run title @s actionbar {"text":"Rifts open only during Endure in the Sift.","color":"dark_purple"}
+execute unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999 run title @s actionbar {"text":"Rifts open only at night.","color":"dark_purple"}
+execute unless dimension entersift:the_sift if score #rift_time sift.day matches 23000.. run title @s actionbar {"text":"Rifts open only at night.","color":"dark_purple"}
+execute if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999
+execute unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999
+execute unless dimension entersift:the_sift if score #rift_time sift.day matches 23000.. run return 0
 execute unless entity @s[tag=sift.player] run function entersift:player/init
 execute if score @s sift.cooldown matches 1.. run return 0
 execute unless entity @s[gamemode=creative] if score @s sift.souls matches ..9 run title @s actionbar {"text":"The gauntlet needs 10 souls (kill mobs to collect them).","color":"red"}

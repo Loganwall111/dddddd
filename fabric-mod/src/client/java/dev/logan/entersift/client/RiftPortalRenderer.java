@@ -73,8 +73,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         s.ex = e.getX(); s.ey = e.getY(); s.ez = e.getZ();
         var level = net.minecraft.client.Minecraft.getInstance().level;
         s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
-        long day = level == null ? 0L : level.getOverworldClockTime() % 24000L;
-        s.night = day >= 11500L && day <= 23300L;        // evening through midnight only, never by day
+        long clock = SiftTides.ticks(level);
+        // Endure is the Sift's night-like tide; outside the Sift, use the local world clock's night range.
+        s.night = s.inSift ? SiftTides.isEndure(clock) : clock >= 13_000L && clock < 23_000L;
         s.view = viewCode(s.type, s.inSift);
     }
 
@@ -173,6 +174,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     @Override
     public void submit(State s, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
         if (SiftRenderTypes.irisShadowPass()) return;       // self-lit: nothing in the shadow map
+        // Natural/gauntlet rifts are only rendered during the local night. The permanent Agency portal remains visible.
+        if (!s.night && s.type != RiftType.PORTAL) return;
         RiftShape sh = SHAPES.computeIfAbsent(s.seed * 1315423911L + Float.floatToIntBits(s.w) * 131L + Float.floatToIntBits(s.h),
             k -> RiftShape.build(s.type, s.seed, s.w, s.h));
         Look look = LOOKS[Math.max(0, Math.min(LOOKS.length - 1, s.view))];
@@ -189,13 +192,25 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         pose.pushPose();
         try {
             pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
+            // Phase 1: a small circular lens opens first; phase 2: it twists into an expanding oval.
+            if (age < CLUSTER_START) {
+                float a = age;
+                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> openingWindow(p, vc, wv, sh, a, code));
+                else out.submitCustomGeometry(pose, glowT, (p, vc) -> openingFlat(p, vc, wv, sh, look, a));
+            }
             if (age < RIPPLE_END + 6 && age < GROWN) {
                 float a = age;
-                out.submitCustomGeometry(pose, glowT, (p, vc) -> { ripple(p, vc, still, sh, look, a); spark(p, vc, still, sh, s, cam, look, a); });
+                out.submitCustomGeometry(pose, glowT, (p, vc) -> {
+                    ripple(p, vc, wv, sh, look, a);
+                    if (s.night) spark(p, vc, wv, sh, s, cam, look, a);
+                });
             }
             if (age >= SEED_START && age < appearAt(1) + 8) {
                 float a = age;
-                out.submitCustomGeometry(pose, glowT, (p, vc) -> { seedBox(p, vc, still, sh, look, a); seedGlow(p, vc, still, sh, s, cam, look, a); });
+                out.submitCustomGeometry(pose, glowT, (p, vc) -> {
+                    seedBox(p, vc, wv, sh, look, a);
+                    seedGlow(p, vc, wv, sh, s, cam, look, a);
+                });
             }
             if (age >= CLUSTER_START) {
                 float a = age;
@@ -207,7 +222,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                     if (s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look, s);
                 });
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, a));
-                if (SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
+                if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
+                    out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
                 if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look, cam, s));
                 if (age >= GROWN && s.night && SiftBudget.auraGlow) out.submitCustomGeometry(pose, glowT, (p, vc) -> curtains(p, vc, sh, s, cam));
             }
@@ -241,19 +257,99 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         return dn < d - 1e-4f ? -dn : 1f;
     }
 
-    /** PHASE 1: nested hollow voxel rectangles expanding 0 % -> 100 % over ticks 0-30, gone by 36 (Images 22, 23). */
+    /** PHASE 1: three fine circular waves spread out from the small lens aperture, then fade. */
     private static void ripple(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
-        float f = Math.min(1f, age / RIPPLE_END), ease = 1 - (1 - f) * (1 - f);
+        float f = Math.max(0f, Math.min(1f, age / RIPPLE_END));
+        float ease = f * f * (3f - 2f * f);
         float fade = age <= RIPPLE_END ? 1f : Math.max(0f, 1f - (age - RIPPLE_END) / 6f);
-        float rx = sh.w * 0.58f, ry = sh.h * 0.58f;
-        for (int rn = 0; rn < 3; rn++) {
-            float scale = Math.max(0.02f, ease - rn * 0.22f);
-            float a = fade * (rn == 0 ? 0.55f : 0.30f) * (1 - f * 0.45f);
-            hollowVoxelRect(p, vc, wv, 0f, sh.cy(), 0.02f, rx * scale, ry * scale, 0.08f, look.halo(), a);
+        float radius = 0.08f + Math.min(sh.w, sh.h) * 0.40f * ease;
+        for (int ring = 0; ring < 3; ring++) {
+            float scale = 0.46f + ring * 0.24f;
+            float rx = radius * scale, ry = radius * scale * (1f + 0.06f * ease);
+            float alpha = fade * (0.34f - ring * 0.07f) * (1f - f * 0.3f);
+            rippleRing(p, vc, wv, sh.cy(), rx, ry, age, ring, look.halo(), alpha);
         }
     }
 
-    /** Nested hollow rectangular voxel border in the wall plane (replaces spherical rings). */
+    /** Filled, shader-backed aperture: circular at first, then it twists and grows into an oval lens. */
+    private static void openingWindow(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code) {
+        float[] shape = apertureShape(sh, age);
+        float rx = shape[0], ry = shape[1], spin = shape[2], progress = shape[3];
+        int segments = 48;
+        for (int i = 0; i < segments; i++) {
+            float a0 = (float) (Math.PI * 2.0 * i / segments) + spin;
+            float a1 = (float) (Math.PI * 2.0 * (i + 1) / segments) + spin;
+            float wobble0 = 1f + (0.035f + progress * 0.075f) * (float) Math.sin(3f * a0 + age * 0.28f);
+            float wobble1 = 1f + (0.035f + progress * 0.075f) * (float) Math.sin(3f * a1 + age * 0.28f);
+            float x0 = (float) Math.cos(a0) * rx * wobble0, y0 = sh.cy() + (float) Math.sin(a0) * ry * wobble0;
+            float x1 = (float) Math.cos(a1) * rx * wobble1, y1 = sh.cy() + (float) Math.sin(a1) * ry * wobble1;
+            float z0 = 0.08f + 0.04f * (float) Math.sin(a0 * 2f + age * 0.16f);
+            float z1 = 0.08f + 0.04f * (float) Math.sin(a1 * 2f + age * 0.16f);
+            win(p, vc, wv, sh, 0f, sh.cy(), 0.08f, code);
+            win(p, vc, wv, sh, x0, y0, z0, code);
+            win(p, vc, wv, sh, x1, y1, z1, code);
+            win(p, vc, wv, sh, 0f, sh.cy(), 0.08f, code);
+        }
+    }
+
+    /** No-shader fallback for the aperture, shaded from the rift's core to its halo. */
+    private static void openingFlat(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
+        float[] shape = apertureShape(sh, age);
+        float rx = shape[0], ry = shape[1], spin = shape[2], progress = shape[3];
+        float[] inside = mix(look.wallBack(), look.wallFront(), 0.28f);
+        float[] edge = mix(look.halo(), look.core(), 0.42f);
+        float alpha = 0.55f + 0.2f * progress;
+        int segments = 48;
+        for (int i = 0; i < segments; i++) {
+            float a0 = (float) (Math.PI * 2.0 * i / segments) + spin;
+            float a1 = (float) (Math.PI * 2.0 * (i + 1) / segments) + spin;
+            float w0 = 1f + (0.035f + progress * 0.075f) * (float) Math.sin(3f * a0 + age * 0.28f);
+            float w1 = 1f + (0.035f + progress * 0.075f) * (float) Math.sin(3f * a1 + age * 0.28f);
+            col(p, vc, wv, 0f, sh.cy(), 0.08f, inside, alpha * 0.45f);
+            col(p, vc, wv, (float) Math.cos(a0) * rx * w0, sh.cy() + (float) Math.sin(a0) * ry * w0, 0.08f, edge, alpha);
+            col(p, vc, wv, (float) Math.cos(a1) * rx * w1, sh.cy() + (float) Math.sin(a1) * ry * w1, 0.08f, edge, alpha);
+            col(p, vc, wv, 0f, sh.cy(), 0.08f, inside, alpha * 0.45f);
+        }
+    }
+
+    /** {radiusX, radiusY, twistRadians, growth}; grows from a near-circle into a wide warped portal. */
+    private static float[] apertureShape(RiftShape sh, float age) {
+        if (age < RIPPLE_END) {
+            float f = Math.max(0f, Math.min(1f, age / RIPPLE_END));
+            float ease = f * f * (3f - 2f * f);
+            float radius = 0.035f + Math.min(sh.w, sh.h) * 0.38f * ease;
+            return new float[]{radius, radius, ease * 0.24f, ease};
+        }
+        float f = Math.max(0f, Math.min(1f, (age - RIPPLE_END) / (CLUSTER_START - RIPPLE_END)));
+        float ease = f * f * (3f - 2f * f);
+        float start = Math.min(sh.w, sh.h) * 0.38f;
+        float rx = start + (sh.w * 0.50f - start) * ease;
+        float ry = start + (sh.h * 0.45f - start) * ease;
+        float twist = ease * (float) (Math.PI * 1.65) + 0.12f * (float) Math.sin(age * 0.21f);
+        return new float[]{rx, ry, twist, ease};
+    }
+
+    private static void rippleRing(PoseStack.Pose p, VertexConsumer vc, Warp wv, float cy,
+                                   float rx, float ry, float age, int ring, float[] color, float alpha) {
+        int segments = 48;
+        float innerScale = 0.82f;
+        float spin = age * (0.022f + ring * 0.009f) * (ring % 2 == 0 ? 1f : -1f);
+        for (int i = 0; i < segments; i++) {
+            float a0 = (float) (Math.PI * 2.0 * i / segments) + spin;
+            float a1 = (float) (Math.PI * 2.0 * (i + 1) / segments) + spin;
+            float w0 = 1f + 0.055f * (float) Math.sin(3f * a0 + age * 0.22f + ring);
+            float w1 = 1f + 0.055f * (float) Math.sin(3f * a1 + age * 0.22f + ring);
+            float i0 = innerScale * w0, i1 = innerScale * w1;
+            float z0 = 0.12f + 0.04f * (float) Math.sin(a0 * 2f + age * 0.14f);
+            float z1 = 0.12f + 0.04f * (float) Math.sin(a1 * 2f + age * 0.14f);
+            col(p, vc, wv, (float) Math.cos(a0) * rx * i0, cy + (float) Math.sin(a0) * ry * i0, z0, color, alpha * 0.48f);
+            col(p, vc, wv, (float) Math.cos(a0) * rx * w0, cy + (float) Math.sin(a0) * ry * w0, z0, color, alpha);
+            col(p, vc, wv, (float) Math.cos(a1) * rx * w1, cy + (float) Math.sin(a1) * ry * w1, z1, color, alpha);
+            col(p, vc, wv, (float) Math.cos(a1) * rx * i1, cy + (float) Math.sin(a1) * ry * i1, z1, color, alpha * 0.48f);
+        }
+    }
+
+    /** Nested hollow rectangular voxel border in the wall plane (retained for the pulsing seed halo). */
     private static void hollowVoxelRect(PoseStack.Pose p, VertexConsumer vc, Warp wv, float cx, float cy, float z,
                                         float hx, float hy, float thick, float[] c, float a) {
         if (a <= 0.005f) return;
@@ -268,7 +364,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float k = seedScale(age);
         if (k <= 0f) return;
         float hx = 0.26f * k, hy = 0.95f * k, hz = 0.18f * k, cy = sh.cy();
-        float tilt = 0.06f * (float) Math.sin(age * 0.15f);
+        float tilt = 0.13f * age + 0.11f * (float) Math.sin(age * 0.22f);
         float[][] v = new float[8][];
         for (int n = 0; n < 8; n++) {
             float x = (n & 1) == 0 ? -hx : hx, y = (n & 2) == 0 ? -hy : hy, z = (n & 4) == 0 ? -hz : hz;
@@ -284,10 +380,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     /** PHASE 1 spark: erratic lightning flashing over the ripple (re-aimed every 2 ticks). */
     private static void spark(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
         if (age > RIPPLE_END) return;
-        int burst = (int) (age / 2f);
-        if (RiftShape.hash(s.seed, burst, 85) < 0.3f) return;
+        int burst = (int) (age / 3f);
+        if (RiftShape.hash(s.seed, burst, 85) < 0.5f) return;
         float r = Math.max(sh.w, sh.h) * 0.55f * Math.min(1f, age / RIPPLE_END + 0.2f);
-        int n = 1 + (int) (RiftShape.hash(s.seed, burst, 86) * 3f);
+        int n = 1 + (int) (RiftShape.hash(s.seed, burst, 86) * 2f);
         for (int b = 0; b < n; b++) {
             float ox = (RiftShape.hash(s.seed, burst * 5 + b, 87) - 0.5f) * 2f;
             float oy = (RiftShape.hash(s.seed, burst * 5 + b, 88) - 0.5f) * 2f;
@@ -308,8 +404,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float k = seedScale(age);
         if (k <= 0f) return;
         hollowVoxelRect(p, vc, wv, 0f, sh.cy(), 0.2f, 0.75f * k, 1.15f * k, 0.14f * k, look.halo(), 0.42f * k);
-        int burst = (int) (age / 3f);
-        int n = 2 + (int) (RiftShape.hash(s.seed, burst, 81) * 3f);
+        if (!s.night) return;
+        int burst = (int) (age / 6f);
+        int n = 1 + (int) (RiftShape.hash(s.seed, burst, 81) * 2f);
         for (int b = 0; b < n; b++) {
             float tx = Math.round((RiftShape.hash(s.seed, burst * 7 + b, 82) - 0.5f) * 8f);
             float ty = Math.round(sh.cy() + (RiftShape.hash(s.seed, burst * 7 + b, 83) - 0.5f) * 6f);
@@ -491,6 +588,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ stable details (trailer notch cubes + sparkles)
 
     private static void stable(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, State s) {
+        if (s.type == RiftType.PORTAL) return; // keep the permanent cyan portal clean and legible
         float[] white = c(1f, 1f, 1f), core = look.core();
         // 5 trailer-exact floating hollow cubes in the perimeter notches (Images 1, 2, 27, 36).
         if (s.type != RiftType.PORTAL) {
@@ -503,16 +601,18 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 for (int[] e : edges) line(p, vc, wv, cam, v[e[0]], v[e[1]], 0.042f, core, 0.95f);
             }
         }
-        // White pixel sparkles drifting strictly upward through the opening.
-        for (int k = 0; k < 28; k++) {
-            float life = (RiftShape.hash(s.seed, k, 70) + s.time * (0.04f + 0.04f * RiftShape.hash(s.seed, k, 71))) % 1f;
-            float x = (RiftShape.hash(s.seed, k, 72) - 0.5f) * sh.w * 0.85f, y = RiftShape.BASE + life * (sh.h + 0.8f);
+        // Sparse, small white motes drift down through the opening (reduced center clutter).
+        for (int k = 0; k < 9; k++) {
+            float life = (RiftShape.hash(s.seed, k, 70) + s.time * (0.035f + 0.025f * RiftShape.hash(s.seed, k, 71))) % 1f;
+            float x = (RiftShape.hash(s.seed, k, 72) - 0.5f) * sh.w * 0.72f;
+            float y = RiftShape.BASE + (1f - life) * (sh.h + 0.8f);
             float z = -sh.maxDepth * RiftShape.hash(s.seed, k, 73) * 0.7f + 0.05f;
-            float a = (float) Math.sin(life * Math.PI) * 0.9f, q = 0.032f + 0.025f * RiftShape.hash(s.seed, k, 75);
+            float a = (float) Math.sin(life * Math.PI) * 0.46f, q = 0.020f + 0.014f * RiftShape.hash(s.seed, k, 75);
             if (a < 0.03f) continue;
-            line(p, vc, wv, cam, new float[]{x, y - q, z}, new float[]{x, y + q, z}, q * 2f, white, a);
+            line(p, vc, wv, cam, new float[]{x, y - q, z}, new float[]{x, y + q, z}, q * 1.5f, white, a);
         }
-        // Occasional lightning arc from the rim into the air.
+        if (!s.night) return;
+        // Occasional lightning arc from the rim into the air, kept distinct from the sparse motes.
         float cycle = s.time * 20f / 80f;
         int n = (int) cycle;
         if (cycle - n < 6f / 80f) {
@@ -552,7 +652,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
-    // ------------------------------------------------------------------ upward-drifting dissolving voxel energy cubes
+    // ------------------------------------------------------------------ downward-drifting dissolving voxel energy cubes
 
     /** Per rift type (0 overworld, 1 nether, 2 end, 3 sift, 4 portal): three emissive trailer hues. */
     static final float[][][] ENERGY = {
@@ -564,14 +664,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     };
 
     /**
-     * Large 3D voxel cubes (0.25-0.5 blocks) drifting strictly upward (velocityY = 0.04f per tick, zero X/Z drift)
-     * and flattening into wide thin slabs over the final 25% of their life.
+     * A reduced number of 3D cubes (0.25-0.5 blocks) drift down through the opening (zero X/Z drift)
+     * and flatten into thin slabs over the final 25% of their life.
      */
     private static void energyCubes(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float age) {
         float[][] pal = ENERGY[Math.max(0, Math.min(ENERGY.length - 1, s.type.id))];
         float ramp = clamp((age - CLUSTER_START) / (GROWN - CLUSTER_START), 0f, 1f);
-        int count = Math.round(14 * (0.3f + 0.7f * ramp));
-        float velocityY = 0.04f;
+        int count = Math.round(7 * (0.3f + 0.7f * ramp));
+        float velocityY = -0.035f;
         for (int k = 0; k < count; k++) {
             float life = 2.2f + 1.6f * RiftShape.hash(s.seed, k, 120), period = life + 0.9f * RiftShape.hash(s.seed, k, 121);
             float tt = s.time + RiftShape.hash(s.seed, k, 122) * period;

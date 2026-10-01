@@ -1,5 +1,5 @@
 {
-  "clock": "minecraft:overworld",
+  "clock": "entersift:sift",
   "period_ticks": 24000,
   "tracks": {
     "minecraft:visual/sky_color": {
@@ -9,27 +9,19 @@
           "value": "#7fd3cf"
         },
         {
-          "ticks": 3500,
+          "ticks": 5000,
           "value": "#7fd3cf"
         },
         {
-          "ticks": 5000,
-          "value": "#8fc2c4"
-        },
-        {
-          "ticks": 8500,
+          "ticks": 6000,
           "value": "#8fc2c4"
         },
         {
           "ticks": 11000,
-          "value": "#c86a92"
+          "value": "#8fc2c4"
         },
         {
-          "ticks": 14500,
-          "value": "#c86a92"
-        },
-        {
-          "ticks": 16500,
+          "ticks": 13000,
           "value": "#db7840"
         },
         {
@@ -45,27 +37,19 @@
           "value": "#7fd3cf"
         },
         {
-          "ticks": 3500,
+          "ticks": 5000,
           "value": "#7fd3cf"
         },
         {
-          "ticks": 5000,
-          "value": "#8fc2c4"
-        },
-        {
-          "ticks": 8500,
+          "ticks": 6000,
           "value": "#8fc2c4"
         },
         {
           "ticks": 11000,
-          "value": "#c86a92"
+          "value": "#8fc2c4"
         },
         {
-          "ticks": 14500,
-          "value": "#c86a92"
-        },
-        {
-          "ticks": 16500,
+          "ticks": 13000,
           "value": "#db7840"
         },
         {
@@ -79,35 +63,27 @@
       "keyframes": [
         {
           "ticks": 0,
-          "value": "#5cb0aa"
-        },
-        {
-          "ticks": 3500,
-          "value": "#5cb0aa"
+          "value": "#5aa8bc"
         },
         {
           "ticks": 5000,
-          "value": "#6aa0a4"
+          "value": "#5aa8bc"
         },
         {
-          "ticks": 8500,
-          "value": "#6aa0a4"
+          "ticks": 6000,
+          "value": "#62b8c0"
         },
         {
           "ticks": 11000,
-          "value": "#a0587a"
+          "value": "#62b8c0"
         },
         {
-          "ticks": 14500,
-          "value": "#a0587a"
-        },
-        {
-          "ticks": 16500,
-          "value": "#b8622e"
+          "ticks": 13000,
+          "value": "#c08a3a"
         },
         {
           "ticks": 22500,
-          "value": "#b8622e"
+          "value": "#c08a3a"
         }
       ]
     },
@@ -118,15 +94,11 @@
           "value": "#00ffffff"
         },
         {
-          "ticks": 3500,
-          "value": "#00ffffff"
-        },
-        {
           "ticks": 5000,
           "value": "#00ffffff"
         },
         {
-          "ticks": 8500,
+          "ticks": 6000,
           "value": "#00ffffff"
         },
         {
@@ -134,11 +106,7 @@
           "value": "#00ffffff"
         },
         {
-          "ticks": 14500,
-          "value": "#00ffffff"
-        },
-        {
-          "ticks": 16500,
+          "ticks": 13000,
           "value": "#00ffffff"
         },
         {
@@ -154,32 +122,24 @@
           "value": "#dcf4fa"
         },
         {
-          "ticks": 3500,
+          "ticks": 5000,
           "value": "#dcf4fa"
         },
         {
-          "ticks": 5000,
-          "value": "#e6fff4"
-        },
-        {
-          "ticks": 8500,
+          "ticks": 6000,
           "value": "#e6fff4"
         },
         {
           "ticks": 11000,
-          "value": "#f4c6dc"
+          "value": "#e6fff4"
         },
         {
-          "ticks": 14500,
-          "value": "#f4c6dc"
-        },
-        {
-          "ticks": 16500,
-          "value": "#ffc88a"
+          "ticks": 13000,
+          "value": "#ffd89a"
         },
         {
           "ticks": 22500,
-          "value": "#ffc88a"
+          "value": "#ffd89a"
         }
       ],
       "modifier": "multiply"
@@ -191,27 +151,19 @@
           "value": 1.0
         },
         {
-          "ticks": 3500,
-          "value": 1.0
-        },
-        {
           "ticks": 5000,
           "value": 1.0
         },
         {
-          "ticks": 8500,
+          "ticks": 6000,
           "value": 1.0
         },
         {
           "ticks": 11000,
-          "value": 0.9
+          "value": 1.0
         },
         {
-          "ticks": 14500,
-          "value": 0.9
-        },
-        {
-          "ticks": 16500,
+          "ticks": 13000,
           "value": 0.8
         },
         {
@@ -228,27 +180,19 @@
           "value": 1.0
         },
         {
-          "ticks": 3500,
-          "value": 1.0
-        },
-        {
           "ticks": 5000,
           "value": 1.0
         },
         {
-          "ticks": 8500,
+          "ticks": 6000,
           "value": 1.0
         },
         {
           "ticks": 11000,
-          "value": 0.9
+          "value": 1.0
         },
         {
-          "ticks": 14500,
-          "value": 0.9
-        },
-        {
-          "ticks": 16500,
+          "ticks": 13000,
           "value": 0.78
         },
         {
@@ -297,6 +241,20 @@
           "value": 180.0
         }
       ]
+    }
+  },
+  "time_markers": {
+    "entersift:flow": {
+      "ticks": 0,
+      "show_in_commands": true
+    },
+    "entersift:thrive": {
+      "ticks": 6000,
+      "show_in_commands": true
+    },
+    "entersift:endure": {
+      "ticks": 13000,
+      "show_in_commands": true
     }
   }
 }

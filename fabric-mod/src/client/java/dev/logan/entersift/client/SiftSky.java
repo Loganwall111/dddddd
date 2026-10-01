@@ -25,14 +25,13 @@ import net.minecraft.world.phys.Vec3;
  * Horizon: the lowest band fades to exactly the fog colour of timeline entersift:sift_cycle
  * (same keyframes, see STAGE_TICKS), so distant terrain melts into the sky without a seam.
  *
- * Cycle (world clock, 24000 ticks). The ground and ichor are tinted by the same timeline via
- * sky_light_color, so they follow the sky's dominant colour.
- *   day      soft teal-blue horizon -> radiant mint-green -> pale violet overhead (trailer frames)
- *   noon     the same, brighter, with a pearl sheen at the zenith
- *   evening  dusty rose horizon, lilac and soft blue-violet above
- *   night    soft hazy amber-gold backdrop with dusty crimson highlights
- * 0.13: there is NO sun in the Sift (the day/night cycle stays). Its light comes from soft
- * multi-coloured columns falling from the sky itself and coloured beams that land on the ground.
+ * Cycle (the Sift's independent 24000-tick clock). Ground and ichor follow the same tide timeline:
+ *   Flow     soft teal-blue horizon and mint-green overhead
+ *   Thrive   brighter teal and pearl accents
+ *   Endure   warm amber haze with muted crimson highlights
+ * Jelly Lands layer their own dense blue fog and deep-blue sky over this cycle.
+ * 0.13: there is NO sun in the Sift; the independent tide clock shapes the sky and ambient light.
+ * Soft multi-coloured columns fall from the sky itself and coloured beams land on the ground.
  *
  * 0.12 layer stack (render types from {@link SiftRenderTypes}; no OIT, so terrain does not flicker):
  *   1. opaque gradient dome with a faint pastel lava-lamp shimmer
@@ -43,26 +42,23 @@ import net.minecraft.world.phys.Vec3;
 public final class SiftSky {
     private SiftSky() {}
 
-    // Keyframes shared with tools/phase10.py (timeline). Index = stage: 0 day, 1 noon, 2 evening, 3 night.
-    static final int[] STAGE_TICKS = {0, 3500, 5000, 8500, 11000, 14500, 16500, 22500};
-    static final int[] STAGE_AT = {0, 0, 1, 1, 2, 2, 3, 3};
+    // Shared with tools/phase19.py and timeline/sift_cycle.json. Index = Flow, Thrive, Endure.
+    static final int[] STAGE_TICKS = {0, 5000, 6000, 11000, 13000, 22500};
+    static final int[] STAGE_AT = {0, 0, 1, 1, 2, 2};
 
-    /** Horizon / fog colour per stage (identical to the timeline's fog_color and sky_color). */
-    static final float[][] HORIZON = {rgb(0x7FD3CF), rgb(0x8FC2C4), rgb(0xC86A92), rgb(0xDB7840)}; // 0.16 spec: cyan, mint, magenta-rose, amber
-    /** 0.12 middle band per stage: radiant mint-green by day, lilac at evening, deeper amber at night. */
-    /** 0.17: deeper, saturated teal toward the zenith (the ref sky is teal, not milky white). */
-    private static final float[][] MID = {rgb(0x5CC8C4), rgb(0x78C6C0), rgb(0xB45C8C), rgb(0xC8683A)};
-    /** Zenith base colour per stage. */
-    /** Zenith per stage: pale violet overhead by day and noon, soft blue-violet at evening, hazy gold at night. */
-    private static final float[][] ZENITH = {rgb(0x2E9AA6), rgb(0x4AA8AC), rgb(0x7A3C7C), rgb(0x9A4A30)}; // 0.17 teal overhead
-    /** Four soft lava-lamp tints per stage (0.12: pastel and faint; they only shimmer over the gradient). */
+    /** Horizon / fog colour per tide; the Java sky and timeline keep the same keyframes. */
+    static final float[][] HORIZON = {rgb(0x7FD3CF), rgb(0x8FC2C4), rgb(0xDB7840)};
+    /** Middle band per tide: saturated teal through the Endure amber haze. */
+    private static final float[][] MID = {rgb(0x5CC8C4), rgb(0x78C6C0), rgb(0xC8683A)};
+    /** Zenith base colour per tide. */
+    private static final float[][] ZENITH = {rgb(0x2E9AA6), rgb(0x4AA8AC), rgb(0x9A4A30)};
+    /** Four soft lava-lamp tints per tide (pastel and faint; they only shimmer over the gradient). */
     private static final float[][][] BLOBS = {
-        {rgb(0xF08CB4), rgb(0x7FF0D0), rgb(0x4FD0E0), rgb(0xFFA8C8)},   // 0.17: pink / mint / teal, no pastel white
+        {rgb(0xF08CB4), rgb(0x7FF0D0), rgb(0x4FD0E0), rgb(0xFFA8C8)},
         {rgb(0x9CF0D8), rgb(0xF0A0C0), rgb(0x60D0D0), rgb(0xB8F0DC)},
-        {rgb(0xFF8CB8), rgb(0x70D0D8), rgb(0xD080C0), rgb(0xFFA890)},
         {rgb(0xFFB060), rgb(0xE86A50), rgb(0xFFD08A), rgb(0xC05A70)}};
-    /** Dusty crimson highlights in the night haze. */
-    private static final float[] PILLAR = rgb(0xA84E56);
+    /** Muted copper highlights during Endure. */
+    private static final float[] ENDURE_PILLAR = rgb(0xA84E56);
     /** Aurora curtain colours from the trailer: mint green, pale white-cyan, soft pink, pale violet. */
     private static final float[][] AURORA = {rgb(0x7DFFC4), rgb(0x5FE0E0), rgb(0xFF8CC0), rgb(0xB89CFF)};
     /** 0.24 curved ribbon-tile sky panels (Images 9, 15, 29, 30): luminous mint-green, aqua-white, chartreuse-mint, and soft rose-pink. */
@@ -71,7 +67,8 @@ public final class SiftSky {
     private static final float[][] SWIRL_COLS = {rgb(0xFF8CC0), rgb(0x48E0D4), rgb(0xFF78B0), rgb(0x38C4CC), rgb(0xFFB4D8)};
     /** Biomes that get the swirl sky; every other Sift biome gets the panel sky. */
     static final java.util.Set<String> SWIRL_BIOMES = java.util.Set.of("coral_expanse", "tidepool_reef", "singer_meadow", "soul_valley");
-    /** 0 = panel sky, 1 = swirl sky; eased toward the camera biome's target so crossing a border blends. */
+    static final java.util.Set<String> JELLY_BIOMES = java.util.Set.of("jelly_lands");
+    /** 0 = panel sky, 1 = swirl sky; biome changes ease instead of popping at borders. */
     private static float swirl = -1f;
     private static long swirlAt;
     /**
@@ -83,7 +80,9 @@ public final class SiftSky {
     static final java.util.Set<String> BASIN_BIOMES = java.util.Set.of("rose_spires", "titan_crags");
     private static final float[] MEADOW_MINT = rgb(0x8FC2C4), PEARL = rgb(0xF2F8F4), ELECTRIC_CYAN = rgb(0x3FF3FF);
     private static final float[] BASIN_CRIMSON = rgb(0xB8384A), BASIN_ROSE = rgb(0xC87A8A), BASIN_MAGENTA = rgb(0x9A2F78);
-    static float meadow = 0f, basin = 0f;
+    private static final float[] JELLY_HORIZON = rgb(0x173B95), JELLY_MID = rgb(0x102B78), JELLY_ZENITH = rgb(0x071640);
+    private static final float[][] JELLY_BLOBS = {rgb(0x1B4EAF), rgb(0x2457B8), rgb(0x163B91), rgb(0x2D4F9A)};
+    static float meadow = 0f, basin = 0f, jelly = 0f;
 
     private static final int AZ = 72, EL = 36;
     private static int lastRadius = -1;
@@ -99,7 +98,7 @@ public final class SiftSky {
             Identifier dim = mc.level.dimension().identifier();
             if (!dim.toString().startsWith("entersift:") || !dim.equals(SiftContent.id("the_sift"))) return;
             float partial = context.levelState().worldPartialTicks;
-            float tick = (float) (mc.level.getOverworldClockTime() % 24000L) + partial;
+            float tick = SiftTides.ticks(mc.level, partial);
             float seconds = (float) ((System.nanoTime() / 1.0e9) % 7200.0);
             int chunks = mc.options.renderDistance().get();
             // Beyond the furthest chunk corner (~1.45 x render distance), inside the far plane (4 x).
@@ -110,10 +109,11 @@ public final class SiftSky {
             }
             updateMode(mc, context.levelState().cameraRenderState.pos);
             final float sw = swirl;
-            Palette pal = palette(tick);
+            final float jellyAmount = jelly;
+            Palette pal = blendJelly(palette(tick), jellyAmount);
             Vec3 cam = context.levelState().cameraRenderState.pos;
             float beamRange = Math.min(chunks * 16f, 176f);
-            List<float[]> beams = collectBeams(mc, cam, beamRange, tick);
+            List<float[]> beams = jellyAmount > 0.98f ? List.of() : collectBeams(mc, cam, beamRange, tick);
             PoseStack pose = context.poseStack();
             pose.pushPose(); // balanced: every push is popped even if a submit throws
             try {
@@ -122,16 +122,20 @@ public final class SiftSky {
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds, sw));
                 // 0.24 layer 2 (alpha blended): curved mint/aqua/pink ribbon-tile panels + aurora swirls across all biomes.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
-                    softPanels(p, vc, radius * 0.985f, pal, seconds, Math.max(0.68f, 1f - sw * 0.32f));
-                    if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw * 0.85f);
+                    float layer = Math.max(0f, 1f - jellyAmount * 0.96f);
+                    softPanels(p, vc, radius * 0.985f, pal, seconds,
+                        Math.max(0.68f, 1f - sw * 0.32f) * layer);
+                    if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw * 0.85f * layer);
                 });
-                // Layer 3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
+                // Layer 3: Jelly Lands keep the deep-blue veil and suppress bright auroras/rays.
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
-                    auroraCurtains(p, vc, radius * 0.98f, pal, seconds);
-                    skyRays(p, vc, radius * 0.96f, pal, seconds);
+                    float layer = Math.max(0f, 1f - jellyAmount * 0.98f);
+                    auroraCurtains(p, vc, radius * 0.98f, pal, seconds, layer);
+                    skyRays(p, vc, radius * 0.96f, pal, seconds, layer);
                 });
-                // World-space diagonal beams slicing into the terrain, with a tint pool where each one lands.
-                if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange));
+                // World-space diagonal beams slice into other Sift biomes; the Jelly haze suppresses them.
+                if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW,
+                    (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange, Math.max(0f, 1f - jellyAmount * 0.98f)));
             } finally {
                 pose.popPose();
             }
@@ -140,22 +144,26 @@ public final class SiftSky {
 
     /** 0.17: which of the two Sift skies the camera's biome uses, eased over ~3 s. */
     private static void updateMode(Minecraft mc, Vec3 camPos) {
-        float target = 0f, tMeadow = 0f, tBasin = 0f;
+        float target = 0f, tMeadow = 0f, tBasin = 0f, tJelly = 0f;
         try {
             var key = mc.level.getBiome(net.minecraft.core.BlockPos.containing(camPos)).unwrapKey();
             String path = key.isPresent() ? key.get().identifier().getPath() : "";
             if (SWIRL_BIOMES.contains(path)) target = 1f;
             if (MEADOW_BIOMES.contains(path)) tMeadow = 1f;
             if (BASIN_BIOMES.contains(path)) tBasin = 1f;
+            if (JELLY_BIOMES.contains(path)) tJelly = 1f;
         } catch (Throwable ignored) { }
         long now = System.nanoTime();
-        if (swirl < 0f) { swirl = target; meadow = tMeadow; basin = tBasin; swirlAt = now; return; }
+        if (swirl < 0f) {
+            swirl = target; meadow = tMeadow; basin = tBasin; jelly = tJelly; swirlAt = now; return;
+        }
         float dt = Math.min(0.25f, (now - swirlAt) / 1.0e9f);
         swirlAt = now;
         float step = dt / 3f;
         swirl = ease(swirl, target, step);
         meadow = ease(meadow, tMeadow, step);
         basin = ease(basin, tBasin, step);
+        jelly = ease(jelly, tJelly, step);
     }
 
     private static float ease(float v, float target, float step) {
@@ -165,7 +173,7 @@ public final class SiftSky {
     // ------------------------------------------------------------------ cycle
 
     /** Colours for the current tick, blended between the two neighbouring stages. */
-    record Palette(float[] horizon, float[] mid, float[] zenith, float[][] blobs, float pillars, float noon) {}
+    record Palette(float[] horizon, float[] mid, float[] zenith, float[][] blobs, float endure, float thrive) {}
 
     static float[] stageMix(float tick) {
         int n = STAGE_TICKS.length;
@@ -190,15 +198,25 @@ public final class SiftSky {
         float f = m[2];
         float[][] blobs = new float[4][];
         for (int k = 0; k < 4; k++) blobs[k] = lerp(BLOBS[a][k], BLOBS[b][k], f);
-        float pillars = (a == 3 ? 1 - f : 0) + (b == 3 ? f : 0);
-        float noon = (a == 1 ? 1 - f : 0) + (b == 1 ? f : 0);
-        return new Palette(lerp(HORIZON[a], HORIZON[b], f), lerp(MID[a], MID[b], f), lerp(ZENITH[a], ZENITH[b], f), blobs, pillars, noon);
+        float endure = (a == 2 ? 1 - f : 0) + (b == 2 ? f : 0);
+        float thrive = (a == 1 ? 1 - f : 0) + (b == 1 ? f : 0);
+        return new Palette(lerp(HORIZON[a], HORIZON[b], f), lerp(MID[a], MID[b], f),
+            lerp(ZENITH[a], ZENITH[b], f), blobs, endure, thrive);
     }
 
-    /** Sun direction: rises in the east (+X) at tick 0, overhead at 6000, sets at 12000. */
-    static float[] sunDirection(float tick) {
-        double a = (tick - 6000.0) / 24000.0 * Math.PI * 2;
-        return new float[]{(float) -Math.sin(a), (float) Math.cos(a), 0.18f};
+    /** Blue-biome sky palette, eased over the same border blend as the biome fog. */
+    private static Palette blendJelly(Palette base, float amount) {
+        float f = Math.max(0f, Math.min(1f, amount));
+        if (f <= 0f) return base;
+        float[][] blobs = new float[4][];
+        for (int k = 0; k < blobs.length; k++) blobs[k] = lerp(base.blobs()[k], JELLY_BLOBS[k], f);
+        return new Palette(
+            lerp(base.horizon(), JELLY_HORIZON, f),
+            lerp(base.mid(), JELLY_MID, f),
+            lerp(base.zenith(), JELLY_ZENITH, f),
+            blobs,
+            base.endure() * (1f - f),
+            base.thrive() * (1f - f));
     }
 
     // ------------------------------------------------------------------ noise
@@ -271,32 +289,32 @@ public final class SiftSky {
             float[] tint = sw > 0.01f ? lerp(pal.blobs()[k], lerp(SWIRL_COLS[k], pal.blobs()[k], 0.35f), sw) : pal.blobs()[k];
             c = lerp(c, tint, w);
         }
-        if (pal.noon() > 0.01f) { // pearl sheen around the zenith at noon
-            float pearl = smooth(0.55f, 1f, up) * 0.12f * pal.noon(); // 0.17: much fainter (was washing the sky white)
+        if (pal.thrive() > 0.01f) { // soft pearl sheen during Thrive
+            float pearl = smooth(0.55f, 1f, up) * 0.12f * pal.thrive();
             c = lerp(c, new float[]{0.96f, 1f, 0.97f}, pearl);
         }
-        if (pal.pillars() > 0.01f) { // soft crimson vertical pillars at night: columns in azimuth, fading upward
+        if (pal.endure() > 0.01f) { // muted vertical highlights during Endure
             float az = (float) Math.atan2(z, x);
             float col = noise((float) Math.cos(az) * 3.2f + t * 0.01f, (float) Math.sin(az) * 3.2f, t * 0.02f)
                 + 0.35f * noise((float) Math.cos(az) * 7f, (float) Math.sin(az) * 7f + t * 0.015f, y * 1.5f);
             float edge = smooth(0.02f, 0.6f, col) * (1 - smooth(0.25f, 0.95f, up)) * smooth(-0.1f, 0.12f, y);
-            c = lerp(c, PILLAR, edge * 0.45f * pal.pillars());
+            c = lerp(c, ENDURE_PILLAR, edge * 0.45f * pal.endure());
         }
-        // 0.21 biome states (kept weaker at night so the amber night stage still reads).
-        float dayK = 1f - 0.5f * pal.pillars();
+        // Biome-specific treatments stay subdued during Endure so the tide's amber character remains legible.
+        float cycleK = 1f - 0.5f * pal.endure();
         float[] horizon = pal.horizon();
         if (meadow > 0.01f) {
             float[] m = lerp(MEADOW_MINT, PEARL, smooth(0.15f, 0.95f, up) * 0.7f);
             m = lerp(m, PEARL, smooth(0.1f, 0.7f, blob(1, sx, y, sz, t)) * 0.35f);      // pearl lava-lamp blobs
-            c = lerp(c, m, meadow * 0.75f * dayK);
-            horizon = lerp(horizon, MEADOW_MINT, meadow * 0.6f * dayK);
+            c = lerp(c, m, meadow * 0.75f * cycleK);
+            horizon = lerp(horizon, MEADOW_MINT, meadow * 0.6f * cycleK);
         }
         if (basin > 0.01f) {
             float[] b = lerp(BASIN_CRIMSON, BASIN_ROSE, smooth(0f, 0.4f, up));
             b = lerp(b, BASIN_MAGENTA, smooth(0.35f, 0.95f, up));
             float basinBand = smooth(0.01f, 0.28f, up) * (1f - smooth(0.36f, 0.72f, up));
-            c = lerp(c, b, basin * (0.22f + 0.42f * basinBand) * dayK);
-            horizon = lerp(horizon, BASIN_ROSE, basin * 0.38f * dayK);
+            c = lerp(c, b, basin * (0.22f + 0.42f * basinBand) * cycleK);
+            horizon = lerp(horizon, BASIN_ROSE, basin * 0.38f * cycleK);
         }
         // Melt into the fog colour at and below the horizon: no seam against distant terrain.
         float haze = 1 - smooth(-0.02f, 0.2f, y);
@@ -344,8 +362,8 @@ public final class SiftSky {
 
     private static float[] bright(float[] c, float w) { return lerp(c, new float[]{1f, 1f, 1f}, w); }
 
-    /** How strongly the aurora shows: a little fainter at noon, strongest in the evening and at night. */
-    private static float auroraStrength(Palette pal) { return (0.7f + 0.3f * (1 - pal.noon())) * (1f + 0.8f * meadow); }
+    /** Aurora stays soft during Thrive and brighter over the Singer Meadow. */
+    private static float auroraStrength(Palette pal) { return (0.7f + 0.3f * (1 - pal.thrive())) * (1f + 0.8f * meadow); }
 
     private static final int CURTAINS = 7, CURTAIN_SEGS = 56, CURTAIN_ROWS = 8;
     /** 0.12: base transparency of every curtain (strict additive blending, SiftRenderTypes.GLOW). */
@@ -359,8 +377,8 @@ public final class SiftSky {
      * shimmering folds along its length, and a colour that shifts from the bottom (mint or white-cyan)
      * to the top (pink or violet). There are no hard edges, and the gradient sky shows through.
      */
-    private static void auroraCurtains(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
-        float strength = auroraStrength(pal);
+    private static void auroraCurtains(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float layerWeight) {
+        float strength = auroraStrength(pal) * layerWeight;
         float[][] row = new float[CURTAIN_ROWS + 1][];
         float[] rowA = new float[CURTAIN_ROWS + 1];
         float[][] prev = null;
@@ -496,8 +514,8 @@ public final class SiftSky {
      * segment with the alpha on the centre line and zero at both edges, and the alpha fades out
      * near the zenith and toward the ground, so none of them has a hard edge.
      */
-    private static void skyRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
-        float strength = 0.75f + 0.25f * (1 - pal.noon());
+    private static void skyRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float layerWeight) {
+        float strength = (0.75f + 0.25f * (1 - pal.thrive())) * layerWeight;
         int segs = 12;
         for (int k = 0; k < SKY_RAYS; k++) {
             double az0 = hash(k, 61, 0) * Math.PI * 2 + t * 0.0025 * (k % 2 == 0 ? 1 : -1);
@@ -530,9 +548,9 @@ public final class SiftSky {
         List<float[]> out = new ArrayList<>();
         int cx0 = (int) Math.floor((cam.x - range) / BEAM_CELL), cx1 = (int) Math.floor((cam.x + range) / BEAM_CELL);
         int cz0 = (int) Math.floor((cam.z - range) / BEAM_CELL), cz1 = (int) Math.floor((cam.z + range) / BEAM_CELL);
-        int day = (int) (mc.level.getOverworldClockTime() / 24000L);
+        int tideCycle = (int) Math.floorDiv(mc.level.getDefaultClockTime(), 24000L);
         for (int cx = cx0; cx <= cx1; cx++) for (int cz = cz0; cz <= cz1; cz++) {
-            if (hash(cx, cz, 91 + day) < 0.45f) continue;
+            if (hash(cx, cz, 91 + tideCycle) < 0.45f) continue;
             int x = cx * BEAM_CELL + (int) (hash(cx, cz, 92) * BEAM_CELL), z = cz * BEAM_CELL + (int) (hash(cx, cz, 93) * BEAM_CELL);
             double dx = x + 0.5 - cam.x, dz = z + 0.5 - cam.z;
             if (dx * dx + dz * dz > range * range) continue;
@@ -545,10 +563,12 @@ public final class SiftSky {
 
     /**
      * Diagonal translucent light beams in world space, slicing down from high above into the ground.
-     * Colours follow the 4-stage timeline; each beam fades with distance and pools a soft additive tint
+     * Colours follow the three-tide palette; each beam fades with distance and pools a soft additive tint
      * on the terrain where it lands. Positions are camera-relative (x - cam).
      */
-    private static void worldBeams(PoseStack.Pose p, VertexConsumer vc, List<float[]> beams, Vec3 cam, Palette pal, float t, float range) {
+    private static void worldBeams(PoseStack.Pose p, VertexConsumer vc, List<float[]> beams, Vec3 cam,
+                                   Palette pal, float t, float range, float visibility) {
+        if (visibility <= 0.005f) return;
         // All beams share one slow-turning slant, so they read as light falling from the sky (there is no sun).
         double turn = t * 0.004;
         float[] axis = norm(new float[]{0.32f * (float) Math.cos(turn), 1f, 0.32f * (float) Math.sin(turn)});
@@ -559,7 +579,7 @@ public final class SiftSky {
             if (fade < 0.01f) continue;
             float pulse = 0.7f + 0.3f * (float) Math.sin(t * 0.4f + b[3] * 20f);
             float[] c = lerp(bright(RAYS[(int) (b[3] * RAYS.length) % RAYS.length], 0.15f), pal.blobs()[(int) b[4]], 0.2f); // multi-coloured
-            float alpha = 0.24f * fade * pulse, width = 2.5f + 3f * b[3], len = 200f;
+            float alpha = 0.24f * fade * pulse * visibility, width = 2.5f + 3f * b[3], len = 200f;
             float[] bottom = {gx, gy - 1.5f, gz}, top = {gx + axis[0] * len, gy + axis[1] * len, gz + axis[2] * len};
             // Billboard around the beam axis toward the camera (camera is at the origin).
             float[] mid = {(bottom[0] + top[0]) / 2, (bottom[1] + top[1]) / 2, (bottom[2] + top[2]) / 2};
