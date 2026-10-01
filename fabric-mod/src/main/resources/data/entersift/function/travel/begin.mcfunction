@@ -6,5 +6,5 @@ execute if dimension entersift:rift_tunnel run return 0
 $scoreboard players set @s sift.dest $(dest)
 execute unless score @s sift.dest matches 5 unless score @s sift.return matches 1 run function entersift:travel/save
 # Tunnel not built yet (first seconds of a new world): old flash-and-teleport sequence.
-execute unless data storage entersift:tunnel {v:2b} run return run function entersift:travel/legacy_begin
+execute unless data storage entersift:tunnel {v:2b} run return 0
 function entersift:tunnel/enter

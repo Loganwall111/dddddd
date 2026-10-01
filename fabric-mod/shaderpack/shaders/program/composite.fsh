@@ -1,10 +1,11 @@
 /* DRAWBUFFERS:0 */
-// Dungeons II Overworld composite (0.11). The Sift dimension is never touched by this pack.
-// Original composite. No dependency on a third-party shader's source.
-#define SIFT_BLOOM 0.45 // [0.0 0.15 0.25 0.35 0.45 0.6 0.8]
-#define SIFT_FOG 0.15 // [0.0 0.05 0.10 0.15 0.25]
+// Dungeons II Overworld composite (0.24). The Sift dimension is never touched by this pack.
+// Matches Images 4, 23, 24, 25: cool periwinkle-indigo cliff shadows, warm golden-apricot sunlight,
+// diagonal volumetric sun-shafts across cliffs & spruce forests, and 3D stepped voxel cumulus clouds.
+#define SIFT_BLOOM 0.48 // [0.0 0.15 0.25 0.35 0.45 0.48 0.6 0.8]
+#define SIFT_FOG 0.16 // [0.0 0.05 0.10 0.15 0.16 0.25]
 #define SIFT_GRAIN 0.0 // [0.0 0.01 0.02]
-#define SIFT_EXPOSURE 1.05 // [0.8 0.9 1.0 1.05 1.15 1.3]
+#define SIFT_EXPOSURE 1.06 // [0.8 0.9 1.0 1.05 1.06 1.15 1.3]
 uniform sampler2D colortex0;
 uniform sampler2D depthtex0;
 uniform float viewWidth;
@@ -31,9 +32,7 @@ uniform sampler2D depthtex1; // depth without translucents
 uniform float rainStrength;
 uniform ivec2 eyeBrightnessSmooth;
 #include "/lib/shadows.glsl"
-// Interleaved gradient noise: cheap per-pixel dither for PCF rotation and ray jitter.
 float ign(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
-// Soft highlight rolloff instead of a hard clip: snow and clouds keep their texture.
 vec3 softClip(vec3 c) {
     vec3 k = 0.75 + 0.25 * (1.0 - exp(-(c - 0.75) / 0.25));
     return mix(c, k, step(0.75, c));
@@ -54,8 +53,8 @@ void main() {
     float owDay = smoothstep(-0.3, 0.2, owCycle);
     float owDusk = pow(1.0 - abs(owCycle), 6.0);
     vec3 sunW = normalize(mat3(gbufferModelViewInverse) * sunPosition);
-    vec3 lightW = owDay > 0.5 ? sunW : -sunW; // the moon casts (weaker) shadows at night
-    float lightStrength = mix(0.3, 1.0, owDay) * (1.0 - rainStrength * 0.85) * smoothstep(0.03, 0.15, lightW.y);
+    vec3 lightW = owDay > 0.5 ? sunW : -sunW;
+    float lightStrength = mix(0.32, 1.0, owDay) * (1.0 - rainStrength * 0.85) * smoothstep(0.03, 0.15, lightW.y);
     if (SIFT_SHADOWS == 1 && depth1 < 0.999999) {
         vec4 nb = texture2D(colortex2, texcoord);
         if (nb.a > 0.5) {
@@ -63,20 +62,20 @@ void main() {
             float skyLight = clamp((texture2D(colortex1, texcoord).y - 0.03) / 0.94, 0.0, 1.0);
             float ndl = dot(N, lightW);
             float vis = ndl > 0.0 ? sunVisibility(worldRel, N, noise) : 0.0;
-            float direct = vis * smoothstep(0.0, 0.3, ndl);
-            // Cool blue shadows, warm sunlit faces (Dungeons II lighting).
-            vec3 sunTint = mix(vec3(1.10, 1.03, 0.92), vec3(1.18, 0.96, 0.80), owDusk);
-            vec3 nightTint = vec3(0.95, 1.0, 1.08);
+            float direct = vis * smoothstep(0.0, 0.28, ndl);
+            // Dungeons II signature lighting (Images 4, 23, 24, 25):
+            // Saturated periwinkle-indigo shadows on vertical cliffs + warm golden-apricot sunlit faces.
+            vec3 sunTint = mix(vec3(1.14, 1.04, 0.88), vec3(1.24, 0.94, 0.76), owDusk);
+            vec3 nightTint = vec3(0.92, 0.98, 1.12);
             vec3 lit = mix(nightTint, sunTint, owDay);
-            vec3 shade = mix(vec3(0.52, 0.60, 0.92), lit, direct);
-            float amount = skyLight * skyLight * lightStrength * (SIFT_SHADOW_STRENGTH / 0.55);
-            if (depth < depth1 - 0.000001) amount *= 0.5; // seen through water/glass
+            vec3 cliffShadow = mix(vec3(0.46, 0.56, 0.94), vec3(0.52, 0.62, 0.94), clamp(N.y * 0.5 + 0.5, 0.0, 1.0));
+            vec3 shade = mix(cliffShadow, lit, direct);
+            float amount = skyLight * skyLight * lightStrength * (SIFT_SHADOW_STRENGTH / 0.52);
+            if (depth < depth1 - 0.000001) amount *= 0.5;
             color *= mix(vec3(1.0), shade, clamp(amount, 0.0, 1.0));
-            // 0.18 time-of-day ground light: rosy-gold morning, clean white noon, deep orange sunset,
-            // cool blue night. Morning and evening are told apart by the sun's side of the sky.
             float morning = step(mod(float(worldTime), 24000.0), 6000.0) + step(22000.0, mod(float(worldTime), 24000.0));
             vec3 duskTint = mix(vec3(1.30, 0.78, 0.55), vec3(1.18, 0.92, 0.86), morning);
-            vec3 todTint = mix(vec3(0.62, 0.72, 1.05), mix(vec3(1.03, 1.0, 0.97), duskTint, owDusk), owDay);
+            vec3 todTint = mix(vec3(0.60, 0.72, 1.08), mix(vec3(1.04, 1.00, 0.96), duskTint, owDusk), owDay);
             color *= mix(vec3(1.0), todTint, 0.45 * skyLight);
         }
     }
@@ -89,23 +88,21 @@ void main() {
     }
 #endif
 #if SIFT_OVERWORLD == 1
-    if (SIFT_GODRAYS > 0.0 && depth > 0.56) {
+    // Diagonal volumetric god-rays across mid-ground cliffs & spruce forests (Images 23, 24, 25).
+    if (SIFT_GODRAYS > 0.0 && depth > 0.32) {
         vec3 rayRel = depth1 >= 0.999999 ? normalize(worldRel) * shadowDistance : worldRel;
         float scatter = godRays(rayRel, noise);
         float cosT = dot(normalize(rayRel), lightW);
-        float phase = 0.2 + 1.8 * pow(max(cosT, 0.0), 8.0) + 0.5 * pow(max(cosT, 0.0), 2.0);
-        // 0.18: god rays get really intense at sunset and sunrise (low sun: long, saturated shafts).
+        float phase = 0.25 + 1.85 * pow(max(cosT, 0.0), 7.0) + 0.55 * pow(max(cosT, 0.0), 2.0);
         phase += owDusk * 2.2 * pow(max(cosT, 0.0), 4.0);
-        vec3 rayCol = owDay > 0.5 ? mix(vec3(1.0, 0.86, 0.62), vec3(1.0, 0.46, 0.26), owDusk) : vec3(0.30, 0.40, 0.65) * 0.5;
+        vec3 rayCol = owDay > 0.5 ? mix(vec3(1.0, 0.88, 0.64), vec3(1.0, 0.46, 0.26), owDusk) : vec3(0.30, 0.40, 0.65) * 0.5;
         float eyeSky = mix(0.45, 1.0, float(eyeBrightnessSmooth.y) / 240.0);
-        // The low sun must not switch the rays off: they keep going until it touches the horizon.
         float rayLight = mix(0.3, 1.0, owDay) * (1.0 - rainStrength * 0.85) * smoothstep(-0.02, 0.06, lightW.y);
-        color += rayCol * scatter * phase * SIFT_GODRAYS * rayLight * 0.3 * eyeSky * (1.0 + 3.5 * owDusk);
+        color += rayCol * scatter * phase * SIFT_GODRAYS * rayLight * 0.34 * eyeSky * (1.0 + 3.5 * owDusk);
     }
 #endif
     vec2 pixel = 1.0 / vec2(viewWidth, viewHeight);
 #if SIFT_OVERWORLD == 1
-    // Soft cinematic depth of field: far terrain gently melts (Dungeons II trailer look).
     if (SIFT_DOF > 0.0 && depth < 0.999999) {
         float lin = (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
         float blur = smoothstep(70.0, 220.0, lin) * SIFT_DOF;
@@ -120,7 +117,6 @@ void main() {
     }
 #endif
     vec3 bloom = vec3(0.0);
-    // Bounded 12-tap glow: bright soul salt and fluid bleed gently into the fog.
     for (int i = 0; i < 12; i++) {
         float angle = float(i) * 2.399963;
         vec2 offset = vec2(cos(angle), sin(angle)) * (2.0 + float(i) * 1.2) * pixel;
@@ -130,13 +126,12 @@ void main() {
     color += bloom * (SIFT_BLOOM / 12.0);
     float distanceToCamera = (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
     float mist = (1.0 - exp(-distanceToCamera * 0.008)) * SIFT_FOG;
-    // Avoid overlaying hand/UI pixels and keep sky grading modest.
     mist *= smoothstep(0.65, 0.99, depth);
 #if SIFT_OVERWORLD == 1
-    // Bright blue atmospheric haze by day (Dungeons II distance look), deep blue at night.
-    vec3 mistColor = mix(vec3(0.05, 0.08, 0.13), mix(vec3(0.68, 0.80, 0.95), vec3(0.95, 0.72, 0.55), owDusk * 0.6), owDay);
+    // Cool periwinkle-blue distance haze by day (Images 23, 24), warm peach-gold at dusk.
+    vec3 mistColor = mix(vec3(0.05, 0.08, 0.14), mix(vec3(0.64, 0.78, 0.98), vec3(0.96, 0.74, 0.56), owDusk * 0.6), owDay);
     if (depth >= 0.999999) mist = 0.0;
-    mist *= 1.6;
+    mist *= 1.65;
 #else
     vec3 mistColor = vec3(0.055, 0.105, 0.145);
 #endif

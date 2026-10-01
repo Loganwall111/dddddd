@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:grass_block",
+    "minecraft:dirt",
+    "minecraft:stone",
+    "minecraft:deepslate",
+    "minecraft:sand",
+    "minecraft:red_sand",
+    "minecraft:gravel",
+    "minecraft:netherrack",
+    "minecraft:basalt",
+    "minecraft:blackstone",
+    "minecraft:end_stone",
+    "entersift:teal_path",
+    "entersift:sinter",
+    "entersift:pink_turf",
+    "entersift:blue_turf",
+    "entersift:sift_earth",
+    "entersift:saltstone",
+    "entersift:salt",
+    "entersift:crag_rock",
+    "entersift:rose_path",
+    "entersift:reef_stone",
+    "entersift:pale_crust",
+    "entersift:carapace",
+    "entersift:rose_spire"
+  ]
+}

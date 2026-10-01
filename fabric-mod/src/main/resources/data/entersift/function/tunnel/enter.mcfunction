@@ -1,3 +1,4 @@
+scoreboard players set @s sift.cooldown 40
 # 0.17: step into a rift -> appear at the start of the tunnel, facing +Z. A brief flash hides the
 # dimension change (the client shows it while the entersift:rift_transit effect is short).
 effect give @s entersift:rift_transit 1 0 true

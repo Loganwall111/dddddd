@@ -85,15 +85,15 @@ public final class SiftRenderTypes {
             .withFragmentShader(SiftContent.id("core/rift"))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .withCull(false)
             .build());
 
     /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
     public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .build());
 
     /** 0.18 rim glow and sparks: RIFT_GLOW, additive, depth-tested, no depth write. */
@@ -141,6 +141,13 @@ public final class SiftRenderTypes {
             .build());
     public static final RenderType SKY_BLEND = RenderType.create("entersift_sky_blend", RenderSetup.builder(SKY_BLEND_PIPELINE).createRenderSetup());
 
+    public static final RenderPipeline GLASS_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/rift_glass"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withCull(false).build());
+    public static final RenderType GLASS = RenderType.create("entersift_glass", RenderSetup.builder(GLASS_PIPELINE).createRenderSetup());
     public static final RenderType SKY = RenderType.create("entersift_sky", RenderSetup.builder(SKY_PIPELINE).createRenderSetup());
     public static final RenderType SOLID = RenderType.create("entersift_solid", RenderSetup.builder(SOLID_PIPELINE).createRenderSetup());
     public static final RenderType GLOW = RenderType.create("entersift_glow", RenderSetup.builder(GLOW_PIPELINE).createRenderSetup());

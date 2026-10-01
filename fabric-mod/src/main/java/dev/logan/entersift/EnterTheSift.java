@@ -49,7 +49,8 @@ public final class EnterTheSift implements ModInitializer {
         level.getServer().getCommands().performPrefixedCommand(source, query);
         return found.get();
     }
-    private static boolean gauntlet(ItemStack stack) { return stack.is(SiftContent.GAUNTLET) || stack.is(SiftContent.RED_GAUNTLET); }
+    private static boolean gauntlet(ItemStack stack) { return stack.is(SiftContent.GAUNTLET) || stack.is(SiftContent.RED_GAUNTLET) || stack.is(SiftContent.RIFT_STAFF) || stack.is(SiftContent.RIFT_STAFF_BLUE); }
+    private static boolean isStaff(ItemStack stack) { return stack.is(SiftContent.RIFT_STAFF) || stack.is(SiftContent.RIFT_STAFF_BLUE); }
     private static boolean note(Level world, BlockPos pos) {
         return world.getBlockState(pos).is(Blocks.NOTE_BLOCK) && world.getBlockState(pos.below()).is(SiftContent.SONOROUS_DEEPSLATE);
     }
@@ -66,7 +67,10 @@ public final class EnterTheSift implements ModInitializer {
         else LOGGER.info("Sift ritual: {}", text);
     }
     private static void shaft(ServerPlayer player, BlockPos pos, int pitch) {
-        runAs(player,"execute positioned "+pos.getX()+".0 "+pos.getY()+".0 "+pos.getZ()+".0 run function entersift:notes/shaft_"+RitualSequence.COLORS[pitch-1]);
+        if (player.level() instanceof ServerLevel level) shaft(level, pos, pitch);
+    }
+    private static void shaft(ServerLevel level, BlockPos pos, int pitch) {
+        run(level,"execute in "+level.dimension().identifier()+" positioned "+pos.getX()+".0 "+pos.getY()+".0 "+pos.getZ()+".0 run function entersift:notes/shaft_"+RitualSequence.COLORS[pitch-1]);
     }
     private static void ensureEncounter(ServerLevel level, AncientFrame f) {
         if (!hasTag(level,f,"sift.encounter")) runAt(level,f,"function entersift:guardian/begin");
@@ -112,6 +116,7 @@ public final class EnterTheSift implements ModInitializer {
         lastStrike.put(pos.immutable(), ticks);
         int pitch=level.getBlockState(pos).getValue(NoteBlock.NOTE)%8+1;
         glow(level,pos,pitch);
+        shaft(level,pos,pitch);
         run(level,"execute in "+level.dimension().identifier()+" positioned "+pos.getX()+".5 "+pos.getY()+".5 "+pos.getZ()+".5 run playsound minecraft:block.note_block.chime block @a[distance=..24] ~ ~ ~ 1 "+Math.pow(2,(pitch-5)/12.0));
         if (!level.dimension().equals(Level.OVERWORLD)) return;
         AncientFrame f=frameNear(level,pos);

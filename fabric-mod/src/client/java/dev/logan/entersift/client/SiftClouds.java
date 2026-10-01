@@ -113,11 +113,12 @@ public final class SiftClouds {
         float sun = (float) Math.cos(ang);
         float day = smooth(-0.2f, 0.25f, sun), dusk = Math.max(0f, 1f - Math.abs(sun) / 0.3f);
         float[] peach = {1f, 0.70f, 0.56f};
-        // 0.17 Dungeons look: bright white tops, sides fading down into a cool bluish grey, and a
-        // shadowed blue-grey underside.
-        float[] top = mix(mix(new float[]{0.22f, 0.25f, 0.38f}, new float[]{1f, 1f, 1f}, day), peach, dusk * 0.45f);
-        float[] low = mix(mix(new float[]{0.13f, 0.15f, 0.27f}, new float[]{0.62f, 0.70f, 0.86f}, day), peach, dusk * 0.3f);
-        float[] bottom = mix(mix(new float[]{0.10f, 0.11f, 0.21f}, new float[]{0.52f, 0.60f, 0.78f}, day), peach, dusk * 0.2f);
+        // 0.24 (Dungeons II Overworld Images 23-25): warm ivory-cream sunlit tops, periwinkle-lavender
+        // side tiers, and a two-tone periwinkle-slate underside (darker in the thick interior of a mass).
+        float[] top = mix(mix(new float[]{0.22f, 0.26f, 0.42f}, new float[]{1.00f, 0.985f, 0.955f}, day), peach, dusk * 0.48f);
+        float[] low = mix(mix(new float[]{0.14f, 0.17f, 0.30f}, new float[]{0.70f, 0.78f, 0.93f}, day), peach, dusk * 0.32f);
+        float[] bottom = mix(mix(new float[]{0.10f, 0.12f, 0.23f}, new float[]{0.56f, 0.65f, 0.85f}, day), peach, dusk * 0.22f);
+        float[] bottomCore = mix(mix(new float[]{0.08f, 0.10f, 0.20f}, new float[]{0.46f, 0.55f, 0.77f}, day), peach, dusk * 0.18f);
 
         float y0 = (float) (BASE_Y - cam.y);
         for (int a = 1; a < size - 1; a++) {
@@ -131,9 +132,10 @@ public final class SiftClouds {
                 if (alpha < 0.01f) continue;
                 float y1 = y0 + level * LAYER;
                 float[] topC = shade(low, top, level * LAYER);
-                // Top and the flat, uniform underside.
+                float[] botC = level >= 3 ? bottomCore : bottom;
+                // Top and the tiered periwinkle underside.
                 quad(p, vc, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1, topC, topC, alpha);
-                quad(p, vc, x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0, bottom, bottom, alpha);
+                quad(p, vc, x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0, botC, botC, alpha);
                 // Sides: only the part that rises above the neighbouring column.
                 side(p, vc, h[a - 1][b], level, x0, z1, x0, z0, y0, low, top, alpha);   // west
                 side(p, vc, h[a + 1][b], level, x1, z0, x1, z1, y0, low, top, alpha);   // east

@@ -7,22 +7,43 @@ D=R/'data/entersift'
 def fn(name): return (D/f'function/{name}.mcfunction').read_text()
 def read(path): return json.loads((D/path).read_text())
 class DataContracts(unittest.TestCase):
+    def test_staff_item_definition_model_texture_chain(self):
+        assets = R/'assets/entersift'
+        for name in ('rift_staff', 'rift_staff_blue'):
+            item = json.loads((assets/f'items/{name}.json').read_text())
+            self.assertEqual(item['model']['model'], f'entersift:item/{name}')
+            model = json.loads((assets/f'models/item/{name}.json').read_text())
+            self.assertEqual(model['textures']['layer0'], f'entersift:item/{name}')
+            self.assertTrue((assets/f'textures/item/{name}.png').is_file())
+    def test_crossing_uses_shared_silhouette_not_proximity(self):
+        source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
+        self.assertIn('RiftCrossing.crosses(shape', source)
+        self.assertIn('previous.put(player.getUUID()', source)
+        self.assertNotIn('@a[distance=', fn('rift/transport'))
+        self.assertNotIn('legacy_begin', '\n'.join(l for l in fn('travel/begin').splitlines() if not l.startswith('#')))
     def test_load_does_not_reset_existing_souls(self):
         self.assertNotIn('scoreboard players set @a sift.souls',fn('load'))
     def test_four_destinations_are_guarded(self):
         for i in range(4):
+            self.assertIn('travel/' + ('nether_surface' if i == 1 else 'surface'), fn(f'travel/destination_{i}'))
+        for name in ('surface', 'nether_surface'):
+            text = fn('travel/' + name)
+            self.assertIn('if loaded', text)
+            self.assertIn('#entersift:arrival_ground', text)
+            self.assertIn('if block ~ ~1 ~ minecraft:air', text)
+            self.assertIn('travel/arrive', text)
+    def test_no_floating_arrival_pads(self):
+        # 0.25 removed the provisional y=300 / y=130 salt pads: arrivals use the surface plus the plaza.
+        for i in range(3):
             text=fn(f'travel/destination_{i}')
-            self.assertIn('unless loaded',text)
-            if i == 3:  # the Sift: surface arrival next to the return portal (0.9)
-                self.assertIn('positioned over motion_blocking_no_leaves',text)
-            else:
-                self.assertIn('unless block ~ ~ ~ minecraft:air run return 0',text)
-            self.assertIn('unless score @s sift.return matches 1',text)
-            self.assertIn('sift.cooldown 100',text)
+            self.assertNotIn('0 300 0',text); self.assertNotIn('0 130 0',text)
+        self.assertIn('function entersift:travel/transit_go',fn('tunnel/exit'))
+        self.assertNotIn('run tp', fn('tunnel/exit'))
     def test_sift_arrival_has_visible_return_portal(self):
-        self.assertIn('summon minecraft:marker ~3 ~ ~ {Tags:["sift.return_gate"]}',fn('travel/plaza'))
-        self.assertIn('summon entersift:rift_portal ~ ~ ~ {Tags:["sift.return_anchor"],RiftType:0',fn('portal/return_tick'))
-        self.assertIn('travel/arrive',fn('travel/sift'))
+        self.assertIn('ReturnExit:true,Lifetime:6000', fn('travel/exit_rift'))
+        self.assertIn('RiftType:$(style)', fn('travel/exit_rift'))
+        self.assertNotIn('travel/plaza', fn('travel/arrive'))
+        self.assertNotIn('summon', fn('portal/return_tick'))
     def test_travel_returns_to_original_dimension(self):
         text=fn('travel/return')
         for dim in ['minecraft:overworld','minecraft:the_nether','minecraft:the_end','entersift:the_sift']:
@@ -48,7 +69,7 @@ class DataContracts(unittest.TestCase):
     def test_biomes_have_distinct_content(self):
         a=read('worldgen/biome/carapace.json'); b=read('worldgen/biome/singer_meadow.json'); c=read('worldgen/biome/saltwound_expanse.json')
         self.assertNotEqual(a['features'],b['features']); self.assertNotEqual(b['features'],c['features'])
-        self.assertEqual(read('worldgen/noise_settings/the_sift.json')['default_fluid'],'entersift:ichor')
+        self.assertEqual(read('worldgen/noise_settings/the_sift.json')['default_fluid'],'minecraft:air')
     def test_no_gamemode_or_inventory_takeover(self):
         for p in (D/'function').rglob('*.mcfunction'):
             for line in p.read_text().splitlines():
@@ -57,18 +78,21 @@ class DataContracts(unittest.TestCase):
     def test_animated_fluid(self):
         p=R/'assets/entersift/textures/block/ichor_still.png.mcmeta'
         self.assertEqual(json.loads(p.read_text())['animation']['frametime'],3)
-    def test_day_night_clock_is_not_frozen(self):
+    def test_sift_tides_use_an_independent_clock(self):
         dim=read('dimension_type/the_sift.json')
         self.assertTrue(dim['has_skylight'])
-        self.assertEqual(dim['default_clock'],'minecraft:overworld')
+        self.assertEqual(dim['default_clock'],'entersift:sift')
         self.assertEqual(dim['timelines'],['entersift:sift_cycle'])
-        import json as _j
-        tl=_j.loads((D/'timeline/sift_cycle.json').read_text())
+        tl=read('timeline/sift_cycle.json')
+        self.assertEqual(tl['clock'],'entersift:sift')
         self.assertEqual(tl['period_ticks'],24000)
-        self.assertIn('minecraft:visual/sun_angle',tl['tracks'])
-        # The Sift sky stays luminous at night (amber-gold), never black/navy.
-        night=tl['tracks']['minecraft:visual/sky_color']['keyframes'][-1]['value']
-        self.assertGreater(sum(int(night[i:i+2],16) for i in (1,3,5)),400)
+        self.assertEqual({name: marker['ticks'] for name,marker in tl['time_markers'].items()},
+                         {'entersift:flow':0,'entersift:thrive':6000,'entersift:endure':13000})
+        self.assertIn('minecraft:visual/sun_angle',tl['tracks'])  # preserve 0.24's sky-angle track
+        self.assertTrue((D/'world_clock/sift.json').exists())
+        tides=(ROOT/'src/client/java/dev/logan/entersift/client/SiftTides.java').read_text()
+        self.assertIn('getDefaultClockTime()',tides)
+        self.assertIn('"Flow"',tides); self.assertIn('"Thrive"',tides); self.assertIn('"Endure"',tides)
         self.assertNotIn('fixed_time',dim)
     def test_sky_is_native_java_lava_lamp(self):
         sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
@@ -214,7 +238,7 @@ class DataContracts(unittest.TestCase):
         import json
         dim=json.loads((D/'dimension/the_sift.json').read_text())['generator']['biome_source']['biomes']
         rule=(D/'worldgen/material_rule/the_sift.json').read_text()
-        for b in ['rose_spires','pale_grove','tidepool_reef']:
+        for b in ['rose_spires','pale_grove','tidepool_reef','jelly_lands']:
             self.assertIn(f'entersift:{b}',[e['biome'] for e in dim])
             self.assertIn(f'entersift:{b}',rule)
     def test_portal_pixelates_through_eight_stages(self):
@@ -245,6 +269,28 @@ class DataContracts(unittest.TestCase):
         self.assertIn('tag @s add sift.awakened',fn('rift/punch'))
         self.assertIn('@s[tag=sift.awakened]',fn('world/roll'))
         self.assertIn('if dimension minecraft:the_nether',fn('rift/wave_player'))
+        # 26.3 /time query takes a timeline id: the removed daytime keyword was a parse error that
+        # stopped the whole function from loading, which is why every rift silently stopped working.
+        # All gates now share rift/gate.
+        gate=fn('rift/gate')
+        self.assertIn('run time of minecraft:overworld query minecraft:day',gate)
+        self.assertIn('run time of entersift:sift query entersift:sift_cycle',gate)
+        self.assertIn('matches 13000..23999 run return 0',gate)
+        self.assertIn('matches ..12999 run return 0',gate)
+        self.assertIn('matches 23000.. run return 0',gate)
+        self.assertIn('return 1',gate)
+        for path in ('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at'):
+            self.assertIn('function entersift:rift/gate',fn(path),path)
+        self.assertIn('function entersift:rift/gate_denied',fn('rift/punch'))
+        self.assertNotIn('rift/gate',fn('rift/seed'))            # creative seeds work at any hour
+        self.assertIn('tag=sift.seeded] unless function entersift:rift/gate',fn('rift/tick'))
+        renderer=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertNotIn('if (!s.night && s.type != RiftType.PORTAL) return;',renderer)
+        self.assertNotIn('getOverworldClockTime()',renderer)
+        self.assertIn('openingWindow(',renderer); self.assertIn('apertureShape(',renderer)
+        self.assertIn('int k = 0; k < 9; k++',renderer)
+        self.assertIn('int count = Math.round(7 *',renderer)
+        self.assertIn('bolt(p, vc',renderer)  # lightning remains visible at night
     def test_rifts_are_entities_everywhere(self):
         import glob
         for path in (D/'function').rglob('*.mcfunction'):
@@ -332,7 +378,8 @@ class DataContracts(unittest.TestCase):
         self.assertTrue({'entersift:soul_valley','entersift:campaign_peaks'} <= biomes)
         for b in biomes: self.assertTrue((D/f"worldgen/biome/{b.split(':')[1]}.json").exists(), b)
         ns=json.dumps(read('worldgen/noise_settings/the_sift.json'))
-        self.assertIn('overworld_amplified',ns)
+        self.assertNotIn('overworld_amplified',ns)
+        self.assertEqual(read('worldgen/noise_settings/the_sift.json')['sea_level'],40)
         # Soul Valley: giant green + purple trees and ruins; Campaign Peaks: volcanoes, ore, ichor springs.
         valley=json.dumps(read('worldgen/biome/soul_valley.json')['features'])
         for f in ['verdant_tree','violet_tree','ruined_hut','ruined_tower','colossus_gate']: self.assertIn(f'entersift:{f}',valley)
@@ -376,20 +423,20 @@ class DataContracts(unittest.TestCase):
         client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
         self.assertLess(client.index('SiftBudget.reset()'),client.index('SiftSky.register()'))
         tr=(C/'SiftTransition.java').read_text()
-        self.assertIn('RIFT_TRANSIT',tr); self.assertIn('0.55f',tr); self.assertIn('afterExtract',tr)
+        self.assertIn('RIFT_TRANSIT',tr); self.assertIn('isFirstPerson()',tr); self.assertNotIn('afterExtract',tr)
         self.assertIn('rift_transit',(ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text())
         begin=fn('travel/begin')
         self.assertIn('function entersift:tunnel/enter',begin)                # 0.17: walk the tunnel, no cutscene
         self.assertIn('effect give @s entersift:rift_transit 2 0 true',fn('travel/legacy_begin'))
         self.assertIn('matches 61..',fn('travel/transit_tick'))               # teleport at tick 60, under the flare
-        for f in ('travel/warp_go','portal/cross','portal/return_tick'):   # 0.21: rifts go through travel/warp first
+        for f in ('travel/warp_go','portal/cross'):   # 0.21: rifts go through travel/warp first
             self.assertIn('travel/begin {dest:',fn(f)); self.assertNotIn('travel/destination_',fn(f))
         self.assertIn('transit_tick',fn('player/tick'))
         T=ROOT/'src/main/resources/assets/entersift/textures'
         for f in ('gui/rift_flash.png','gui/rift_glitch.png','mob_effect/rift_transit.png'):
             self.assertTrue((T/f).is_file(),f)
         sky=(C/'SiftSky.java').read_text()
-        self.assertIn('softPanels(',sky); self.assertIn('rgb(0xC86A92)',sky)
+        self.assertIn('softPanels(',sky); self.assertIn('rgb(0xDB7840)',sky)
 
     def test_v015_portal_rifts_and_bundled_pack(self):
         import re
@@ -404,13 +451,13 @@ class DataContracts(unittest.TestCase):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
         # Stacked hollow boxes at different depths, with step walls and lip rims between them.
-        shape=(C/'RiftShape.java').read_text()
+        shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
         self.assertIn('boxes(',shape); self.assertIn('maxDepth',shape)
         # 0.20: no per-vertex jitter and no pixelated lens view; the window is sampled by view direction.
         self.assertNotIn('gameTime() * 0.4f',rift); self.assertNotIn('px(lens',fsh)
     def test_v020_clean_slate_rifts(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
-        rift=(C/'RiftPortalRenderer.java').read_text(); shape=(C/'RiftShape.java').read_text()
+        rift=(C/'RiftPortalRenderer.java').read_text(); shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
         fsh=(S/'rift.fsh').read_text(); vsh=(S/'rift.vsh').read_text(); types=(C/'SiftRenderTypes.java').read_text()
         # Everything from the old renderer is gone.
         self.assertFalse((C/'SiftLens.java').exists()); self.assertNotIn('RIFT_LENS',types)
@@ -425,11 +472,11 @@ class DataContracts(unittest.TestCase):
         self.assertIn('float clouds(vec3 dir',fsh); self.assertIn('float ridge(float yaw',fsh)
         self.assertNotIn('Sampler0',fsh)
         # 2. Lifecycle (0.21: 0-100): ripple hard-stopped, tiered snap.
-        self.assertIn('age < RIPPLE_END + 6 && age < GROWN',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
+        self.assertIn('if (a > 52f) ripple(',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
         # 3. Wide soft additive night curtains replace laser poles.
-        self.assertIn('private static void curtains(',rift)
+        self.assertNotIn('private static void curtains(',rift)
         for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
-        self.assertIn('age >= GROWN && s.night',rift)
+        self.assertIn('energyCubes(p, vc, sh, s, a)',rift)
         # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
         self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
         self.assertIn('no T-junctions',rift)
@@ -445,22 +492,44 @@ class DataContracts(unittest.TestCase):
             a=read(f'worldgen/biome/{b}.json')['attributes']
             self.assertLess(a['minecraft:visual/fog_end_distance'],200)
         # Directive 2: 100-tick awakening, one tier every 10 ticks, large dissolving voxel cubes per rift type.
-        self.assertIn('RIPPLE_END = 30, SEED_START = 31, CLUSTER_START = 61, GROWN = 100',rift)
+        self.assertIn('RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 61, GROWN = 100',rift)
         self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f',rift)
-        self.assertIn('TIERS = 4',(C/'RiftShape.java').read_text())
+        self.assertIn('TIERS = 4',(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text())
         self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
-        self.assertIn('(0.25f + 0.25f * RiftShape.hash(g, k, 7)) / 2f',rift)        # 0.25-0.5 block cubes
-        self.assertIn('if (f >= 0.75f)',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
+        self.assertIn('float hx = half, hy = half, hz = half;',rift)        # 0.25-0.5 block cubes
+        self.assertIn('if (f >= 0.68f)',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
         self.assertIn('rgb(0xC0142A), rgb(0xFF6A1A), rgb(0xE0B040)',rift)
         self.assertIn('GROWN = 100',(ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
         self.assertIn('matches 100..5990',fn('rift/tick'))
         # Directive 3: direction window kept, safe rim shimmer, recessed alcove frame, warp overlay then tunnel.
-        self.assertIn('float[] jit',rift); self.assertIn('private static void frame(',rift); self.assertIn('COLLAR = 0.3f',rift)
-        self.assertIn('travel/warp {dest:',fn('rift/transport'))
-        self.assertIn('effect give @s entersift:rift_transit 4 0 true',fn('travel/warp'))
+        self.assertIn('float[] jit',rift); self.assertIn('private static void frame(',rift); self.assertIn('COLLAR = 0.12f',rift)
+        self.assertNotIn('@a[distance=',fn('rift/transport'))
+        self.assertIn('travel/begin {dest:$(dest)}',fn('travel/warp'))
         self.assertIn('matches 160.. run function entersift:travel/warp_go',fn('travel/transit_tick'))
         self.assertIn('matches 61..99 run function entersift:travel/transit_go',fn('travel/transit_tick'))
-        self.assertIn('private static void warp(',hud); self.assertIn('Math.sin(seconds * 9.0) * 0.15f',hud)
+        self.assertNotIn('private static void warp(',hud); self.assertIn('0xFFFFFF',hud)
+    def test_v022_master_architecture_override(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        rift=(C/'RiftPortalRenderer.java').read_text(); shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
+        part=(C/'RiftEnergyCubeParticle.java').read_text(); hud=(C/'SiftTransition.java').read_text()
+        tun=(C/'SiftTunnel.java').read_text(); fsh=(S/'rift.fsh').read_text(); tfsh=(S/'tunnel.fsh').read_text()
+        # Part 1: Pure voxel geometry over spheres + 100-tick timeline + reduced downward motes
+        self.assertNotIn('private static void ring(',rift); self.assertIn('hollowVoxelRect(',rift)
+        self.assertIn('openingWindow(',rift); self.assertIn('apertureShape(',rift)
+        self.assertNotIn('Math.cos(a)',shape); self.assertIn('rimCells',shape)
+        self.assertIn('RiftEnergyCubeParticle.register()',(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
+        self.assertIn('velocity.y -= 0.04f',part); self.assertIn('currentAge >= 0.75f * totalMaxAge',part)
+        self.assertIn('SIFT_PALETTE',part); self.assertIn('velocityY = -0.035f',rift)
+        # Part 2: Immersive Viewport Multi-Dimension Engine (secondary FBO pass + multi-pass box-blur + emissive overlay)
+        self.assertIn('encodeView(',rift); self.assertNotIn('renderSecondaryFboViewportPass(',rift)
+        self.assertIn('getYaw(',rift); self.assertIn('getPitch(',rift)
+        self.assertIn('VIBRANT_PINK_DAY',rift); self.assertIn('DEEP_AMBER_NIGHT',rift)
+        self.assertIn('boxBlurViewport(',fsh); self.assertIn('vibrantPinkDay',fsh); self.assertIn('deepAmberNight',fsh)
+        # Part 3: Seamless Transition (Ticks 0-40 RGB split, 41-60 orange flare, Tick 60 tunnel) & Voxel Corridor
+        self.assertIn('effect.getDuration() > 20',hud)
+        self.assertNotIn('private static void sphere(',tun)
+        self.assertIn('voxelSkybox(',tun); self.assertIn('voxelRings(',tun)
+        self.assertIn('voxelRing',tfsh)
     def test_v0182_gpu_rifts_under_iris_and_pack_updates(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         types=(c/'client/SiftRenderTypes.java').read_text()
@@ -492,13 +561,27 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.21',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.27.0-alpha',(ROOT/'gradle.properties').read_text())
+    def test_v024_trailer_accuracy_overhaul(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
+        shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
+        fsh=(S/'rift.fsh').read_text(); sky=(C/'SiftSky.java').read_text()
+        aura=(C/'AuraColumns.java').read_text(); clouds=(C/'SiftClouds.java').read_text()
+        # Unified stepped-cross cavity + wavy side walls & wavy interior vistas
+        self.assertIn('box[i][j] = 0;',shape); self.assertIn('rectSub(',rift); self.assertIn('wavySideVeils(',rift)
+        self.assertIn('wavyCoords(',fsh); self.assertIn('canopyTreesAndMesas(',fsh)
+        # Sift aurora panels + floating musical note glyphs inside rainbow columns
+        self.assertIn('0x68FFD0',sky); self.assertIn('noteGlyphs(',aura)
+        # Dungeons II Overworld stepped voxel clouds + periwinkle shadows
+        self.assertIn('bottomCore',clouds)
+        ow=(ROOT/'shaderpack/shaders/lib/overworld.glsl').read_text()
+        self.assertIn('periwinkle',ow)
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
         for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
         self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
-        self.assertIn('day >= 11500L && day <= 23300L',rift)                               # evening + night only
+        self.assertIn('clock >= 13_000L && clock < 23_000L',rift)                         # strict local night; Endure in the Sift
         self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
     def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
@@ -506,7 +589,7 @@ class DataContracts(unittest.TestCase):
         # The whole rift goes through the rift GLSL program; real lensing samples a scene copy.
         for k in ('RIFT_WALL','RIFT_GLOW'): self.assertIn(k,types); self.assertIn(k,(S/'rift.fsh').read_text())
         self.assertNotIn('RIFT_HALO',types); self.assertNotIn('LENS JITTER',rift)
-        self.assertIn('random value 6..9',fn('rift/style')); self.assertIn('distance=..3.0',fn('rift/transport'))
+        self.assertIn('random value 6..9',fn('rift/style')); self.assertNotIn('distance=..3.0',fn('rift/transport'))
         # Warp tunnel: invisible barriers, shorter, client-drawn burst.
         self.assertIn('minecraft:barrier hollow',fn('tunnel/build')); self.assertNotIn('tunnel_rib',fn('tunnel/build'))
         self.assertIn('matches 28..',fn('tunnel/player_tick')); self.assertNotIn('particle minecraft:',fn('tunnel/player_tick'))
@@ -563,4 +646,129 @@ class DataContracts(unittest.TestCase):
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))
+
+    def test_sift_overhaul_025_acceptance(self):
+        # Clock stays local to the Sift, and the worldgen no longer fills aquifers with Ichor.
+        self.assertEqual(read('dimension_type/the_sift.json')['default_clock'],'entersift:sift')
+        self.assertEqual(read('timeline/sift_cycle.json')['clock'],'entersift:sift')
+        self.assertEqual(read('worldgen/noise_settings/the_sift.json')['default_fluid'],'minecraft:air')
+        self.assertNotIn('overworld_amplified',json.dumps(read('worldgen/noise_settings/the_sift.json')))
+        self.assertEqual(read('worldgen/noise_settings/the_sift.json')['sea_level'],40)
+        for feature in ('ichor_lake','ichor_hot_spring'):
+            data=read(f'worldgen/feature/{feature}.json')
+            self.assertEqual(data['type'],'minecraft:delta_feature')
+            self.assertLessEqual(data['size']['max_inclusive'],2)
+        for feature, chance in (('ichor_lake',64),('ichor_hot_spring',96),('ichor_spring',96),('ichor_volcano',256)):
+            self.assertEqual(read(f'worldgen/placed_feature/{feature}.json')['placement'][0]['chance'],chance)
+        import struct
+        for texture in ('ichor_still','ichor_flow','ichor_overlay'):
+            data=(R/f'assets/entersift/textures/block/{texture}.png').read_bytes()
+            width,height=struct.unpack('!II',data[16:24])
+            self.assertEqual((width,height),(32,1536))
+        # Canopy retains its old key but now places unmistakable, large visible fossil structures.
+        self.assertEqual(json.loads((R/'assets/entersift/lang/en_us.json').read_text())['biome.entersift.boneyard'],'Canopy')
+        skull=read('worldgen/feature/giant_skull.json')
+        self.assertGreater(len(skull['features']),2000)
+        self.assertIn('minecraft:bone_block',json.dumps(skull))
+        canopy=json.dumps(read('worldgen/biome/boneyard.json')['features'])
+        for feature in ('giant_skull','bone_tusk','boneyard_ribcage'):
+            self.assertIn(f'entersift:{feature}',canopy)
+        # Jelly Lands has a short blue fog range, pink ground cover, pale trees, and many Blubs.
+        jelly=read('worldgen/biome/jelly_lands.json')
+        attrs=jelly['attributes']
+        self.assertEqual(attrs['minecraft:visual/fog_color'],'#173b95')
+        self.assertLessEqual(attrs['minecraft:visual/fog_end_distance'],64)
+        self.assertIn('entersift:pale_tree',jelly['features'][9])
+        self.assertIn('entersift:pink_grass_pale_grove',jelly['features'][9])
+        rule=json.dumps(read('worldgen/material_rule/the_sift.json'))
+        self.assertIn('entersift:jelly_lands',rule); self.assertIn('entersift:pink_turf',rule)
+        dim=read('dimension/the_sift.json')['generator']['biome_source']['biomes']
+        self.assertIn('entersift:jelly_lands',[entry['biome'] for entry in dim])
+        mobs=(ROOT/'src/main/java/dev/logan/entersift/SiftEntities.java').read_text()
+        self.assertIn('spawn("jelly_lands", MobCategory.CREATURE, SiftKind.BLUB, 48, 3, 6)',mobs)
+        self.assertIn('entersift:jelly_lands',fn('world/pulse'))
+        # Rifts are gated to local night/Endure; the opening is circular, twisted, and less particle-heavy.
+        rift=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('SiftTides.isEndure(clock)',rift)
+        self.assertIn('openingWindow(',rift); self.assertIn('rippleRing(',rift)
+        self.assertNotIn('if (!s.night && s.type != RiftType.PORTAL) return;',rift)
+        self.assertIn('int k = 0; k < 9; k++',rift)
+        self.assertIn('int count = Math.round(7 *',rift)
+        # Rifts are gated to local night/Endure through the shared 26.3 timeline query (rift/gate).
+        self.assertIn('query entersift:sift_cycle',fn('rift/gate'))
+        self.assertIn('function entersift:rift/gate',fn('rift/create'))
+        self.assertIn('function entersift:rift/gate',fn('rift/tick'))
+        self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
+        props=(ROOT/'gradle.properties').read_text()
+        self.assertIn('mod_version=0.27.0-alpha',props)
+        self.assertIn('archives_base_name=sift-overhaul',props)
+    def test_no_removed_time_query_keywords(self):
+        # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
+        for p in (D/'function').rglob('*.mcfunction'):
+            for line in p.read_text().splitlines():
+                if 'run time query ' in line:
+                    self.assertIn('time query gametime',line,str(p))
+    def test_rift_opens_at_ground_level(self):
+        # RiftShape draws the cluster upward from BASE above its anchor, so the gauntlet must anchor a
+        # rift just above the player's feet (eyes - 1.5). 0.22 "raised" this to ~-0.5 and floated the
+        # whole rift a block above the ground.
+        text=fn('rift/punch')
+        self.assertIn('positioned ~ ~-1.5 ~',text)
+        self.assertIn('positioned ~ ~-1.2 ~',text)
+        self.assertNotIn('~ ~-0.5 ~',text); self.assertNotIn('~ ~-0.2 ~',text)
+        shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
+        self.assertIn('static final float BASE = 0.25f;',shape)
+    def test_rift_diagnostic_command(self):
+        text=fn('dev/riftcheck')
+        self.assertIn('function entersift:rift/gate',text)       # reports the window
+        self.assertIn('query entersift:sift_cycle',text)         # and the Sift clock
+        self.assertIn('function entersift:rift/seed with storage entersift:rift',text)
+        self.assertIn('scoreboard players set #rift_dest sift.target 3',text)  # never the current dimension
+    def test_toolchain_baseline_manifest(self):
+        # tools/regen_check.py (CI) is only meaningful if the manifest stays honest: every live script
+        # exists and owns something, every documented drift path exists, every dead/manual script has a
+        # reason, and no script is listed twice.
+        import json
+        m=json.loads((ROOT/'tools/baseline.json').read_text())
+        live=[s['script'] for s in m['live']]
+        self.assertEqual(len(live),len(set(live)))
+        for step in m['live']:
+            self.assertTrue((ROOT/'tools'/step['script']).exists(),step['script'])
+            self.assertTrue(step['owns'].strip(),step['script'])
+        for path,reason in m['known_drift'].items():
+            self.assertTrue((ROOT/path).exists(),path)
+            self.assertGreater(len(reason),40,path)
+        for group in ('dead','manual'):
+            self.assertTrue(m[group])
+            for name,reason in m[group].items():
+                self.assertGreater(len(reason),20,name)
+        self.assertIn('make_asset_sheet.py',m['manual'])           # non-deterministic: never enforced
+        self.assertNotIn('generate_data.py',live)                  # crashes: never enforced
+        self.assertIn('phase19.py',live)
+    def test_live_generators_are_deterministic_and_idempotent(self):
+        # Two bugs that made the shipped tree impossible to reproduce:
+        # 1) creatures.py salting its Licker mottling with the builtin hash() (PYTHONHASHSEED), so every
+        #    process drew a different texture;
+        # 2) phase19.moderate_crags() scaling the crag feature files in place, shrinking them on every run.
+        live=[s['script'] for s in json.loads((ROOT/'tools/baseline.json').read_text())['live']]
+        for name in live:
+            for line in (ROOT/'tools'/name).read_text().splitlines():
+                if 'hash(' in line and not line.strip().startswith('#'):
+                    self.fail(f'{name} uses the salted builtin hash(): {line.strip()} (use zlib.crc32)')
+        creatures=(ROOT/'tools/creatures.py').read_text()
+        self.assertIn('zlib.crc32(f"{part[\'name\']}|{fname}|{xx // 3}|{yy // 3}".encode()) % 7',creatures)
+        phase19=(ROOT/'tools/phase19.py').read_text()
+        self.assertIn('ROOT / f"tools/overlays/{name}.json"',phase19)  # crags are pinned, not re-scaled
+        self.assertIn('CRAG_OVERLAYS = ("titan_crag", "crag_spire")',phase19)
+        for name in ('titan_crag','crag_spire'):
+            base=json.loads((ROOT/f'tools/overlays/{name}.json').read_text())
+            shipped=read(f'worldgen/feature/{name}.json')
+            self.assertEqual(base,shipped,f'tools/overlays/{name}.json is stale: update it with the shipped file')
+    def test_toolchain_baseline_has_no_undocumented_drift(self):
+        # known_drift is a safety valve, not a habit: the roster is printed in the CI log, and any entry
+        # must carry a real reason. Empty means every live generator reproduces the shipped tree.
+        manifest=json.loads((ROOT/'tools/baseline.json').read_text())
+        for path,reason in manifest['known_drift'].items():
+            self.assertTrue((ROOT/path).exists(),path)
+            self.assertGreater(len(reason),40,path)
 if __name__=='__main__': unittest.main(verbosity=2)

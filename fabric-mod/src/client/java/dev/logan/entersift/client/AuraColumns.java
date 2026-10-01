@@ -33,6 +33,35 @@ public final class AuraColumns {
         float breathe = 0.82f + 0.18f * (float) Math.sin(time * 1.3f + seed * 11f);
         layer(p, vc, cx, y0, cz, height, halfWidth * 2.6f, sx, sz, bottom, top, alpha * 0.32f * breathe, time, seed);
         layer(p, vc, cx, y0, cz, height * 0.92f, halfWidth, sx, sz, bottom, top, alpha * breathe, time, seed);
+        noteGlyphs(p, vc, cx, y0, cz, height, sx, sz, bottom, top, alpha * breathe, time, seed);
+    }
+
+    /** Floating pixel musical note glyphs (♪) rising inside each note-block rainbow column (Images 5, 6, 10). */
+    private static void noteGlyphs(PoseStack.Pose p, VertexConsumer vc, float cx, float y0, float cz, float height,
+                                   float sx, float sz, float[] bottom, float[] top, float alpha, float time, float seed) {
+        for (int n = 0; n < 3; n++) {
+            float life = (time * 0.32f + seed * 1.7f + n * 0.33f) % 1f;
+            float env = (float) Math.sin(life * Math.PI);
+            float a = Math.min(1f, alpha * 1.35f) * env;
+            if (a < 0.04f) continue;
+            float sway = (float) Math.sin(time * 1.8f + n * 2.1f + seed * 7f) * 0.28f;
+            float nx = cx + sx * sway, nz = cz + sz * sway;
+            float ny = y0 + 0.6f + life * Math.min(height * 0.65f, 6.5f);
+            float[] c = mix(mix(bottom, top, life), new float[]{1f, 1f, 1f}, 0.35f);
+            float u = 0.065f;
+            // Note head (2x2 pixel block), vertical stem, and top flag
+            quad(p, vc, nx, ny, nz, sx, sz, -2f * u, -u, 0f, u, c, a);
+            quad(p, vc, nx, ny, nz, sx, sz, -0.4f * u, -u, 0.4f * u, 3.2f * u, c, a);
+            quad(p, vc, nx, ny, nz, sx, sz, 0.4f * u, 1.8f * u, 2.0f * u, 3.0f * u, c, a);
+        }
+    }
+
+    private static void quad(PoseStack.Pose p, VertexConsumer vc, float cx, float cy, float cz, float sx, float sz,
+                             float x0, float y0, float x1, float y1, float[] c, float a) {
+        v(p, vc, cx + sx * x0, cy + y0, cz + sz * x0, c, a);
+        v(p, vc, cx + sx * x1, cy + y0, cz + sz * x1, c, a);
+        v(p, vc, cx + sx * x1, cy + y1, cz + sz * x1, c, a);
+        v(p, vc, cx + sx * x0, cy + y1, cz + sz * x0, c, a);
     }
 
     private static void layer(PoseStack.Pose p, VertexConsumer vc, float cx, float y0, float cz, float height, float hw,
@@ -41,10 +70,10 @@ public final class AuraColumns {
             float f0 = k / (float) SEGS, f1 = (k + 1) / (float) SEGS;
             float a0 = alpha * profile(f0), a1 = alpha * profile(f1);
             if (a0 + a1 < 0.003f) continue;
-            // Gentle sway that grows with height; the column also widens a little as it rises.
-            float o0 = 0.25f * f0 * (float) Math.sin(time * 0.7f + seed * 5f + f0 * 3f);
-            float o1 = 0.25f * f1 * (float) Math.sin(time * 0.7f + seed * 5f + f1 * 3f);
-            float w0 = hw * (1f + 0.35f * f0), w1 = hw * (1f + 0.35f * f1);
+            // Crisp vertical stage-light column (Images 5, 6, 10, 29) with subtle shimmer.
+            float o0 = 0.04f * f0 * (float) Math.sin(time * 0.9f + seed * 5f + f0 * 3f);
+            float o1 = 0.04f * f1 * (float) Math.sin(time * 0.9f + seed * 5f + f1 * 3f);
+            float w0 = hw * (1f + 0.08f * f0), w1 = hw * (1f + 0.08f * f1);
             float ya = y0 + height * f0, yb = y0 + height * f1;
             float[] c0 = mix(bottom, top, f0), c1 = mix(bottom, top, f1);
             float ax = cx + sx * o0, az = cz + sz * o0, bx = cx + sx * o1, bz = cz + sz * o1;

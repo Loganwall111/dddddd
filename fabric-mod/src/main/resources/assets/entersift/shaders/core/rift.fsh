@@ -1,11 +1,10 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
-// 0.20 Enter the Sift rift shader (clean slate).
-//   RIFT_WALL  inner walls: vertex colour, fogged. Perfectly still (no pulse, no sweep).
-//   RIFT_GLOW  rims, halos, sparkles, lightning, night curtains: additive vertex colour, no flicker.
-//   (default)  the WINDOW: the destination's sky, blocky clouds and horizon, sampled by world-space view
-//              direction, so it is sharp, un-warped and identical across every window quad.
+// 0.24 Trailer-Exact Enter the Sift Rift & Portal Shader (Images 1-3, 5-8, 10, 13, 14, 19, 20, 24-28, 36-38).
+//   RIFT_WALL  inner walls: vertex colour, fogged.
+//   RIFT_GLOW  rims, halos, sparkles, lightning, side distortion veils, night curtains: additive vertex colour.
+//   (default)  the WINDOW: wavy domain-warped destination vista sampled by world-space view direction.
 
 #include <minecraft:fog.glsl>
 #include <minecraft:globals.glsl>
@@ -17,10 +16,6 @@ layout(location = 2) in float sphericalVertexDistance;
 layout(location = 3) in float cylindricalVertexDistance;
 
 layout(location = 0) out vec4 fragColor;
-// Shader-pack masks (0.18.2). Without a pack only attachment 0 exists and GL discards these. Under an Iris
-// pack (rift pipelines are deliberately unassigned, so Iris draws them with THIS shader) they land in
-// colortex1 (lightmap) and colortex2 (normal, a = 0 = not world geometry), so the Dungeons II composite
-// never re-shades the self-lit rift.
 layout(location = 1) out vec4 packLight;
 layout(location = 2) out vec4 packNormal;
 
@@ -50,14 +45,14 @@ float fbm(vec2 p) {
     return s;
 }
 
-// Blocky horizon: height of the skyline in the view direction's yaw, in columns (Minecraft terrain).
+// Blocky horizon: height of the skyline in the view direction's yaw, in columns.
 float ridge(float yaw, float seed, float cols, float lo, float hi) {
     float c = floor((yaw + PI) / (2.0 * PI) * cols);
     float n = hash21(vec2(c, seed)) * 0.45 + hash21(vec2(floor(c / 4.0), seed + 7.0)) * 0.55;
     return lo + (hi - lo) * n;
 }
 
-// Minecraft-style blocky clouds on a plane above the viewer, drifting slowly (sharp, perspective-true).
+// Minecraft-style blocky clouds on a plane above the viewer, drifting slowly.
 float clouds(vec3 dir, float t, float scale, float cover, float seed) {
     float k = 1.0 / (max(dir.y, -0.1) + 0.16);
     vec2 cell = floor(dir.xz * k * scale + vec2(t * 0.04, t * 0.015) + seed);
@@ -65,80 +60,141 @@ float clouds(vec3 dir, float t, float scale, float cover, float seed) {
     return step(cover, n);
 }
 
-// 0 Overworld: coral sky over an orange horizon, blocky cream clouds, hazy coral hills.
-vec3 viewOverworld(vec3 dir, float yaw, float t) {
-    float el = dir.y;
-    vec3 c = mix(vec3(1.00, 0.70, 0.36), vec3(0.95, 0.40, 0.32), smoothstep(-0.05, 0.55, el));
-    c = mix(c, vec3(1.00, 0.88, 0.58), exp(-abs(el - 0.02) * 14.0) * 0.5);
-    c = mix(c, vec3(1.00, 0.76, 0.55), clouds(dir, t, 1.6, 0.52, 3.0) * 0.7);    // far peach layer
-    c = mix(c, vec3(1.00, 0.94, 0.74), clouds(dir, t * 1.4, 2.4, 0.58, 0.0) * 0.95);
-    if (el < ridge(yaw, 3.0, 90.0, -0.03, 0.09)) c = mix(c, vec3(0.88, 0.40, 0.32), 0.6);
-    if (el < ridge(yaw, 9.0, 40.0, -0.12, 0.02)) c = vec3(0.74, 0.30, 0.26);
-    return c;
+// Crisp square pixel sparkles drifting upward inside the window (Images 1, 7, 8, 13, 19, 24, 25, 27, 36).
+float pixelSparkles(float yaw, float el, float t, float density) {
+    vec2 grid = vec2(yaw * 24.0, el * 26.0 - t * 1.4);
+    vec2 cell = floor(grid);
+    vec2 f = fract(grid);
+    float h = hash21(cell);
+    if (h < density) return 0.0;
+    float ph = fract(h * 19.3 + t * (0.7 + fract(h * 7.1)));
+    float twinkle = sin(ph * PI);
+    vec2 d = abs(f - vec2(0.5));
+    return step(max(d.x, d.y), 0.18) * twinkle;
 }
 
-// 5 The Overworld seen from the Sift: golden sky, pale gold clouds, olive treeline.
-vec3 viewGold(vec3 dir, float yaw, float t) {
-    float el = dir.y;
-    vec3 c = mix(vec3(1.00, 0.94, 0.58), vec3(0.93, 0.80, 0.25), smoothstep(-0.05, 0.5, el));
-    c = mix(c, vec3(1.00, 0.98, 0.80), clouds(dir, t, 2.0, 0.55, 5.0) * 0.9);
-    if (el < ridge(yaw, 4.0, 120.0, -0.02, 0.12)) c = mix(c, vec3(0.70, 0.62, 0.22), 0.7);
-    if (el < ridge(yaw, 8.0, 50.0, -0.10, 0.04)) c = vec3(0.48, 0.43, 0.13);
-    return c;
+// Smooth wavy domain warp on (yaw, el) so the interior vista ripples like a living portal tear.
+vec2 wavyCoords(float yaw, float el, float t) {
+    float wy = yaw + 0.022 * sin(el * 11.0 - t * 2.1 + yaw * 4.0);
+    float we = el  + 0.018 * cos(yaw * 9.0 + t * 1.7 - el * 5.0);
+    return vec2(wy, we);
 }
 
-// 1 Nether: crimson sky, rolling dark smoke, a blocky fortress skyline, rising embers, lava glow below.
-vec3 viewNether(vec3 dir, float yaw, float t) {
-    float el = dir.y;
-    vec3 c = mix(vec3(1.00, 0.38, 0.12), vec3(0.45, 0.05, 0.05), smoothstep(-0.05, 0.6, el));
-    float smoke = fbm(vec2(yaw * 2.5, el * 5.0 - t * 0.12));
-    c = mix(c, vec3(0.22, 0.03, 0.04), smoothstep(0.5, 0.75, smoke) * 0.6);
-    if (el < ridge(yaw, 2.0, 70.0, -0.04, 0.20)) c = vec3(0.20, 0.03, 0.04);
-    c += vec3(1.0, 0.45, 0.12) * smoothstep(-0.02, -0.25, el) * 0.6;
-    vec2 e = floor(vec2(yaw * 30.0, el * 30.0 - t * 1.5));
-    c += vec3(1.0, 0.72, 0.3) * step(0.975, hash21(e));
-    return c;
-}
-
-// 2 End: deep blue starlit sky with a violet nebula and dark island silhouettes rimmed in purple.
-vec3 viewEnd(vec3 dir, float yaw, float t) {
-    float el = dir.y;
-    vec3 c = mix(vec3(0.30, 0.28, 0.62), vec3(0.04, 0.05, 0.16), smoothstep(-0.05, 0.6, el));
-    float neb = fbm(vec2(yaw * 1.5 + t * 0.01, el * 3.0));
-    c += vec3(0.55, 0.20, 0.60) * smoothstep(0.55, 0.8, neb) * 0.5;
-    vec2 g = vec2(yaw * 60.0, el * 60.0);
-    float h = hash21(floor(g));
-    c += vec3(0.9, 0.9, 1.0) * step(0.965, h) * smoothstep(0.45, 0.0, length(fract(g) - 0.5));
-    float r = ridge(yaw, 6.0, 60.0, -0.06, 0.10);
-    if (el < r) c = mix(vec3(0.14, 0.12, 0.32), vec3(0.55, 0.35, 0.85), smoothstep(r - 0.012, r, el) * 0.8);
-    return c;
-}
-
-// 3 Sift: pale mint sky, soft pink panels, rows of pink and teal pillars on the horizon.
-vec3 viewSift(vec3 dir, float yaw, float t) {
-    float el = dir.y;
-    vec3 c = mix(vec3(0.62, 0.90, 0.86), vec3(0.88, 0.97, 0.95), smoothstep(-0.05, 0.6, el));
-    vec2 pg = vec2(yaw * 5.0 + t * 0.01, el * 7.0);
-    float panel = smoothstep(0.55, 0.7, vnoise(floor(pg) * 0.7 + 3.0)) * smoothstep(0.02, 0.15, el);
-    c = mix(c, vec3(0.98, 0.80, 0.90), panel * 0.45);
-    for (int i = 2; i >= 0; i--) {
-        float cols = 36.0 + 24.0 * float(i);
-        float cid = floor((yaw + PI) / (2.0 * PI) * cols);
-        float f = fract((yaw + PI) / (2.0 * PI) * cols);
-        float hgt = 0.02 + (0.10 + 0.06 * float(2 - i)) * hash21(vec2(cid, float(i)));
-        float on = step(0.45, hash21(vec2(cid, 3.0 + float(i)))) * step(abs(f - 0.5), 0.3) * step(el, hgt);
-        vec3 pillar = mix(vec3(0.85, 0.42, 0.44), vec3(0.40, 0.72, 0.70), float(i) * 0.5);
-        c = mix(c, mix(pillar, c, 0.15 * float(2 - i)), on);
+// Flat-topped cream/yellow umbrella canopy trees on coral trunks (Images 27, 28, 36, 37).
+vec3 canopyTreesAndMesas(vec3 col, float yaw, float el) {
+    // Rose-coral stepped canyon mesas capped with bright mint-cyan turf
+    float rMesa = ridge(yaw, 3.0, 56.0, -0.04, 0.13);
+    if (el < rMesa) {
+        vec3 mesa = mix(vec3(0.76, 0.22, 0.28), vec3(0.92, 0.38, 0.34), smoothstep(-0.15, rMesa, el));
+        float mintCap = step(rMesa - 0.016, el);
+        mesa = mix(mesa, vec3(0.32, 0.95, 0.78), mintCap * 0.78);
+        col = mix(col, mesa, 0.84);
     }
-    if (el < -0.08) c = mix(c, vec3(0.55, 0.80, 0.72), 0.6);
+    // Flat-topped umbrella canopy trees rising above the coral mesas (Images 27, 28, 36, 37)
+    float treeCol = floor((yaw + PI) / (2.0 * PI) * 26.0);
+    float tf = fract((yaw + PI) / (2.0 * PI) * 26.0);
+    float th = hash21(vec2(treeCol, 19.0));
+    if (th > 0.52) {
+        float topY = 0.06 + 0.14 * fract(th * 7.3);
+        float trunk = step(abs(tf - 0.5), 0.06) * step(-0.08, el) * step(el, topY);
+        float cap = step(abs(tf - 0.5), 0.34) * step(topY, el) * step(el, topY + 0.032);
+        col = mix(col, vec3(0.70, 0.18, 0.22), trunk * 0.90);
+        col = mix(col, vec3(1.00, 0.94, 0.68), cap * 0.94);
+    }
+    return col;
+}
+
+// 0 Overworld / Sift vista: coral-vermilion & peach sky, golden-cream glow, blocky clouds, canopy trees.
+vec3 viewOverworld(vec3 dir, float yaw, float t) {
+    vec2 w = wavyCoords(yaw, dir.y, t);
+    float el = w.y;
+    vec3 c = mix(vec3(1.00, 0.74, 0.38), vec3(0.95, 0.36, 0.28), smoothstep(-0.06, 0.55, el));
+    c = mix(c, vec3(1.00, 0.90, 0.60), exp(-abs(el - 0.02) * 12.0) * 0.58);
+    c = mix(c, vec3(1.00, 0.78, 0.56), clouds(dir, t, 1.6, 0.52, 3.0) * 0.72);
+    c = mix(c, vec3(1.00, 0.95, 0.76), clouds(dir, t * 1.4, 2.4, 0.58, 0.0) * 0.95);
+    c = canopyTreesAndMesas(c, w.x, el);
+    c = mix(c, vec3(1.0, 1.0, 1.0), pixelSparkles(w.x, el, t, 0.88));
     return c;
 }
 
-// 4 Ritual portal: bright cyan mosaic.
+// 5 The Overworld seen from the Sift (Images 19, 20): blazing golden-yellow sky, olive spruce silhouettes, white-gold core.
+vec3 viewGold(vec3 dir, float yaw, float t) {
+    vec2 w = wavyCoords(yaw, dir.y, t);
+    float el = w.y;
+    vec3 c = mix(vec3(1.00, 0.94, 0.52), vec3(0.94, 0.78, 0.22), smoothstep(-0.05, 0.5, el));
+    c = mix(c, vec3(1.00, 0.98, 0.82), clouds(dir, t, 2.0, 0.55, 5.0) * 0.9);
+    if (el < ridge(w.x, 4.0, 120.0, -0.02, 0.12)) c = mix(c, vec3(0.66, 0.60, 0.20), 0.72);
+    if (el < ridge(w.x, 8.0, 50.0, -0.10, 0.04)) c = vec3(0.46, 0.42, 0.12);
+    c = mix(c, vec3(1.0, 1.0, 0.92), pixelSparkles(w.x, el, t, 0.86));
+    return c;
+}
+
+// 1 Nether (Images 8, 13, 25): crimson-ruby sky, rolling dark smoke, Nether-brick fortress arches, rising embers.
+vec3 viewNether(vec3 dir, float yaw, float t) {
+    vec2 w = wavyCoords(yaw, dir.y, t);
+    float el = w.y;
+    vec3 c = mix(vec3(1.00, 0.38, 0.14), vec3(0.45, 0.05, 0.08), smoothstep(-0.05, 0.6, el));
+    float smoke = fbm(vec2(w.x * 2.5, el * 5.0 - t * 0.15));
+    c = mix(c, vec3(0.22, 0.03, 0.05), smoothstep(0.5, 0.75, smoke) * 0.62);
+    if (el < ridge(w.x, 2.0, 70.0, -0.04, 0.20)) c = vec3(0.18, 0.03, 0.05);
+    c += vec3(1.0, 0.45, 0.12) * smoothstep(-0.02, -0.25, el) * 0.6;
+    c = mix(c, vec3(1.0, 0.90, 0.62), pixelSparkles(w.x, el, t * 1.3, 0.85));
+    return c;
+}
+
+// 2 End / Deep-Cavern Rift (Images 7, 8, 24): twilight indigo-blue & violet cavern columns with white pixel sparkles.
+vec3 viewEnd(vec3 dir, float yaw, float t) {
+    vec2 w = wavyCoords(yaw, dir.y, t);
+    float el = w.y;
+    vec3 c = mix(vec3(0.28, 0.34, 0.68), vec3(0.08, 0.12, 0.32), smoothstep(-0.05, 0.6, el));
+    float neb = fbm(vec2(w.x * 1.6 + t * 0.02, el * 3.2));
+    c += vec3(0.52, 0.26, 0.64) * smoothstep(0.48, 0.78, neb) * 0.52;
+    float r = ridge(w.x, 6.0, 60.0, -0.06, 0.14);
+    if (el < r) c = mix(vec3(0.14, 0.18, 0.42), vec3(0.52, 0.68, 0.96), smoothstep(r - 0.015, r, el) * 0.82);
+    c = mix(c, vec3(0.94, 0.97, 1.0), pixelSparkles(w.x, el, t, 0.86));
+    return c;
+}
+
+// 3 Sift Rift in Overworld (Images 1, 2, 3, 26, 27, 28, 36, 37, 38):
+// Warm coral-orange & peach sky, high turquoise-mint aurora ribbon, golden-yellow center glow,
+// rose-coral canyon mesas with mint-cyan turf caps, flat-topped cream canopy trees, and white pixel sparkles.
+vec3 viewSift(vec3 dir, float yaw, float t) {
+    vec2 w = wavyCoords(yaw, dir.y, t);
+    float el = w.y;
+    // Warm coral-vermilion & peach-gold sky (Images 1, 27, 36, 37)
+    vec3 c = mix(vec3(1.00, 0.76, 0.40), vec3(0.95, 0.34, 0.28), smoothstep(-0.05, 0.55, el));
+    c = mix(c, vec3(1.00, 0.92, 0.66), exp(-abs(el - 0.01) * 11.0) * 0.62);
+    // High turquoise-mint sky ribbon & soft pink panels peeking through upper sky (Images 2, 3, 27)
+    vec2 pg = vec2(w.x * 5.0 + t * 0.02, el * 7.0);
+    float panel = smoothstep(0.52, 0.72, vnoise(floor(pg) * 0.7 + 3.0)) * smoothstep(0.08, 0.32, el);
+    c = mix(c, vec3(0.38, 0.92, 0.84), panel * 0.42);
+    // Blocky golden-cream clouds
+    c = mix(c, vec3(1.00, 0.95, 0.76), clouds(dir, t * 1.2, 2.2, 0.56, 2.0) * 0.82);
+    // Rose-coral canyon mesas, mint-cyan turf caps & flat-topped cream canopy trees (Images 27, 28, 36, 37)
+    c = canopyTreesAndMesas(c, w.x, el);
+    // Crisp white square pixel sparkles drifting upward
+    c = mix(c, vec3(1.0, 1.0, 1.0), pixelSparkles(w.x, el, t, 0.86));
+    return c;
+}
+
+// 4 Ritual & Sift Ruin Portal (Images 5, 6, 10, 11, 31):
+// Multi-layered 3D Cyan/Turquoise Tetris-Pixel Mosaic with glowing white-cyan stepped entry silhouette.
 vec3 viewPortal(vec3 dir, float yaw, float t) {
-    vec2 g = floor(vec2(yaw * 24.0, dir.y * 24.0));
-    float n = hash21(g) * 0.5 + vnoise(g * 0.25 + t * 0.2) * 0.5;
-    return mix(vec3(0.20, 0.70, 0.85), vec3(0.75, 1.00, 1.00), n);
+    vec2 g1 = floor(vec2(yaw * 24.0, dir.y * 24.0));
+    float h1 = hash21(g1);
+    float pulse = 0.5 + 0.5 * sin(t * 1.8 + h1 * 6.2831);
+    vec3 deepTeal   = vec3(0.06, 0.42, 0.58);
+    vec3 midCyan    = vec3(0.14, 0.72, 0.88);
+    vec3 brightCyan = vec3(0.32, 0.95, 1.00);
+    vec3 iceWhite   = vec3(0.90, 1.00, 1.00);
+    vec3 col = mix(deepTeal, midCyan, step(0.30, h1));
+    col = mix(col, brightCyan, step(0.64, h1) * (0.65 + 0.35 * pulse));
+    col = mix(col, iceWhite, step(0.86, h1) * pulse);
+    // Finer inner mosaic layer for 3D pixel depth
+    vec2 g2 = floor(vec2(yaw * 48.0 + sin(t * 0.6), dir.y * 48.0));
+    float h2 = hash21(g2 + 17.0);
+    if (h2 > 0.74) col = mix(col, h2 > 0.90 ? iceWhite : brightCyan, 0.65);
+    return col;
 }
 
 vec3 destination(int view, vec3 dir, float t) {
@@ -150,35 +206,60 @@ vec3 destination(int view, vec3 dir, float t) {
     if (view == 5) return viewGold(dir, yaw, t);
     return viewPortal(dir, yaw, t);
 }
+
+// Multi-pass box-blur viewport blend + vibrantPinkDay / deepAmberNight grading.
+vec3 boxBlurViewport(int view, vec3 dir, float t, bool night, vec2 faceUv) {
+    vec3 acc = vec3(0.0);
+    const float r = 0.0035;
+    for (int ox = -1; ox <= 1; ox++) {
+        for (int oy = -1; oy <= 1; oy++) {
+            vec3 sampleDir = normalize(dir + vec3(float(ox) * r, float(oy) * r, 0.0));
+            acc += destination(view, sampleDir, t);
+        }
+    }
+    vec3 col = acc / 9.0;
+    vec3 vibrantPinkDay = vec3(1.0, 0.84, 0.78);
+    vec3 deepAmberNight = vec3(1.0, 0.68, 0.52);
+    if (view == 3) {
+        col = mix(col, night ? deepAmberNight : vibrantPinkDay, night ? 0.22 : 0.12);
+    }
+    // Stepped glowing shrine / doorway silhouette at lower center (Images 1, 3, 5, 10, 13, 27, 38)
+    vec2 p = faceUv * 2.0 - 1.0;
+    float sx = abs(p.x);
+    float shrine = (step(sx, 0.13) * step(faceUv.y, 0.24))
+                 + (step(sx, 0.07) * step(faceUv.y, 0.34));
+    if (view == 3 || view == 0 || view == 1 || view == 4) {
+        vec3 doorCol = (view == 4) ? vec3(0.94, 1.0, 1.0) : vec3(1.0, 0.97, 0.88);
+        col = mix(col, doorCol, clamp(shrine, 0.0, 1.0) * 0.78);
+    }
+    return col;
+}
 #endif
 
 void main() {
 #if defined(RIFT_GLOW)
-    packLight = vec4(0.0);                  // additive: zeros leave the pack buffers untouched
+    packLight = vec4(0.0);
     packNormal = vec4(0.0);
     fragColor = vec4(riftData.rgb, riftData.a * fogFade()) * ColorModulator;
 #elif defined(RIFT_WALL)
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
-    fragColor = apply_fog(vec4(riftData.rgb, 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
+    fragColor = apply_fog(vec4(riftData.rgb, riftData.a * 0.24) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #else
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
-    float t = GameTime * 1200.0;            // seconds
+    float t = GameTime * 1200.0;
     int code = int(riftData.b * 16.0);
     int view = code - (code / 8) * 8;
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
-    vec3 col = destination(view, dir, t);
-    // Light pouring through the middle of the rift (face coordinates are global, so no seams either).
-    vec2 d = riftData.rg - 0.5;
-    float core = exp(-dot(d, d) * 10.0);
-    float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
-    col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
-    // The Sift at night glows pink-white through the rift (trailer night frames).
-    if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), riftData.g), 0.55);
-    fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
-        FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
+    // Clear coloured membrane, not an opaque synthetic landscape.
+    vec3 tint = view == 0 || view == 5 ? vec3(0.95, 0.85, 0.25) :
+                view == 1 ? vec3(0.95, 0.25, 0.18) :
+                view == 2 ? vec3(0.65, 0.38, 0.85) :
+                view == 4 ? vec3(0.20, 0.80, 0.95) : vec3(1.0, 0.58, 0.65);
+    float shimmer = 0.5 + 0.5 * sin(riftData.g * 19.0 + t * 1.5);
+    fragColor = vec4(tint, 0.12 + 0.06 * shimmer) * ColorModulator;
 #endif
 }

@@ -26,15 +26,16 @@ Use a disposable world and a dedicated server with two clients. Never use a valu
 - [ ] Repeating the sequence does not duplicate an existing portal; restart mid-song resumes safely.
 
 ## Travel / encounters
-- [ ] Each rift destination produces a usable pad and a working return gate.
+- [ ] Each rift destination produces a usable surface landing and a working return gate.
 - [ ] The two test players return to their own source dimensions and positions, including negative coordinates.
 - [ ] Nested rifts preserve the first source; death invalidates the old return.
-- [ ] Unloaded/blocked destination guards refuse unsafe entry; no terrain overwritten by arrival pads.
+- [ ] Unloaded/blocked destination guards refuse unsafe entry; the arrival plaza only replaces terrain at the shared origin landing.
 - [ ] Confirm behavior when source terrain is altered or obstructed before returning; implement a safe-location search before production release.
 - [ ] Gauntlet air/blocked-target handling, 10-soul cost and cooldown are authoritative and exploit-resistant.
 - [ ] Random encounters respect the server toggle. Riftcallers strike ground without modifying blocks.
-- [ ] Rifts expire after 900 loaded ticks; unload/reload does not leak entities.
-- [ ] Replace the provisional Nether-roof/high-altitude pads with tested exploration exits before release.
+- [ ] Rifts expire after 6000 loaded ticks; unload/reload does not leak entities.
+- [ ] Rifts open only at night (Overworld/Nether/End) or during Endure in the Sift, and seal when that window ends; creative seeds still work at any hour.
+- [ ] Replace the provisional origin-based surface landings with tested exploration exits before release.
 
 ## Souls / entities / visual
 - [ ] Ichor damages once per second, drains souls to zero but not below, and causes the depletion effect.
