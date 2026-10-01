@@ -45,6 +45,8 @@ jobs:
           PY
       - run: python3 tools/validate.py
       - run: python3 tools/test_data.py
+      - name: Regeneration baseline (live generators reproduce the shipped tree)
+        run: python3 tools/regen_check.py
       - name: Compile-check shaderpack (glslang)
         run: |
           curl -sSL -o /tmp/glslang.tgz https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-linux-x86_64-release.tar.gz

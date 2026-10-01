@@ -131,18 +131,19 @@ Do not remove a dimension/content mod from a valuable world without a backup. Fi
 ## Development and checks
 
 ```sh
-python3 tools/generate_data.py  # Deterministic resources, textures and animation strips
-python3 tools/extract_textures.py  # Terrain/portal/rift textures sampled from the reference screenshots
-python3 tools/creatures.py      # 9 creature models (SiftModelDefs.java), entity textures, spawn eggs
-python3 tools/paint_skies.py    # Day (peach/rose + crimson pillars) and night (luminous teal + aurora curtains) panoramas
-python3 tools/phase4.py         # Entities in data, new blocks, 3 new biomes, staged portal, rift waves, sky textures
-python3 tools/phase5.py         # Mob loot, recipes for new blocks, 'Enter the Sift' advancement tab
-python3 tools/preview_creatures.py  # Software render of every model -> docs/creature-preview.png
 python3 tools/validate.py       # JSON, function references, model/texture integrity
 python3 tools/test_data.py      # offline data-contract tests
+python3 tools/regen_check.py    # the live generators still reproduce the shipped tree (CI runs this)
 ./gradlew test                  # Java ritual-state tests; requires JDK + dependencies
 ./gradlew runClient             # Minecraft client smoke test
 ```
+
+**The shipped resources are the baseline.** Six dependency-free generators (creatures, phase5,
+expansion, visual_pass, phase24_textures, phase19) are still live and are pinned by
+`tools/regen_check.py`; the hand-authored 0.25 rift/travel/portal files are covered by `validate.py` and
+`test_data.py`. The 0.17–0.24 phase chain is historical: several of those scripts crash and others would
+**revert 0.25 content** if re-run, so do not run them. [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md) lists every
+script, what it owns, the documented drift and how to regenerate deliberately.
 
 See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) for the outstanding acceptance tests and [`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md) for the exact verification record.
 

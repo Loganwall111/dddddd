@@ -712,4 +712,25 @@ class DataContracts(unittest.TestCase):
         self.assertIn('query entersift:sift_cycle',text)         # and the Sift clock
         self.assertIn('function entersift:rift/seed with storage entersift:rift',text)
         self.assertIn('scoreboard players set #rift_dest sift.target 3',text)  # never the current dimension
+    def test_toolchain_baseline_manifest(self):
+        # tools/regen_check.py (CI) is only meaningful if the manifest stays honest: every live script
+        # exists and owns something, every documented drift path exists, every dead/manual script has a
+        # reason, and no script is listed twice.
+        import json
+        m=json.loads((ROOT/'tools/baseline.json').read_text())
+        live=[s['script'] for s in m['live']]
+        self.assertEqual(len(live),len(set(live)))
+        for step in m['live']:
+            self.assertTrue((ROOT/'tools'/step['script']).exists(),step['script'])
+            self.assertTrue(step['owns'].strip(),step['script'])
+        for path,reason in m['known_drift'].items():
+            self.assertTrue((ROOT/path).exists(),path)
+            self.assertGreater(len(reason),40,path)
+        for group in ('dead','manual'):
+            self.assertTrue(m[group])
+            for name,reason in m[group].items():
+                self.assertGreater(len(reason),20,name)
+        self.assertIn('make_asset_sheet.py',m['manual'])           # non-deterministic: never enforced
+        self.assertNotIn('generate_data.py',live)                  # crashes: never enforced
+        self.assertIn('phase19.py',live)
 if __name__=='__main__': unittest.main(verbosity=2)
