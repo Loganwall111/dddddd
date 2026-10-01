@@ -187,6 +187,13 @@ class DataContracts(unittest.TestCase):
         # The tunnel corridor is decoration: a render failure must be logged, never fatal.
         tunnel = (ROOT/'src/client/java/dev/logan/entersift/client/SiftTunnel.java').read_text()
         self.assertIn('tunnelWarned.compareAndSet', tunnel)
+        # Every rift always has a walkable far side, even over ocean/lava/void.
+        surface = fn('travel/surface')
+        self.assertIn('entersift:travel/fallback_ledge', surface)
+        ledge = fn('travel/fallback_ledge')
+        self.assertIn('fill', ledge)
+        self.assertIn('function entersift:travel/arrive', ledge)
+        self.assertIn('world_surface', surface)
         self.assertIn('catch (Throwable error)', tunnel)
 
     def test_crossing_uses_shared_silhouette_not_proximity(self):

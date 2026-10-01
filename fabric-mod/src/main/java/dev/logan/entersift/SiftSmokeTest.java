@@ -39,6 +39,7 @@ final class SiftSmokeTest {
             if (ticks == 150) enterRift(server);
             if (ticks == 170) walkTunnel(server);
             if (ticks == 190) walkTunnel(server);
+            if (ticks == 200) probeDestination(server);
             if (ticks == 260) checkArrival(server);
             if (ticks == 250) {
                 var level = server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, SiftContent.id("the_sift")));
@@ -71,6 +72,20 @@ final class SiftSmokeTest {
         // `execute in ...` is required for both: the function has to run inside the tunnel dimension.
         run(server, "execute in entersift:rift_tunnel as @e[tag=sift.walker] at @s run tp @s 0.5 64 30.0 0 0");
         run(server, "execute in entersift:rift_tunnel as @e[tag=sift.walker] at @s run function entersift:tunnel/player_tick");
+    }
+
+    /** Records what the destination column actually looks like, so a stuck crossing is diagnosable. */
+    private static void probeDestination(MinecraftServer server) {
+        var key = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, SiftContent.id("the_sift"));
+        var level = server.getLevel(key);
+        if (level == null) { EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL the_sift is not loaded"); return; }
+        int surface = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, 0, 0);
+        EnterTheSift.LOGGER.info("SIFT-SMOKE sift column 0,0: worldSurfaceY={} surfaceBlock={} y64={} y63={} y62={}",
+            surface,
+            level.getBlockState(new net.minecraft.core.BlockPos(0, surface - 1, 0)),
+            level.getBlockState(new net.minecraft.core.BlockPos(0, 64, 0)),
+            level.getBlockState(new net.minecraft.core.BlockPos(0, 63, 0)),
+            level.getBlockState(new net.minecraft.core.BlockPos(0, 62, 0)));
     }
 
     /** The walker must leave the tunnel, land in a real dimension and find a return rift waiting. */
