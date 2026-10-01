@@ -169,6 +169,26 @@ class DataContracts(unittest.TestCase):
         tex = assets/'textures/item'
         self.assertNotEqual((tex/'rift_staff.png').read_bytes(), (tex/'rift_gauntlet.png').read_bytes())
         self.assertNotEqual((tex/'rift_staff.png').read_bytes(), (tex/'rift_staff_blue.png').read_bytes())
+    def test_v032_staff_spell_wearable_gauntlet_and_tunnel_guard(self):
+        # The staffs cast their own ranged spell: a bolt along the sight line, then the rift tears.
+        cast = fn('rift/staff_cast')
+        self.assertIn('run function entersift:rift/punch_at', cast)
+        self.assertIn('punch_yaw', cast)
+        self.assertIn('tag @s add sift.awakened', cast)
+        self.assertGreaterEqual(cast.count('positioned ^ ^ ^'), 8)          # an eight-block bolt
+        for reach in ('^ ^ ^8', '^ ^ ^6', '^ ^ ^4'):
+            self.assertIn(f'positioned {reach} positioned', cast)           # fires further than the gauntlet
+        main = (ROOT/'src/main/java/dev/logan/entersift/EnterTheSift.java').read_text()
+        # A staff in the hand, or a gauntlet worn on the arm, both cast:
+        for token in ('wearsGauntlet', 'toggleGauntlet', 'EquipmentSlot.CHEST',
+                      'function entersift:rift/staff_cast', 'function entersift:rift/punch',
+                      'player.isShiftKeyDown()'):
+            self.assertIn(token, main)
+        # The tunnel corridor is decoration: a render failure must be logged, never fatal.
+        tunnel = (ROOT/'src/client/java/dev/logan/entersift/client/SiftTunnel.java').read_text()
+        self.assertIn('tunnelWarned.compareAndSet', tunnel)
+        self.assertIn('catch (Throwable error)', tunnel)
+
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
         self.assertIn('RiftCrossing.crosses(shape', source)

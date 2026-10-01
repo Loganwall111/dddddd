@@ -58,6 +58,16 @@ public final class EnterTheSift implements ModInitializer {
         return gauntlet(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST));
     }
 
+    /** 0.32: the rift staffs are the ranged spell; the gauntlets tear space at touch. */
+    private static boolean staff(ItemStack stack) { return stack.is(SiftContent.RIFT_STAFF) || stack.is(SiftContent.RIFT_STAFF_BLUE); }
+
+    /** Casts the spell of whichever rift item is doing the work: the hand's item, else the worn one. */
+    private static void cast(ServerPlayer sp, Player player, InteractionHand hand) {
+        ItemStack trigger = player.getItemInHand(hand);
+        if (trigger.isEmpty()) trigger = player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST);
+        runAs(sp, staff(trigger) ? "function entersift:rift/staff_cast" : "function entersift:rift/punch");
+    }
+
     /** Sneak-right-click swaps a held gauntlet onto the arm, or takes a worn one back into the hand. */
     private static boolean toggleGauntlet(ServerPlayer sp, InteractionHand hand) {
         var slot = net.minecraft.world.entity.EquipmentSlot.CHEST;
@@ -246,7 +256,7 @@ public final class EnterTheSift implements ModInitializer {
         AttackBlockCallback.EVENT.register((player,world,hand,pos,direction) -> {
             if (player.isSpectator()) return InteractionResult.PASS;
             if (gauntlet(player.getItemInHand(hand)) || wearsGauntlet(player)) {
-                if (player instanceof ServerPlayer sp) runAs(sp,"function entersift:rift/punch");
+                if (player instanceof ServerPlayer sp) cast(sp, player, hand);
                 return InteractionResult.SUCCESS;
             }
             if (!note(world,pos)) return InteractionResult.PASS;
@@ -255,7 +265,7 @@ public final class EnterTheSift implements ModInitializer {
         });
         AttackEntityCallback.EVENT.register((player,level,hand,entity,hit) -> {
             if (!player.isSpectator() && (gauntlet(player.getItemInHand(hand)) || wearsGauntlet(player))) {
-                if(player instanceof ServerPlayer sp)runAs(sp,"function entersift:rift/punch");
+                if (player instanceof ServerPlayer sp) cast(sp, player, hand);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
@@ -269,7 +279,7 @@ public final class EnterTheSift implements ModInitializer {
             boolean casting = gauntlet(player.getItemInHand(hand))
                 || (player.getItemInHand(hand).isEmpty() && wearsGauntlet(player));
             if (casting) {
-                if (player instanceof ServerPlayer sp) runAs(sp, "function entersift:rift/punch");
+                if (player instanceof ServerPlayer sp) cast(sp, player, hand);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;

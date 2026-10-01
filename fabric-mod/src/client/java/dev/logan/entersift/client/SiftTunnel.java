@@ -2,7 +2,9 @@ package dev.logan.entersift.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.logan.entersift.EnterTheSift;
 import dev.logan.entersift.SiftContent;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -26,6 +28,8 @@ public final class SiftTunnel {
     static final Identifier TUNNEL_DIM = SiftContent.id("rift_tunnel");
     private static final int GRID = 16, PARTICLES = 120, VOXEL_RINGS = 14;
     private static final float HALF_BOX = 28f, AXIS_X = 0.5f, AXIS_Y = 65.6f;
+    /** 0.32: a tunnel-render failure must never take the game down — the corridor is decoration. */
+    private static final AtomicBoolean tunnelWarned = new AtomicBoolean();
 
     public static void register() {
         SiftRenderTypes.initialize();
@@ -33,21 +37,29 @@ public final class SiftTunnel {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null || !mc.level.dimension().identifier().equals(TUNNEL_DIM)) return;
             if (SiftRenderTypes.irisShadowPass()) return;
-            Vec3 cam = context.levelState().cameraRenderState.pos;
-            float seconds = (float) ((System.nanoTime() / 1.0e9) % 3600.0);
-            boolean gpu = SiftBudget.riftShader; // 0.18.2: also under Iris packs
-            PoseStack pose = context.poseStack();
-            pose.pushPose(); // balanced
             try {
-                var out = context.submitNodeCollector();
-                if (gpu) out.submitCustomGeometry(pose, SiftRenderTypes.TUNNEL, (p, vc) -> voxelSkybox(p, vc, false, seconds));
-                else out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> voxelSkybox(p, vc, true, seconds));
-                out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
-                    voxelRings(p, vc, cam, seconds);
-                    particles(p, vc, cam, seconds);
-                });
-            } finally {
-                pose.popPose();
+                Vec3 cam = context.levelState().cameraRenderState.pos;
+                float seconds = (float) ((System.nanoTime() / 1.0e9) % 3600.0);
+                boolean gpu = SiftBudget.riftShader; // 0.18.2: also under Iris packs
+                PoseStack pose = context.poseStack();
+                pose.pushPose(); // balanced
+                try {
+                    var out = context.submitNodeCollector();
+                    if (gpu) out.submitCustomGeometry(pose, SiftRenderTypes.TUNNEL, (p, vc) -> voxelSkybox(p, vc, false, seconds));
+                    else out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> voxelSkybox(p, vc, true, seconds));
+                    out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
+                        voxelRings(p, vc, cam, seconds);
+                        particles(p, vc, cam, seconds);
+                    });
+                } finally {
+                    pose.popPose();
+                }
+            } catch (Throwable error) {
+                // The corridor is decoration: if a pipeline or a vertex write fails, skip it for the rest
+                // of the session instead of crashing the client the moment a player steps through a rift.
+                if (tunnelWarned.compareAndSet(false, true))
+                    EnterTheSift.LOGGER.error("[Sift] the rift tunnel renderer failed and is now skipped; "
+                        + "travel still works and the corridor will just be empty", error);
             }
         });
     }
