@@ -209,3 +209,9 @@ at the anchor column) and quietly leave the traveler walking the corridor foreve
 column, so an arrival always lands somewhere walkable and the return rift always opens. A second bug — a
 fallback line that started with `positioned` instead of `execute positioned` — killed the whole function
 at datapack load; `validate.py` now fails the build on that entire class of typo.
+
+The staged crossing is green in CI (run 36939932907, artifact `Sift-Overhaul-0.32.0-alpha-26.3`): entry,
+corridor hand-off, destination search, arrival and the return rift all happen with no thrown error. The
+staff's ranged spell (`rift/staff_cast`: crystal flash, eight-block bolt, rift torn open where it lands)
+is a data-side function and is NOT covered by the smoke stage — only its existence and its call sites are
+asserted by `tools/test_data.py`.
