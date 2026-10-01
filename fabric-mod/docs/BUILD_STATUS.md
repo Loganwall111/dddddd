@@ -239,3 +239,23 @@ Local gates: 70 data tests, 615-file validation, 8 generators, 82 shader program
 clean. The Java here touches `DataComponents.EQUIPPABLE`, `Equippable.builder(EquipmentSlot)`,
 `setAsset(...)` and `Registries.EQUIPMENT_ASSET` — none of those could be signature-checked in this
 sandbox (no local jars), so the 26.3 compile is what confirms them.
+
+## Sift Overhaul 0.34.0-alpha: worn gauntlets, a destination behind the glass, and the probe's verdict
+
+Run 36942346211 failed with `SiftContent.java:34: error: cannot find symbol - variable EQUIPMENT_ASSET,
+location: class Registries`. That guess came from the 26.3 class list; the names could not be checked
+offline. So the equipment classes were added to `tools/probe/classes.txt` and the API-probe workflow was
+run (run 36942751368, commit 729ed46), which dumped the real signatures into `probe-output/signatures.txt`:
+
+- `Equippable.builder(EquipmentSlot)` - exists.
+- `Equippable.Builder.setAsset(ResourceKey<EquipmentAsset>)` - exists.
+- The registry key is `net.minecraft.world.item.equipment.EquipmentAssets.ROOT_ID`; `Registries` has no
+  EQUIPMENT_ASSET entry (only TRIM_MATERIAL / TRIM_PATTERN).
+- `EquipmentClientInfo.Builder.addHumanoidLayers(Identifier)` - confirms the `layers.humanoid[].texture`
+  JSON shape and that the layer's texture id is what the sheet is looked up by.
+- `EquipmentAssetManager.get(ResourceKey<EquipmentAsset>)` - the client-side source of the worn layer.
+
+The gauntlets now use `EquipmentAssets.ROOT_ID` with `setEquipOnInteract(true)`, and the contract asserts
+those exact symbols. The one thing the probe could not confirm is the on-disk directory the manager
+scans (`assets/<ns>/equipment/`), which follows the 1.21.4+ vanilla layout; if it were wrong the gauntlet
+would simply render nothing rather than error.

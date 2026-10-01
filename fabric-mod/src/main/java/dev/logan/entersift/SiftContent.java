@@ -12,6 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.equipment.Equippable;
+import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -30,8 +31,12 @@ public final class SiftContent {
      * worn, not merely held.
      */
     private static Item.Properties wearable(Item.Properties props, String path) {
+        // Signature checked against the CI probe (probe-output/signatures.txt): Equippable.builder(slot),
+        // Builder.setAsset(ResourceKey<EquipmentAsset>) and EquipmentAssets.ROOT_ID. 26.3 has no
+        // Registries.EQUIPMENT_ASSET - that guess is what failed the previous build.
         return props.component(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.CHEST)
-            .setAsset(ResourceKey.create(Registries.EQUIPMENT_ASSET, id(path)))
+            .setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID, id(path)))
+            .setEquipOnInteract(true)
             .build());
     }
     private static Block block(String name, Block base, int light) {

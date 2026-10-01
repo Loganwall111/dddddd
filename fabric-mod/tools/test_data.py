@@ -234,7 +234,8 @@ class DataContracts(unittest.TestCase):
         # Java: the component that makes the game render and equip them.
         content = (ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text()
         for token in ('DataComponents.EQUIPPABLE', 'Equippable.builder(EquipmentSlot.CHEST)',
-                      'Registries.EQUIPMENT_ASSET', 'wearable(itemProperties("rift_gauntlet")',
+                      'EquipmentAssets.ROOT_ID', 'setEquipOnInteract(true)',
+                      'wearable(itemProperties("rift_gauntlet")',
                       'wearable(itemProperties("red_rift_gauntlet")'):
             self.assertIn(token, content)
         # validate.py must refuse to ship an equipment layer whose worn texture is missing.

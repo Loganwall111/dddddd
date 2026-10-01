@@ -246,3 +246,29 @@ around both forearms. The worn sheet is deliberately empty everywhere except the
 
 Not verified here: the client only. Both the sheet and the layer are structural (checked by
 `validate.py`) but whether the band sits where the wrist actually is can only be seen in game.
+
+### 0.34 the opening is a destination, not a mirror
+
+Reported in game: the middle of the rift showed the world the player was standing in - "it just looks
+like a window". The cause was in `rift.fsh`: the window's interior content was `texture(Sampler1, ...)`,
+and Sampler1 is the copy of the CURRENT framebuffer that `RiftScene` takes every frame. There was no
+destination anywhere in the pipeline; the glass could only ever reflect where you already were.
+
+What it does now:
+- The interior is painted from the rift's own style colours using the vertex world ray as a view
+  direction: a sky gradient, a horizon, two parallax ridge lines, a distant sun with its glow, and sparks
+  drifting upward, over the existing crack/throb energy. Style 4 (cyan) shows a cyan world, style 1
+  (red) a red one, and so on.
+- The opening is opaque: alpha 0.94 over the interior, and the captured scene is mixed in ONLY at the
+  outer rim (`destAmt = smoothstep(0.05, 0.45, edgeFade)`), which keeps the glass-edge bending without
+  ever showing the world behind the middle.
+- The no-shader CPU path paints the same kind of destination (sky/ground bands, a sun) at 0.82 alpha
+  instead of the old 0.18 see-through pane.
+
+Honest scope: the destination is PROCEDURAL, not the real Sift terrain. Rendering the actual destination
+would need a second world render from a camera in the target dimension, which 26.3 does not expose in a
+supported way from a mod (there is no re-entrant level-render pass; `LevelRenderEvents` covers the one
+active render only). The reference frames show a bright interior rather than a photographic like-through,
+so a painted world is the closest thing that can be delivered and verified without a second render.
+
+Dials to turn in a client: the interior alpha (0.94), `destAmt`'s band, and the ridge/sun sizes.
