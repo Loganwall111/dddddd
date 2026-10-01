@@ -1,7 +1,4 @@
-execute store result score #rift_time sift.day run time query daytime
-execute if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999
-execute unless dimension entersift:the_sift if score #rift_time sift.day matches 23000.. run return 0
+execute unless function entersift:rift/gate run return 0
 execute if entity @e[type=minecraft:marker,tag=sift.rift,distance=..5] run return 0
 summon minecraft:marker ~ ~ ~ {Tags:["sift.rift","sift.new_rift"]}
 scoreboard players set @e[type=minecraft:marker,tag=sift.new_rift,distance=..1] sift.age 0

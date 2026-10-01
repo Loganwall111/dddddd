@@ -248,12 +248,21 @@ class DataContracts(unittest.TestCase):
         self.assertIn('tag @s add sift.awakened',fn('rift/punch'))
         self.assertIn('@s[tag=sift.awakened]',fn('world/roll'))
         self.assertIn('if dimension minecraft:the_nether',fn('rift/wave_player'))
-        for path in ('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at','rift/seed'):
-            text=fn(path)
-            self.assertIn('time query daytime',text,path)
-            self.assertIn('if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999',text,path)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999',text,path)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches 23000..',text,path)
+        # 26.3 /time query takes a timeline id: the removed daytime keyword was a parse error that
+        # stopped the whole function from loading, which is why every rift silently stopped working.
+        # All gates now share rift/gate.
+        gate=fn('rift/gate')
+        self.assertIn('run time of minecraft:overworld query minecraft:day',gate)
+        self.assertIn('run time of entersift:sift query entersift:sift_cycle',gate)
+        self.assertIn('matches 13000..23999 run return 0',gate)
+        self.assertIn('matches ..12999 run return 0',gate)
+        self.assertIn('matches 23000.. run return 0',gate)
+        self.assertIn('return 1',gate)
+        for path in ('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at'):
+            self.assertIn('function entersift:rift/gate',fn(path),path)
+        self.assertIn('function entersift:rift/gate_denied',fn('rift/punch'))
+        self.assertNotIn('rift/gate',fn('rift/seed'))            # creative seeds work at any hour
+        self.assertIn('tag=sift.seeded] unless function entersift:rift/gate',fn('rift/tick'))
         renderer=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('if (!s.night && s.type != RiftType.PORTAL) return;',renderer)
         self.assertNotIn('getOverworldClockTime()',renderer)
@@ -664,13 +673,18 @@ class DataContracts(unittest.TestCase):
         self.assertIn('if (!s.night && s.type != RiftType.PORTAL) return;',rift)
         self.assertIn('int k = 0; k < 9; k++',rift)
         self.assertIn('int count = Math.round(7 *',rift)
-        for path in ('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at','rift/seed'):
-            text=fn(path)
-            self.assertIn('if dimension entersift:the_sift unless score #rift_time sift.day matches 13000..23999',text)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches ..12999',text)
-            self.assertIn('unless dimension entersift:the_sift if score #rift_time sift.day matches 23000..',text)
+        # Rifts are gated to local night/Endure through the shared 26.3 timeline query (rift/gate).
+        self.assertIn('query entersift:sift_cycle',fn('rift/gate'))
+        self.assertIn('function entersift:rift/gate',fn('rift/create'))
+        self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:4,Width:3f,Height:4f',fn('portal/return_tick'))
         props=(ROOT/'gradle.properties').read_text()
         self.assertIn('mod_version=0.25.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
+    def test_no_removed_time_query_keywords(self):
+        # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
+        for p in (D/'function').rglob('*.mcfunction'):
+            for line in p.read_text().splitlines():
+                if 'run time query ' in line:
+                    self.assertIn('time query gametime',line,str(p))
 if __name__=='__main__': unittest.main(verbosity=2)

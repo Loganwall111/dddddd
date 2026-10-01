@@ -71,10 +71,24 @@ final class SiftSmokeTest {
             x += 8;
         }
         run(server, "execute in entersift:the_sift positioned 0 140 -20 run function entersift:creature/twisted_warden/spawn");
+        // 0.25 rifts are gated to the local window (night, or Endure inside the Sift), so move both clocks
+        // into place and prove that the gate refuses daytime rifts before one is allowed to open.
+        run(server, "time of minecraft:overworld set 6000");
+        run(server, "execute in minecraft:overworld store result score #smoke_gate sift.clock run function entersift:rift/gate");
+        run(server, "execute if score #smoke_gate sift.clock matches 1 run say SIFT-SMOKE FAIL rift gate allowed a rift at noon");
+        run(server, "time of minecraft:overworld set 13000");
+        run(server, "execute in entersift:the_sift run time of entersift:sift set 6000");
+        run(server, "execute in entersift:the_sift store result score #smoke_gate sift.clock run function entersift:rift/gate");
+        run(server, "execute if score #smoke_gate sift.clock matches 1 run say SIFT-SMOKE FAIL rift gate allowed a Thrive rift");
+        run(server, "execute in entersift:the_sift run time of entersift:sift set 13000");
+        run(server, "execute in entersift:the_sift store result score #smoke_gate sift.clock run function entersift:rift/gate");
+        run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked Endure");
         run(server, "execute in entersift:the_sift positioned 10 140 -20 run function entersift:rift/natural");
+        run(server, "execute in minecraft:overworld positioned 0 100 0 run function entersift:rift/natural");
         run(server, "execute in entersift:the_sift run function entersift:world/tick");
         // Client-rendered rifts/portals: the invisible anchor display must actually spawn.
         run(server, "execute in entersift:the_sift unless entity @e[type=entersift:rift_portal,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL rift anchor missing");
+        run(server, "execute in minecraft:overworld unless entity @e[type=entersift:rift_portal,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL overworld rift anchor missing");
         run(server, "execute in entersift:the_sift positioned 30 140 -20 run function entersift:portal/visual {sx:4.0f,sy:4.0f,sz:0.07f,tx:-2.0f,tz:-0.035f,pw:4.0f,yaw:0.0f}");
         run(server, "execute in entersift:the_sift positioned 30 140 -20 unless entity @e[type=entersift:rift_portal,tag=sift.portal_anchor,distance=..1] run say SIFT-SMOKE FAIL portal anchor missing");
         for (SiftKind kind : SiftKind.values())

@@ -30,7 +30,7 @@ This is a separate Minecraft project. The existing Lumital React/Three.js app at
 | **The Singer** | Original block-display figure rises for four seconds, answers six notes at their recorded positions, and opens a flickering threshold after eleven seconds. It is an animated display rig, not a registered custom mob. |
 | **Ichor** | Registered source/flowing fluid and bucket; original animated rainbow textures; contact damages health and drains souls once per second. No infinite-source conversion. |
 | **Souls** | Persistent per-player score, initially 20, capped at 100. Ichor drains 3; depleted souls cause a short wither effect. Standing on soul salt slowly replenishes souls in the Sift. |
-| **Rift gauntlet** | Punch a block/entity, or right-click, to tear a short-lived rift ahead of you. Costs 10 souls; 3-second cooldown. The target must be air. |
+| **Rift gauntlet** | Punch a block/entity, or right-click, to tear a short-lived rift ahead of you. Costs 10 souls; 3-second cooldown. The target must be air. Night only: outside the Sift the local day cycle must be between 13000 and 22999, inside the Sift the tide must be Endure. |
 | **Wandering rifts** | Night-only encounters across supported dimensions. A circular lens twists open into the warped stepped window; reduced downward motes, lightning, and a 100-tick assembly. |
 | **Riftcallers** | Tagged vanilla evokers with a ground-strike particle/sound sequence that creates rifts. No terrain griefing. Not a separately registered illager type. |
 | **Soul potion** | A 32-tick drink adds 40 souls and grants 30 seconds of invisibility and slow falling, with soul particles. No spectator mode, flight or wall-phasing. Nearby-player haunting is optional. |
