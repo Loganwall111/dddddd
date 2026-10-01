@@ -132,7 +132,7 @@ public final class RiftShape {
         }
         int[][] box = new int[cols][rows];
         for (int[] col : box) Arrays.fill(col, -1);
-        float mainDepth = 0.4837f;
+        float mainDepth = 0.60f; // 0.29: boxier depth so the sides read as real boxes
         float max = mainDepth;
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {
@@ -140,11 +140,11 @@ public final class RiftShape {
                 // Outer left attached boxes get distinct shallow step depths; main cross is one seamless window.
                 if ((type == RiftType.SIFT || type == RiftType.OVERWORLD) && i <= 1 && j >= 2 && j <= 3) {
                     box[i][j] = 1;
-                    depth[i][j] = 0.2637f;
+                    depth[i][j] = 0.32f;
                     tier[i][j] = 3;
                 } else if ((type == RiftType.SIFT || type == RiftType.OVERWORLD) && i <= 2 && j <= 1 && (i < 3)) {
                     box[i][j] = 2;
-                    depth[i][j] = 0.3537f;
+                    depth[i][j] = 0.44f;
                     tier[i][j] = 2;
                 } else {
                     box[i][j] = 0;
@@ -152,7 +152,7 @@ public final class RiftShape {
                 }
             }
         }
-        return max;
+        return Math.max(max, 0.60f);
     }
 
     // ------------------------------------------------------------------ trailer-exact perimeter satellites

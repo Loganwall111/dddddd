@@ -7,12 +7,41 @@ D=R/'data/entersift'
 def fn(name): return (D/f'function/{name}.mcfunction').read_text()
 def read(path): return json.loads((D/path).read_text())
 class DataContracts(unittest.TestCase):
+    def test_v029_box_structure_lightning_and_shockwave(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        budget=(C/'SiftBudget.java').read_text(); shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
+        # The flat backdrop quad is gone: the cavity walls, their depth fade and the rims carry the back.
+        self.assertNotIn('backsideVeil',rift)
+        self.assertIn('float mainDepth = 0.60f;',shape)
+        # Box faces are frosted and readable instead of nearly invisible (the "neon lines only" report).
+        self.assertIn('riftData.a * 0.82',fsh)
+        self.assertIn('0.50 * edgeFade',fsh)
+        # The neon outline overlaps its segments, so it is a continuous band instead of dots.
+        self.assertIn('float overlap = (0.05f + 0.04f * flash) * k;',rift)
+        self.assertIn('x0 - ox',rift); self.assertIn('x1 + ox',rift)
+        # Placement shockwave: expanding white ground band plus radiating cracks.
+        self.assertIn('static final float SHOCK_END = 48f;',rift)
+        self.assertIn('private static void groundRing(',rift)
+        self.assertIn('private static void groundCrack(',rift)
+        self.assertIn('shockwave(p, vc, still, sh, look, s, cam, age)',rift)
+        self.assertIn('if (age <= SHOCK_END)',rift)
+        # Lightning crawling off the structure and off the assembling slab.
+        self.assertIn('private static void riftBolts(',rift); self.assertIn('private static void seedBolts(',rift)
+        self.assertIn('riftBolts(p, vc, wv, sh, s, cam, look, a)',rift)
+        self.assertIn('seedBolts(p, vc, sh, s, cam, look, a)',rift)
+        # The seed is a tall, tilted, slowly turning glowing slab with outlined edges.
+        self.assertIn('float hx = 0.30f, hy = 0.72f + 0.42f * stretch, hz = 0.11f, cy = sh.cy();',rift)
+        self.assertIn('outline',rift)
+        for key in ('rift_bolts','rift_shockwave'):
+            self.assertIn(key,budget)
+
     def test_v028_back_fade_dissolves_the_receding_structure(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
         budget=(C/'SiftBudget.java').read_text()
         # Depth fade: faces dissolve behind the opening plane, edges keep a fraction so the wireframe reads.
-        self.assertIn('static final float FADE_NEAR = 0.06f, FADE_FAR = 0.85f;',rift)
+        self.assertIn('static final float FADE_NEAR = 0.06f, FADE_FAR = 1.0f;',rift)
         self.assertIn('static float backFade(float z)',rift)
         self.assertIn('private static float faceA(float z, float a)',rift)
         self.assertIn('private static float edgeA(float z, float a)',rift)
@@ -24,7 +53,6 @@ class DataContracts(unittest.TestCase):
         # The opening itself stays clear; only the detached window panels fade.
         self.assertIn('winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, 1f)',rift)
         self.assertIn('* backFade(b[5])',rift)
-        self.assertIn('float back = 0.20f + 0.80f * backFade(z);',rift)
         # The shader multiplies the window by the per-quad fade carried in the vertex colour.
         self.assertIn('* riftData.a) * ColorModulator;',fsh)
         self.assertIn('riftBackFade',budget); self.assertIn('"rift_back_fade"',budget)
@@ -617,7 +645,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.28.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.29.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -756,7 +784,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.28.0-alpha',props)
+        self.assertIn('mod_version=0.29.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

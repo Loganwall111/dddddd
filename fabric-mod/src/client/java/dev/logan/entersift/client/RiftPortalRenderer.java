@@ -42,7 +42,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * FADE_NEAR..FADE_FAR; edges keep a fraction so the wireframe stays readable while it recedes.
      * The window itself is deliberately exempt — the opening stays clear.
      */
-    static final float FADE_NEAR = 0.06f, FADE_FAR = 0.85f;
+    static final float FADE_NEAR = 0.06f, FADE_FAR = 1.0f;
+    /** Placement shockwave: the giant white ground band that expands and fades (reference placement shots). */
+    static final float SHOCK_END = 48f;
     static final int SUB = 4; // subdivisions per cell edge so vertical sides curve smoothly with the wave
     static final float[] VIBRANT_PINK_DAY = rgb(0xFF6FA8);
     static final float[] DEEP_AMBER_NIGHT = rgb(0xDB7840);
@@ -226,12 +228,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (age < CLUSTER_START) {
                 float a = age;
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> {
-                    seedBox(p, vc, still, sh, look, a);
+                    seedBox(p, vc, still, sh, look, a, cam);
+                    if (SiftBudget.riftEffects) seedBolts(p, vc, sh, s, cam, look, a);
                     if (SiftBudget.riftEffects && SiftBudget.riftFlares) rotatingArcs(p, vc, sh, s, cam, a);
                     if (SiftBudget.riftEffects && SiftBudget.riftBloom) seedShell(p, vc, sh, s, a);
                     if (a > 4f) ripple(p, vc, still, sh, look, (a - 4f) * 15f);
                 });
             }
+            if (age <= SHOCK_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> shockwave(p, vc, still, sh, look, s, cam, age));
             if (age >= CLUSTER_START) {
                 float a = age;
                 if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s));
@@ -240,6 +244,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> {
                     rims(p, vc, wv, sh, look, cam, a, s);
                     if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look, a);
+                    if (SiftBudget.riftEffects) riftBolts(p, vc, wv, sh, s, cam, look, a);
                     if (SiftBudget.riftEffects && SiftBudget.riftFlares) {
                         glitchTeeth(p, vc, sh, s, a);
                         clawRibbons(p, vc, sh, s, cam, a);
@@ -380,22 +385,28 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /** PHASE 2: tall vertical seed box (Image 22: 194638), pulsing rapidly before snapping into the stepped cross. */
-    private static void seedBox(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
+    private static void seedBox(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age, Vector3f cam) {
         float k = seedScale(age);
         if (k <= 0f) return;
         float stretch = clamp(age / 40f, 0f, 1f);
-        float hx = 0.25f, hy = 0.25f, hz = 0.25f, cy = sh.cy();
-        float tilt = 0.13f * age + 0.11f * (float) Math.sin(age * 0.22f);
+        // Reference placement frames: a tall, thin, tilted glowing slab that slowly turns while it grows.
+        float hx = 0.30f, hy = 0.72f + 0.42f * stretch, hz = 0.11f, cy = sh.cy();
+        float tilt = 0.52f + 0.10f * (float) Math.sin(age * 0.22f);
+        float spin = age * 0.26f;
+        float ct = (float) Math.cos(tilt), st = (float) Math.sin(tilt), cs = (float) Math.cos(spin), ss = (float) Math.sin(spin);
         float[][] v = new float[8][];
         for (int n = 0; n < 8; n++) {
             float x = (n & 1) == 0 ? -hx : hx, y = (n & 2) == 0 ? -hy : hy, z = (n & 4) == 0 ? -hz : hz;
-            float rx = x * (float) Math.cos(tilt) - y * (float) Math.sin(tilt), ry = x * (float) Math.sin(tilt) + y * (float) Math.cos(tilt);
-            v[n] = new float[]{rx, cy + ry, z};
+            float rx = x * ct - y * st, ry = x * st + y * ct;
+            v[n] = new float[]{rx * cs + z * ss, cy + ry, -rx * ss + z * cs};
         }
         int[][] faces = {{0, 1, 3, 2}, {4, 6, 7, 5}, {0, 4, 5, 1}, {2, 3, 7, 6}, {0, 2, 6, 4}, {1, 5, 7, 3}};
         float[] hot = c(1f, 0.98f, 1f);
         float pulse = 0.55f + 0.45f * (0.5f + 0.5f * (float) Math.sin(age * 2.2f));
         for (int[] f : faces) for (int idx : f) col(p, vc, wv, v[idx][0], v[idx][1], v[idx][2], hot, pulse);
+        // Bright edges so the slab reads as the glowing monolith from the placement references.
+        int[][] outline = {{0, 1}, {2, 3}, {0, 2}, {1, 3}, {4, 5}, {6, 7}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+        for (int[] e : outline) line(p, vc, Warp.STILL, cam, v[e[0]], v[e[1]], 0.05f, hot, pulse * 0.85f);
     }
 
     /** Six step-locked, rotating arcs, each six segments; pale pink tips. */
@@ -672,20 +683,24 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static void rim(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
                             float[] core, float[] halo, boolean lip, float flash, float[] jit) {
         float k = lip ? 0.75f : 1f, a = lip ? 0.85f : 1f;
+        // 0.28: overlap neighbouring segments so the neon outline is a continuous band instead of dots.
+        float overlap = (0.05f + 0.04f * flash) * k;
         for (int s = 0; s < SUB; s++) {
             float t0 = s / (float) SUB, t1 = (s + 1) / (float) SUB;
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
             float x1 = xa + (xb - xa) * t1, y1 = ya + (yb - ya) * t1;
-            float[] fa = {x0, y0, zf + 0.006f}, fb = {x1, y1, zf + 0.006f};
+            float dxs = x1 - x0, dys = y1 - y0, dlen = Math.max(1e-4f, (float) Math.sqrt(dxs * dxs + dys * dys));
+            float ox = dxs / dlen * overlap, oy = dys / dlen * overlap;
+            float[] fa = {x0 - ox, y0 - oy, zf + 0.006f}, fb = {x1 + ox, y1 + oy, zf + 0.006f};
             band(p, vc, wv, cam, fa, fb, (0.065f + 0.05f * flash) * k, (0.32f + 0.15f * flash) * k, core, halo, a);
-            line(p, vc, wv, cam, new float[]{x0 + jit[0], y0 + jit[1], zf + 0.01f}, new float[]{x1 + jit[0], y1 + jit[1], zf + 0.01f}, 0.038f * k, core, 0.24f);
-            band(p, vc, wv, cam, new float[]{x0, y0, zb + 0.012f}, new float[]{x1, y1, zb + 0.012f}, 0.032f, 0.12f, core, halo, 0.35f);
+            line(p, vc, wv, cam, new float[]{x0 + jit[0] - ox, y0 + jit[1] - oy, zf + 0.01f}, new float[]{x1 + jit[0] + ox, y1 + jit[1] + oy, zf + 0.01f}, 0.038f * k, core, 0.24f);
+            band(p, vc, wv, cam, new float[]{x0 - ox, y0 - oy, zb + 0.012f}, new float[]{x1 + ox, y1 + oy, zb + 0.012f}, 0.032f, 0.12f, core, halo, 0.35f);
         }
     }
 
     /**
      * Translucent wavy reality-ripple / heat-haze ribbons undulating along the left and right outer flanks
-     * of the rift (Images 7, 22, 23, 24, 26). Now also supports the twisted backside veil.
+     * of the rift (Images 7, 22, 23, 24, 26).
      */
     private static void wavySideVeils(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s) {
         float[] c = look.halo();
@@ -706,34 +721,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 col(p, vc, wv, bx + w1, y1, COLLAR * 0.6f, c, 0.22f * env1);
             }
         }
-        // Backside twisted/bending veil (Image 8 back): a translucent, slowly rotating veil
-        // that hides the rear of the rift. It sits behind the window (negative Z deeper than walls)
-        // and bends with the warp, so the rift reads as a threshold, not a double-sided plane.
-        backsideVeil(p, vc, wv, sh, look, s);
-    }
-
-    /** Translucent twisted veil behind the rift opening — hides the back face with a bending distortion (Image 8). */
-    private static void backsideVeil(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s) {
-        float z = -sh.maxDepth - 0.42f;
-        float alpha = 0.18f + 0.06f * (float) Math.sin(s.time * 0.9f);
-        // Large, slightly twisted quad that covers the back; subdivided so warp bends it
-        int div = 3;
-        for (int ix = 0; ix < div; ix++) for (int iy = 0; iy < div; iy++) {
-            float x0 = -sh.w * 0.62f + (sh.w * 1.24f) * (ix / (float) div);
-            float x1 = -sh.w * 0.62f + (sh.w * 1.24f) * ((ix + 1) / (float) div);
-            float y0 = RiftShape.BASE + sh.h * (iy / (float) div);
-            float y1 = RiftShape.BASE + sh.h * ((iy + 1) / (float) div);
-            float twist = 0.18f * (float) Math.sin(s.time * 0.65f + (x0 + y0) * 0.3f);
-            float tx0 = x0 + twist * (y0 - sh.cy()) * 0.12f;
-            float tx1 = x1 + twist * (y1 - sh.cy()) * 0.12f;
-            // Gradient from halo at edges to slightly darker center
-            float[] c = mix(look.halo(), look.wallBack(), 0.35f);
-            float back = 0.20f + 0.80f * backFade(z); // 0.28: the rear of the rift thins to almost nothing
-            col(p, vc, wv, tx0, y0, z, c, alpha * 0.65f * back);
-            col(p, vc, wv, tx1, y0, z, c, alpha * 0.65f * back);
-            col(p, vc, wv, tx1, y1, z, c, alpha * back);
-            col(p, vc, wv, tx0, y1, z, c, alpha * back);
-        }
+        // 0.28: the flat backdrop quad that used to sit behind the rift was removed. It read as a
+        // floating transparent rectangle ("it is just a window"). The stepped cavity, its outer box
+        // walls and the depth fade now carry the back of the structure instead.
     }
 
     /** Summon distortion stretch + ring/ripple (Image 7 right-most): on `age < 30` the ground around the anchor
@@ -926,6 +916,107 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         };
         float[] a = anchors[k % anchors.length];
         return new float[]{a[0], a[1], a[2], q};
+    }
+
+    // ------------------------------------------------------------------ placement shockwave + lightning
+
+    private static final float PI2 = (float) (Math.PI * 2.0);
+
+    /** Flat glowing band lying on the terrain; the placement shockwave is made of two of these. */
+    private static void groundRing(PoseStack.Pose p, VertexConsumer vc, Warp wv, float radius, float thickness,
+                                   float alpha, float[] tone, boolean fadeWithDistance) {
+        int seg = 56;
+        float inner = Math.max(0.05f, thickness * 0.5f);
+        for (int i = 0; i < seg; i++) {
+            float a0 = i / (float) seg * PI2, a1 = (i + 1) / (float) seg * PI2;
+            float ca0 = (float) Math.cos(a0), sa0 = (float) Math.sin(a0);
+            float ca1 = (float) Math.cos(a1), sa1 = (float) Math.sin(a1);
+            float r0 = Math.max(0.1f, radius - inner), r1 = radius + inner;
+            float y = RiftShape.BASE + 0.025f;
+            float aa = alpha * (fadeWithDistance ? backFade(-radius * 0.15f) * 0.5f + 0.5f : 1f);
+            col(p, vc, wv, ca0 * r0, y, sa0 * r0, tone, aa);
+            col(p, vc, wv, ca1 * r0, y, sa1 * r0, tone, aa);
+            col(p, vc, wv, ca1 * r1, y, sa1 * r1, tone, aa * 0.85f);
+            col(p, vc, wv, ca0 * r1, y, sa0 * r1, tone, aa * 0.85f);
+        }
+    }
+
+    /** Kinked crack running outward along the ground plane. */
+    private static void groundCrack(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float angle, float length,
+                                    long seed, float[] core, float alpha) {
+        float y = RiftShape.BASE + 0.035f;
+        float[] prev = {0f, y, 0f};
+        float dx = (float) Math.cos(angle), dz = (float) Math.sin(angle);
+        for (int q = 1; q <= 6; q++) {
+            float t = q / 6f;
+            float jitter = q == 6 ? 0f : (RiftShape.hash(seed, q, 71) - 0.5f) * length * 0.16f;
+            float[] next = {dx * length * t - dz * jitter, y, dz * length * t + dx * jitter};
+            line(p, vc, wv, cam, prev, next, 0.055f * (1f - t * 0.55f), core, alpha * (1f - t * 0.7f));
+            prev = next;
+        }
+    }
+
+    /**
+     * Placement shockwave: one giant white band races out across the terrain and dissolves, followed by
+     * thinner halo rings and ground cracks (reference placement frames). The band's radius grows fast then
+     * eases, and its alpha fades quadratically so it "appears on the land and disappears".
+     */
+    private static void shockwave(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s, Vector3f cam, float age) {
+        if (!SiftBudget.riftShock) return;
+        float f = clamp(age / SHOCK_END, 0f, 1f);
+        float ease = 1f - (float) Math.pow(1f - f, 3);
+        float radius = 1.0f + ease * 13.0f;
+        float alpha = (1f - f) * (1f - f) * 0.95f;
+        groundRing(p, vc, wv, radius, 0.75f - 0.35f * ease, alpha, c(1f, 0.99f, 0.97f), false);
+        groundRing(p, vc, wv, radius * 0.80f, 0.34f, alpha * 0.45f, look.halo(), false);
+        groundRing(p, vc, wv, radius * 1.12f, 0.22f, alpha * 0.25f, look.core(), false);
+        if (f > 0.82f) return;
+        for (int k = 0; k < 7; k++) {
+            long g = s.seed + k * 31L;
+            float angle = RiftShape.hash(g, k, 51) * PI2;
+            float len = radius * (0.65f + 0.55f * RiftShape.hash(g, k, 52));
+            groundCrack(p, vc, wv, cam, angle, len, g, c(1f, 0.98f, 0.96f), alpha * 0.8f);
+        }
+    }
+
+    /**
+     * Long kinked arcs flying off the rift (references: lightning crawls out of the structure in every
+     * direction). Re-aimed a few times per second; brighter and more frequent at night.
+     */
+    private static void riftBolts(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
+        if (!SiftBudget.riftBolts) return;
+        int step = (int) (s.time * (s.night ? 2.8f : 1.5f));
+        int count = s.night ? 3 : 2;
+        for (int k = 0; k < count; k++) {
+            long g = s.seed + step * 977L + k;
+            if (RiftShape.hash(g, k, 41) < 0.22f) continue;
+            float sx = (RiftShape.hash(g, k, 42) - 0.5f) * sh.w;
+            float sy = sh.cy() + (RiftShape.hash(g, k, 43) - 0.5f) * sh.h;
+            float angle = RiftShape.hash(g, k, 44) * PI2;
+            float dist = 4f + 13f * RiftShape.hash(g, k, 45);
+            float ex = sx + (float) Math.cos(angle) * dist;
+            float ey = sy + (RiftShape.hash(g, k, 46) - 0.35f) * dist * 0.85f;
+            float ez = 0.1f + (RiftShape.hash(g, k, 47) - 0.5f) * (0.6f + dist * 0.35f);
+            bolt(p, vc, wv, cam, new float[]{sx, sy, 0.05f}, new float[]{ex, ey, ez}, g, look, s.night ? 0.95f : 0.7f);
+        }
+    }
+
+    /** Long arcs crawling off the seed slab while the rift is still assembling. */
+    private static void seedBolts(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, Vector3f cam, Look look, float age) {
+        if (!SiftBudget.riftBolts) return;
+        int step = (int) (age / 4f);
+        for (int b = 0; b < 4; b++) {
+            long g = s.seed + step * 613L + b;
+            if (RiftShape.hash(g, b, 61) < 0.25f) continue;
+            float sx = (RiftShape.hash(g, b, 62) - 0.5f) * 0.9f;
+            float sy = sh.cy() + (RiftShape.hash(g, b, 63) - 0.5f) * 1.9f;
+            float angle = RiftShape.hash(g, b, 64) * PI2;
+            float dist = 2.5f + 6.5f * RiftShape.hash(g, b, 65);
+            float ex = sx + (float) Math.cos(angle) * dist;
+            float ey = sy + (RiftShape.hash(g, b, 66) - 0.4f) * dist * 0.8f;
+            float ez = 0.05f + (RiftShape.hash(g, b, 67) - 0.5f) * 1.6f;
+            bolt(p, vc, Warp.STILL, cam, new float[]{sx, sy, 0.05f}, new float[]{ex, ey, ez}, g, look, 0.9f);
+        }
     }
 
     // ------------------------------------------------------------------ primitives

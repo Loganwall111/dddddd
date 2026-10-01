@@ -31,7 +31,7 @@ void main() {
 #elif defined(RIFT_WALL)
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
-    fragColor = apply_fog(vec4(riftData.rgb, riftData.a * 0.24) * ColorModulator,
+    fragColor = apply_fog(vec4(riftData.rgb, riftData.a * 0.82) * ColorModulator,
         sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd,
         FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #else
@@ -67,7 +67,7 @@ void main() {
     if (warpedDepth > gl_FragCoord.z + 0.00001) sampleUv = screen;
     vec3 scene = texture(Sampler1, sampleUv).rgb;
     // Alpha blends the bent scene over the actual background; NOT a synthetic destination image.
-    fragColor = vec4(mix(scene, tint, alpha), 0.72 * edgeFade * fogFade() * riftData.a) * ColorModulator;
+    fragColor = vec4(mix(scene, tint, alpha), 0.50 * edgeFade * fogFade() * riftData.a) * ColorModulator;
 #else
     // No valid capture / shader-pack / disabled lens: preserve real terrain with a faint membrane.
     fragColor = vec4(tint, alpha * fogFade() * riftData.a) * ColorModulator;

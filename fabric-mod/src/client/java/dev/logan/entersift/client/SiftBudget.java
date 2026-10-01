@@ -53,7 +53,7 @@ public final class SiftBudget {
 
     public static boolean overworldClouds = true, riftEffects = true, transitionHud = true, riftShader = true, auraGlow = true;
 
-    public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = true, riftBackFade = true;
+    public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = true, riftBackFade = true, riftBolts = true, riftShock = true;
 
     public static void load(Path configDir) {
         Path file = configDir.resolve("entersift-client.properties");
@@ -71,11 +71,15 @@ public final class SiftBudget {
         riftFlares = flag(props, "enable_flares", true);
         riftSpill = flag(props, "rift_spill", true);
         riftBackFade = flag(props, "rift_back_fade", true);
+        riftBolts = flag(props, "rift_bolts", true);
+        riftShock = flag(props, "rift_shockwave", true);
         props.setProperty("rift_refraction", Boolean.toString(riftRefraction));
         props.setProperty("rift_glow", Boolean.toString(riftBloom));
         props.setProperty("enable_flares", Boolean.toString(riftFlares));
         props.setProperty("rift_spill", Boolean.toString(riftSpill));
         props.setProperty("rift_back_fade", Boolean.toString(riftBackFade));
+        props.setProperty("rift_bolts", Boolean.toString(riftBolts));
+        props.setProperty("rift_shockwave", Boolean.toString(riftShock));
         auraGlow = flag(props, "aura_glow", true);       // 0.17 night aura columns + note-block columns
         props.setProperty("overworld_clouds", Boolean.toString(overworldClouds));
         props.setProperty("rift_effects", Boolean.toString(riftEffects));
