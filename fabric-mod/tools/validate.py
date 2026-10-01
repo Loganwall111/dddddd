@@ -13,6 +13,16 @@ for p in (r/'data').rglob('*.mcfunction'):
         if ref not in functions: errors.append(f'{p}: unresolved function {ref}')
     for line in p.read_text().splitlines():
         if '$(' in line and not line.startswith('$'): errors.append(f'{p}: macro line missing $')
+# A command line must start at a command root. 'positioned ...' or 'as @a ...' is not a command, and the
+# whole function silently fails to load, which strands every player inside the rift corridor (0.32 bug).
+EXECUTE_SUBCOMMANDS = {'positioned','anchored','as','at','if','unless','store','align','facing','rotated','in','on','run'}
+for p in (r/'data').rglob('*.mcfunction'):
+    for line in p.read_text().splitlines():
+        s = line.strip()
+        if not s or s.startswith('#') or s.startswith('$'): continue
+        head = s.split(' ', 1)[0]
+        if head in EXECUTE_SUBCOMMANDS:
+            errors.append(f'{p}: line starts with the execute subcommand "{head}" (missing "execute")')
 def asset_refs(value, key=""):
     if isinstance(value, dict):
         for name, child in value.items():
