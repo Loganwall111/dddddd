@@ -683,11 +683,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (isWindow(sh, i, j - 1)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx1, by0, z + 0.012f}, 0.05f, edge, 0.55f);
             if (isWindow(sh, i, j + 1)) line(p, vc, wv, cam, new float[]{bx0, by1, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.05f, edge, 0.55f);
         }
-        for (float[] b : sh.sats) {
-            if (age < satAt(b)) continue;
-            float f = spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f);
-            rectSub(p, vc, wv, b[0], b[1], b[2], b[3], b[5], face, 0.95f * f);
-        }
+        // The detached satellites stay HOLLOW, exactly like the reference's small outlined boxes (17345525):
+        // rims() already draws their lit edges and corner posts, so no frosted pane goes on them.
     }
 
     private static boolean isWindow(RiftShape sh, int i, int j) {

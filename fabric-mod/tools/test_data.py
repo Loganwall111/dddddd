@@ -35,6 +35,8 @@ class DataContracts(unittest.TestCase):
         self.assertIn('return RIFT_BIRTH - 6f + Math.min(tier, RiftShape.TIERS - 1) * 2f;',rift)
         # 0.30: stepped frosted box with one small clear square window.
         self.assertIn('private static void boxFaces(',rift)
+        # The reference's detached boxes are hollow outlines, so no frosted pane goes on the satellites.
+        self.assertIn('// The detached satellites stay HOLLOW, exactly like the reference',rift)
         self.assertIn('float[] face = look.frost();',rift)
         self.assertIn('private static boolean isWindow(RiftShape sh, int i, int j)',rift)
         self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a, s);',rift)

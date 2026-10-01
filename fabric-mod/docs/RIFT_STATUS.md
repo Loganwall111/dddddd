@@ -154,3 +154,21 @@ numbers are the dials to turn next.
 Dials that are still guesswork and can only be settled in a client: how frosted the panels look
 (`0.95` face alpha through `faceA`), how wide the square window should be (currently 3x3 cells of an
 11x8 grid), and whether the band should read thicker or thinner at its widest.
+
+## 0.31 — eight styles, two silhouettes, proximity frost, pane aura
+
+- Eight rift styles now exist: the five destination looks plus the white reference cross (17345525) and
+  the steep olive wall (The_Nether). Each has its own inner tint and its own frosted tone measured from
+  the reference crops, so rifts in the world come out green, lime/yellow, red, orange, pink or white —
+  the spread the reference screenshots show. Roughly a third of overworld/sift rifts and two fifths of
+  end rifts take the white style.
+- Two silhouettes: the usual wide stepped cross, and the TALL tower variant (rolled one in five, spawned
+  as a genuinely taller entity). Variant selection is derived from width/height, so collisions and
+  rendering always agree.
+- The glazed square is a frosted pane at range and clears as you walk up (7.5 blocks -> 1.6 blocks),
+  but never goes fully clear, so the dimension stays "seen through glass".
+- The aura above the rift is now flat luminous panes, one texture pixel thick and roughly twice the
+  previous size, rising from the top lip and disintegrating around half way up.
+
+Still unverified in a client, and the dials to turn first: how strong the frost reads at range
+(`0.62` in the shader), how fast it clears (`FROST_NEAR`/`FROST_CLEAR`), and the pane size/spacing.

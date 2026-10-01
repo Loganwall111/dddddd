@@ -116,3 +116,41 @@ Verified locally: 66 data tests, 613-file validation, 7 generators, 82 shader pr
 Environment note: this turn the sandbox's `.git` was re-cloned at the session base commit while the
 working tree held the session's work; recovery was to re-fetch the pushed branch (`b390240`), hard-reset
 onto it and restore the six files edited after that push, so no session work was lost.
+
+## Sift Overhaul 0.31.0-alpha: styles, variants, proximity frost, pane aura (CI verified, run 36937269352)
+
+Scope: the rift gets the colour spread and the two silhouettes the references show, the glazed square
+frosts and clears as you approach, and the aura becomes one-pixel-thin rising panes.
+
+- `Look` gained a fifth colour, `frost`, and `LOOKS` now holds eight styles: 0-5 the destinations plus
+  6 the white reference rift (17345525) and 7 the steep olive wall (The_Nether). Frost tones are the
+  measured reference crop averages (red #9a3d36, yellow #d9c96c, olive #6e7781, pink #dfcfd5) lifted to
+  a frosted brightness. `lookFor(int)` wraps instead of clamping, so a bad index can never paint a
+  different rift's colours.
+- `viewCode(type, inSift, seed)` picks a style per rift (overworld/sift: white, coral or gold; nether:
+  olive, red or gold; end: white or violet), and `rift.fsh` carries the matching `TINT[8]` / `FROST[8]`
+  tables. The window encodes its style with a stride of 32 so eight styles fit alongside the night bit.
+- `boxFaces(...)` now paints the frosted mass in the rift's own frost colour, with the cells furthest
+  from the window taking a warmer tip tone. The detached satellites stay hollow outlines, as in the
+  reference's small boxes.
+- Proximity frost: `frostProximity(cam)` smooth-steps 1 -> 0 between `FROST_NEAR = 7.5` and
+  `FROST_CLEAR = 1.6` blocks. The window vertex packs `fade/2 + frost/2` into alpha and the shader
+  recovers both (`frostAmt`, `fade`), so the glazed square is a frosted pane at range that clears as you
+  walk up — `max(0.50 * edgeFade * fade, frostAmt * 0.62 * edgeFade)` is never fully clear.
+  `rift_proximity` switches it off.
+- Variants: `RiftShape.tallVariant(w, h)` (`h >= w * 1.25`) selects a tall tower silhouette instead of
+  the wide stepped cross. It is derived from width/height, so the server collision shape and the client
+  renderer cannot disagree. `rift/style.mcfunction` rolls tall (w 4..6, h 9..11) one time in five.
+- Aura: `energyCubes(...)` now emits `thinSquare(...)` panes — 0.84-1.68 blocks across, exactly one
+  block-texture pixel (1/16) thick, camera-facing, with a bright rim. They rise from the rift's top lip
+  and disintegrate around half way up (`f >= 0.34` shrinks to a spark, gone by `f = 0.62`). Still
+  midnight-gated with the rest of the aura.
+
+Verified: 67 data tests, 613-file validation, 7 generators, 82 shader programs, `git diff --check`.
+Artifact `Sift-Overhaul-0.31.0-alpha-26.3` (5,190,311 bytes). Not seen in a client: no GPU, no client and
+no online session here, so every visual statement above is a source-level claim.
+
+Interpretation risk worth recording: the user asked to "use these as backgrounds" for the middle window.
+This batch reads that as "these are the look references" and keeps the real destination visible through a
+coloured frosted sheet (the shader samples the copied scene, never a baked image). Baking the uploaded
+frames in as the window texture would be a different change and has not been done.
