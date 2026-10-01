@@ -717,7 +717,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('mod_version=0.25.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     # ------------------------------------------------------------------ 0.25.1: rifts must actually open
-    def test_no_legacy_time_query_keywords(self):
+    def test_time_queries_use_26x_syntax(self):
         """26.x reads the word after `time query` as a TIMELINE id. `daytime`/`day` therefore fail to parse,
         and one bad command stops the whole function from loading (0.25: rifts could not be created, punched,
         seeded, spawned or ticked, and the CI server smoke test failed). `gametime` and `time` are still keywords."""

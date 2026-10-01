@@ -37,8 +37,15 @@ and End.
 ## GitHub Actions build
 
 The workflow runs validation, data-contract tests, shader compilation, the Fabric/Gradle build, shader-pack bundling
-checks and the 26.3 server smoke test. It is the authoritative compiler and runtime check; read the latest run on the
-branch for the result. The CI artifact, not a locally compiled JAR, is the intended build output.
+checks and the 26.3 server smoke test. It is the authoritative compiler and runtime check. The CI artifact, not a locally
+compiled JAR, is the intended build output.
+
+- `bc36768` (run 36864105876): failed the server smoke test — six rift functions did not load, `rifts=0`.
+- Fix, run 36874779236 (commit `30a446e`): **every step passed**, including the Gradle build and the 26.3 server smoke test.
+  The run's "Smoke evidence" annotation lists what the real server did: in the Sift (own clock), Overworld, Nether and End
+  a rift stayed closed at ticks 0, 6000, 12999 (and 23000 outside the Sift) and opened at 13000, 14000, 18000, 22999
+  (and 23999 in the Sift); `rift/seed`, `rift/tick` (closes the rift when the night ends) and the gauntlet function behaved
+  the same way; and `anchors: rifts=1 portals=1 wrongType=0`.
 
 ## Runtime limitations
 
