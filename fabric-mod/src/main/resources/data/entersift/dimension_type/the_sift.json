@@ -1,7 +1,7 @@
 {
   "ambient_light": 0.1,
   "attributes": {
-    "minecraft:visual/fog_color": "#ffffff",
+    "minecraft:visual/fog_color": "#7fd3cf",
     "minecraft:visual/sky_color": "#7fd3cf",
     "minecraft:visual/ambient_light_color": "#203946",
     "minecraft:audio/ambient_sounds": {
@@ -35,7 +35,7 @@
     }
   },
   "coordinate_scale": 1.0,
-  "default_clock": "minecraft:overworld",
+  "default_clock": "entersift:sift",
   "has_ceiling": false,
   "has_ender_dragon_fight": false,
   "has_skylight": true,

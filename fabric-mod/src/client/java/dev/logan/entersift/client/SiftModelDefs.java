@@ -13,16 +13,18 @@ public final class SiftModelDefs {
     public static LayerDefinition blub() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        PartDefinition p_body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-5.0f, -8.0f, -5.0f, 10.0f, 8.0f, 10.0f), PartPose.offsetAndRotation(0.0f, 21.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        PartDefinition p_ear_l = p_body.addOrReplaceChild("ear_l", CubeListBuilder.create().texOffs(40, 0).addBox(-1.5f, -5.0f, -0.5f, 3.0f, 5.0f, 1.0f), PartPose.offsetAndRotation(-3.0f, -8.0f, 1.0f, 0.12f, 0.0f, -0.14f));
-        PartDefinition p_ear_r = p_body.addOrReplaceChild("ear_r", CubeListBuilder.create().texOffs(48, 0).addBox(-1.5f, -5.0f, -0.5f, 3.0f, 5.0f, 1.0f), PartPose.offsetAndRotation(3.0f, -8.0f, 1.0f, 0.12f, 0.0f, 0.14f));
-        PartDefinition p_leg_0 = root.addOrReplaceChild("leg_0", CubeListBuilder.create().texOffs(56, 0).addBox(-1.0f, 0.0f, -1.0f, 2.0f, 3.0f, 2.0f), PartPose.offsetAndRotation(-3.0f, 21.0f, -3.0f, 0.0f, 0.0f, 0.0f));
-        PartDefinition p_leg_1 = root.addOrReplaceChild("leg_1", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, 0.0f, -1.0f, 2.0f, 3.0f, 2.0f), PartPose.offsetAndRotation(3.0f, 21.0f, -3.0f, 0.0f, 0.0f, 0.0f));
-        PartDefinition p_leg_2 = root.addOrReplaceChild("leg_2", CubeListBuilder.create().texOffs(8, 18).addBox(-1.0f, 0.0f, -1.0f, 2.0f, 3.0f, 2.0f), PartPose.offsetAndRotation(-3.0f, 21.0f, 3.0f, 0.0f, 0.0f, 0.0f));
-        PartDefinition p_leg_3 = root.addOrReplaceChild("leg_3", CubeListBuilder.create().texOffs(16, 18).addBox(-1.0f, 0.0f, -1.0f, 2.0f, 3.0f, 2.0f), PartPose.offsetAndRotation(3.0f, 21.0f, 3.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-6.0f, -9.0f, -5.0f, 12.0f, 9.0f, 10.0f), PartPose.offsetAndRotation(0.0f, 21.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_ear_l = p_body.addOrReplaceChild("ear_l", CubeListBuilder.create().texOffs(44, 0).addBox(-1.5f, -8.0f, -0.5f, 3.0f, 8.0f, 1.0f), PartPose.offsetAndRotation(-4.0f, -9.0f, 1.0f, 0.08f, 0.0f, -0.3f));
+        PartDefinition p_ear_r = p_body.addOrReplaceChild("ear_r", CubeListBuilder.create().texOffs(52, 0).addBox(-1.5f, -8.0f, -0.5f, 3.0f, 8.0f, 1.0f), PartPose.offsetAndRotation(4.0f, -9.0f, 1.0f, 0.08f, 0.0f, 0.3f));
+        PartDefinition p_nose = p_body.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(18, 25).addBox(-1.0f, -0.5f, -1.0f, 2.0f, 1.0f, 1.0f), PartPose.offsetAndRotation(0.0f, -5.0f, -5.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_mouth = p_body.addOrReplaceChild("mouth", CubeListBuilder.create().texOffs(0, 25).addBox(-4.0f, -1.0f, -1.0f, 8.0f, 2.0f, 1.0f), PartPose.offsetAndRotation(0.0f, -3.0f, -5.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_leg_0 = root.addOrReplaceChild("leg_0", CubeListBuilder.create().texOffs(0, 19).addBox(-1.5f, 0.0f, -1.5f, 3.0f, 3.0f, 3.0f), PartPose.offsetAndRotation(-4.0f, 21.0f, -3.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_leg_1 = root.addOrReplaceChild("leg_1", CubeListBuilder.create().texOffs(12, 19).addBox(-1.5f, 0.0f, -1.5f, 3.0f, 3.0f, 3.0f), PartPose.offsetAndRotation(4.0f, 21.0f, -3.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_leg_2 = root.addOrReplaceChild("leg_2", CubeListBuilder.create().texOffs(24, 19).addBox(-1.5f, 0.0f, -1.5f, 3.0f, 3.0f, 3.0f), PartPose.offsetAndRotation(-4.0f, 21.0f, 3.0f, 0.0f, 0.0f, 0.0f));
+        PartDefinition p_leg_3 = root.addOrReplaceChild("leg_3", CubeListBuilder.create().texOffs(36, 19).addBox(-1.5f, 0.0f, -1.5f, 3.0f, 3.0f, 3.0f), PartPose.offsetAndRotation(4.0f, 21.0f, 3.0f, 0.0f, 0.0f, 0.0f));
         return LayerDefinition.create(mesh, 64, 64);
     }
-    public static final String[][] BLUB_PARTS = {{"body"}, {"body", "ear_l"}, {"body", "ear_r"}, {"leg_0"}, {"leg_1"}, {"leg_2"}, {"leg_3"}};
+    public static final String[][] BLUB_PARTS = {{"body"}, {"body", "ear_l"}, {"body", "ear_r"}, {"body", "nose"}, {"body", "mouth"}, {"leg_0"}, {"leg_1"}, {"leg_2"}, {"leg_3"}};
 
     public static LayerDefinition sculker() {
         MeshDefinition mesh = new MeshDefinition();

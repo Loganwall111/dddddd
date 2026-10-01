@@ -150,6 +150,43 @@ vec3 destination(int view, vec3 dir, float t) {
     if (view == 5) return viewGold(dir, yaw, t);
     return viewPortal(dir, yaw, t);
 }
+
+// Saturated aperture colours used only at night to keep the centre readable instead of clipping to white.
+vec3 nightApertureColor(int view) {
+    if (view == 0) return vec3(0.80, 0.25, 0.18);  // coral
+    if (view == 1) return vec3(0.82, 0.18, 0.07);  // ember
+    if (view == 2) return vec3(0.34, 0.24, 0.70);  // violet
+    if (view == 3) return vec3(0.65, 0.17, 0.36);  // rose
+    if (view == 4) return vec3(0.10, 0.54, 0.72);  // cyan
+    return vec3(0.70, 0.50, 0.12);                 // gold
+}
+
+// Night-only gravitational refraction. It bends the sampled world view most strongly near the aperture's
+// edge, with a slow twist and small travelling waves; daytime sampling is deliberately left untouched.
+vec3 realityLens(vec3 ray, vec2 face, float t) {
+    vec2 p = (face - 0.5) * 2.0;
+    float radius = length(p);
+    float edge = smoothstep(0.18, 1.12, radius);
+    float theta = atan(p.y, p.x);
+    float angle = edge * (0.30 + 0.11 * sin(t * 0.43 + radius * 4.0)) * sin(t * 0.37 + radius * 5.3 + theta * 0.6);
+    float ca = cos(angle), sa = sin(angle);
+    vec2 twisted = vec2(p.x * ca - p.y * sa, p.x * sa + p.y * ca);
+    // Alternating radial stretch and squeeze makes the aperture edges pull like elastic fabric.
+    float stretch = 1.0 + edge * 0.075 * sin(theta * 2.0 + t * 0.21);
+    twisted *= vec2(stretch, 1.0 / stretch);
+    float wave = sin(t * 1.55 - radius * 19.0 + theta * 3.0);
+    float radial = edge * (0.11 * wave + 0.035 * sin(t * 0.9 + radius * 31.0));
+    twisted += normalize(p + vec2(0.0001)) * radial;
+    twisted += edge * 0.014 * vec2(sin(t * 1.8 + p.y * 28.0), cos(t * 1.6 + p.x * 24.0));
+    vec2 bend = twisted - p;
+
+    vec3 tangent = cross(ray, vec3(0.0, 1.0, 0.0));
+    float tangentLength = length(tangent);
+    if (tangentLength < 0.0001) tangent = vec3(1.0, 0.0, 0.0);
+    else tangent /= tangentLength;
+    vec3 bitangent = normalize(cross(tangent, ray));
+    return normalize(ray + tangent * bend.x * 0.68 + bitangent * bend.y * 0.68);
+}
 #endif
 
 void main() {
@@ -170,14 +207,24 @@ void main() {
     int view = code - (code / 8) * 8;
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
+    if (night) dir = realityLens(dir, riftData.rg, t);
     vec3 col = destination(view, dir, t);
     // Light pouring through the middle of the rift (face coordinates are global, so no seams either).
     vec2 d = riftData.rg - 0.5;
     float core = exp(-dot(d, d) * 10.0);
-    float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
-    col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
-    // The Sift at night glows pink-white through the rift (trailer night frames).
-    if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), riftData.g), 0.55);
+    float coreK = view == 5 ? 0.95 : (view == 3 ? 0.3 : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
+    if (night) {
+        // Lower exposure across the night window, then replace the white core with a destination-coloured glow.
+        col *= 0.88;
+        if (view == 3) {
+            vec3 roseAtmosphere = mix(vec3(0.14, 0.035, 0.13), vec3(0.44, 0.12, 0.30), clamp(riftData.g, 0.0, 1.0));
+            col = mix(col, roseAtmosphere, 0.18);
+        }
+        col = mix(col, nightApertureColor(view), core * 0.58);
+    } else {
+        // Preserve the daytime palette and centre bloom exactly as before.
+        col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
+    }
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif

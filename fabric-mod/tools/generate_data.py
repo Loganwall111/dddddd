@@ -193,10 +193,17 @@ fn('portal/tick', '''
 particle minecraft:reverse_portal ~ ~2 ~ 1.5 2 0.1 0.025 5 normal
 function entersift:portal/cross with entity @s data
 ''')
-fn('portal/cross', '$execute positioned ~$(tx) ~ ~$(tz) as @a[dx=$(sx),dy=$(sy),dz=$(sz),scores={sift.cooldown=0},gamemode=!spectator] at @s run function entersift:travel/sift')
+fn('portal/cross', '''
+# The Agency Portal is two-way: enter the Sift from outside, return through it from inside.
+$execute positioned ~$(tx) ~ ~$(tz) as @a[dx=$(sx),dy=$(sy),dz=$(sz),scores={sift.cooldown=0},gamemode=!spectator] at @s if dimension entersift:the_sift if score @s sift.return matches 1 run function entersift:travel/begin {dest:5}
+$execute positioned ~$(tx) ~ ~$(tz) as @a[dx=$(sx),dy=$(sy),dz=$(sz),scores={sift.cooldown=0,sift.return=0},gamemode=!spectator] at @s if dimension entersift:the_sift run function entersift:travel/begin {dest:0}
+$execute positioned ~$(tx) ~ ~$(tz) as @a[dx=$(sx),dy=$(sy),dz=$(sz),scores={sift.cooldown=0},gamemode=!spectator] at @s unless dimension entersift:the_sift run function entersift:travel/begin {dest:4}
+''')
 fn('portal/return_tick', '''
-particle minecraft:portal ~ ~1 ~ 0.6 1 0.6 0.01 4 normal
-execute as @a[distance=..1.5,scores={sift.cooldown=0,sift.return=1},gamemode=!spectator] at @s run function entersift:travel/return
+particle minecraft:end_rod ~ ~2 ~ 0.2 1.6 1.2 0.01 2 normal
+execute as @a[distance=..1.8,scores={sift.cooldown=0,sift.return=1},gamemode=!spectator] at @s run function entersift:travel/begin {dest:5}
+execute as @a[distance=..1.8,scores={sift.cooldown=0,sift.return=0},gamemode=!spectator] at @s run function entersift:travel/begin {dest:0}
+execute unless entity @e[type=entersift:rift_portal,tag=sift.return_anchor,distance=..1] run summon entersift:rift_portal ~ ~ ~ {Tags:["sift.return_anchor"],RiftType:0,Width:3f,Height:4f,Rotation:[90f,0f]}
 ''')
 fn('rift/punch', '''
 execute unless entity @s[tag=sift.player] run function entersift:player/init
