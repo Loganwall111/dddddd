@@ -259,3 +259,12 @@ The gauntlets now use `EquipmentAssets.ROOT_ID` with `setEquipOnInteract(true)`,
 those exact symbols. The one thing the probe could not confirm is the on-disk directory the manager
 scans (`assets/<ns>/equipment/`), which follows the 1.21.4+ vanilla layout; if it were wrong the gauntlet
 would simply render nothing rather than error.
+
+## Sift Overhaul 0.34.0-alpha: CI verified
+
+Run 36943120185 on the 0.34 tree is green end to end: 71 data-contract tests, 615-file validation
+(157 functions), eight regenerated generators, 82 shader programs, the 26.3 client compile (including the
+new `EquipmentAssets.ROOT_ID` equipment component), shader-pack bundling and the dedicated-server smoke
+test with the staged rift crossing and the new `checkWearable` assertion.
+
+Artifact: `Sift-Overhaul-0.34.0-alpha-26.3`.
