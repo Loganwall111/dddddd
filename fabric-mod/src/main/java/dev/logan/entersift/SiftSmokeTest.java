@@ -89,6 +89,12 @@ final class SiftSmokeTest {
         // Client-rendered rifts/portals: the invisible anchor display must actually spawn.
         run(server, "execute in entersift:the_sift unless entity @e[type=entersift:rift_portal,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL rift anchor missing");
         run(server, "execute in minecraft:overworld unless entity @e[type=entersift:rift_portal,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL overworld rift anchor missing");
+        // Arrival landings are surface-based: the origin chunks must be loaded, and the plaza the players
+        // arrive on (with its return gate + anchor) must build. Built in the air at y=100 in the smoke world.
+        for (String dim : new String[]{"minecraft:overworld", "minecraft:the_nether", "minecraft:the_end", "entersift:the_sift"})
+            run(server, "execute in " + dim + " unless loaded 0 64 0 run say SIFT-SMOKE FAIL origin chunk not loaded in " + dim);
+        run(server, "execute in minecraft:overworld positioned 0 100 0 run function entersift:travel/plaza");
+        run(server, "execute in minecraft:overworld positioned 0 100 0 unless entity @e[type=minecraft:marker,tag=sift.return_gate,distance=..4] run say SIFT-SMOKE FAIL arrival plaza has no return gate");
         run(server, "execute in entersift:the_sift positioned 30 140 -20 run function entersift:portal/visual {sx:4.0f,sy:4.0f,sz:0.07f,tx:-2.0f,tz:-0.035f,pw:4.0f,yaw:0.0f}");
         run(server, "execute in entersift:the_sift positioned 30 140 -20 unless entity @e[type=entersift:rift_portal,tag=sift.portal_anchor,distance=..1] run say SIFT-SMOKE FAIL portal anchor missing");
         for (SiftKind kind : SiftKind.values())

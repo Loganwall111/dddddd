@@ -10,15 +10,24 @@ class DataContracts(unittest.TestCase):
     def test_load_does_not_reset_existing_souls(self):
         self.assertNotIn('scoreboard players set @a sift.souls',fn('load'))
     def test_four_destinations_are_guarded(self):
+        # Every rift lands on the local surface at the origin next to a return gate; the three non-Sift
+        # destinations also require clear air at y=64 before the player is moved.
         for i in range(4):
             text=fn(f'travel/destination_{i}')
             self.assertIn('unless loaded',text)
-            if i == 3:  # the Sift: surface arrival next to the return portal (0.9)
-                self.assertIn('positioned over motion_blocking_no_leaves',text)
-            else:
+            self.assertIn('positioned over motion_blocking_no_leaves',text)
+            self.assertIn('function entersift:travel/arrive',text)
+            self.assertNotIn('travel/pad',text)
+            if i != 3:
                 self.assertIn('unless block ~ ~ ~ minecraft:air run return 0',text)
             self.assertIn('unless score @s sift.return matches 1',text)
             self.assertIn('sift.cooldown 100',text)
+    def test_no_floating_arrival_pads(self):
+        # 0.25 removed the provisional y=300 / y=130 salt pads: arrivals use the surface plus the plaza.
+        for i in range(3):
+            text=fn(f'travel/destination_{i}')
+            self.assertNotIn('0 300 0',text); self.assertNotIn('0 130 0',text)
+        self.assertIn('function entersift:travel/arrive',fn('tunnel/exit'))
     def test_sift_arrival_has_visible_return_portal(self):
         self.assertIn('summon minecraft:marker ~3 ~ ~ {Tags:["sift.return_gate"]}',fn('travel/plaza'))
         self.assertIn('summon entersift:rift_portal ~ ~ ~ {Tags:["sift.return_anchor"],RiftType:4',fn('portal/return_tick'))
