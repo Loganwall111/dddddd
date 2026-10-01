@@ -64,10 +64,49 @@ void main() {
     if (phase >= 5.0 && phase < 6.0) tint = vec3(1.0, 0.97, 0.96);
     float edgeFade = exp(-3.0 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
     float crack = 1.0 - smoothstep(0.012, 0.045, abs(uv.x - 0.5 - 0.1 * sin(floor(uv.y * 24.0) + floor(t * 5.0))));
-    float alpha = 0.15 * strength * edgeFade;
-    tint = mix(tint, vec3(1.0, 0.48, 0.12), crack * 0.5);
-    // The frosted sheet takes the rift's own frost colour, so each rift reads green / red / yellow / orange.
-    tint = mix(tint, frost, frostAmt * 0.65);
+    // -------------------------------------------------------------------------------------------
+    // 0.34: WHAT IS BEYOND THE OPENING.
+    // 0.31 sampled the copied framebuffer here, so the middle of the rift showed the world the player
+    // was standing in - a literal window onto the Overworld, with no dimension behind it (reported in
+    // game). The opening now paints the dimension the rift leads to: a horizon, layered ridges, a
+    // distant sun and rising sparks, built from this rift's own style colours. The real scene is
+    // sampled ONLY in the thin outer rim, where the glass edge bends what surrounds the rift.
+    // -------------------------------------------------------------------------------------------
+    vec3 dir = normalize(worldRay + vec3(0.0, 0.0, 0.0001)); // camera -> this point, world axes
+    float up = clamp(dir.y, -1.0, 1.0);
+    float az = atan(dir.z, dir.x);
+
+    vec3 zenith  = mix(tint, frost, 0.35) * 0.42;
+    vec3 horizon = mix(tint, vec3(1.0), 0.28);
+    vec3 floorC  = mix(frost, vec3(0.05, 0.06, 0.09), 0.55);
+    vec3 ridgeFar  = mix(tint, frost, 0.45) * 0.30;
+    vec3 ridgeNear = mix(frost, vec3(0.03, 0.04, 0.06), 0.40);
+
+    vec3 col = mix(horizon, zenith, smoothstep(0.02, 0.62, up));
+    col = mix(col, floorC, smoothstep(0.02, -0.22, up) * 0.85);
+    // A far ridge line, then a nearer, darker one: the destination reads as a PLACE, not a picture.
+    float farRidge  = 0.115 + 0.055 * sin(az * 2.3 + 0.8) + 0.030 * sin(az * 5.1 + 2.2);
+    float nearRidge = 0.045 + 0.045 * sin(az * 3.1 - 1.1) + 0.022 * sin(az * 7.3 + 0.4);
+    col = mix(col, ridgeFar,  1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up));
+    col = mix(col, ridgeNear, 1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up));
+    // A rift sun hanging over the ridge, with a wide glow.
+    float sun = length(vec2((az - 0.55) * 0.85, up - 0.34));
+    col += tint * exp(-sun * 3.2) * 0.55;
+    col = mix(col, vec3(1.0), 1.0 - smoothstep(0.020, 0.045, sun));
+    // Sparks drifting up through the opening.
+    float motes = sin(up * 26.0 - t * 2.2 + az * 5.0) * sin(up * 41.0 - t * 3.1 - az * 3.0 + 1.7);
+    col += tint * pow(max(0.0, motes), 6.0) * 0.55;
+    // The rift's own energy still breathes across the opening.
+    col = mix(col, vec3(1.0, 0.48, 0.12), crack * 0.35);
+    col += tint * (0.18 + 0.30 * strength) * exp(-1.6 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
+    // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
+    col = mix(col, frost, frostAmt * 0.65);
+    col += vec3(0.05) * frostAmt;
+
+    // The opening is opaque: nothing of the world behind the rift may show through it. The captured
+    // scene is used only in the outer rim, where the glass edge bends the surroundings.
+    float destAmt = smoothstep(0.05, 0.45, edgeFade);
+    float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;
 #ifdef RIFT_REFRACT
     vec2 size = vec2(textureSize(Sampler1, 0));
     vec2 texel = 1.0 / size;
@@ -78,15 +117,9 @@ void main() {
     // Vanilla 26.3 uses reverse-Z: larger means closer. Iris uses the fallback pipeline.
     float warpedDepth = texture(Sampler0, sampleUv).r;
     if (warpedDepth > gl_FragCoord.z + 0.00001) sampleUv = screen;
-    vec3 scene = texture(Sampler1, sampleUv).rgb;
-    // Alpha blends the bent scene over the actual background; NOT a synthetic destination image.
-    // Up close frostAmt falls away, so the dimension clears — but the sheet never goes fully clear.
-    float a = max(0.50 * edgeFade * fogFade() * fade, frostAmt * 0.62 * edgeFade * fogFade());
-    fragColor = vec4(mix(scene, tint, max(alpha, frostAmt * 0.5)), a) * ColorModulator;
-#else
-    // No valid capture / shader-pack / disabled lens: preserve real terrain with a faint membrane.
-    float a = clamp(alpha + frostAmt * 0.55, 0.0, 1.0) * fogFade() * fade;
-    fragColor = vec4(tint, a) * ColorModulator;
+    col = mix(texture(Sampler1, sampleUv).rgb, col, destAmt);
+#endif
+    fragColor = vec4(col, a) * ColorModulator;
 #endif
 #endif
 #endif

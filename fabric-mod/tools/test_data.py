@@ -16,7 +16,9 @@ class DataContracts(unittest.TestCase):
         self.assertIn('float mainDepth = 0.60f;',shape)
         # Box faces are frosted and readable instead of nearly invisible (the "neon lines only" report).
         self.assertIn('riftData.a * 0.82',fsh)
-        self.assertIn('0.50 * edgeFade',fsh)
+        # 0.34: the opening is opaque over its interior (the scene copy is rim-only), so the world
+        # behind the rift can never show through the middle.
+        self.assertIn('float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;',fsh)
         # The neon outline overlaps its segments, so it is a continuous band instead of dots.
         self.assertIn('float overlap = (0.05f + 0.04f * flash) * k;',rift)
         self.assertIn('x0 - ox',rift); self.assertIn('x1 + ox',rift)
@@ -77,7 +79,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('static float frostProximity(Vector3f cam)',rift)
         self.assertIn('float frost = 0.55f * frostProximity(cam);',rift)
         self.assertIn('float frostAmt = clamp(riftData.a * 2.0 - 1.0, 0.0, 1.0);',fsh)
-        self.assertIn('float a = max(0.50 * edgeFade * fogFade() * fade, frostAmt * 0.62 * edgeFade * fogFade());',fsh)
+        self.assertIn('float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;',fsh)
         self.assertIn('riftProximity = flag(props, "rift_proximity", true)',budget)
         # Two silhouette variants: the usual wide cross and the tall wall, decided by w/h on both sides.
         self.assertIn('public static boolean tallVariant(float w, float h)',shape)
@@ -111,7 +113,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade, frost);',rift)
         self.assertIn('* backFade(b[5])',rift)
         # The shader multiplies the window by the per-quad fade carried in the vertex colour.
-        self.assertIn('fragColor = vec4(mix(scene, tint, max(alpha, frostAmt * 0.5)), a) * ColorModulator;',fsh)
+        self.assertIn('col = mix(texture(Sampler1, sampleUv).rgb, col, destAmt);',fsh)
         self.assertIn('riftBackFade',budget); self.assertIn('"rift_back_fade"',budget)
 
     def test_rift_scene_capture_and_depth_guard(self):
@@ -243,6 +245,28 @@ class DataContracts(unittest.TestCase):
         self.assertIn('rift_item_art.py', live)
         # The smoke test asserts wearability on a real server.
         self.assertIn('checkWearable', (ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text())
+
+    def test_v034_opening_shows_its_destination_not_the_world_behind(self):
+        # The user, in game: "I can see the overworld right through it... it just looks like a window."
+        # The 0.31 shader sampled the copied framebuffer as the window content; that is exactly a mirror
+        # of the world the player stands in. It must no longer be the interior.
+        fsh = (R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        self.assertNotIn('mix(scene, tint', fsh)                     # the mirror is gone
+        for token in ('float destAmt = smoothstep(0.05, 0.45, edgeFade);',
+                      'col = mix(texture(Sampler1, sampleUv).rgb, col, destAmt);',
+                      'float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;'):
+            self.assertIn(token, fsh)                                # the scene copy is rim-only now
+        # The destination itself: view-ray parallax, a horizon, two ridge lines, a sun and rising sparks,
+        # all built from the rift's own style colours.
+        for token in ('vec3 dir = normalize(worldRay', 'float az = atan(dir.z, dir.x);',
+                      'float farRidge', 'float nearRidge', 'float sun = length(',
+                      'float motes = sin('):
+            self.assertIn(token, fsh)
+        # No-shader path draws the same kind of destination instead of a see-through pane.
+        r = (ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('float[] zenith = mix(g[1], g[0], 0.25f), horizonC = mix(g[0], c(1f, 1f, 1f), 0.30f);', r)
+        self.assertIn('float a = 0.82f * fade;', r)
+        self.assertNotIn('0.18f * fade); col(p, vc, wv, x1, y0, z, lo', r)
 
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()

@@ -739,12 +739,17 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (!shown(sh, i, j, age)) continue;
             if (SiftBudget.riftBoxFace && !sh.windowCell(i, j)) continue; // boxFaces draws the frosted panels
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
-            float[] lo = mix(g[0], g[1], (float) j / sh.rows), hi = mix(g[0], g[1], (float) (j + 1) / sh.rows);
-            // No-shader path: the sheet takes the frost tone and thins towards the inner glow as you approach.
-            lo = mix(lo, mix(look.frost(), look.core(), 0.25f), frost * 2f);
-            hi = mix(hi, mix(look.frost(), look.core(), 0.25f), frost * 2f);
-            col(p, vc, wv, x0, y0, z, lo, 0.18f * fade); col(p, vc, wv, x1, y0, z, lo, 0.18f * fade);
-            col(p, vc, wv, x1, y1, z, hi, 0.18f * fade); col(p, vc, wv, x0, y1, z, hi, 0.18f * fade);
+            // 0.34 no-shader path: still a DESTINATION, never a clear pane onto the world behind the rift.
+            float[] zenith = mix(g[1], g[0], 0.25f), horizonC = mix(g[0], c(1f, 1f, 1f), 0.30f);
+            float[] ground = mix(g[1], c(0.03f, 0.04f, 0.06f), 0.55f);
+            float v = (j + 0.5f) / sh.rows;                                     // 0 bottom .. 1 top
+            float[] col = v > 0.30f ? mix(horizonC, zenith, (v - 0.30f) / 0.70f) : mix(ground, horizonC, v / 0.30f);
+            float sun = (float) Math.exp(-Math.abs(v - 0.62f) * 6f) * (float) Math.exp(-Math.abs(i - 5.5f) * 0.55f);
+            col = mix(col, c(1f, 1f, 1f), Math.min(0.85f, sun * 0.9f));
+            col = mix(col, mix(look.frost(), look.core(), 0.25f), frost * 2f);
+            float a = 0.82f * fade;
+            col(p, vc, wv, x0, y0, z, col, a); col(p, vc, wv, x1, y0, z, col, a);
+            col(p, vc, wv, x1, y1, z, col, a); col(p, vc, wv, x0, y1, z, col, a);
         }
         if (SiftBudget.riftBoxFace) return;
         for (float[] b : sh.sats) {
