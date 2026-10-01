@@ -1,0 +1,59 @@
+{
+  "note": "The shipped 0.25 tree in fabric-mod/src/main/resources IS the baseline: tools/regen_check.py re-runs the live generators (deterministic, standard-library only) in a scratch copy and fails if that run changes anything. known_drift is empty: every live generator reproduces the shipped tree exactly. See docs/TOOLCHAIN.md.",
+  "live": [
+    {
+      "script": "creatures.py",
+      "owns": "SiftModelDefs.java, entity textures, spawn eggs; deterministic as of the PYTHONHASHSEED fix"
+    },
+    {
+      "script": "phase5.py",
+      "owns": "mob loot, block recipes, advancement tab"
+    },
+    {
+      "script": "expansion.py",
+      "owns": "rift waves, illager encounters, world/roll"
+    },
+    {
+      "script": "visual_pass.py",
+      "owns": "reference-driven textures, note glow, rift authoring"
+    },
+    {
+      "script": "phase24_textures.py",
+      "owns": "ichor sheets, 0.24 block textures"
+    },
+    {
+      "script": "phase19.py",
+      "owns": "0.25 tides, terrain, Canopy, Jelly Lands, Blub, ichor; crag shapes pinned in tools/overlays (idempotent)"
+    },
+    {
+      "script": "staff_assets.py",
+      "owns": "3D staff models, item definitions, and four-swatch textures"
+    }
+  ],
+  "known_drift": {},
+  "dead": {
+    "generate_data.py": "Crashes: visual_pass expects only the original 3 biomes (KeyError 'boneyard'); superseded by phases 4-19.",
+    "extract_textures.py": "Needs PIL and the original reference screenshots; the sampled textures have shipped.",
+    "item_art.py": "Needs PIL; item art has shipped.",
+    "audio11.py": "Needs numpy; the ritual/music audio has shipped.",
+    "phase4.py": "Needs PIL; its content was extended and partly replaced by later phases.",
+    "phase6.py": "Superseded: re-running rewrites 9 rift/portal functions and reverts 0.25 content.",
+    "phase8.py": "Superseded: re-running rewrites the 16 note beam/shaft functions.",
+    "phase9.py": "Superseded: its loot-data precondition no longer exists (StopIteration).",
+    "phase10.py": "Needs numpy; superseded by phase14/17/19.",
+    "phase11.py": "Needs numpy; superseded.",
+    "phase12.py": "Needs numpy; superseded.",
+    "phase13.py": "Needs numpy; superseded.",
+    "phase14.py": "Needs numpy; superseded.",
+    "phase15.py": "Needs numpy; superseded.",
+    "phase16.py": "Needs numpy; superseded.",
+    "phase17.py": "Needs numpy; superseded.",
+    "phase18.py": "Needs numpy; superseded."
+  },
+  "manual": {
+    "make_asset_sheet.py": "docs/visual-assets.png review sheet: needs ImageMagick and writes non-deterministic bytes, so it is refreshed by hand and never checked.",
+    "preview_creatures.py / preview_features.py / preview_sky.py": "software preview renders for docs/; visual only.",
+    "check_shaders.py": "CI-only: compiles the bundled shaderpack with a glslangValidator path argument.",
+    "smoke_report.py": "CI-only: turns the dedicated-server smoke log into GitHub annotations."
+  }
+}

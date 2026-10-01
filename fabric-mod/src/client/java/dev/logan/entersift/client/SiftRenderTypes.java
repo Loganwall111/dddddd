@@ -85,15 +85,15 @@ public final class SiftRenderTypes {
             .withFragmentShader(SiftContent.id("core/rift"))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .withCull(false)
             .build());
 
     /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
     public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .build());
 
     /** 0.18 rim glow and sparks: RIFT_GLOW, additive, depth-tested, no depth write. */
@@ -101,6 +101,21 @@ public final class SiftRenderTypes {
             .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .build());
+
+    /** Screen-space rear refraction. Separate copied scene texture avoids framebuffer feedback. */
+    public static final RenderPipeline RIFT_LENS_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/rift_lens"))
+            .withVertexShader(SiftContent.id("core/rift"))
+            .withFragmentShader(SiftContent.id("core/rift_lens"))
+            .withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.SAMPLER0)
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withCull(false).build());
+    public static final RenderType RIFT_LENS = RenderType.create("entersift_rift_lens",
+        RenderSetup.builder(RIFT_LENS_PIPELINE).withTexture("Sampler0", RiftSceneCapture.SCENE).createRenderSetup());
 
     /** 0.18 warp tunnel sphere around the camera inside the rift tunnel (core/tunnel). Always behind everything. */
     public static final RenderPipeline TUNNEL_PIPELINE = RenderPipelines.register(

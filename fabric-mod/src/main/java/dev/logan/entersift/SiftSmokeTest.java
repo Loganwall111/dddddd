@@ -71,10 +71,31 @@ final class SiftSmokeTest {
             x += 8;
         }
         run(server, "execute in entersift:the_sift positioned 0 140 -20 run function entersift:creature/twisted_warden/spawn");
+        // 0.26 rifts now open at ANY hour (day or night) in any dimension, including Thrive in the Sift.
+        // The gate formerly blocked noon/Thrive; the player report was correct that this was a bug —
+        // rifts summon every time, only the midnight aura/curtains are time-gated (client renderer).
+        run(server, "time of minecraft:overworld set 6000");
+        run(server, "execute in minecraft:overworld store result score #smoke_gate sift.clock run function entersift:rift/gate");
+        run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked a rift at noon (rifts should be any hour, 0.26)");
+        run(server, "time of minecraft:overworld set 13000");
+        run(server, "execute in entersift:the_sift run time of entersift:sift set 6000");
+        run(server, "execute in entersift:the_sift store result score #smoke_gate sift.clock run function entersift:rift/gate");
+        run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked a Thrive rift (rifts should be any hour, 0.26)");
+        run(server, "execute in entersift:the_sift run time of entersift:sift set 13000");
+        run(server, "execute in entersift:the_sift store result score #smoke_gate sift.clock run function entersift:rift/gate");
+        run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked Endure");
         run(server, "execute in entersift:the_sift positioned 10 140 -20 run function entersift:rift/natural");
+        run(server, "execute in minecraft:overworld positioned 0 100 0 run function entersift:rift/natural");
         run(server, "execute in entersift:the_sift run function entersift:world/tick");
         // Client-rendered rifts/portals: the invisible anchor display must actually spawn.
         run(server, "execute in entersift:the_sift unless entity @e[type=entersift:rift_portal,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL rift anchor missing");
+        run(server, "execute in minecraft:overworld unless entity @e[type=entersift:rift_portal,tag=sift.rift_anchor] run say SIFT-SMOKE FAIL overworld rift anchor missing");
+        // Arrival landings are surface-based: the origin chunks must be loaded, and the plaza the players
+        // arrive on (with its return gate + anchor) must build. Built in the air at y=100 in the smoke world.
+        for (String dim : new String[]{"minecraft:overworld", "minecraft:the_nether", "minecraft:the_end", "entersift:the_sift"})
+            run(server, "execute in " + dim + " unless loaded 0 64 0 run say SIFT-SMOKE FAIL origin chunk not loaded in " + dim);
+        run(server, "execute in minecraft:overworld positioned 0 100 0 run function entersift:travel/plaza");
+        run(server, "execute in minecraft:overworld positioned 0 100 0 unless entity @e[type=minecraft:marker,tag=sift.return_gate,distance=..4] run say SIFT-SMOKE FAIL arrival plaza has no return gate");
         run(server, "execute in entersift:the_sift positioned 30 140 -20 run function entersift:portal/visual {sx:4.0f,sy:4.0f,sz:0.07f,tx:-2.0f,tz:-0.035f,pw:4.0f,yaw:0.0f}");
         run(server, "execute in entersift:the_sift positioned 30 140 -20 unless entity @e[type=entersift:rift_portal,tag=sift.portal_anchor,distance=..1] run say SIFT-SMOKE FAIL portal anchor missing");
         for (SiftKind kind : SiftKind.values())

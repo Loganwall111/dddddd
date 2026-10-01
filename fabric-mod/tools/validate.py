@@ -25,7 +25,22 @@ for p in (r/'assets/entersift/textures').rglob('*.png'):
     if b[:8]!=b'\x89PNG\r\n\x1a\n': errors.append(f'{p}: bad PNG')
     w,h=struct.unpack('!II',b[16:24])
     if h>w and not p.with_suffix('.png.mcmeta').exists(): errors.append(f'{p}: animation metadata missing')
-assert len(list((r/'data/entersift/worldgen/biome').glob('*.json')))==12
+biome_files=list((r/'data/entersift/worldgen/biome').glob('*.json'))
+assert len(biome_files)==13, f'expected 13 biome definitions, found {len(biome_files)}'
+sift=json.loads((r/'data/entersift/dimension/the_sift.json').read_text())
+sift_biomes=sift['generator']['biome_source']['biomes']
+assert len(sift_biomes)==12, f'expected 12 Sift biome entries, found {len(sift_biomes)}'
+assert {b['biome'] for b in sift_biomes} >= {'entersift:jelly_lands','entersift:singer_meadow','entersift:boneyard'}
+assert all((r/f"data/entersift/worldgen/biome/{b['biome'].split(':')[1]}.json").exists() for b in sift_biomes)
+dim_type=json.loads((r/'data/entersift/dimension_type/the_sift.json').read_text())
+assert dim_type['default_clock']=='entersift:sift'
+assert json.loads((r/'data/entersift/timeline/sift_cycle.json').read_text())['clock']=='entersift:sift'
+noise=json.loads((r/'data/entersift/worldgen/noise_settings/the_sift.json').read_text())
+assert noise['default_fluid']=='minecraft:air'
+assert json.loads((r/'data/entersift/worldgen/feature/ichor_lake.json').read_text())['type']=='minecraft:delta_feature'
+jelly=json.loads((r/'data/entersift/worldgen/biome/jelly_lands.json').read_text())
+assert jelly['attributes']['minecraft:visual/fog_end_distance'] <= 64
+assert 'entersift:pink_grass_pale_grove' in jelly['features'][9]
 assert '1, 3, 7, 6, 5, 2, 4, 8' in (root/'src/main/java/dev/logan/entersift/RitualSequence.java').read_text()
 assert (root/'gradle/wrapper/gradle-wrapper.jar').read_bytes()[:2]==b'PK'
 # Validate that custom worldgen block/biome/feature refs resolve locally.
@@ -40,5 +55,5 @@ for _f in (r/'data/entersift/worldgen/feature').glob('*.json'):
         for _pl in _e.get('placement', []):
             if _pl.get('type') == 'minecraft:offset':
                 assert max(abs(_pl['x']), abs(_pl['y']), abs(_pl['z'])) <= 16, f'{_f.name}: offset > 16'
-print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper and nine biomes.')
+print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper, and {len(sift_biomes)} Sift biomes.')
 print('Minecraft 26.3 compilation, registry codecs, command parsing and in-game behavior still require Gradle/client/server tests.')
