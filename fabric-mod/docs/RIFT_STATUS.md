@@ -200,3 +200,12 @@ Still unverified in a client, and the dials to turn first: how strong the frost 
 Still not seen in a client: whether the thicker rims and the sine wave read as "thicker wavy borders"
 at gameplay distance, and whether the floating crystal sits where the reference staffs hold theirs.
 Dials: `FLANGE`, the band widths inside `rim(...)`, and `borderWave`'s amplitudes.
+
+### 0.32 arrival fix (found by the new smoke stage)
+
+A staged rift crossing in CI exposed that the destination search could come up empty (ocean, lava or void
+at the anchor column) and quietly leave the traveler walking the corridor forever, retrying every tick.
+`travel/surface` now ends with `travel/fallback_ledge`: a 5x5 saltstone ledge at the top of the anchor
+column, so an arrival always lands somewhere walkable and the return rift always opens. A second bug — a
+fallback line that started with `positioned` instead of `execute positioned` — killed the whole function
+at datapack load; `validate.py` now fails the build on that entire class of typo.

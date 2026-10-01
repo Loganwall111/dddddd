@@ -155,7 +155,29 @@ This batch reads that as "these are the look references" and keeps the real dest
 coloured frosted sheet (the shader samples the copied scene, never a baked image). Baking the uploaded
 frames in as the window texture would be a different change and has not been done.
 
-## Sift Overhaul 0.32.0-alpha: gates green locally (CI pending)
+## Sift Overhaul 0.32.0-alpha: CI verified (run 36939932907, bf6a65ff)
+
+The Actions run on `bf6a65ff` is green end to end: 68 data-contract tests, 613-file validation
+(157 functions), seven regenerated generators, 82 shader programs, the 26.3 client compile, the
+shader-pack bundling check and the dedicated-server smoke test, which now stages a REAL rift crossing.
+Artifact `Sift-Overhaul-0.32.0-alpha-26.3` (5,202,375 bytes).
+
+What the new smoke stage proves on the server (it failed twice before it was right, which is the point):
+- `travel/begin` moves an entity into `entersift:rift_tunnel` and the entry path throws nothing.
+- `tunnel/player_tick` hands the traveler over at the far end.
+- `travel/surface` finds a destination column, `travel/arrive` re-summons the return rift, and the
+  walker is standing in `entersift:the_sift` within 48 blocks of a `RiftPortalEntity`.
+
+Two real bugs were found by that stage, both of which stranded a crossing and neither of which showed up
+in any static gate:
+- `travel/surface` did not always find a natural column (ocean/lava/void). It now lays a small saltstone
+  ledge as a fallback via `travel/fallback_ledge`, so every rift has a walkable far side.
+- A one-word typo in the new fallback line (`positioned` instead of `execute positioned`) made the whole
+  function fail to load, which is silent in game and only ever printed one line at server start.
+  `validate.py` now rejects any `.mcfunction` line that starts with an execute subcommand, and the check
+  was verified by re-introducing the typo and watching it fail.
+
+## Sift Overhaul 0.32.0-alpha: local gates
 
 - `python3 tools/validate.py` — passed: 613 JSON/metadata files, 155 functions, 12 Sift biomes.
 - `python3 tools/test_data.py` — all 67 data-contract tests passed. The staff contract now asserts the
@@ -165,7 +187,7 @@ frames in as the window texture would be a different change and has not been don
 - `python3 tools/check_shaders.py` — structure ok for 82 programs (no glslangValidator locally).
 - `git diff --check` — clean.
 
-The 26.3 compile is again the only gate that can catch a Java signature mistake: `EnterTheSift` gained
+### The 26.3 compile is the only gate that can catch a Java signature mistake: `EnterTheSift` gained
 `wearsGauntlet`/`toggleGauntlet` (chest-slot equip swap, `LivingEntity.getItemBySlot`/`setItemSlot` and
 `Entity.isShiftKeyDown`, all confirmed present in the probe signatures), and `RiftPortalRenderer` gained
 `tipFade`/`borderWave` with a new `SiftBudget.riftTipFade` flag. Nothing has been compiled locally.
