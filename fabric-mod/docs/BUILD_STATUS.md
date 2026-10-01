@@ -53,3 +53,38 @@ Even a successful server smoke test cannot establish client-side visual quality.
   test (with the registered rift-core assertion) all passed; artifact `Sift-Overhaul-0.28.0-alpha-26.3`.
 - Still not verified anywhere: GPU rendering. The fade distances, edge floor and shell alphas are parameter
   choices that need a client capture to judge.
+
+## Sift Overhaul 0.29.0-alpha: CI verified (runs 36934022122 + 36934410974)
+
+Scope: the flat backside veil is deleted, the rift cavity is deeper so the back reads as stepped
+boxes instead of one glazed pane, and the placement sequence now has the reference lightning and the
+giant white ground shockwave.
+
+- `RiftPortalRenderer`: `backsideVeil(...)` and its call site removed — no flat backdrop quad remains.
+- `RiftShape`: `mainDepth` 0.4837 -> 0.60 with the left attached boxes stepped at 0.32 / 0.44, so the
+  sides recede as real boxes; `boxes(...)` clamps its maximum to the same 0.60.
+- `RiftPortalRenderer`: back fade now runs to `FADE_FAR = 1.0f`, so a 0.60-deep wall keeps roughly
+  two thirds of its alpha instead of fading out at half a block.
+- Shader `rift.fsh`: box faces `riftData.a * 0.82` (was 0.24) and the window plane `0.50 * edgeFade`
+  (was 0.72) — the frosted structure is readable, the opening stays clear.
+- Rim segments overlap (`overlap = (0.05f + 0.04f * flash) * k`, spans `x0 - ox` .. `x1 + ox`) so the
+  neon outline is a continuous band rather than a row of dots.
+- Placement sequence: `seedBox` is now a tall tilted turning glowing slab with an outlined edge
+  (0.30 x 0.72+0.42*stretch x 0.11, spin `age * 0.26f`, tilt `0.52 + 0.10*sin(age*0.22)`).
+- `riftBolts(...)` (2 arcs by day, 3 at night, re-aimed a few times per second, out to ~38 blocks) and
+  `seedBolts(...)` (4 candidate arcs off the assembling slab) — the lightning that crawls off the rift.
+- `shockwave(...)` + `groundRing(...)` + `groundCrack(...)` + `shockCracks(...)`: two pulses on the
+  reference timing, band one 0..22 ticks out to ~22 blocks, the gigantic band 22..62 ticks out to
+  ~46 blocks, three rings each (white core, halo, outer glow) with ground cracks trailing both fronts.
+  `groundRing` raises its segment count (56 -> 80 -> 128) as the radius grows so the band stays round.
+- Culling box inflates to 52 blocks while the blast runs, otherwise the band popped out when the
+  camera pulled back.
+- `SiftBudget`: `riftBolts` / `riftShock` flags with `rift_bolts` / `rift_shockwave` properties, so the
+  new effects are switchable like the rest.
+
+Verified: `tools/test_data.py` 66 tests, `tools/validate.py` (613 files), `tools/regen_check.py`
+(7 generators), `tools/check_shaders.py` (82 programs), `git diff --check` — all clean before both
+pushes. Artifact: `Sift-Overhaul-0.29.0-alpha-26.3`.
+
+Not verified: nothing in this batch has been seen in a running client. There is no GPU, no client and
+no online-mode session in this workspace, so every visual statement above is a source-level claim.

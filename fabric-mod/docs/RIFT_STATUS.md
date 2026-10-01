@@ -120,3 +120,21 @@ were 64.
 7. Repeat without shaders, with the bundled Iris pack (expect the transparent fallback), with
    `rift_refraction=false` / `rift_glow=false` / `enable_flares=false` / `rift_spill=false` in
    `config/entersift-client.properties`, and with pre-0.27 return gates.
+
+## 0.29 — no flat back, box cavity, placement lightning + shockwave (CI verified)
+
+- The flat translucent `backsideVeil` quad is gone: it is what made the rift read as "just a window".
+  The back is now carried by the stepped box walls, the rim outline and the depth fade (opens at the
+  front, dissolves once it has receded `FADE_FAR = 1.0` behind the opening).
+- `mainDepth` is 0.60 with the left attached boxes stepped at 0.32 / 0.44, and the frosted box faces
+  render at `alpha * 0.82` (was 0.24) against a `0.50` window plane, so the box structure is visible
+  around the bright opening instead of only the neon lines.
+- Placement reads in three beats, matching the reference frames: a tall tilted glowing seed slab that
+  turns while it grows, lightning crawling off it and later off the finished rift (out to ~38 blocks,
+  more and brighter at night), and the white ground shockwave — band one appears on the land and dies,
+  then the gigantic band crosses the gap it left, out to ~46 blocks, with cracks trailing each front.
+- Both new effect groups are switchable (`rift_bolts`, `rift_shockwave`).
+
+Still not one-to-one: the blast radius, the window plane depth and the exact frost opacity were chosen
+from measured reference proportions and have never been compared against a running client. Those three
+numbers are the dials to turn next.
