@@ -1,6 +1,27 @@
-# Rift correction pass 0.27
+# Rift status: 0.28
 
-Baseline: the user's Actions build 36919666703, commit `ad86c346702279d2b0b06d3778c0ae6f9671a08e`.
+## 0.28 — back fading (this pass)
+
+The supplied reference shows frosted voxel shells whose near faces stay crisp while the recessed and rear
+faces dissolve instead of ending on a hard backside. Rift geometry now fades with depth behind the opening
+plane:
+
+- `backFade(z)` is 1 at the front plane and 0 once geometry has receded `FADE_FAR = 0.85` blocks behind it
+  (`FADE_NEAR = 0.06` keeps the front lip and flange untouched), so a recessed wall strip reads solid at the
+  lip and transparent at the membrane, and the rear veil thins to almost nothing (`0.20 + 0.80 * backFade`)
+  instead of hiding the back of the rift.
+- Edges, rims, tendrils and glow bands use `edgeA(...)`, which keeps a 45% floor: the wireframe dims as it
+  recedes but stays readable rather than vanishing before the faces do.
+- Detached satellite boxes and the five floating cubes additionally use `spokeFade(...)`, a gentle falloff
+  with distance from the opening centre, so the perimeter pieces read fainter than the central cross.
+- The opening itself is exempt: main-body window quads pass a fade of 1, and only detached window panels are
+  faded. The fade travels in the window vertex colour (`riftData.a`) and the shader multiplies its output by
+  it, so the clear portal view never dims.
+- `config/entersift-client.properties` gained `rift_back_fade` (default true) to disable the effect.
+
+## 0.27 — corrections on the linked baseline
+
+Baseline for 0.27: the user's Actions build 36919666703, commit `ad86c346702279d2b0b06d3778c0ae6f9671a08e`.
 This snapshot was imported onto the session branch before editing. The substantial baseline changes
 versus the session's older checkout are intentional.
 
@@ -51,6 +72,9 @@ Rendering (0.27 additions, in the mod's own renderer, never vanilla overrides)
   growth crackle). CI encodes the WAVs to mono Vorbis; the sound files themselves are not committed.
 
 ## Validation
+
+0.28 adds `test_v028_back_fade_dissolves_the_receding_structure` (65 tests total); the 0.27 numbers below
+were 64.
 
 - `python3 tools/validate.py`: PASS (613 JSON/metadata files, 155 functions).
 - `python3 tools/test_data.py`: PASS (64 tests).

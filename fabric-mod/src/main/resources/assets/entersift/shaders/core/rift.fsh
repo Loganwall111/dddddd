@@ -67,10 +67,10 @@ void main() {
     if (warpedDepth > gl_FragCoord.z + 0.00001) sampleUv = screen;
     vec3 scene = texture(Sampler1, sampleUv).rgb;
     // Alpha blends the bent scene over the actual background; NOT a synthetic destination image.
-    fragColor = vec4(mix(scene, tint, alpha), 0.72 * edgeFade * fogFade()) * ColorModulator;
+    fragColor = vec4(mix(scene, tint, alpha), 0.72 * edgeFade * fogFade() * riftData.a) * ColorModulator;
 #else
     // No valid capture / shader-pack / disabled lens: preserve real terrain with a faint membrane.
-    fragColor = vec4(tint, alpha * fogFade()) * ColorModulator;
+    fragColor = vec4(tint, alpha * fogFade() * riftData.a) * ColorModulator;
 #endif
 #endif
 }

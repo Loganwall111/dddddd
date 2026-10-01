@@ -36,6 +36,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     static final float RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 8, GROWN = 100;
     /** Recessed alcove constants; FLANGE is kept sleek so the glowing white neon rim stays razor-sharp. */
     static final float COLLAR = 0.12f, FLANGE = 0.018f;
+    /**
+     * 0.28 back fading (reference screenshots): the frosted voxel structure recedes behind the opening
+     * plane (negative Z) and dissolves instead of ending on a hard backside. Faces fade to nothing over
+     * FADE_NEAR..FADE_FAR; edges keep a fraction so the wireframe stays readable while it recedes.
+     * The window itself is deliberately exempt — the opening stays clear.
+     */
+    static final float FADE_NEAR = 0.06f, FADE_FAR = 0.85f;
     static final int SUB = 4; // subdivisions per cell edge so vertical sides curve smoothly with the wave
     static final float[] VIBRANT_PINK_DAY = rgb(0xFF6FA8);
     static final float[] DEEP_AMBER_NIGHT = rgb(0xDB7840);
@@ -151,6 +158,26 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
+    /** 1 at the front plane, 0 once the geometry has receded FADE_FAR behind it. */
+    static float backFade(float z) {
+        if (!SiftBudget.riftBackFade) return 1f;
+        float f = clamp((-z - FADE_NEAR) / (FADE_FAR - FADE_NEAR), 0f, 1f);
+        return 1f - f * f * (3f - 2f * f);
+    }
+
+    private static float faceA(float z, float a) { return a * backFade(z); }
+
+    private static float edgeA(float z, float a) { return a * (0.45f + 0.55f * backFade(z)); }
+
+    /** Detached boxes fade with their distance from the opening centre, not only with depth. */
+    static float spokeFade(RiftShape sh, float x, float y) {
+        if (!SiftBudget.riftBackFade) return 1f;
+        float dx = x / Math.max(0.001f, sh.w * 0.5f), dy = (y - sh.cy()) / Math.max(0.001f, sh.h * 0.5f);
+        float r = (float) Math.sqrt(dx * dx + dy * dy);
+        float f = clamp((r - 1.05f) / 1.15f, 0f, 1f);
+        return 1f - 0.5f * f * f;
+    }
+
     /** Coloured vertex (walls, rims, glow). */
     private static void col(PoseStack.Pose p, VertexConsumer vc, Warp wv, float x, float y, float z, float[] c, float a) {
         if (!SiftBudget.take(vc)) return;
@@ -159,14 +186,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         vc.addVertex(p, wx, wy, wz).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), Math.max(0f, Math.min(1f, a)));
     }
 
-    /** Window vertex: colour carries (face u, face v, view code, 1). The shader samples by view direction. */
-    private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code) {
+    /** Window vertex: colour carries (face u, face v, view code, fade). The shader samples by view direction. */
+    private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code, float fade) {
         if (!SiftBudget.take(vc)) return;
         float span = Math.max(sh.w, sh.h) * 1.15f;
         float u = clamp(0.5f + x / span, 0f, 1f), v = clamp(0.5f + (y - sh.cy()) / span, 0f, 1f);
         float wx = x + wv.dx(x, y, z), wy = y + wv.dy(x, y, z), wz = z + wv.dz(x, y, z);
         if (!Float.isFinite(wx + wy + wz)) { wx = 0f; wy = 0f; wz = 0f; }
-        vc.addVertex(p, wx, wy, wz).setColor(u, v, code, 1f);
+        vc.addVertex(p, wx, wy, wz).setColor(u, v, code, clamp(fade, 0f, 1f));
     }
 
     // ------------------------------------------------------------------ submit
@@ -458,7 +485,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                        {x0,y0,z1},{x1,y0,z1},{x0,y1,z1},{x1,y1,z1}};
         int[][] faces = {{0,1,3,2},{4,6,7,5},{0,4,5,1},{2,3,7,6},{0,2,6,4},{1,5,7,3}};
         for (int[] face : faces) for (int index : face)
-            col(p, vc, Warp.STILL, v[index][0], v[index][1], v[index][2], color, alpha);
+            col(p, vc, Warp.STILL, v[index][0], v[index][1], v[index][2], color, faceA(v[index][2], alpha));
     }
 
     /** PHASE 1 spark: erratic lightning flashing over the ripple (re-aimed every 2 ticks). */
@@ -502,12 +529,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ subdivided wavy windows (the destination view)
 
     private static void winQuadSub(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh,
-                                   float x0, float y0, float x1, float y1, float z, float code) {
+                                   float x0, float y0, float x1, float y1, float z, float code, float fade) {
         for (int sx = 0; sx < SUB; sx++) for (int sy = 0; sy < SUB; sy++) {
             float xa = x0 + (x1 - x0) * (sx / (float) SUB), xb = x0 + (x1 - x0) * ((sx + 1) / (float) SUB);
             float ya = y0 + (y1 - y0) * (sy / (float) SUB), yb = y0 + (y1 - y0) * ((sy + 1) / (float) SUB);
-            win(p, vc, wv, sh, xa, ya, z, code); win(p, vc, wv, sh, xb, ya, z, code);
-            win(p, vc, wv, sh, xb, yb, z, code); win(p, vc, wv, sh, xa, yb, z, code);
+            win(p, vc, wv, sh, xa, ya, z, code, fade); win(p, vc, wv, sh, xb, ya, z, code, fade);
+            win(p, vc, wv, sh, xb, yb, z, code, fade); win(p, vc, wv, sh, xa, yb, z, code, fade);
         }
     }
 
@@ -515,17 +542,19 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
-            winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code);
+            winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, 1f); // opening stays clear
         }
         for (float[] b : sh.sats) {
             if (age < satAt(b)) continue;
-            winQuadSub(p, vc, wv, sh, b[0], b[1], b[2], b[3], b[5], code);
+            winQuadSub(p, vc, wv, sh, b[0], b[1], b[2], b[3], b[5], code,
+                spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f) * backFade(b[5]));
         }
         if (age >= GROWN && s.type != RiftType.PORTAL) for (int k = 0; k < 5; k++) {
             float[] c = cube(sh, s, k);
             float q = c[3], z = c[2] - q;
-            win(p, vc, wv, sh, c[0] - q, c[1] - q, z, code); win(p, vc, wv, sh, c[0] + q, c[1] - q, z, code);
-            win(p, vc, wv, sh, c[0] + q, c[1] + q, z, code); win(p, vc, wv, sh, c[0] - q, c[1] + q, z, code);
+            float fade = spokeFade(sh, c[0], c[1]) * backFade(z);
+            win(p, vc, wv, sh, c[0] - q, c[1] - q, z, code, fade); win(p, vc, wv, sh, c[0] + q, c[1] - q, z, code, fade);
+            win(p, vc, wv, sh, c[0] + q, c[1] + q, z, code, fade); win(p, vc, wv, sh, c[0] - q, c[1] + q, z, code, fade);
         }
     }
 
@@ -548,8 +577,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
         for (float[] b : sh.sats) {
             if (age < satAt(b)) continue;
-            col(p, vc, wv, b[0], b[1], b[5], g[0], 1f); col(p, vc, wv, b[2], b[1], b[5], g[0], 1f);
-            col(p, vc, wv, b[2], b[3], b[5], g[1], 1f); col(p, vc, wv, b[0], b[3], b[5], g[1], 1f);
+            float f = spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f) * backFade(b[5]);
+            col(p, vc, wv, b[0], b[1], b[5], g[0], f); col(p, vc, wv, b[2], b[1], b[5], g[0], f);
+            col(p, vc, wv, b[2], b[3], b[5], g[1], f); col(p, vc, wv, b[0], b[3], b[5], g[1], f);
         }
     }
 
@@ -570,31 +600,39 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (float[] q : sh.sats) {
             if (age < satAt(q)) continue;
             int m = (int) q[7];
-            if ((m & 1) == 0) wall(p, vc, wv, q[0], q[1], q[0], q[3], q[4], q[5], f, b, 0.92f);
-            if ((m & 2) == 0) wall(p, vc, wv, q[2], q[1], q[2], q[3], q[4], q[5], f, b, 0.84f);
-            if ((m & 4) == 0) wall(p, vc, wv, q[0], q[1], q[2], q[1], q[4], q[5], f, b, 1f);
-            if ((m & 8) == 0) wall(p, vc, wv, q[0], q[3], q[2], q[3], q[4], q[5], f, b, 0.76f);
+            float sp = spokeFade(sh, (q[0] + q[2]) * 0.5f, (q[1] + q[3]) * 0.5f);
+            if ((m & 1) == 0) wall(p, vc, wv, q[0], q[1], q[0], q[3], q[4], q[5], f, b, 0.92f, sp);
+            if ((m & 2) == 0) wall(p, vc, wv, q[2], q[1], q[2], q[3], q[4], q[5], f, b, 0.84f, sp);
+            if ((m & 4) == 0) wall(p, vc, wv, q[0], q[1], q[2], q[1], q[4], q[5], f, b, 1f, sp);
+            if ((m & 8) == 0) wall(p, vc, wv, q[0], q[3], q[2], q[3], q[4], q[5], f, b, 0.76f, sp);
         }
         if (age >= GROWN && s.type != RiftType.PORTAL) for (int k = 0; k < 5; k++) {
             float[] c = cube(sh, s, k);
             float q = c[3], zf = c[2] + q, zb = c[2] - q;
-            wall(p, vc, wv, c[0] - q, c[1] - q, c[0] - q, c[1] + q, zf, zb, f, b, 0.92f);
-            wall(p, vc, wv, c[0] + q, c[1] - q, c[0] + q, c[1] + q, zf, zb, f, b, 0.84f);
-            wall(p, vc, wv, c[0] - q, c[1] - q, c[0] + q, c[1] - q, zf, zb, f, b, 1f);
-            wall(p, vc, wv, c[0] - q, c[1] + q, c[0] + q, c[1] + q, zf, zb, f, b, 0.76f);
+            float sp = spokeFade(sh, c[0], c[1]);
+            wall(p, vc, wv, c[0] - q, c[1] - q, c[0] - q, c[1] + q, zf, zb, f, b, 0.92f, sp);
+            wall(p, vc, wv, c[0] + q, c[1] - q, c[0] + q, c[1] + q, zf, zb, f, b, 0.84f, sp);
+            wall(p, vc, wv, c[0] - q, c[1] - q, c[0] + q, c[1] - q, zf, zb, f, b, 1f, sp);
+            wall(p, vc, wv, c[0] - q, c[1] + q, c[0] + q, c[1] + q, zf, zb, f, b, 0.76f, sp);
         }
     }
 
     /** Subdivided wall strip so vertical sides and horizontal ledges bend smoothly with Warp. */
     private static void wall(PoseStack.Pose p, VertexConsumer vc, Warp wv, float xa, float ya, float xb, float yb, float zf, float zb,
                              float[] front, float[] back, float shade) {
+        wall(p, vc, wv, xa, ya, xb, yb, zf, zb, front, back, shade, 1f);
+    }
+
+    private static void wall(PoseStack.Pose p, VertexConsumer vc, Warp wv, float xa, float ya, float xb, float yb, float zf, float zb,
+                             float[] front, float[] back, float shade, float alphaMul) {
         float[] f = {front[0] * shade, front[1] * shade, front[2] * shade}, b = {back[0] * shade, back[1] * shade, back[2] * shade};
+        float af = faceA(zf, alphaMul), ab = faceA(zb, alphaMul);
         for (int s = 0; s < SUB; s++) {
             float t0 = s / (float) SUB, t1 = (s + 1) / (float) SUB;
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
             float x1 = xa + (xb - xa) * t1, y1 = ya + (yb - ya) * t1;
-            col(p, vc, wv, x0, y0, zf, f, 1f); col(p, vc, wv, x1, y1, zf, f, 1f);
-            col(p, vc, wv, x1, y1, zb, b, 1f); col(p, vc, wv, x0, y0, zb, b, 1f);
+            col(p, vc, wv, x0, y0, zf, f, af); col(p, vc, wv, x1, y1, zf, f, af);
+            col(p, vc, wv, x1, y1, zb, b, ab); col(p, vc, wv, x0, y0, zb, b, ab);
         }
     }
 
@@ -618,6 +656,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (float[] q : sh.sats) {
             if (age < satAt(q)) continue;
             float flash = Math.max(0f, 1f - (age - satAt(q)) / 6f);
+            float sp = spokeFade(sh, (q[0] + q[2]) * 0.5f, (q[1] + q[3]) * 0.5f);
             int m = (int) q[7];
             if ((m & 1) == 0) rim(p, vc, wv, cam, q[0], q[1], q[0], q[3], q[4], q[5], core, halo, false, flash, jit);
             if ((m & 2) == 0) rim(p, vc, wv, cam, q[2], q[1], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
@@ -625,7 +664,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if ((m & 8) == 0) rim(p, vc, wv, cam, q[0], q[3], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
             float[][] corners = {{q[0], q[1], m & 5}, {q[2], q[1], m & 6}, {q[0], q[3], m & 9}, {q[2], q[3], m & 10}};
             for (float[] cr : corners)
-                if (cr[2] == 0) line(p, vc, wv, cam, new float[]{cr[0], cr[1], q[4]}, new float[]{cr[0], cr[1], q[5]}, 0.05f, core, 0.8f);
+                if (cr[2] == 0) line(p, vc, wv, cam, new float[]{cr[0], cr[1], q[4]}, new float[]{cr[0], cr[1], q[5]}, 0.05f, core, 0.8f * sp);
         }
     }
 
@@ -689,10 +728,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float tx1 = x1 + twist * (y1 - sh.cy()) * 0.12f;
             // Gradient from halo at edges to slightly darker center
             float[] c = mix(look.halo(), look.wallBack(), 0.35f);
-            col(p, vc, wv, tx0, y0, z, c, alpha * 0.65f);
-            col(p, vc, wv, tx1, y0, z, c, alpha * 0.65f);
-            col(p, vc, wv, tx1, y1, z, c, alpha);
-            col(p, vc, wv, tx0, y1, z, c, alpha);
+            float back = 0.20f + 0.80f * backFade(z); // 0.28: the rear of the rift thins to almost nothing
+            col(p, vc, wv, tx0, y0, z, c, alpha * 0.65f * back);
+            col(p, vc, wv, tx1, y0, z, c, alpha * 0.65f * back);
+            col(p, vc, wv, tx1, y1, z, c, alpha * back);
+            col(p, vc, wv, tx0, y1, z, c, alpha * back);
         }
     }
 
@@ -742,7 +782,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 float[][] v = new float[8][];
                 for (int n = 0; n < 8; n++) v[n] = new float[]{c[0] + ((n & 1) == 0 ? -q : q), c[1] + ((n & 2) == 0 ? -q : q), c[2] + ((n & 4) == 0 ? -q : q)};
                 int[][] edges = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
-                for (int[] e : edges) line(p, vc, wv, cam, v[e[0]], v[e[1]], 0.042f, core, 0.95f);
+                float sp = spokeFade(sh, c[0], c[1]);
+                for (int[] e : edges) line(p, vc, wv, cam, v[e[0]], v[e[1]], 0.042f, core, 0.95f * sp);
             }
         }
         // Sparse, small white motes drift down through the opening (reduced center clutter).
@@ -860,10 +901,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float x0 = cx - hx, x1 = cx + hx, y0 = cy - hy, y1 = cy + hy, z0 = cz - hz, z1 = cz + hz;
         rect(p, vc, w, x0, y0, x1, y1, z1, sideA, a);
         rect(p, vc, w, x0, y0, x1, y1, z0, sideA, a * 0.6f);
-        col(p, vc, w, x0, y1, z0, top, a); col(p, vc, w, x1, y1, z0, top, a); col(p, vc, w, x1, y1, z1, top, a); col(p, vc, w, x0, y1, z1, top, a);
-        col(p, vc, w, x0, y0, z0, sideB, a * 0.7f); col(p, vc, w, x1, y0, z0, sideB, a * 0.7f); col(p, vc, w, x1, y0, z1, sideB, a * 0.7f); col(p, vc, w, x0, y0, z1, sideB, a * 0.7f);
-        col(p, vc, w, x0, y0, z0, sideB, a); col(p, vc, w, x0, y1, z0, sideB, a); col(p, vc, w, x0, y1, z1, sideB, a); col(p, vc, w, x0, y0, z1, sideB, a);
-        col(p, vc, w, x1, y0, z0, sideB, a); col(p, vc, w, x1, y1, z0, sideB, a); col(p, vc, w, x1, y1, z1, sideB, a); col(p, vc, w, x1, y0, z1, sideB, a);
+        col(p, vc, w, x0, y1, z0, top, faceA(z0, a)); col(p, vc, w, x1, y1, z0, top, faceA(z0, a)); col(p, vc, w, x1, y1, z1, top, faceA(z1, a)); col(p, vc, w, x0, y1, z1, top, faceA(z1, a));
+        col(p, vc, w, x0, y0, z0, sideB, faceA(z0, a * 0.7f)); col(p, vc, w, x1, y0, z0, sideB, faceA(z0, a * 0.7f)); col(p, vc, w, x1, y0, z1, sideB, faceA(z1, a * 0.7f)); col(p, vc, w, x0, y0, z1, sideB, faceA(z1, a * 0.7f));
+        col(p, vc, w, x0, y0, z0, sideB, faceA(z0, a)); col(p, vc, w, x0, y1, z0, sideB, faceA(z0, a)); col(p, vc, w, x0, y1, z1, sideB, faceA(z1, a)); col(p, vc, w, x0, y0, z1, sideB, faceA(z1, a));
+        col(p, vc, w, x1, y0, z0, sideB, faceA(z0, a)); col(p, vc, w, x1, y1, z0, sideB, faceA(z0, a)); col(p, vc, w, x1, y1, z1, sideB, faceA(z1, a)); col(p, vc, w, x1, y0, z1, sideB, faceA(z1, a));
     }
 
     /**
@@ -890,7 +931,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ primitives
 
     private static void rect(PoseStack.Pose p, VertexConsumer vc, Warp wv, float x0, float y0, float x1, float y1, float z, float[] c, float a) {
-        col(p, vc, wv, x0, y0, z, c, a); col(p, vc, wv, x1, y0, z, c, a); col(p, vc, wv, x1, y1, z, c, a); col(p, vc, wv, x0, y1, z, c, a);
+        float fa = faceA(z, a);
+        col(p, vc, wv, x0, y0, z, c, fa); col(p, vc, wv, x1, y0, z, c, fa); col(p, vc, wv, x1, y1, z, c, fa); col(p, vc, wv, x0, y1, z, c, fa);
     }
 
     private static void rectSub(PoseStack.Pose p, VertexConsumer vc, Warp wv, float x0, float y0, float x1, float y1, float z, float[] c, float a) {
@@ -935,12 +977,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float[] off = {-half, -core * 1.15f, -core / 2, core / 2, core * 1.15f, half};
         float[][] cs = {halo, halo, white, white, halo, halo};
         float[] as = {0f, 0.4f, 1f, 1f, 0.4f, 0f};
+        float fz = (a[2] + b[2]) * 0.5f;
         for (int i = 0; i < 5; i++) {
             float o0 = off[i], o1 = off[i + 1];
-            col(p, vc, wv, ax + sx * o0, ay + sy * o0, az + sz * o0, cs[i], as[i] * alpha);
-            col(p, vc, wv, bx + sx * o0, by + sy * o0, bz + sz * o0, cs[i], as[i] * alpha);
-            col(p, vc, wv, bx + sx * o1, by + sy * o1, bz + sz * o1, cs[i + 1], as[i + 1] * alpha);
-            col(p, vc, wv, ax + sx * o1, ay + sy * o1, az + sz * o1, cs[i + 1], as[i + 1] * alpha);
+            col(p, vc, wv, ax + sx * o0, ay + sy * o0, az + sz * o0, cs[i], edgeA(fz, as[i] * alpha));
+            col(p, vc, wv, bx + sx * o0, by + sy * o0, bz + sz * o0, cs[i], edgeA(fz, as[i] * alpha));
+            col(p, vc, wv, bx + sx * o1, by + sy * o1, bz + sz * o1, cs[i + 1], edgeA(fz, as[i + 1] * alpha));
+            col(p, vc, wv, ax + sx * o1, ay + sy * o1, az + sz * o1, cs[i + 1], edgeA(fz, as[i + 1] * alpha));
         }
     }
 
@@ -956,8 +999,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float dl = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
         float ex = dl > 1e-6f ? dx / dl * width / 2 : 0, ey = dl > 1e-6f ? dy / dl * width / 2 : 0, ez = dl > 1e-6f ? dz / dl * width / 2 : 0;
         float ax = a[0] - ex, ay = a[1] - ey, az = a[2] - ez, bx = b[0] + ex, by = b[1] + ey, bz = b[2] + ez;
-        col(p, vc, wv, ax - sx, ay - sy, az - sz, c, alpha); col(p, vc, wv, bx - sx, by - sy, bz - sz, c, alpha);
-        col(p, vc, wv, bx + sx, by + sy, bz + sz, c, alpha); col(p, vc, wv, ax + sx, ay + sy, az + sz, c, alpha);
+        float fz = (a[2] + b[2]) * 0.5f;
+        col(p, vc, wv, ax - sx, ay - sy, az - sz, c, edgeA(fz, alpha)); col(p, vc, wv, bx - sx, by - sy, bz - sz, c, edgeA(fz, alpha));
+        col(p, vc, wv, bx + sx, by + sy, bz + sz, c, edgeA(fz, alpha)); col(p, vc, wv, ax + sx, ay + sy, az + sz, c, edgeA(fz, alpha));
     }
 
     // ------------------------------------------------------------------ small helpers

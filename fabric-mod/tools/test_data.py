@@ -7,6 +7,28 @@ D=R/'data/entersift'
 def fn(name): return (D/f'function/{name}.mcfunction').read_text()
 def read(path): return json.loads((D/path).read_text())
 class DataContracts(unittest.TestCase):
+    def test_v028_back_fade_dissolves_the_receding_structure(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        budget=(C/'SiftBudget.java').read_text()
+        # Depth fade: faces dissolve behind the opening plane, edges keep a fraction so the wireframe reads.
+        self.assertIn('static final float FADE_NEAR = 0.06f, FADE_FAR = 0.85f;',rift)
+        self.assertIn('static float backFade(float z)',rift)
+        self.assertIn('private static float faceA(float z, float a)',rift)
+        self.assertIn('private static float edgeA(float z, float a)',rift)
+        self.assertIn('float af = faceA(zf, alphaMul), ab = faceA(zb, alphaMul);',rift)
+        # Detached boxes and floating cubes also fade with distance from the opening centre.
+        self.assertIn('static float spokeFade(RiftShape sh, float x, float y)',rift)
+        self.assertIn('spokeFade(sh, (q[0] + q[2]) * 0.5f, (q[1] + q[3]) * 0.5f)',rift)
+        self.assertIn('0.95f * sp',rift)
+        # The opening itself stays clear; only the detached window panels fade.
+        self.assertIn('winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, 1f)',rift)
+        self.assertIn('* backFade(b[5])',rift)
+        self.assertIn('float back = 0.20f + 0.80f * backFade(z);',rift)
+        # The shader multiplies the window by the per-quad fade carried in the vertex colour.
+        self.assertIn('* riftData.a) * ColorModulator;',fsh)
+        self.assertIn('riftBackFade',budget); self.assertIn('"rift_back_fade"',budget)
+
     def test_rift_scene_capture_and_depth_guard(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         scene=(C/'RiftScene.java').read_text(); shader=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
@@ -595,7 +617,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.27.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.28.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -734,7 +756,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.27.0-alpha',props)
+        self.assertIn('mod_version=0.28.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
