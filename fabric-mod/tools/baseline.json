@@ -1,9 +1,9 @@
 {
-  "note": "The shipped 0.25 tree in fabric-mod/src/main/resources IS the baseline: tools/regen_check.py re-runs the live generators (deterministic, standard-library only) in a scratch copy and fails if that run changes anything beyond known_drift. See docs/TOOLCHAIN.md.",
+  "note": "The shipped 0.25 tree in fabric-mod/src/main/resources IS the baseline: tools/regen_check.py re-runs the live generators (deterministic, standard-library only) in a scratch copy and fails if that run changes anything. known_drift is empty: every live generator reproduces the shipped tree exactly. See docs/TOOLCHAIN.md.",
   "live": [
     {
       "script": "creatures.py",
-      "owns": "SiftModelDefs.java, entity textures, spawn eggs"
+      "owns": "SiftModelDefs.java, entity textures, spawn eggs; deterministic as of the PYTHONHASHSEED fix"
     },
     {
       "script": "phase5.py",
@@ -23,14 +23,10 @@
     },
     {
       "script": "phase19.py",
-      "owns": "0.25 tides, terrain, Canopy, Jelly Lands, Blub, ichor"
+      "owns": "0.25 tides, terrain, Canopy, Jelly Lands, Blub, ichor; crag shapes pinned in tools/overlays (idempotent)"
     }
   ],
-  "known_drift": {
-    "src/main/resources/assets/entersift/textures/entity/licker.png": "creatures.py draws a slightly different Licker (542/16384 pixels, head/face region, 3.31%) than the committed 0.24 art. The shipped texture is what players see, so it stays; regenerate only after a visual review.",
-    "src/main/resources/data/entersift/worldgen/feature/crag_spire.json": "phase19.py's Crag generator no longer reproduces the shipped shape (320/619 placement entries differ, mostly 1-block Y offsets). Re-running would change worldgen for new chunks, so the shipped file stays.",
-    "src/main/resources/data/entersift/worldgen/feature/titan_crag.json": "as crag_spire.json: 1167/1776 placement entries differ from the generator (offsets shifted ~1 block)."
-  },
+  "known_drift": {},
   "dead": {
     "generate_data.py": "Crashes: visual_pass expects only the original 3 biomes (KeyError 'boneyard'); superseded by phases 4-19.",
     "extract_textures.py": "Needs PIL and the original reference screenshots; the sampled textures have shipped.",

@@ -46,13 +46,29 @@ Rules for a live generator: pure standard library (CI has no PIL/numpy), determi
 network, and it must leave the tree byte-identical when re-run. New or changed files must be reported by
 `regen_check.py` and either fixed or added to `known_drift` with a reason.
 
-## Known drift (documented, checked)
+## Known drift: none
 
-| file | why it differs | how to resolve |
-|------|----------------|----------------|
-| `assets/entersift/textures/entity/licker.png` | `creatures.py` draws a slightly different Licker (542/16384 pixels, head/face region) than the committed 0.24 art. The shipped texture is the reviewed art. | Compare both in game, then either ship the generator output or update the sprite spec, and re-run `--update`. |
-| `worldgen/feature/crag_spire.json` | `phase19.py`'s Crag generator produces 320/619 placement entries with different offsets (mostly 1 block lower) than the shipped file. | Review the crag silhouette in game; the shipped file stays until then, because re-running changes worldgen for new chunks. |
-| `worldgen/feature/titan_crag.json` | Same as `crag_spire.json` (1167/1776 entries differ). | As above. |
+`known_drift` is empty — every live generator reproduces the shipped tree byte-for-byte, and
+`regen_check.py` fails if that stops being true. Two long-standing sources of drift were fixed rather
+than tolerated, because both were generator bugs:
+
+| bug | effect | fix |
+|-----|--------|-----|
+| `creatures.py` salted its Licker mottling with the builtin `hash()` | the texture changed on every process (`PYTHONHASHSEED`), so the shipped Licker could never be reproduced | `zlib.crc32` of the part/face/cell key (stable across runs and platforms) |
+| `phase19.py` scaled the crag overlay **in place** on every run | `titan_crag` shrank on each regeneration (38 → 12 → 8 → …), so worldgen drifted every time the toolchain ran | the reviewed 0.25 shapes are pinned in `tools/overlays/` and copied verbatim; `scale_overlay()` is kept as documented history |
+
+The pinned crag shapes are the ones players already have: 0.25 shipped the 0.24 overlay scaled twice
+(0.82² / 0.68²), which is exactly what `tools/overlays/{titan_crag,crag_spire}.json` contains.
+
+## Pinned overlays
+
+| file | meaning |
+|------|---------|
+| `tools/overlays/titan_crag.json` | the shipped 0.25 `titan_crag` feature, copied verbatim by `phase19.moderate_crags()` |
+| `tools/overlays/crag_spire.json` | the shipped 0.25 `crag_spire` feature |
+
+Change a crag shape by editing the overlay (and the shipped file), never by re-running a scale
+transform. `tools/test_data.py` asserts the overlays and the shipped features are identical.
 
 ## Manual / informational scripts (never checked)
 

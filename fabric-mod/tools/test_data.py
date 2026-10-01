@@ -733,4 +733,30 @@ class DataContracts(unittest.TestCase):
         self.assertIn('make_asset_sheet.py',m['manual'])           # non-deterministic: never enforced
         self.assertNotIn('generate_data.py',live)                  # crashes: never enforced
         self.assertIn('phase19.py',live)
+    def test_live_generators_are_deterministic_and_idempotent(self):
+        # Two bugs that made the shipped tree impossible to reproduce:
+        # 1) creatures.py salting its Licker mottling with the builtin hash() (PYTHONHASHSEED), so every
+        #    process drew a different texture;
+        # 2) phase19.moderate_crags() scaling the crag feature files in place, shrinking them on every run.
+        live=[s['script'] for s in json.loads((ROOT/'tools/baseline.json').read_text())['live']]
+        for name in live:
+            for line in (ROOT/'tools'/name).read_text().splitlines():
+                if 'hash(' in line and not line.strip().startswith('#'):
+                    self.fail(f'{name} uses the salted builtin hash(): {line.strip()} (use zlib.crc32)')
+        creatures=(ROOT/'tools/creatures.py').read_text()
+        self.assertIn('zlib.crc32(f"{part[\'name\']}|{fname}|{xx // 3}|{yy // 3}".encode()) % 7',creatures)
+        phase19=(ROOT/'tools/phase19.py').read_text()
+        self.assertIn('ROOT / f"tools/overlays/{name}.json"',phase19)  # crags are pinned, not re-scaled
+        self.assertIn('CRAG_OVERLAYS = ("titan_crag", "crag_spire")',phase19)
+        for name in ('titan_crag','crag_spire'):
+            base=json.loads((ROOT/f'tools/overlays/{name}.json').read_text())
+            shipped=read(f'worldgen/feature/{name}.json')
+            self.assertEqual(base,shipped,f'tools/overlays/{name}.json is stale: update it with the shipped file')
+    def test_toolchain_baseline_has_no_undocumented_drift(self):
+        # known_drift is a safety valve, not a habit: the roster is printed in the CI log, and any entry
+        # must carry a real reason. Empty means every live generator reproduces the shipped tree.
+        manifest=json.loads((ROOT/'tools/baseline.json').read_text())
+        for path,reason in manifest['known_drift'].items():
+            self.assertTrue((ROOT/path).exists(),path)
+            self.assertGreater(len(reason),40,path)
 if __name__=='__main__': unittest.main(verbosity=2)

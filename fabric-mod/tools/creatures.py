@@ -305,7 +305,10 @@ def paint(kind, spec):
                     elif b["pat"] == "stripes":
                         c = shade(c, 0.88 if (yy // 2) % 2 else 1.04)
                     elif b["pat"] == "patches":
-                        n = (hash((part["name"], fname, xx // 3, yy // 3)) % 7)
+                        # Stable across processes. The builtin hash() is salted per process
+                        # (PYTHONHASHSEED), which made the Licker's mottling different on every run
+                        # and made the texture impossible to reproduce from source.
+                        n = zlib.crc32(f"{part['name']}|{fname}|{xx // 3}|{yy // 3}".encode()) % 7
                         c = b["dark"] if n == 0 else ((206, 152, 150) if n == 1 else shade(c, 0.95 + 0.1 * r))
                     elif b["pat"] == "starry":  # 0.17 twisted warden: navy with pale-blue and teal specks
                         c = shade(c, 0.9 + 0.15 * r)

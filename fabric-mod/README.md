@@ -139,8 +139,8 @@ python3 tools/regen_check.py    # the live generators still reproduce the shippe
 ```
 
 **The shipped resources are the baseline.** Six dependency-free generators (creatures, phase5,
-expansion, visual_pass, phase24_textures, phase19) are still live and are pinned by
-`tools/regen_check.py`; the hand-authored 0.25 rift/travel/portal files are covered by `validate.py` and
+expansion, visual_pass, phase24_textures, phase19 — including the deterministic Licker texture fixed in
+0.25) are still live and are pinned by `tools/regen_check.py`, with no drift left; the hand-authored 0.25 rift/travel/portal files are covered by `validate.py` and
 `test_data.py`. The 0.17–0.24 phase chain is historical: several of those scripts crash and others would
 **revert 0.25 content** if re-run, so do not run them. [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md) lists every
 script, what it owns, the documented drift and how to regenerate deliberately.

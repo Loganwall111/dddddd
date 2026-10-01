@@ -416,6 +416,11 @@ def bone_worldgen():
 # --------------------------------------------------------------------------- lower, sparser mountain features
 
 def scale_overlay(name: str, xz: float, y_scale: float):
+    """Historical in-place crag scaling. NOT idempotent - retained for reference only.
+
+    Applying it repeatedly keeps shrinking the feature (see moderate_crags()), which is why
+    the 0.25 crag shapes are pinned in tools/overlays/ instead.
+    """
     path = DATA / f"worldgen/feature/{name}.json"
     data = load(path)
     for entry in data.get("features", []):
@@ -442,10 +447,22 @@ def set_rarity(name: str, chance: int):
     dump(path, data)
 
 
+# The 0.25 crag shapes are PINNED, not re-derived.
+#
+# moderate_crags() used to scale the feature files in place (scale_overlay). That transform is not
+# idempotent: it divided every offset by 0.82/0.68 again on every run, so titanium_crag went
+# 38 -> 12 -> 8 -> 5 blocks tall across runs and the shipped worldgen could never be reproduced.
+# (The shipped 0.25 file is the 0.24 shape scaled twice, i.e. 0.82^2 / 0.68^2.)
+#
+# The scaled shapes were reviewed and shipped, so they live in tools/overlays/ as the base and this
+# pass now copies them verbatim - same output on every run, and the shipped tree stays authoritative.
+CRAG_OVERLAYS = ("titan_crag", "crag_spire")
+
+
 def moderate_crags():
-    # The old features were 30 and 20 blocks tall, with near-every-chunk placement.
-    scale_overlay("titan_crag", 0.82, 0.68)
-    scale_overlay("crag_spire", 0.82, 0.68)
+    for name in CRAG_OVERLAYS:
+        base = ROOT / f"tools/overlays/{name}.json"
+        (DATA / f"worldgen/feature/{name}.json").write_bytes(base.read_bytes())
     set_rarity("titan_crag", 6)
     set_rarity("crag_spire", 4)
 

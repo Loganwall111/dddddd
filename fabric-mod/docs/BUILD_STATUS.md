@@ -14,10 +14,11 @@ The 0.25.0-alpha source is being built with the repository's GitHub Actions work
 ## Toolchain baseline (0.25)
 
 - `python3 tools/regen_check.py` — the six live generators (creatures, phase5, expansion, visual_pass,
-  phase24_textures, phase19) reproduce the shipped tree; three files are documented known drift
-  (`entity/licker.png`, `worldgen/feature/crag_spire.json`, `worldgen/feature/titan_crag.json`) and are
-  never overwritten by a regeneration run. The historical phase chain is marked dead in
-  `tools/baseline.json` because several of those scripts crash or revert 0.25 content.
+  phase24_textures, phase19) reproduce the shipped tree byte-for-byte, with no known drift left. Two
+  generator bugs were fixed to get there (creatures.py salted the Licker texture with the builtin
+  `hash()`; phase19.py re-scaled the crag overlays in place on every run), and the reviewed crag shapes
+  are pinned in `tools/overlays/`. The historical phase chain is marked dead in `tools/baseline.json`
+  because several of those scripts crash or revert 0.25 content.
 - The check now runs in CI after the offline tests, so a stale generator (or a stale note) fails the build.
 
 ## Runtime limitations
