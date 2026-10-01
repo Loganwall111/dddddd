@@ -24,3 +24,18 @@ The 0.25.0-alpha source is being built with the repository's GitHub Actions work
 ## Runtime limitations
 
 Even a successful server smoke test cannot establish client-side visual quality. Rift timing/opening animation, sky and fog blending, animated Ichor appearance, Blub appearance/spawning, portal return behavior, and biome terrain density still need an in-game client playtest. Worldgen codecs and command behavior are only runtime-verified to the extent covered by the Actions server smoke test.
+
+
+## Sift Overhaul 0.27.0-alpha: CI verified (run 36931015775)
+
+- `python3 tools/validate.py` — passed: 613 JSON/metadata files, 155 functions. Model references are now
+  resolved with the JSON key and the full subdirectory, so `"parent": "entersift:block/x"` is checked as a
+  model (previously it was misread as a missing texture).
+- `python3 tools/test_data.py` — all 64 data-contract tests passed, including the new scene-capture/depth-guard
+  and rift-loop/registration contracts.
+- `python3 tools/regen_check.py` — seven live generators (creatures, phase5, expansion, visual_pass,
+  phase24_textures, phase19, rift_audio) reproduce the shipped tree byte-for-byte.
+- GitHub Actions: the 26.3 client compile, shader-pack bundling check and the dedicated-server smoke test all
+  passed. The smoke test now also places `entersift:rift_core` and asserts the registered block entity ticks.
+- Not verified anywhere yet: client-side rendering on a GPU. `RiftScene` refraction, the inflated shells, the
+  tendrils/teeth, the positional hum loop and the accumulated rift changes still need an in-game capture pass.
