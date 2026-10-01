@@ -71,15 +71,16 @@ final class SiftSmokeTest {
             x += 8;
         }
         run(server, "execute in entersift:the_sift positioned 0 140 -20 run function entersift:creature/twisted_warden/spawn");
-        // 0.25 rifts are gated to the local window (night, or Endure inside the Sift), so move both clocks
-        // into place and prove that the gate refuses daytime rifts before one is allowed to open.
+        // 0.26 rifts now open at ANY hour (day or night) in any dimension, including Thrive in the Sift.
+        // The gate formerly blocked noon/Thrive; the player report was correct that this was a bug —
+        // rifts summon every time, only the midnight aura/curtains are time-gated (client renderer).
         run(server, "time of minecraft:overworld set 6000");
         run(server, "execute in minecraft:overworld store result score #smoke_gate sift.clock run function entersift:rift/gate");
-        run(server, "execute if score #smoke_gate sift.clock matches 1 run say SIFT-SMOKE FAIL rift gate allowed a rift at noon");
+        run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked a rift at noon (rifts should be any hour, 0.26)");
         run(server, "time of minecraft:overworld set 13000");
         run(server, "execute in entersift:the_sift run time of entersift:sift set 6000");
         run(server, "execute in entersift:the_sift store result score #smoke_gate sift.clock run function entersift:rift/gate");
-        run(server, "execute if score #smoke_gate sift.clock matches 1 run say SIFT-SMOKE FAIL rift gate allowed a Thrive rift");
+        run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked a Thrive rift (rifts should be any hour, 0.26)");
         run(server, "execute in entersift:the_sift run time of entersift:sift set 13000");
         run(server, "execute in entersift:the_sift store result score #smoke_gate sift.clock run function entersift:rift/gate");
         run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked Endure");
