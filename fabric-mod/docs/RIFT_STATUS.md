@@ -237,3 +237,12 @@ lattice of translucent glass slabs whose every beam is white on BOTH sides.
 Still source-level only: no GPU here, so the beam thickness, the wave and the block's in-hand size have
 not been seen rendered. The 26.3 client compile over the new `rim(...)` signature is confirmed green in
 CI (run 36941443986, 543a7d2).
+
+### 0.34 worn gauntlets
+
+The gauntlets are proper equipment now: the `equippable` component for the chest slot plus a data-driven
+`humanoid` equipment layer, so the game draws the gauntlet as banded metal, gold rings and a glowing gem
+around both forearms. The worn sheet is deliberately empty everywhere except the vanilla arm cells.
+
+Not verified here: the client only. Both the sheet and the layer are structural (checked by
+`validate.py`) but whether the band sits where the wrist actually is can only be seen in game.

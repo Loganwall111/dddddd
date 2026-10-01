@@ -217,6 +217,33 @@ class DataContracts(unittest.TestCase):
         # Frosted panels are framed panes.
         self.assertIn('float in = 0.13f, ie = 0.28f * tf;', r)
 
+    def test_v034_gauntlets_are_worn_equipment_not_held_items(self):
+        # The user: "you should be able to wear them... equipped onto your arm instead of like an item".
+        assets = R/'assets/entersift'
+        for name in ('rift_gauntlet', 'red_rift_gauntlet'):
+            eq = json.loads((assets/f'equipment/{name}.json').read_text())
+            self.assertEqual(eq['layers']['humanoid'][0]['texture'], f'entersift:{name}')
+            worn = assets/f'textures/entity/equipment/humanoid/{name}.png'
+            self.assertTrue(worn.is_file())
+            head = worn.read_bytes()[:26]
+            self.assertEqual(head[:8], b'\x89PNG\r\n\x1a\n')
+            self.assertEqual((int.from_bytes(head[16:20], 'big'), int.from_bytes(head[20:24], 'big')), (64, 32),
+                             'worn armour must use the vanilla 64x32 humanoid layout')
+        # Java: the component that makes the game render and equip them.
+        content = (ROOT/'src/main/java/dev/logan/entersift/SiftContent.java').read_text()
+        for token in ('DataComponents.EQUIPPABLE', 'Equippable.builder(EquipmentSlot.CHEST)',
+                      'Registries.EQUIPMENT_ASSET', 'wearable(itemProperties("rift_gauntlet")',
+                      'wearable(itemProperties("red_rift_gauntlet")'):
+            self.assertIn(token, content)
+        # validate.py must refuse to ship an equipment layer whose worn texture is missing.
+        v = (ROOT/'tools/validate.py').read_text()
+        self.assertIn('textures/entity/equipment/{layer}/{name}.png', v)
+        # A live generator owns the sheets.
+        live = [e['script'] for e in json.loads((ROOT/'tools/baseline.json').read_text())['live']]
+        self.assertIn('rift_item_art.py', live)
+        # The smoke test asserts wearability on a real server.
+        self.assertIn('checkWearable', (ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text())
+
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
         self.assertIn('RiftCrossing.crosses(shape', source)
@@ -763,7 +790,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.33.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.34.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -902,7 +929,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.33.0-alpha',props)
+        self.assertIn('mod_version=0.34.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

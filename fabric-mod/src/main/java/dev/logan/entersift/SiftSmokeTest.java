@@ -27,6 +27,7 @@ final class SiftSmokeTest {
             ticks++;
             if (ticks == 20) stageOne(server);
             if (ticks == 120) stageTwo(server);
+            if (ticks == 145) checkWearable(server);
             if (ticks == 140) checkAnchors(server);
             // 0.16: the arena chunks are force-loaded first and built 80 ticks later (a slow runner may not
             // have generated them in the same tick), and the portal gets ~200 ticks of slack after opening.
@@ -112,6 +113,20 @@ final class SiftSmokeTest {
         else
             EnterTheSift.LOGGER.info("SIFT-SMOKE rift crossing completed: the walker left the tunnel and a rift is waiting there");
         run(server, "kill @e[tag=sift.walker]");
+    }
+
+    /** 0.34: a gauntlet that is not equippable cannot be worn on the arm, which is the whole point. */
+    private static void checkWearable(MinecraftServer server) {
+        for (var held : new net.minecraft.world.item.ItemStack[]{new net.minecraft.world.item.ItemStack(SiftContent.GAUNTLET), new net.minecraft.world.item.ItemStack(SiftContent.RED_GAUNTLET)}) {
+            var equippable = held.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
+            if (equippable == null)
+                EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL {} does not carry the equippable component (cannot be worn)", held.getItem());
+            else
+                EnterTheSift.LOGGER.info("SIFT-SMOKE {} is wearable equipment for the {}", held.getItem(), equippable.slot());
+        }
+        run(server, "execute in minecraft:overworld run summon minecraft:armor_stand 0.5 120 0.5 {Tags:[\"sift.kit\"],HandItems:[{id:\"entersift:rift_gauntlet\",count:1},{}]}");
+        run(server, "data get entity @e[tag=sift.kit,limit=1] HandItems[0]");
+        run(server, "kill @e[tag=sift.kit]");
     }
 
     private static void run(MinecraftServer server, String command) {

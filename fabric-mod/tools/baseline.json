@@ -28,6 +28,10 @@
     {
       "script": "rift_audio.py",
       "owns": "0.27 original rift hum/growth WAV sources; standard-library deterministic synthesis"
+    },
+    {
+      "script": "rift_item_art.py",
+      "owns": "0.33 staff art (shaft + floating block) and the 0.34 worn-arm gauntlet sheets; deterministic, standard library only"
     }
   ],
   "known_drift": {},

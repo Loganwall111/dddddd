@@ -1,6 +1,7 @@
 package dev.logan.entersift;
 
 import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -8,7 +9,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -19,6 +22,17 @@ public final class SiftContent {
     private static ResourceKey<Block> blockKey(String path) { return ResourceKey.create(Registries.BLOCK, id(path)); }
     private static Item.Properties itemProperties(String path) {
         return new Item.Properties().setId(ResourceKey.create(Registries.ITEM, id(path)));
+    }
+    /**
+     * 0.34: real wearable equipment. The gauntlets carry the EQUIPPABLE component for the chest slot
+     * (the arm) and point at assets/entersift/equipment/&lt;path&gt;.json, so 26.3's data-driven equipment
+     * layer draws them on the player's arms and vanilla right-click/shift-click equips them — they are
+     * worn, not merely held.
+     */
+    private static Item.Properties wearable(Item.Properties props, String path) {
+        return props.component(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.CHEST)
+            .setAsset(ResourceKey.create(Registries.EQUIPMENT_ASSET, id(path)))
+            .build());
     }
     private static Block block(String name, Block base, int light) {
         var key = blockKey(name);
@@ -167,9 +181,9 @@ public final class SiftContent {
      * hand when held, handled client-side in {@link dev.logan.entersift.client.SiftClient}.
      */
     public static final Item GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("rift_gauntlet"),
-        new Item(itemProperties("rift_gauntlet").stacksTo(1)));
+        new Item(wearable(itemProperties("rift_gauntlet"), "rift_gauntlet").stacksTo(1)));
     public static final Item RED_GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("red_rift_gauntlet"),
-        new Item(itemProperties("red_rift_gauntlet").stacksTo(1)));
+        new Item(wearable(itemProperties("red_rift_gauntlet"), "red_rift_gauntlet").stacksTo(1)));
     /** Rift staff with a glowing blue cube cluster floating at its tip (Image 6). */
     public static final Item RIFT_STAFF = Registry.register(BuiltInRegistries.ITEM, id("rift_staff"),
         new Item(itemProperties("rift_staff").stacksTo(1)));

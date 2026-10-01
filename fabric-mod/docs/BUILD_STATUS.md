@@ -216,3 +216,26 @@ dedicated-server smoke test (entry, corridor hand-off, destination search, arriv
 The eight `rim(...)` call sites were changed in the same pass as the signature that now takes the cell
 centre; that combination is the one that broke CI once before, so it was checked here by grep and is now
 confirmed by the compiler.
+
+## Sift Overhaul 0.34.0-alpha: the gauntlets are worn equipment
+
+The last piece of the user's repeat message that was still only half-done: a gauntlet could be put in
+the chest slot, but nothing drew it there. 26.3 renders worn equipment from data, so the gauntlets now
+carry the real thing:
+
+- `SiftContent.wearable(...)` attaches `DataComponents.EQUIPPABLE` (chest slot) with
+  `Registries.EQUIPMENT_ASSET` pointing at `assets/entersift/equipment/<id>.json`. Both gauntlets use it,
+  so vanilla right-click and shift-click equip them onto the arm as well as the mod's sneak-right-click.
+- `assets/entersift/equipment/{rift,red_rift}_gauntlet.json`: a `humanoid` layer per gauntlet.
+- `assets/entersift/textures/entity/equipment/humanoid/*.png`: 64x32 worn sheets painted ONLY on the
+  vanilla arm cells (checked: 160 opaque pixels, every one inside u 40..55 / v 16..31), so the rift
+  gauntlet shows as a banded, gold-trimmed, gemmed forearm on both arms and the body, head and legs stay
+  bare. Drawn by `tools/rift_item_art.py`, which is now a checked live generator (8 of them).
+- `tools/validate.py` refuses to ship an equipment layer whose worn texture is missing.
+- `SiftSmokeTest.checkWearable` (tick 145) asserts on a real server that both gauntlets carry the
+  component, and dumps an armour stand holding one for the CI log.
+
+Local gates: 70 data tests, 615-file validation, 8 generators, 82 shader programs, `git diff --check`
+clean. The Java here touches `DataComponents.EQUIPPABLE`, `Equippable.builder(EquipmentSlot)`,
+`setAsset(...)` and `Registries.EQUIPMENT_ASSET` — none of those could be signature-checked in this
+sandbox (no local jars), so the 26.3 compile is what confirms them.

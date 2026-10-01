@@ -41,6 +41,16 @@ for p in (r/'assets/entersift').rglob('*.json'):
         folder = 'models' if key in ('model', 'parent') or 'models' not in p.parts else 'textures'
         ext = '.png' if folder == 'textures' else '.json'
         if not (r/f'assets/entersift/{folder}/{ref}{ext}').exists(): errors.append(f'{p}: missing {folder} {ref}')
+# 0.34: worn equipment. Assets/<ns>/equipment/<id>.json layers sample
+# textures/entity/equipment/<layer>/<texture>.png, so a missing sheet means an invisible gauntlet.
+for p in (r/'assets/entersift/equipment').rglob('*.json'):
+    for layer, entries in (json.loads(p.read_text()).get('layers') or {}).items():
+        for entry in entries or []:
+            tex = entry.get('texture', '') if isinstance(entry, dict) else ''
+            name = tex.split(':', 1)[-1]
+            if not name or not (r/f'assets/entersift/textures/entity/equipment/{layer}/{name}.png').exists():
+                errors.append(f'{p}: no worn texture for the {layer} layer: {tex!r}')
+
 for p in (r/'assets/entersift/textures').rglob('*.png'):
     b=p.read_bytes()
     if b[:8]!=b'\x89PNG\r\n\x1a\n': errors.append(f'{p}: bad PNG')
