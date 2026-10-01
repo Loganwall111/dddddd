@@ -191,3 +191,17 @@ in any static gate:
 `wearsGauntlet`/`toggleGauntlet` (chest-slot equip swap, `LivingEntity.getItemBySlot`/`setItemSlot` and
 `Entity.isShiftKeyDown`, all confirmed present in the probe signatures), and `RiftPortalRenderer` gained
 `tipFade`/`borderWave` with a new `SiftBudget.riftTipFade` flag. Nothing has been compiled locally.
+
+## Sift Overhaul 0.33.0-alpha: glass-beam edges and a floating blue block
+
+Local gates: 69 data-contract tests, 613-file validation (157 functions), seven regenerated generators,
+82 shader programs, `git diff --check` clean.
+
+- `RiftPortalRenderer`: `rim(...)` gained the owning cell's centre so it can draw an inner bright line as
+  well as the outer band; bands widened; `borderWave` amplitudes raised; `boxFaces` draws a framed pane
+  per frosted slab. All eight `rim(...)` call sites were updated in the same pass (the signature change
+  that broke CI once; the call sites and their arguments were checked by grep before the push).
+- `rift_staff.json` / `rift_staff_blue.json`: the floating element is now a true 4.4-unit cube with a
+  1.5-unit gap above the collar, and `tools/rift_item_art.py` draws a block-face texture for it.
+- The staff textures and the gauntlet texture are no longer byte-identical (they were, which is what the
+  user was looking at).

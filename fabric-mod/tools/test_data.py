@@ -161,9 +161,12 @@ class DataContracts(unittest.TestCase):
             self.assertEqual(names, ['shaft', 'bindings', 'crystal'])
             shaft, gem = model['elements'][0], model['elements'][2]
             self.assertEqual((shaft['from'][0], shaft['to'][0]), (7.4, 8.6))          # a slim shaft, 5 px wide
-            self.assertGreaterEqual(shaft['to'][1] - shaft['from'][1], 10)            # long: 11 px
-            self.assertLess(gem['to'][1], shaft['from'][1])                           # the crystal sits above the tip
+            self.assertGreaterEqual(shaft['to'][1] - shaft['from'][1], 9)             # long: ~10 px
+            self.assertLess(gem['to'][1], shaft['from'][1])                           # the block sits above the collar
             self.assertGreaterEqual(shaft['from'][1] - gem['to'][1], 0.5)             # and FLOATS: a visible gap
+            # A BLUE BLOCK, not a gem: the floating element is a true cube (equal on all three axes).
+            self.assertAlmostEqual(gem['to'][0] - gem['from'][0], gem['to'][1] - gem['from'][1], places=3)
+            self.assertAlmostEqual(gem['to'][2] - gem['from'][2], gem['to'][1] - gem['from'][1], places=3)
             self.assertTrue((assets/f'textures/item/{name}.png').is_file())
         # The user's report: the staff art was byte-identical to the gauntlet art.
         tex = assets/'textures/item'
@@ -195,6 +198,24 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:travel/arrive', ledge)
         self.assertIn('world_surface', surface)
         self.assertIn('catch (Throwable error)', tunnel)
+
+    def test_v033_thick_double_edged_wavy_borders_and_block_staff(self):
+        r = (ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        # Thicker beams: the lip grew and the bands widened.
+        self.assertIn('COLLAR = 0.12f, FLANGE = 0.06f', r)
+        self.assertIn('(0.20f + 0.12f * flash) * k, (0.58f + 0.24f * flash) * k', r)
+        # White on BOTH sides of every border: rim() takes the cell centre and draws an inner line.
+        self.assertIn('float cx, float cy) {', r)
+        self.assertIn('float inx = 0f, iny = 0f;', r)
+        self.assertIn('0.13f * k', r)                       # the inner offset
+        for site in ('tipFade(sh, x0, cym), cxm, cym', 'tipFade(sh, cxm, y1), cxm, cym',
+                     'tipFade(sh, q[0], qcy), qcx, qcy', 'tipFade(sh, qcx, q[3]), qcx, qcy'):
+            self.assertIn(site, r)                          # every rim site knows its cell centre
+        # Stronger wave.
+        self.assertIn('0.18f * (float) Math.sin(along * 1.9f', r)
+        self.assertIn('0.075f * (float) Math.sin(along * 3.7f', r)
+        # Frosted panels are framed panes.
+        self.assertIn('float in = 0.13f, ie = 0.28f * tf;', r)
 
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
@@ -742,7 +763,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.32.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.33.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -881,7 +902,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.32.0-alpha',props)
+        self.assertIn('mod_version=0.33.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

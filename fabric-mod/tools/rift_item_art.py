@@ -50,23 +50,25 @@ def draw_shaft(px) -> None:
 
 
 def draw_crystal(px, core, mid, edge, glow) -> None:
-    """An 8x8 bevelled gem in the block x 4..11, y 0..7."""
-    cx, cy = 7.5, 3.5
+    """An 8x8 BLUE BLOCK in the block x 4..11, y 0..7.
+
+    The model maps this region onto every face of a floating cube, so it is drawn like a block face:
+    a lit top-left edge, a shaded bottom-right edge and a bright core, which reads as a solid glowing
+    cube from any angle (the user: "a 3D staff with a blue block floating on top").
+    """
     for y in range(0, 8):
         for x in range(4, 12):
-            dx, dy = abs(x - cx), abs(y - cy)
-            d = dx + dy
-            if d > 4.6:
-                px[y][x] = (0, 0, 0, 0)
-            elif d > 3.7:
+            lx, ly = x - 4, y
+            if lx == 0 or ly == 0:                       # lit edges
+                px[y][x] = glow
+            elif lx == 7 or ly == 7:                     # shaded edges
                 px[y][x] = edge
-            elif d > 1.2:
+            elif lx in (1, 6) or ly in (1, 6):           # bevel
                 px[y][x] = mid
-            else:
+            else:                                        # the block's glowing heart
                 px[y][x] = core
-    px[3][7] = glow
-    px[4][6] = glow
-    px[2][7] = (255, 255, 255, 255)
+    for y, x in ((3, 7), (4, 7), (3, 8), (4, 8)):
+        px[y][x] = (255, 255, 255, 255)                   # white spark on the face
 
 
 def staff(path: pathlib.Path, core, mid, edge, glow) -> None:
@@ -77,7 +79,8 @@ def staff(path: pathlib.Path, core, mid, edge, glow) -> None:
 
 
 if __name__ == "__main__":
-    # Rift staff: violet-blue crystal. Blue staff: brighter cyan crystal, same shaft.
-    staff(TEX / "rift_staff.png", (206, 222, 255, 255), (106, 140, 255, 255), (32, 48, 104, 255), (156, 200, 255, 255))
-    staff(TEX / "rift_staff_blue.png", (214, 250, 255, 255), (47, 212, 255, 255), (16, 70, 104, 255), (150, 240, 255, 255))
+    # Both staffs carry a blue floating block: violet-blue for the rift staff, electric blue for the
+    # blue one; the shaft art is shared.
+    staff(TEX / "rift_staff.png", (150, 190, 255, 255), (96, 132, 255, 255), (22, 34, 84, 255), (215, 232, 255, 255))
+    staff(TEX / "rift_staff_blue.png", (168, 236, 255, 255), (52, 186, 255, 255), (10, 52, 96, 255), (226, 250, 255, 255))
     print("wrote rift_staff.png and rift_staff_blue.png")

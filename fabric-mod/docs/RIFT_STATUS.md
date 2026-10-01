@@ -215,3 +215,24 @@ corridor hand-off, destination search, arrival and the return rift all happen wi
 staff's ranged spell (`rift/staff_cast`: crystal flash, eight-block bolt, rift torn open where it lands)
 is a data-side function and is NOT covered by the smoke stage — only its existence and its call sites are
 asserted by `tools/test_data.py`.
+
+## 0.33 — glass beams with white edges on both sides, strong wave, floating blue block
+
+Worked from the attached reference screenshot (Screenshot 2026-09-30 151158), which shows the rift as a
+lattice of translucent glass slabs whose every beam is white on BOTH sides.
+
+- Borders are now double: `rim(...)` takes the owning cell's centre and draws a second bright line offset
+  0.13 towards the middle, parallel to the outer band. Read together with the wider bands
+  (bright `0.20 + 0.12 x flash`, halo `0.58 + 0.24 x flash`, lip `FLANGE` 0.05 -> 0.06) each border is a
+  glass beam with two lit edges instead of a single hairline.
+- Every frosted slab is a PANE IN A FRAME: `boxFaces` draws a bright inset rectangle 0.13 inside each
+  panel's own silhouette, the way every box face in the screenshot is outlined.
+- The wave is stronger: `borderWave` is `0.18 sin(1.9a + 1.1t) + 0.075 sin(3.7a - 1.7t)`, vertical run
+  full strength, horizontal runs damped to 0.55.
+- `rift_staff` / `rift_staff_blue` now carry a genuine floating BLUE BLOCK: a 4.4-unit cube (equal on all
+  three axes), 1.5 units of clear air above the gold collar, lit top-left and shaded bottom-right in its
+  texture so it reads as a solid glowing cube from every angle. The staff sheet is drawn by
+  `tools/rift_item_art.py`.
+
+Still source-level only: no GPU here, so the beam thickness, the wave and the block's in-hand size have
+not been seen rendered.
