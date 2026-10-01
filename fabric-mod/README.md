@@ -3,9 +3,9 @@
 
 **Experimental Fabric mod source · Minecraft Java 26.3 · Java 25**
 
-> **Build status:** Source and assets authored; offline resource checks and 20 data-contract tests pass. A Minecraft JAR has **not** been compiled or playtested in this environment. Java is unavailable, and attempts to download Java, Minecraft/Fabric dependencies and shader-validation tools were blocked by network failures. Do not install this in an important world yet.
+> **Build status:** The current source branch is based on `0.21.0-alpha`. Offline validation and 53 data-contract tests pass. A Minecraft JAR has **not** been compiled or playtested in this environment because Java is unavailable. See [current visual/world-generation status](docs/VISUAL_STATUS.md); all runtime behavior remains unverified.
 
-**New in 0.2:** screenshot-driven cyan threshold, warm stepped rifts with drifting shards, six-colour note rims, richer souls, rose saltstone, and a dimension-scoped ribbon sky with day/night variation. See the [screenshot comparison and remaining gaps](docs/VISUAL_STATUS.md). All are still runtime-unverified.
+**Current visual/world-generation pass:** night-only rift opening/lensing effects, a Sift-local **Flow / Thrive / Endure** clock, dry island-and-cavern terrain with rare small ichor features, sparse giant Canopy fossils, a symmetrical animated rainbow ichor texture, two-way Agency Portal routing, and a Blub model/texture matched to the repository crop.
 
 This is a separate Minecraft project. The existing Lumital React/Three.js app at the repository root is preserved and is **not** the mod.
 
@@ -13,26 +13,27 @@ This is a separate Minecraft project. The existing Lumital React/Three.js app at
 
 | Feature | Alpha implementation |
 |---|---|
-| **The Sift** | Registered data-driven dimension, salt caps over rose saltstone, ichor seas, tinted fog, soul particles and a shared day/night clock. |
-| **Carapace** | Bone-coloured surfaces, generated surface ribcages, buried fossils and skeletons. |
-| **Singer Meadow** | Teal moss, alliums, soul-salt outcrops and occasional Blubs. |
+| **The Sift** | Registered data-driven dimension with a separate Flow/Thrive/Endure world clock, normal Overworld density functions, caves/islands, and mostly dry terrain. |
+| **Canopy (Boneyard ID)** | Dry bone desert with sparse giant skull, tusk, and ribcage features placed as visible vanilla bone blocks. |
+| **Carapace** | Preserved bone-coloured biome with its existing fossils and skeletons. |
+| **Singer Meadow** | Preserved Sift biome with teal moss, alliums, soul-salt outcrops, and occasional Blubs. |
 | **Saltwound Expanse** | Salt flats and luminous crystal columns. This third name is a provisional addition; the brief named only two biomes. |
 | **Ancient-city ritual** | Six distinct note blocks on coloured wool: **red → magenta → pink → cyan → blue → purple**. An intact reinforced-deepslate frame nearby is required. The same mechanism works with a constructed frame in the Overworld. Six colour-matched full-bright note rims appear on input and on the Singer’s replies. |
 | **The Singer** | Original block-display figure rises for four seconds, answers six notes at their recorded positions, and opens a flickering threshold after eleven seconds. It is an animated display rig, not a registered custom mob. |
-| **Ichor** | Registered source/flowing fluid and bucket; original animated rainbow textures; contact damages health and drains souls once per second. No infinite-source conversion. |
+| **Ichor** | Registered source/flowing fluid and bucket; animated, bilateral rainbow texture; rare 1–2-block puddles and springs rather than oceans; contact damages health and drains souls once per second. |
 | **Souls** | Persistent per-player score, initially 20, capped at 100. Ichor drains 3; depleted souls cause a short wither effect. Standing on soul salt slowly replenishes souls in the Sift. |
 | **Rift gauntlet** | Punch a block/entity, or right-click, to tear a short-lived rift ahead of you. Costs 10 souls; 3-second cooldown. The target must be air. |
 | **Wandering rifts** | Random encounters across four supported dimensions. Warm stepped membranes, white outlines and drifting shards; 2-second warmup and 45-loaded-second lifetime. |
 | **Riftcallers** | Tagged vanilla evokers with a ground-strike particle/sound sequence that creates rifts. No terrain griefing. Not a separately registered illager type. |
 | **Soul potion** | A 32-tick drink adds 40 souls and grants 30 seconds of invisibility and slow falling, with soul particles. No spectator mode, flight or wall-phasing. Nearby-player haunting is optional. |
-| **Jelly Bunny / Blub** | Low original cube-display body, ears and red eyes; an invisible vanilla rabbit supplies health. Scripted ground-following motion, not full custom navigation or a new registered entity type. |
-| **Cinematic look** | Original pixel textures plus an optional Iris pack: Sift-only flowing sky ribbons, teal day/rose dusk/indigo night, saturated-colour bloom, haze and vignette. |
+| **Jelly Bunny / Blub** | Original cube-display body with cyan texture, indigo eyes, purple nose, pink mouth and pink-lined ears; an invisible vanilla rabbit supplies health. |
+| **Cinematic look** | Fabric/vanilla client rendering with a Sift-only procedural sky and custom rift pipelines; the night rift lensing path is separate from its daytime look. |
 
 ### Important alpha limits
 
 - **Not a one-to-one recreation.** The latest fifteen Minecraft-style screenshots are now the primary reference, superseding the earlier sci-fi images inside the repository ZIP. The source follows their cyan/rose palette and two portal families; authored ruins, giant cyan trees, larger spirit creatures and exact lighting/geometry are still absent.
-- Biomes currently use large checkerboard regions over continuous noise terrain, not a custom climate distribution.
-- Rift arrival points are shared **high-altitude salt pads**, not geographically linked exits. The Nether pad is **above its bedrock roof**. Return particles are three blocks east of the pad centre. This is a safe-testing provision, not finished exploration balancing.
+- Biomes use a multi-noise distribution over normal Overworld density functions. Island/cavern balance, biome scale, and crag height still need multi-seed in-game review.
+- Some gauntlet rift destinations still use shared high-altitude pads (the Nether pad is above its bedrock roof). The Sift arrival uses a surface plaza and visible return gate; the Agency Portal/return anchor routes back to a saved dimension and coordinates, with an Overworld fallback when no return point exists.
 - Arrival pads use air-only placement and reject blocked landing/head positions. The 4 chunks around the origin in each of the 4 dimensions are force-loaded to make those pads available. This is **16 forced chunks total**; see cleanup below.
 - Return coordinates are persistent, per-player and block-precision. Nested rifts preserve the first origin until returning. Death clears the saved return. If the original location is altered while away, return safety is not guaranteed—keep an operator rescue command available.
 - Rift and ritual timers pause in unloaded chunks; no permanent force-loading of ancient cities or encounters.
@@ -56,13 +57,13 @@ The Gradle wrapper is included. It downloads Gradle 9.7.1 and the dependencies. 
 - Fabric API `0.161.0+26.3`
 - Fabric Loom `1.18-SNAPSHOT` (upstream currently uses a snapshot; resolution needs internet)
 
-After a successful build, install `build/libs/enter-the-sift-0.2.0-alpha.jar` in a **Fabric 26.3** instance's `mods` folder alongside Fabric API. **Do not install the `-sources.jar` or the source ZIP.** Both client and server need the mod because it registers blocks, items and fluids. Restart Minecraft when changing dimensions/worldgen data.
+After a successful build, install `build/libs/enter-the-sift-0.21.0-alpha.jar` in a **Fabric 26.3** instance's `mods` folder alongside Fabric API. **Do not install the `-sources.jar` or the source ZIP.** Both client and server need the mod because it registers blocks, items and fluids. Restart Minecraft when changing dimensions/worldgen data.
 
 A GitHub Actions workflow is included at `.github/workflows/sift-build.yml`. On a push/PR containing this project, it runs validation and the Gradle build, then uploads the JAR and shader ZIP **only if the build succeeds**. The workflow has not been run from this session.
 
-### Shader selection
+### Rendering
 
-On client initialization, the mod copies its bundled `Sift-Cinematic-0.2.zip` into the instance's `shaderpacks` folder **only if it is absent**. Existing packs and video settings are never overwritten. Install compatible Iris separately, open **Video Settings → Shader Packs**, and select **Sift-Cinematic-0.2**. Choose Subtle, Cinematic or Dreamlike. Grain defaults to off.
+The current source draws the Sift sky and rifts through Fabric's client rendering pipeline. It does not install or require the old `Sift-Cinematic-0.2.zip` shader pack; the client removes obsolete Sift-Cinematic packs from earlier versions without touching unrelated packs or video settings. Shader and visual output still need a real Minecraft 26.3/GPU test.
 
 ## Try the ritual in a disposable world
 
@@ -74,7 +75,7 @@ On client initialization, the mod copies its bundled `Sift-Cinematic-0.2.zip` in
    **Warning: this developer command replaces a local 11 × 10 floor area and builds a frame. Never run it in a base or valuable ancient city.**
 3. Left-click the six note blocks **from left to right**. Their wool colours are red, magenta, pink, cyan, blue and purple. Right-click changes vanilla tuning; left-click is the ritual input. Exact pitches are not required by the input sequence.
 4. The sequence times out after 30 seconds. A wrong colour or reusing one recoloured note resets it. The Singer then answers slowly and opens the frame.
-5. Walk through the aperture. On arrival, **wait five seconds**, then walk into the purple particles three blocks east to return.
+5. Walk through the aperture. In the Sift, use the visible return-side portal/rift anchor to travel back to your saved dimension and position; if no return point is stored, it falls back to the Overworld.
 6. For the real route, locate an ancient city with `/locate structure minecraft:ancient_city`, preserve its reinforced frame, and place the six coloured-wool/note-block pairs nearby. Frame recognition scans 24 blocks horizontally around each played note and supports either axis.
 
 ### Test commands
@@ -125,6 +126,7 @@ python3 tools/creatures.py      # 9 creature models (SiftModelDefs.java), entity
 python3 tools/paint_skies.py    # Day (peach/rose + crimson pillars) and night (luminous teal + aurora curtains) panoramas
 python3 tools/phase4.py         # Entities in data, new blocks, 3 new biomes, staged portal, rift waves, sky textures
 python3 tools/phase5.py         # Mob loot, recipes for new blocks, 'Enter the Sift' advancement tab
+python3 tools/phase19.py        # Run last: Flow/Thrive/Endure, dry terrain, Canopy fossils, ichor, Blub and portal pass
 python3 tools/preview_creatures.py  # Software render of every model -> docs/creature-preview.png
 python3 tools/validate.py       # JSON, function references, model/texture integrity
 python3 tools/test_data.py      # offline data-contract tests

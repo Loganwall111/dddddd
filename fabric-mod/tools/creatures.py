@@ -12,7 +12,10 @@ Colours are sampled by eye from the reference crops in art/ref_crops.
 from __future__ import annotations
 import random
 from pathlib import Path
-from PIL import Image
+try:
+    from PIL import Image
+except ModuleNotFoundError:  # Java-only generation and the stdlib phase19 pass do not need Pillow.
+    Image = None
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "src/main/resources/assets/entersift/textures"
@@ -32,27 +35,30 @@ def B(x, y, z, w, h, d, base, pat="noise", faces=None, glow=False, dark=None):
 # Specs
 # ----------------------------------------------------------------------------------------------
 BLUE = (156, 214, 232)
-RED_EYE = (224, 44, 62)
 SPECS: dict[str, dict] = {}
 
-# Blub — (0.13, user correction) an icy-blue jelly bunny: pale blue cube body, RED slit eyes and a small red
-# mouth, short upright ears in the body blue (lighter blue inside). No pink, no purple.
-# 0.17 (user): eyes and mouth are the SAME darker red (#7a1020), not bright red, and not emissive.
-BLUB_EYE, BLUB_MOUTH = (122, 16, 32), (122, 16, 32)
-BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (196, 234, 250), (148, 206, 236), (184, 228, 248), (120, 178, 214)
-BLUB_BLUE = (156, 214, 240)
+# Blub — match art/ref_crops/blub.png: a compact cyan cube, indigo square eyes, a purple nose,
+# a pink mouth ledge, and long floppy ears with pink inner faces. Nothing glows white or red.
+BLUB_BLUE = (92, 190, 210)
+BLUB_EYE = (48, 54, 104)
+BLUB_NOSE = (118, 74, 150)
+BLUB_MOUTH = (238, 128, 166)
+BLUB_TOP, BLUB_EAR, BLUB_EAR_IN, BLUB_LEG = (150, 226, 232), (78, 174, 202), (242, 154, 184), (68, 154, 186)
 SPECS["blub"] = dict(tex=64, egg=(BLUB_BLUE, BLUB_EYE), parts=[
-    P("body", (0, 21, 0), [B(-5, -8, -5, 10, 8, 10, BLUB_BLUE, "speckle", faces={
-        "north": [(1, 3, 3, 1, BLUB_EYE, False), (6, 3, 3, 1, BLUB_EYE, False), (4, 5, 2, 1, BLUB_MOUTH, False)],
-        "top": [(0, 0, 10, 10, BLUB_TOP, False)]})]),
-    P("ear_l", (-3, 13, 1), [B(-1.5, -5, -0.5, 3, 5, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 3, BLUB_EAR_IN, False)]})],
-      parent="body", rot=(0.12, 0, -0.14)),
-    P("ear_r", (3, 13, 1), [B(-1.5, -5, -0.5, 3, 5, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 3, BLUB_EAR_IN, False)]})],
-      parent="body", rot=(0.12, 0, 0.14)),
-    P("leg_0", (-3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
-    P("leg_1", (3, 21, -3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
-    P("leg_2", (-3, 21, 3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
-    P("leg_3", (3, 21, 3), [B(-1, 0, -1, 2, 3, 2, BLUB_LEG)]),
+    P("body", (0, 21, 0), [B(-6, -9, -5, 12, 9, 10, BLUB_BLUE, "speckle", faces={
+        "north": [(2, 3, 2, 2, BLUB_EYE, False), (8, 3, 2, 2, BLUB_EYE, False),
+                  (5, 4, 2, 1, BLUB_NOSE, False), (3, 6, 6, 2, BLUB_MOUTH, False)],
+        "top": [(0, 0, 12, 10, BLUB_TOP, False)]})]),
+    P("ear_l", (-4, 12, 1), [B(-1.5, -8, -0.5, 3, 8, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 6, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.08, 0, -0.30)),
+    P("ear_r", (4, 12, 1), [B(-1.5, -8, -0.5, 3, 8, 1, BLUB_EAR, "plain", faces={"north": [(1, 1, 1, 6, BLUB_EAR_IN, False)]})],
+      parent="body", rot=(0.08, 0, 0.30)),
+    P("nose", (0, 16, -5), [B(-1, -0.5, -1, 2, 1, 1, BLUB_NOSE, "plain")], parent="body"),
+    P("mouth", (0, 18, -5), [B(-4, -1, -1, 8, 2, 1, BLUB_MOUTH, "plain")], parent="body"),
+    P("leg_0", (-4, 21, -3), [B(-1.5, 0, -1.5, 3, 3, 3, BLUB_LEG)]),
+    P("leg_1", (4, 21, -3), [B(-1.5, 0, -1.5, 3, 3, 3, BLUB_LEG)]),
+    P("leg_2", (-4, 21, 3), [B(-1.5, 0, -1.5, 3, 3, 3, BLUB_LEG)]),
+    P("leg_3", (4, 21, 3), [B(-1.5, 0, -1.5, 3, 3, 3, BLUB_LEG)]),
 ])
 
 # Sculker — slate-blue gaper with a huge tan mouth, whiskers and antler sprouts (sculkers render).
@@ -256,6 +262,8 @@ def shade(c, k):
 
 
 def paint(kind, spec):
+    if Image is None:
+        raise SystemExit("Pillow is required to paint creature textures; the generated Java models remain available without it.")
     size = spec["tex"]
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     glow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
@@ -315,6 +323,8 @@ def paint(kind, spec):
 
 def egg(kind, spec):
     """Spawn-egg sprite in the vanilla silhouette, creature palette with spots."""
+    if Image is None:
+        raise SystemExit("Pillow is required to paint creature textures and spawn eggs.")
     base, spot = spec["egg"]
     img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     px = img.load()

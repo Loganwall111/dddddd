@@ -25,7 +25,8 @@ for p in (r/'assets/entersift/textures').rglob('*.png'):
     if b[:8]!=b'\x89PNG\r\n\x1a\n': errors.append(f'{p}: bad PNG')
     w,h=struct.unpack('!II',b[16:24])
     if h>w and not p.with_suffix('.png.mcmeta').exists(): errors.append(f'{p}: animation metadata missing')
-assert len(list((r/'data/entersift/worldgen/biome').glob('*.json')))==12
+biome_count=len(list((r/'data/entersift/worldgen/biome').glob('*.json')))
+assert biome_count==12
 assert '1, 3, 7, 6, 5, 2, 4, 8' in (root/'src/main/java/dev/logan/entersift/RitualSequence.java').read_text()
 assert (root/'gradle/wrapper/gradle-wrapper.jar').read_bytes()[:2]==b'PK'
 # Validate that custom worldgen block/biome/feature refs resolve locally.
@@ -40,5 +41,5 @@ for _f in (r/'data/entersift/worldgen/feature').glob('*.json'):
         for _pl in _e.get('placement', []):
             if _pl.get('type') == 'minecraft:offset':
                 assert max(abs(_pl['x']), abs(_pl['y']), abs(_pl['z'])) <= 16, f'{_f.name}: offset > 16'
-print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper and nine biomes.')
+print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper and {biome_count} biomes.')
 print('Minecraft 26.3 compilation, registry codecs, command parsing and in-game behavior still require Gradle/client/server tests.')
