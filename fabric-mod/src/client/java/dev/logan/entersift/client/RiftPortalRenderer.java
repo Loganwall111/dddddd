@@ -43,12 +43,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * The window itself is deliberately exempt — the opening stays clear.
      */
     static final float FADE_NEAR = 0.06f, FADE_FAR = 1.0f;
-    /** Placement shockwave: the giant white ground band that expands and fades (reference placement shots). */
     /**
-     * Placement blast timing (reference placement sequence): band one appears on the land and dies, then
-     * the gigantic band follows through the gap it left, clearing ~46 blocks before it dissolves.
+     * Placement timing (reference placement sequence): the seed throws lightning while the box rebuilds, ONE
+     * gigantic white band appears on the land and races out to ~62 blocks, the rift snaps in and flares
+     * white, and a few ticks later the white dissolves into the rift's colours.
      */
-    static final float SHOCK_END = 62f, SHOCK_PULSE2 = 22f;
+    static final float SHOCK_END = 40f, RIFT_BIRTH = 42f, RIFT_COLOUR = 48f;
     static final int SUB = 4; // subdivisions per cell edge so vertical sides curve smoothly with the wave
     static final float[] VIBRANT_PINK_DAY = rgb(0xFF6FA8);
     static final float[] DEEP_AMBER_NIGHT = rgb(0xDB7840);
@@ -98,8 +98,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         // While the placement blast is still running the structure's visible footprint is the whole shockwave,
         // so the culling box has to grow with it or the band pops out when the camera pulls back.
         boolean blasting = SiftBudget.riftShock && e.age() <= SHOCK_END + 4f;
-        float r = Math.max(e.riftWidth(), e.riftHeight()) + (blasting ? 52f : 8f);
-        return e.getBoundingBox().inflate(r, blasting ? 24f : r * 2f, r);
+        float r = Math.max(e.riftWidth(), e.riftHeight()) + (blasting ? 68f : 8f);
+        return e.getBoundingBox().inflate(r, blasting ? 26f : r * 2f, r);
     }
 
     /**
@@ -225,6 +225,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
         RenderType winT = gpu ? (RiftScene.request() ? SiftRenderTypes.RIFT_REFRACT : SiftRenderTypes.RIFT) : SiftRenderTypes.GLASS;
         float age = s.age;
+        // 0.29r: the rift snaps in white and dissolves into its colours a few ticks later.
+        float fl = whiteFlash(age);
+        Look look2 = fl > 0.001f ? whiten(look, fl) : look;
+        float wf = 1f - 0.75f * fl;
         Warp wv = Warp.STILL; // crisp voxel edges; distortion belongs behind the opening
         Warp still = Warp.STILL;
         float code = encodeView(s);
@@ -245,23 +249,24 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (age <= SHOCK_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> shockwave(p, vc, still, sh, look, s, cam, age));
             if (age >= CLUSTER_START) {
                 float a = age;
-                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s));
-                else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s));
-                out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look, a, s));
+                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf));
+                else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf));
+                out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look2, a, s));
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> {
-                    rims(p, vc, wv, sh, look, cam, a, s);
-                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look, a);
+                    boxFaces(p, vc, wv, sh, look2, cam, a, s);
+                    rims(p, vc, wv, sh, look2, cam, a, s);
+                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look2, a);
                     if (SiftBudget.riftEffects) riftBolts(p, vc, wv, sh, s, cam, look, a);
                     if (SiftBudget.riftEffects && SiftBudget.riftFlares) {
                         glitchTeeth(p, vc, sh, s, a);
                         clawRibbons(p, vc, sh, s, cam, a);
                     }
-                    if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look, s);
+                    if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look2, s);
                 });
-                out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, a));
+                out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look2, a));
                 if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
                     out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
-                if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look, cam, s));
+                if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look2, cam, s));
             }
         } finally {
             pose.popPose();
@@ -276,7 +281,20 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ timeline
 
     /** Seed explodes for 0–8 ticks; ravine tiers grow at 8, 33, 58, 83, settling by 100. */
-    private static float appearAt(int tier) { return CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 25f; }
+    /** The box steps in during the last stretch of the blast, so the rift is born white right after it. */
+    private static float appearAt(int tier) { return RIFT_BIRTH - 6f + Math.min(tier, RiftShape.TIERS - 1) * 2f; }
+
+    /** 1 the instant the rift snaps into existence, 0 once it has dissolved into full colour. */
+    static float whiteFlash(float age) {
+        return 1f - clamp((age - RIFT_BIRTH) / (RIFT_COLOUR - RIFT_BIRTH), 0f, 1f);
+    }
+
+    /** The same palette pushed to white, so the whole rift flares before the colours come back in. */
+    private static Look whiten(Look look, float k) {
+        float[] w = c(1f, 1f, 1f);
+        return new Look(mix(look.core(), w, k * 0.85f), mix(look.halo(), w, k * 0.85f),
+            mix(look.wallFront(), w, k * 0.92f), mix(look.wallBack(), w, k * 0.92f));
+    }
 
     private static boolean shown(RiftShape sh, int i, int j, float age) { return sh.on(i, j) && age >= appearAt(sh.tier[i][j]); }
 
@@ -556,28 +574,63 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
-    private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s) {
+    private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s, float fade) {
+        boolean boxFace = SiftBudget.riftBoxFace;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
+            if (boxFace && !sh.windowCell(i, j)) continue; // the stepped box is frosted; boxFaces draws it
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
-            winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, 1f); // opening stays clear
+            winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade); // opening stays clear
         }
+        if (boxFace) return; // satellites and cubes are frosted boxes too, drawn by boxFaces
         for (float[] b : sh.sats) {
             if (age < satAt(b)) continue;
             winQuadSub(p, vc, wv, sh, b[0], b[1], b[2], b[3], b[5], code,
-                spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f) * backFade(b[5]));
+                fade * spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f) * backFade(b[5]));
         }
         if (age >= GROWN && s.type != RiftType.PORTAL) for (int k = 0; k < 5; k++) {
             float[] c = cube(sh, s, k);
             float q = c[3], z = c[2] - q;
-            float fade = spokeFade(sh, c[0], c[1]) * backFade(z);
-            win(p, vc, wv, sh, c[0] - q, c[1] - q, z, code, fade); win(p, vc, wv, sh, c[0] + q, c[1] - q, z, code, fade);
-            win(p, vc, wv, sh, c[0] + q, c[1] + q, z, code, fade); win(p, vc, wv, sh, c[0] - q, c[1] + q, z, code, fade);
+            float f = fade * spokeFade(sh, c[0], c[1]) * backFade(z);
+            win(p, vc, wv, sh, c[0] - q, c[1] - q, z, code, f); win(p, vc, wv, sh, c[0] + q, c[1] - q, z, code, f);
+            win(p, vc, wv, sh, c[0] + q, c[1] + q, z, code, f); win(p, vc, wv, sh, c[0] - q, c[1] + q, z, code, f);
         }
     }
 
+    /**
+     * 0.29r: the frosted voxel box. Every body cell that is not the small square window is drawn as a solid
+     * frosted face, the detached satellites close into frosted boxes, and the window hole gets a lit border.
+     * This is what turns the rift from "a window" into the reference's stepped grey box with one glazed square.
+     */
+    private static void boxFaces(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, float age, State s) {
+        if (!SiftBudget.riftBoxFace) return;
+        // Reference frames are grey-toned: the box mass is frosted cool white, the rims keep the type colour.
+        float[] face = mix(mix(look.wallFront(), look.wallBack(), 0.30f), c(0.78f, 0.80f, 0.84f), 0.45f);
+        float[] edge = mix(look.core(), c(1f, 1f, 1f), 0.45f);
+        for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
+            if (!shown(sh, i, j, age) || sh.windowCell(i, j)) continue;
+            float z = -sh.d(i, j);
+            rectSub(p, vc, wv, sh.x(i), sh.y(j), sh.x(i + 1), sh.y(j + 1), z, face, 0.95f);
+            // Lit border around the glazed square, so the hole reads as cut into the box.
+            float bx0 = sh.x(i), bx1 = sh.x(i + 1), by0 = sh.y(j), by1 = sh.y(j + 1);
+            if (isWindow(sh, i - 1, j)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx0, by1, z + 0.012f}, 0.05f, edge, 0.55f);
+            if (isWindow(sh, i + 1, j)) line(p, vc, wv, cam, new float[]{bx1, by0, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.05f, edge, 0.55f);
+            if (isWindow(sh, i, j - 1)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx1, by0, z + 0.012f}, 0.05f, edge, 0.55f);
+            if (isWindow(sh, i, j + 1)) line(p, vc, wv, cam, new float[]{bx0, by1, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.05f, edge, 0.55f);
+        }
+        for (float[] b : sh.sats) {
+            if (age < satAt(b)) continue;
+            float f = spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f);
+            rectSub(p, vc, wv, b[0], b[1], b[2], b[3], b[5], face, 0.95f * f);
+        }
+    }
+
+    private static boolean isWindow(RiftShape sh, int i, int j) {
+        return sh.on(i, j) && sh.windowCell(i, j);
+    }
+
     /** rift_shader=false fallback: flat vertical gradient in the destination colours (no shader). */
-    private static void windowsFlat(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, State s) {
+    private static void windowsFlat(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, State s, float fade) {
         float[][] g = switch (s.view) {
             case 1 -> new float[][]{c(0.95f, 0.30f, 0.12f), c(0.45f, 0.05f, 0.05f)};
             case 2 -> new float[][]{c(0.30f, 0.28f, 0.62f), c(0.05f, 0.06f, 0.18f)};
@@ -588,14 +641,16 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         };
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
+            if (SiftBudget.riftBoxFace && !sh.windowCell(i, j)) continue; // boxFaces draws the frosted panels
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
             float[] lo = mix(g[0], g[1], (float) j / sh.rows), hi = mix(g[0], g[1], (float) (j + 1) / sh.rows);
-            col(p, vc, wv, x0, y0, z, lo, 0.18f); col(p, vc, wv, x1, y0, z, lo, 0.18f);
-            col(p, vc, wv, x1, y1, z, hi, 0.18f); col(p, vc, wv, x0, y1, z, hi, 0.18f);
+            col(p, vc, wv, x0, y0, z, lo, 0.18f * fade); col(p, vc, wv, x1, y0, z, lo, 0.18f * fade);
+            col(p, vc, wv, x1, y1, z, hi, 0.18f * fade); col(p, vc, wv, x0, y1, z, hi, 0.18f * fade);
         }
+        if (SiftBudget.riftBoxFace) return;
         for (float[] b : sh.sats) {
             if (age < satAt(b)) continue;
-            float f = spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f) * backFade(b[5]);
+            float f = fade * spokeFade(sh, (b[0] + b[2]) * 0.5f, (b[1] + b[3]) * 0.5f) * backFade(b[5]);
             col(p, vc, wv, b[0], b[1], b[5], g[0], f); col(p, vc, wv, b[2], b[1], b[5], g[0], f);
             col(p, vc, wv, b[2], b[3], b[5], g[1], f); col(p, vc, wv, b[0], b[3], b[5], g[1], f);
         }
@@ -964,31 +1019,22 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /**
-     * Placement shockwave (reference placement frames): one white band races out over the land and vanishes,
-     * then the gigantic band follows through the gap it left. Radii are the absolute reference-measured
-     * blocks — pulse one tops out near 22 blocks, the giant pulse clears ~46 — with ground cracks trailing
-     * each front so the band reads as energy running through the terrain, not a decal.
+     * Placement shockwave (reference placement frames): ONE gigantic white band appears on the land and
+     * races out to the reference-measured radius (~62 blocks) before it dissolves, with ground cracks
+     * trailing the front so the band reads as energy running through the terrain, not a decal.
      */
     private static void shockwave(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s, Vector3f cam, float age) {
         if (!SiftBudget.riftShock) return;
+        float f = clamp(age / SHOCK_END, 0f, 1f);
+        float ease = 1f - (float) Math.pow(1f - f, 3);
+        float radius = 1.0f + ease * 61.0f;
+        float alpha = (1f - f) * (1f - f) * 0.95f;
         float[] white = c(1f, 0.99f, 0.97f);
-        float f1 = clamp(age / SHOCK_PULSE2, 0f, 1f);
-        float e1 = 1f - (float) Math.pow(1f - f1, 3);
-        float r1 = 1.0f + e1 * 21.0f;
-        float a1 = (1f - f1) * (1f - f1) * 0.95f;
-        groundRing(p, vc, wv, r1, 0.85f - 0.45f * e1, a1, white, false);
-        groundRing(p, vc, wv, r1 * 0.86f, 0.34f, a1 * 0.45f, look.halo(), false);
-        groundRing(p, vc, wv, r1 * 1.10f, 0.24f, a1 * 0.25f, look.core(), false);
-        if (f1 <= 0.78f) shockCracks(p, vc, wv, s, cam, 7, r1 * 0.85f, 0.65f, white, a1 * 0.85f);
-        if (age <= SHOCK_PULSE2) return;
-        float f2 = clamp((age - SHOCK_PULSE2) / (SHOCK_END - SHOCK_PULSE2), 0f, 1f);
-        float e2 = 1f - (float) Math.pow(1f - f2, 3);
-        float r2 = 6.0f + e2 * 40.0f;
-        float a2 = (1f - f2) * (1f - f2) * 0.92f;
-        groundRing(p, vc, wv, r2, 2.2f - 1.2f * e2, a2, white, false);
-        groundRing(p, vc, wv, r2 * 0.94f, 0.70f, a2 * 0.45f, look.halo(), false);
-        groundRing(p, vc, wv, r2 * 1.06f, 0.50f, a2 * 0.30f, look.core(), false);
-        if (f2 <= 0.85f) shockCracks(p, vc, wv, s, cam, 11, r2 * 0.90f, 0.70f, white, a2 * 0.80f);
+        groundRing(p, vc, wv, radius, 2.6f - 1.4f * ease, alpha, white, false);
+        groundRing(p, vc, wv, radius * 0.94f, 0.80f, alpha * 0.45f, look.halo(), false);
+        groundRing(p, vc, wv, radius * 1.06f, 0.60f, alpha * 0.30f, look.core(), false);
+        if (f > 0.86f) return;
+        shockCracks(p, vc, wv, s, cam, 11, radius * 0.90f, 0.70f, white, alpha * 0.80f);
     }
 
     /** Ground cracks radiating from the centre, trailing a shock front. */

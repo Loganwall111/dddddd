@@ -7,7 +7,7 @@ D=R/'data/entersift'
 def fn(name): return (D/f'function/{name}.mcfunction').read_text()
 def read(path): return json.loads((D/path).read_text())
 class DataContracts(unittest.TestCase):
-    def test_v029_box_structure_lightning_and_shockwave(self):
+    def test_v030_frosted_box_lightning_shockwave_and_white_birth(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
         budget=(C/'SiftBudget.java').read_text(); shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
@@ -21,14 +21,28 @@ class DataContracts(unittest.TestCase):
         self.assertIn('float overlap = (0.05f + 0.04f * flash) * k;',rift)
         self.assertIn('x0 - ox',rift); self.assertIn('x1 + ox',rift)
         # Placement shockwave: expanding white ground band plus radiating cracks.
-        self.assertIn('static final float SHOCK_END = 62f, SHOCK_PULSE2 = 22f;',rift)
-        # 0.29b: the reference-timed two-pulse blast, cracks trailing each front.
-        self.assertIn('float r1 = 1.0f + e1 * 21.0f;',rift)
-        self.assertIn('float r2 = 6.0f + e2 * 40.0f;',rift)
+        self.assertIn('static final float SHOCK_END = 40f, RIFT_BIRTH = 42f, RIFT_COLOUR = 48f;',rift)
+        # The blast is a single gigantic band out to the measured ~62 blocks, cracks trailing the front.
+        self.assertIn('float radius = 1.0f + ease * 61.0f;',rift)
         self.assertIn('private static void shockCracks(',rift)
         self.assertIn('int seg = radius > 26f ? 128 : radius > 12f ? 80 : 56;',rift)
         self.assertIn('float dist = 8f + 30f * RiftShape.hash(g, k, 45);',rift)
         self.assertIn('boolean blasting = SiftBudget.riftShock && e.age() <= SHOCK_END + 4f;',rift)
+        # 0.30: the rift snaps in white and dissolves into its colours a few ticks later.
+        self.assertIn('float fl = whiteFlash(age);',rift)
+        self.assertIn('static float whiteFlash(float age)',rift)
+        self.assertIn('private static Look whiten(Look look, float k)',rift)
+        self.assertIn('return RIFT_BIRTH - 6f + Math.min(tier, RiftShape.TIERS - 1) * 2f;',rift)
+        # 0.30: stepped frosted box with one small clear square window.
+        self.assertIn('private static void boxFaces(',rift)
+        self.assertIn('float[] face = mix(mix(look.wallFront(), look.wallBack(), 0.30f), c(0.78f, 0.80f, 0.84f), 0.45f);',rift)
+        self.assertIn('private static boolean isWindow(RiftShape sh, int i, int j)',rift)
+        self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a, s);',rift)
+        self.assertIn('public boolean windowCell(int i, int j)',shape)
+        self.assertIn('window[i][j] = !glazedSquare || (Math.abs(i - 5) <= 1 && Math.abs(j - 3) <= 1);',shape)
+        self.assertIn('private final boolean[][] window;',shape)
+        for key in ('rift_box_face',):
+            self.assertIn(key,budget)
         self.assertIn('private static void groundRing(',rift)
         self.assertIn('private static void groundCrack(',rift)
         self.assertIn('shockwave(p, vc, still, sh, look, s, cam, age)',rift)
@@ -58,7 +72,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('spokeFade(sh, (q[0] + q[2]) * 0.5f, (q[1] + q[3]) * 0.5f)',rift)
         self.assertIn('0.95f * sp',rift)
         # The opening itself stays clear; only the detached window panels fade.
-        self.assertIn('winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, 1f)',rift)
+        self.assertIn('winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade)',rift)
         self.assertIn('* backFade(b[5])',rift)
         # The shader multiplies the window by the per-quad fade carried in the vertex colour.
         self.assertIn('* riftData.a) * ColorModulator;',fsh)
@@ -584,7 +598,7 @@ class DataContracts(unittest.TestCase):
             self.assertLess(a['minecraft:visual/fog_end_distance'],200)
         # Directive 2: 100-tick awakening, one tier every 10 ticks, large dissolving voxel cubes per rift type.
         self.assertIn('RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 8, GROWN = 100',rift)
-        self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 25f',rift)
+        self.assertIn('RIFT_BIRTH - 6f + Math.min(tier, RiftShape.TIERS - 1) * 2f',rift)
         self.assertIn('TIERS = 4',(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text())
         self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
         self.assertIn('float hx = half, hy = half, hz = half;',rift)        # 0.25-0.5 block cubes
@@ -652,7 +666,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.29.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.30.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -791,7 +805,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.29.0-alpha',props)
+        self.assertIn('mod_version=0.30.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

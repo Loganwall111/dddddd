@@ -28,9 +28,12 @@ public final class RiftShape {
     public final float maxDepth;
     /** Satellite cells: {x0, y0, x1, y1, zFront, zBack, group, neighbourMask(1 L, 2 R, 4 D, 8 U)}. */
     public final List<float[]> sats = new ArrayList<>();
+    /** 0.29r: cells that stay clear window; everything else in the body is a frosted box face. */
+    private final boolean[][] window;
 
-    private RiftShape(int cols, int rows, float w, float h, boolean[][] body, float[][] depth, int[][] tier, float maxDepth) {
+    private RiftShape(int cols, int rows, float w, float h, boolean[][] body, float[][] depth, int[][] tier, float maxDepth, boolean[][] window) {
         this.cols = cols; this.rows = rows; this.w = w; this.h = h;
+        this.window = window;
         this.cw = w / cols; this.ch = h / rows;
         this.body = body; this.depth = depth; this.tier = tier; this.maxDepth = maxDepth;
     }
@@ -65,7 +68,12 @@ public final class RiftShape {
         }
         float[][] depth = new float[cols][rows];
         float max = boxes(type, seed, cols, rows, body, tier, depth);
-        RiftShape s = new RiftShape(cols, rows, w, h, body, depth, tier, max);
+        boolean[][] window = new boolean[cols][rows];
+        boolean glazedSquare = type == RiftType.SIFT || type == RiftType.OVERWORLD;
+        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) {
+            window[i][j] = !glazedSquare || (Math.abs(i - 5) <= 1 && Math.abs(j - 3) <= 1);
+        }
+        RiftShape s = new RiftShape(cols, rows, w, h, body, depth, tier, max, window);
         s.satellites(type, seed);
         return s;
     }
@@ -153,6 +161,16 @@ public final class RiftShape {
             }
         }
         return Math.max(max, 0.60f);
+    }
+
+    /**
+     * 0.29r: the reference rift is a stepped voxel BOX whose only glazed part is a small square hole in the
+     * middle — everything else is frosted panel. Cells that answer true here stay clear window; every other
+     * body cell is drawn as a frosted box face (see {@code boxFaces} in the renderer). Other rift types keep
+     * their old fully-glazed opening.
+     */
+    public boolean windowCell(int i, int j) {
+        return i >= 0 && j >= 0 && i < cols && j < rows && window[i][j];
     }
 
     // ------------------------------------------------------------------ trailer-exact perimeter satellites

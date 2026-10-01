@@ -138,3 +138,19 @@ were 64.
 Still not one-to-one: the blast radius, the window plane depth and the exact frost opacity were chosen
 from measured reference proportions and have never been compared against a running client. Those three
 numbers are the dials to turn next.
+
+## 0.30 — frosted box with one square window, single blast, white birth
+
+- The rift is now a stepped frosted BOX. Only the central 3x3 cell square stays glazed; every other body
+  cell (and every satellite) is a frosted grey-white panel at its own recess depth, with a lit border
+  around the square hole. That is the "square box behind it" the reference frames show, instead of the
+  previous fully-transparent stepped cross.
+- The placement blast fires ONCE: a single gigantic white band out to ~62 blocks, cracks trailing the
+  front, then the rift snaps in, flares white and dissolves into its colours over about six ticks
+  (`RIFT_BIRTH = 42`, `RIFT_COLOUR = 48`). The 0.29 two-pulse version is superseded.
+- Lightning still crawls off the assembling seed and off the finished rift (out to ~38 blocks).
+- Switchable: `rift_box_face`, `rift_shockwave`, `rift_bolts`, `rift_back_fade`.
+
+Dials that are still guesswork and can only be settled in a client: how frosted the panels look
+(`0.95` face alpha through `faceA`), how wide the square window should be (currently 3x3 cells of an
+11x8 grid), and whether the band should read thicker or thinner at its widest.

@@ -88,3 +88,31 @@ pushes. Artifact: `Sift-Overhaul-0.29.0-alpha-26.3`.
 
 Not verified: nothing in this batch has been seen in a running client. There is no GPU, no client and
 no online-mode session in this workspace, so every visual statement above is a source-level claim.
+
+## Sift Overhaul 0.30.0-alpha: frosted box, one blast, white birth (CI pending at time of writing)
+
+Scope: the user picked "box mass with one small clear square window" and asked for the blast to fire
+once and the rift to arrive white before dissolving into colour.
+
+- `RiftShape` now carries a window mask (`private final boolean[][] window`, built in `build(...)`):
+  for SIFT and OVERWORLD only the 3x3 cell square at the centre (`|i-5| <= 1 && |j-3| <= 1`) stays
+  glazed; every other body cell is a frosted box face. Other rift types keep their old opening.
+- New renderer pass `boxFaces(...)`: frosted grey-white panels at each cell's recess depth for the body
+  and the detached satellites, plus a lit border around the square hole. Drawn on the glow pipeline
+  with `faceA(z, 0.95f)`, so the frosted mass still dissolves as it recedes.
+- `windows(...)`/`windowsFlat(...)` now draw only the glazed square (and skip satellites/cubes when the
+  box face is on), taking the new per-window fade so the flash can dissolve the opening.
+- Placement re-timed: `SHOCK_END = 40`, `RIFT_BIRTH = 42`, `RIFT_COLOUR = 48`. One gigantic white band
+  (`radius = 1 + ease * 61`, measured ~62 blocks) with cracks trailing the front — the two-pulse version
+  from 0.29 is gone.
+- The box steps in at `RIFT_BIRTH - 6 + tier * 2` (36/38/40/42), so the rift appears right behind the
+  blast: it snaps in as a white silhouette (`whiteFlash`, `whiten(look, k)` pushes every palette
+  towards white) and dissolves into its colours over the next six ticks.
+- Culling box inflates 68 blocks while the blast runs. `SiftBudget.riftBoxFace` (`rift_box_face`)
+  switches the frosted box on and off.
+
+Verified locally: 66 data tests, 613-file validation, 7 generators, 82 shader programs, `git diff --check`.
+
+Environment note: this turn the sandbox's `.git` was re-cloned at the session base commit while the
+working tree held the session's work; recovery was to re-fetch the pushed branch (`b390240`), hard-reset
+onto it and restore the six files edited after that push, so no session work was lost.
