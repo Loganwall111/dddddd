@@ -21,7 +21,14 @@ class DataContracts(unittest.TestCase):
         self.assertIn('float overlap = (0.05f + 0.04f * flash) * k;',rift)
         self.assertIn('x0 - ox',rift); self.assertIn('x1 + ox',rift)
         # Placement shockwave: expanding white ground band plus radiating cracks.
-        self.assertIn('static final float SHOCK_END = 48f;',rift)
+        self.assertIn('static final float SHOCK_END = 62f, SHOCK_PULSE2 = 22f;',rift)
+        # 0.29b: the reference-timed two-pulse blast, cracks trailing each front.
+        self.assertIn('float r1 = 1.0f + e1 * 21.0f;',rift)
+        self.assertIn('float r2 = 6.0f + e2 * 40.0f;',rift)
+        self.assertIn('private static void shockCracks(',rift)
+        self.assertIn('int seg = radius > 26f ? 128 : radius > 12f ? 80 : 56;',rift)
+        self.assertIn('float dist = 8f + 30f * RiftShape.hash(g, k, 45);',rift)
+        self.assertIn('boolean blasting = SiftBudget.riftShock && e.age() <= SHOCK_END + 4f;',rift)
         self.assertIn('private static void groundRing(',rift)
         self.assertIn('private static void groundCrack(',rift)
         self.assertIn('shockwave(p, vc, still, sh, look, s, cam, age)',rift)

@@ -44,7 +44,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      */
     static final float FADE_NEAR = 0.06f, FADE_FAR = 1.0f;
     /** Placement shockwave: the giant white ground band that expands and fades (reference placement shots). */
-    static final float SHOCK_END = 48f;
+    /**
+     * Placement blast timing (reference placement sequence): band one appears on the land and dies, then
+     * the gigantic band follows through the gap it left, clearing ~46 blocks before it dissolves.
+     */
+    static final float SHOCK_END = 62f, SHOCK_PULSE2 = 22f;
     static final int SUB = 4; // subdivisions per cell edge so vertical sides curve smoothly with the wave
     static final float[] VIBRANT_PINK_DAY = rgb(0xFF6FA8);
     static final float[] DEEP_AMBER_NIGHT = rgb(0xDB7840);
@@ -91,8 +95,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     @Override
     protected AABB getBoundingBoxForCulling(RiftPortalEntity e, float partial) {
-        float r = Math.max(e.riftWidth(), e.riftHeight()) + 8f;
-        return e.getBoundingBox().inflate(r, r * 2f, r);
+        // While the placement blast is still running the structure's visible footprint is the whole shockwave,
+        // so the culling box has to grow with it or the band pops out when the camera pulls back.
+        boolean blasting = SiftBudget.riftShock && e.age() <= SHOCK_END + 4f;
+        float r = Math.max(e.riftWidth(), e.riftHeight()) + (blasting ? 52f : 8f);
+        return e.getBoundingBox().inflate(r, blasting ? 24f : r * 2f, r);
     }
 
     /**
@@ -925,7 +932,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     /** Flat glowing band lying on the terrain; the placement shockwave is made of two of these. */
     private static void groundRing(PoseStack.Pose p, VertexConsumer vc, Warp wv, float radius, float thickness,
                                    float alpha, float[] tone, boolean fadeWithDistance) {
-        int seg = 56;
+        int seg = radius > 26f ? 128 : radius > 12f ? 80 : 56;
         float inner = Math.max(0.05f, thickness * 0.5f);
         for (int i = 0; i < seg; i++) {
             float a0 = i / (float) seg * PI2, a1 = (i + 1) / (float) seg * PI2;
@@ -957,25 +964,41 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /**
-     * Placement shockwave: one giant white band races out across the terrain and dissolves, followed by
-     * thinner halo rings and ground cracks (reference placement frames). The band's radius grows fast then
-     * eases, and its alpha fades quadratically so it "appears on the land and disappears".
+     * Placement shockwave (reference placement frames): one white band races out over the land and vanishes,
+     * then the gigantic band follows through the gap it left. Radii are the absolute reference-measured
+     * blocks — pulse one tops out near 22 blocks, the giant pulse clears ~46 — with ground cracks trailing
+     * each front so the band reads as energy running through the terrain, not a decal.
      */
     private static void shockwave(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s, Vector3f cam, float age) {
         if (!SiftBudget.riftShock) return;
-        float f = clamp(age / SHOCK_END, 0f, 1f);
-        float ease = 1f - (float) Math.pow(1f - f, 3);
-        float radius = 1.0f + ease * 13.0f;
-        float alpha = (1f - f) * (1f - f) * 0.95f;
-        groundRing(p, vc, wv, radius, 0.75f - 0.35f * ease, alpha, c(1f, 0.99f, 0.97f), false);
-        groundRing(p, vc, wv, radius * 0.80f, 0.34f, alpha * 0.45f, look.halo(), false);
-        groundRing(p, vc, wv, radius * 1.12f, 0.22f, alpha * 0.25f, look.core(), false);
-        if (f > 0.82f) return;
-        for (int k = 0; k < 7; k++) {
-            long g = s.seed + k * 31L;
+        float[] white = c(1f, 0.99f, 0.97f);
+        float f1 = clamp(age / SHOCK_PULSE2, 0f, 1f);
+        float e1 = 1f - (float) Math.pow(1f - f1, 3);
+        float r1 = 1.0f + e1 * 21.0f;
+        float a1 = (1f - f1) * (1f - f1) * 0.95f;
+        groundRing(p, vc, wv, r1, 0.85f - 0.45f * e1, a1, white, false);
+        groundRing(p, vc, wv, r1 * 0.86f, 0.34f, a1 * 0.45f, look.halo(), false);
+        groundRing(p, vc, wv, r1 * 1.10f, 0.24f, a1 * 0.25f, look.core(), false);
+        if (f1 <= 0.78f) shockCracks(p, vc, wv, s, cam, 7, r1 * 0.85f, 0.65f, white, a1 * 0.85f);
+        if (age <= SHOCK_PULSE2) return;
+        float f2 = clamp((age - SHOCK_PULSE2) / (SHOCK_END - SHOCK_PULSE2), 0f, 1f);
+        float e2 = 1f - (float) Math.pow(1f - f2, 3);
+        float r2 = 6.0f + e2 * 40.0f;
+        float a2 = (1f - f2) * (1f - f2) * 0.92f;
+        groundRing(p, vc, wv, r2, 2.2f - 1.2f * e2, a2, white, false);
+        groundRing(p, vc, wv, r2 * 0.94f, 0.70f, a2 * 0.45f, look.halo(), false);
+        groundRing(p, vc, wv, r2 * 1.06f, 0.50f, a2 * 0.30f, look.core(), false);
+        if (f2 <= 0.85f) shockCracks(p, vc, wv, s, cam, 11, r2 * 0.90f, 0.70f, white, a2 * 0.80f);
+    }
+
+    /** Ground cracks radiating from the centre, trailing a shock front. */
+    private static void shockCracks(PoseStack.Pose p, VertexConsumer vc, Warp wv, State s, Vector3f cam,
+                                    int count, float reach, float spread, float[] tone, float alpha) {
+        for (int k = 0; k < count; k++) {
+            long g = s.seed + k * 31L + count * 7717L;
             float angle = RiftShape.hash(g, k, 51) * PI2;
-            float len = radius * (0.65f + 0.55f * RiftShape.hash(g, k, 52));
-            groundCrack(p, vc, wv, cam, angle, len, g, c(1f, 0.98f, 0.96f), alpha * 0.8f);
+            float len = reach * (0.45f + spread * RiftShape.hash(g, k, 52));
+            groundCrack(p, vc, wv, cam, angle, len, g, tone, alpha);
         }
     }
 
@@ -993,9 +1016,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float sx = (RiftShape.hash(g, k, 42) - 0.5f) * sh.w;
             float sy = sh.cy() + (RiftShape.hash(g, k, 43) - 0.5f) * sh.h;
             float angle = RiftShape.hash(g, k, 44) * PI2;
-            float dist = 4f + 13f * RiftShape.hash(g, k, 45);
+            float dist = 8f + 30f * RiftShape.hash(g, k, 45);
             float ex = sx + (float) Math.cos(angle) * dist;
-            float ey = sy + (RiftShape.hash(g, k, 46) - 0.35f) * dist * 0.85f;
+            float ey = Math.max(0.25f, sy + (RiftShape.hash(g, k, 46) - 0.35f) * dist * 0.85f);
             float ez = 0.1f + (RiftShape.hash(g, k, 47) - 0.5f) * (0.6f + dist * 0.35f);
             bolt(p, vc, wv, cam, new float[]{sx, sy, 0.05f}, new float[]{ex, ey, ez}, g, look, s.night ? 0.95f : 0.7f);
         }
@@ -1011,7 +1034,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float sx = (RiftShape.hash(g, b, 62) - 0.5f) * 0.9f;
             float sy = sh.cy() + (RiftShape.hash(g, b, 63) - 0.5f) * 1.9f;
             float angle = RiftShape.hash(g, b, 64) * PI2;
-            float dist = 2.5f + 6.5f * RiftShape.hash(g, b, 65);
+            float dist = 3.5f + 10.5f * RiftShape.hash(g, b, 65);
             float ex = sx + (float) Math.cos(angle) * dist;
             float ey = sy + (RiftShape.hash(g, b, 66) - 0.4f) * dist * 0.8f;
             float ez = 0.05f + (RiftShape.hash(g, b, 67) - 0.5f) * 1.6f;
