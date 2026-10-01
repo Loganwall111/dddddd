@@ -39,3 +39,17 @@ Even a successful server smoke test cannot establish client-side visual quality.
   passed. The smoke test now also places `entersift:rift_core` and asserts the registered block entity ticks.
 - Not verified anywhere yet: client-side rendering on a GPU. `RiftScene` refraction, the inflated shells, the
   tendrils/teeth, the positional hum loop and the accumulated rift changes still need an in-game capture pass.
+
+## Sift Overhaul 0.28.0-alpha: CI verified (run 36932734783)
+
+- 0.28 adds the rift back fade: structure dissolves with depth behind the opening plane, with a 45% floor on
+  edges so the wireframe stays readable, a gentler radial falloff for the detached boxes and floating cubes,
+  and a per-quad window fade (carried in the vertex colour, applied in ) that leaves the opening
+  itself clear.  in  disables it.
+-  — 65 tests passed (adds ).
+-  — 613 JSON/metadata files, 155 functions;  — 7 live
+  generators reproduce the shipped tree.
+- GitHub Actions: 26.3 client compile, shader checks, shader-pack bundling and the dedicated-server smoke
+  test (with the registered rift-core assertion) all passed, artifact `Sift-Overhaul-0.28.0-alpha-26.3`.
+- Still not verified anywhere: GPU rendering. The fade distances, edge floor and shell alphas are
+  parameter choices that need a client capture to judge.
