@@ -24,6 +24,16 @@ def annotate(title, text):
     text = text[:3500].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
     print(f"::error title={title}::{text}")
 
+def notice(title, text):
+    text = text[:3500].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::notice title={title}::{text}")
+
+# Positive evidence from the real server: what the rift night gate actually did (0.25.1), so a green run can be audited.
+evidence = [re.sub(r"\b(?:minecraft|entersift):", "", re.sub(r"^.*?SIFT-SMOKE ", "", l)).strip() for l in log
+            if re.search(r"SIFT-SMOKE (rift gate|anchors|ritual):", l) and "SIFT-SMOKE > " not in l]
+if evidence:
+    notice("Smoke evidence (rift gate / anchors / ritual)", "\n".join(evidence))
+
 if not started:
     annotate("Smoke test", "SIFT-SMOKE never enabled; server did not start the mod.\n" + "\n".join(log[-60:]))
 if started and not done:
