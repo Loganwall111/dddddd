@@ -53,7 +53,7 @@ public final class SiftBudget {
 
     public static boolean overworldClouds = true, riftEffects = true, transitionHud = true, riftShader = true, auraGlow = true;
 
-    public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = true, riftBackFade = true, riftBolts = true, riftShock = true, riftBoxFace = true, riftProximity = true;
+    public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = true, riftBackFade = true, riftBolts = true, riftShock = true, riftBoxFace = true, riftProximity = true, riftTipFade = true;
 
     public static void load(Path configDir) {
         Path file = configDir.resolve("entersift-client.properties");
@@ -75,6 +75,7 @@ public final class SiftBudget {
         riftShock = flag(props, "rift_shockwave", true);
         riftBoxFace = flag(props, "rift_box_face", true); // 0.29: frosted stepped box, one clear square window
         riftProximity = flag(props, "rift_proximity", true); // 0.31: the frosted sheet clears as you walk up
+        riftTipFade = flag(props, "rift_tip_fade", true); // 0.32: the outer boxes dissolve to nothing at the tips
         props.setProperty("rift_refraction", Boolean.toString(riftRefraction));
         props.setProperty("rift_glow", Boolean.toString(riftBloom));
         props.setProperty("enable_flares", Boolean.toString(riftFlares));
@@ -84,6 +85,7 @@ public final class SiftBudget {
         props.setProperty("rift_shockwave", Boolean.toString(riftShock));
         props.setProperty("rift_box_face", Boolean.toString(riftBoxFace));
         props.setProperty("rift_proximity", Boolean.toString(riftProximity));
+        props.setProperty("rift_tip_fade", Boolean.toString(riftTipFade));
         auraGlow = flag(props, "aura_glow", true);       // 0.17 night aura columns + note-block columns
         props.setProperty("overworld_clouds", Boolean.toString(overworldClouds));
         props.setProperty("rift_effects", Boolean.toString(riftEffects));

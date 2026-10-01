@@ -35,7 +35,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     static final Identifier THE_SIFT = SiftContent.id("the_sift");
     static final float RIPPLE_END = 60, SEED_START = 0, CLUSTER_START = 8, GROWN = 100;
     /** Recessed alcove constants; FLANGE is kept sleek so the glowing white neon rim stays razor-sharp. */
-    static final float COLLAR = 0.12f, FLANGE = 0.018f;
+    /** 0.32: the references' borders are thick chunky bevels, not hairline inlays. */
+    static final float COLLAR = 0.12f, FLANGE = 0.05f;
     /**
      * 0.28 back fading (reference screenshots): the frosted voxel structure recedes behind the opening
      * plane (negative Z) and dissolves instead of ending on a hard backside. Faces fade to nothing over
@@ -222,6 +223,27 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static float edgeA(float z, float a) { return a * (0.45f + 0.55f * backFade(z)); }
 
     /** Detached boxes fade with their distance from the opening centre, not only with depth. */
+    /**
+     * 0.32 tip fade: the outer boxes dissolve to nothing at the ends, exactly as the reference rifts fade
+     * out — 1 in the middle of the structure, 0 past the arms. Applied to the rims and the frosted panels.
+     */
+    static float tipFade(RiftShape sh, float x, float y) {
+        if (!SiftBudget.riftTipFade) return 1f;
+        float dx = x / Math.max(0.001f, sh.w * 0.5f), dy = (y - sh.cy()) / Math.max(0.001f, sh.h * 0.5f);
+        float r = (float) Math.sqrt(dx * dx + dy * dy);
+        float f = clamp((r - 0.30f) / 0.75f, 0f, 1f);
+        return 1f - f * f * f;
+    }
+
+    /**
+     * 0.32 wavy border: a slow travelling wave applied to the SIDE borders of the silhouette (never to the
+     * recessed steps inside it), so the outer edges undulate like the reference rifts.
+     */
+    static float borderWave(float along, float time) {
+        return 0.14f * (float) Math.sin(along * 1.9f + time * 1.1f)
+             + 0.06f * (float) Math.sin(along * 3.7f - time * 1.7f);
+    }
+
     static float spokeFade(RiftShape sh, float x, float y) {
         if (!SiftBudget.riftBackFade) return 1f;
         float dx = x / Math.max(0.001f, sh.w * 0.5f), dy = (y - sh.cy()) / Math.max(0.001f, sh.h * 0.5f);
@@ -673,15 +695,18 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age) || sh.windowCell(i, j)) continue;
             float z = -sh.d(i, j);
-            // Cells further from the glazed square stand taller and take the warm tip tone.
+            // Cells further from the glazed square stand taller, take the warm tip tone and fade out.
             boolean tipCell = Math.abs(i - 5) + Math.abs(j - 3) >= 4;
-            rectSub(p, vc, wv, sh.x(i), sh.y(j), sh.x(i + 1), sh.y(j + 1), z, tipCell ? pane : face, 0.95f);
+            float tf = tipFade(sh, (sh.x(i) + sh.x(i + 1)) * 0.5f, (sh.y(j) + sh.y(j + 1)) * 0.5f);
+            if (tf <= 0.02f) continue;
+            rectSub(p, vc, wv, sh.x(i), sh.y(j), sh.x(i + 1), sh.y(j + 1), z, tipCell ? pane : face, 0.95f * tf);
             // Lit border around the glazed square, so the hole reads as cut into the box.
             float bx0 = sh.x(i), bx1 = sh.x(i + 1), by0 = sh.y(j), by1 = sh.y(j + 1);
-            if (isWindow(sh, i - 1, j)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx0, by1, z + 0.012f}, 0.05f, edge, 0.55f);
-            if (isWindow(sh, i + 1, j)) line(p, vc, wv, cam, new float[]{bx1, by0, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.05f, edge, 0.55f);
-            if (isWindow(sh, i, j - 1)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx1, by0, z + 0.012f}, 0.05f, edge, 0.55f);
-            if (isWindow(sh, i, j + 1)) line(p, vc, wv, cam, new float[]{bx0, by1, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.05f, edge, 0.55f);
+            float ea = 0.55f * tf;
+            if (isWindow(sh, i - 1, j)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx0, by1, z + 0.012f}, 0.08f, edge, ea);
+            if (isWindow(sh, i + 1, j)) line(p, vc, wv, cam, new float[]{bx1, by0, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.08f, edge, ea);
+            if (isWindow(sh, i, j - 1)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx1, by0, z + 0.012f}, 0.08f, edge, ea);
+            if (isWindow(sh, i, j + 1)) line(p, vc, wv, cam, new float[]{bx0, by1, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.08f, edge, ea);
         }
         // The detached satellites stay HOLLOW, exactly like the reference's small outlined boxes (17345525):
         // rims() already draws their lit edges and corner posts, so no frosted pane goes on them.
@@ -786,20 +811,30 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (flash > 0f) rect(p, vc, wv, x0, y0, x1, y1, -d + 0.02f, white, flash * 0.85f);
             float zl = wallTop(sh, i - 1, j, d, age), zr = wallTop(sh, i + 1, j, d, age);
             float zd = wallTop(sh, i, j - 1, d, age), zu = wallTop(sh, i, j + 1, d, age);
-            if (zl <= 0) rim(p, vc, wv, cam, x0, y0, x0, y1, lip(zl), -d, core, halo, zl < 0, flash, jit);
-            if (zr <= 0) rim(p, vc, wv, cam, x1, y0, x1, y1, lip(zr), -d, core, halo, zr < 0, flash, jit);
-            if (zd <= 0) rim(p, vc, wv, cam, x0, y0, x1, y0, lip(zd), -d, core, halo, zd < 0, flash, jit);
-            if (zu <= 0) rim(p, vc, wv, cam, x0, y1, x1, y1, lip(zu), -d, core, halo, zu < 0, flash, jit);
+            // 0.32: silhouette edges get the full wave and the tip fade; recessed internal steps keep a
+            // quarter of the wave so the middle of the box stays crisp.
+            if (zl <= 0) rim(p, vc, wv, cam, x0, y0, x0, y1, lip(zl), -d, core, halo, zl < 0, flash, jit,
+                zl < 0 ? 0.25f : 1f, s.time, tipFade(sh, x0, (y0 + y1) * 0.5f));
+            if (zr <= 0) rim(p, vc, wv, cam, x1, y0, x1, y1, lip(zr), -d, core, halo, zr < 0, flash, jit,
+                zr < 0 ? 0.25f : 1f, s.time, tipFade(sh, x1, (y0 + y1) * 0.5f));
+            if (zd <= 0) rim(p, vc, wv, cam, x0, y0, x1, y0, lip(zd), -d, core, halo, zd < 0, flash, jit,
+                zd < 0 ? 0.25f : 1f, s.time, tipFade(sh, (x0 + x1) * 0.5f, y0));
+            if (zu <= 0) rim(p, vc, wv, cam, x0, y1, x1, y1, lip(zu), -d, core, halo, zu < 0, flash, jit,
+                zu < 0 ? 0.25f : 1f, s.time, tipFade(sh, (x0 + x1) * 0.5f, y1));
         }
         for (float[] q : sh.sats) {
             if (age < satAt(q)) continue;
             float flash = Math.max(0f, 1f - (age - satAt(q)) / 6f);
             float sp = spokeFade(sh, (q[0] + q[2]) * 0.5f, (q[1] + q[3]) * 0.5f);
             int m = (int) q[7];
-            if ((m & 1) == 0) rim(p, vc, wv, cam, q[0], q[1], q[0], q[3], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 2) == 0) rim(p, vc, wv, cam, q[2], q[1], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 4) == 0) rim(p, vc, wv, cam, q[0], q[1], q[2], q[1], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 8) == 0) rim(p, vc, wv, cam, q[0], q[3], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
+            if ((m & 1) == 0) rim(p, vc, wv, cam, q[0], q[1], q[0], q[3], q[4], q[5], core, halo, false, flash, jit,
+                1f, s.time, sp * tipFade(sh, q[0], (q[1] + q[3]) * 0.5f));
+            if ((m & 2) == 0) rim(p, vc, wv, cam, q[2], q[1], q[2], q[3], q[4], q[5], core, halo, false, flash, jit,
+                1f, s.time, sp * tipFade(sh, q[2], (q[1] + q[3]) * 0.5f));
+            if ((m & 4) == 0) rim(p, vc, wv, cam, q[0], q[1], q[2], q[1], q[4], q[5], core, halo, false, flash, jit,
+                1f, s.time, sp * tipFade(sh, (q[0] + q[2]) * 0.5f, q[1]));
+            if ((m & 8) == 0) rim(p, vc, wv, cam, q[0], q[3], q[2], q[3], q[4], q[5], core, halo, false, flash, jit,
+                1f, s.time, sp * tipFade(sh, (q[0] + q[2]) * 0.5f, q[3]));
             float[][] corners = {{q[0], q[1], m & 5}, {q[2], q[1], m & 6}, {q[0], q[3], m & 9}, {q[2], q[3], m & 10}};
             for (float[] cr : corners)
                 if (cr[2] == 0) line(p, vc, wv, cam, new float[]{cr[0], cr[1], q[4]}, new float[]{cr[0], cr[1], q[5]}, 0.05f, core, 0.8f * sp);
@@ -808,20 +843,26 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     /** Subdivided neon rim along each open or stepped edge so the white neon outline follows the wavy wall. */
     private static void rim(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
-                            float[] core, float[] halo, boolean lip, float flash, float[] jit) {
-        float k = lip ? 0.75f : 1f, a = lip ? 0.85f : 1f;
+                            float[] core, float[] halo, boolean lip, float flash, float[] jit, float wave, float time, float fade) {
+        float k = lip ? 0.75f : 1f, a = (lip ? 0.85f : 1f) * fade;
         // 0.28: overlap neighbouring segments so the neon outline is a continuous band instead of dots.
         float overlap = (0.05f + 0.04f * flash) * k;
         for (int s = 0; s < SUB; s++) {
             float t0 = s / (float) SUB, t1 = (s + 1) / (float) SUB;
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
             float x1 = xa + (xb - xa) * t1, y1 = ya + (yb - ya) * t1;
+            // 0.32: vertical side borders undulate; horizontal borders ride a smaller wave.
+            if (wave > 0f) {
+                if (Math.abs(yb - ya) >= Math.abs(xb - xa)) { x0 += borderWave(y0, time) * wave; x1 += borderWave(y1, time) * wave; }
+                else { y0 += borderWave(x0, time) * wave * 0.55f; y1 += borderWave(x1, time) * wave * 0.55f; }
+            }
             float dxs = x1 - x0, dys = y1 - y0, dlen = Math.max(1e-4f, (float) Math.sqrt(dxs * dxs + dys * dys));
             float ox = dxs / dlen * overlap, oy = dys / dlen * overlap;
             float[] fa = {x0 - ox, y0 - oy, zf + 0.006f}, fb = {x1 + ox, y1 + oy, zf + 0.006f};
-            band(p, vc, wv, cam, fa, fb, (0.065f + 0.05f * flash) * k, (0.32f + 0.15f * flash) * k, core, halo, a);
-            line(p, vc, wv, cam, new float[]{x0 + jit[0] - ox, y0 + jit[1] - oy, zf + 0.01f}, new float[]{x1 + jit[0] + ox, y1 + jit[1] + oy, zf + 0.01f}, 0.038f * k, core, 0.24f);
-            band(p, vc, wv, cam, new float[]{x0 - ox, y0 - oy, zb + 0.012f}, new float[]{x1 + ox, y1 + oy, zb + 0.012f}, 0.032f, 0.12f, core, halo, 0.35f);
+            // 0.32: thick soft borders — the references' edges are broad glowing bands, not thin lines.
+            band(p, vc, wv, cam, fa, fb, (0.15f + 0.10f * flash) * k, (0.46f + 0.20f * flash) * k, core, halo, a);
+            line(p, vc, wv, cam, new float[]{x0 + jit[0] - ox, y0 + jit[1] - oy, zf + 0.01f}, new float[]{x1 + jit[0] + ox, y1 + jit[1] + oy, zf + 0.01f}, 0.075f * k, core, 0.30f * fade);
+            band(p, vc, wv, cam, new float[]{x0 - ox, y0 - oy, zb + 0.012f}, new float[]{x1 + ox, y1 + oy, zb + 0.012f}, 0.05f, 0.18f, core, halo, 0.40f * fade);
         }
     }
 

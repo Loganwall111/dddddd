@@ -172,3 +172,31 @@ Dials that are still guesswork and can only be settled in a client: how frosted 
 
 Still unverified in a client, and the dials to turn first: how strong the frost reads at range
 (`0.62` in the shader), how fast it clears (`FROST_NEAR`/`FROST_CLEAR`), and the pane size/spacing.
+
+## 0.32 — thicker, wavy, dissolving edges; real staffs; worn gauntlets; entry hardening
+
+- Rift edges are thicker: the bevel lip is 0.05 wide (was 0.018) and every rim band roughly doubled
+  (bright band 0.15 + 0.10 x flash, halo 0.46 + 0.20 x flash, core line 0.075). The recessed back steps
+  keep a quarter-strength wave so the opening still reads as a clean rectangle.
+- The side borders are WAVY, as asked: `borderWave(along, time)` is the sum of two sines
+  (`0.14 sin(1.9a + 1.1t) + 0.06 sin(3.7a - 1.7t)`), driven along the border in blocks and damped to
+  0.55 across the horizontal runs. `rift_tip_fade` switches it back to the plain frame.
+- The tips dissolve to nothing: `tipFade(sh, x, y)` is 1 through the middle and falls to 0 past the
+  arms, so the outer boxes, their rims and the frosted panels all fade out completely at the ends
+  instead of stopping in a hard cut. This is the "basically nothing at the end" the reference frames
+  show, and it is what makes the 13-pixel reference mass read as a tunnel that evaporates at its mouth.
+- The rift staffs are real 3D items now: a slim obsidian shaft with gold bindings and a rift CRYSTAL
+  that FLOATS clear of the tip (a separate element with a visible gap), violet for `rift_staff`, cyan
+  for `rift_staff_blue`. Their textures were also byte-identical to the gauntlet's before this batch;
+  `tools/rift_item_art.py` now draws both staff sheets deterministically.
+- The gauntlets can be WORN: sneak-right-click swaps a held gauntlet onto the chest slot (the arm), and
+  the same gesture with an empty hand takes a worn one back. A worn gauntlet casts the rift magic from
+  the arm, by right- OR left-click, without being held.
+- Crash hardening: `RiftPortalEntity.tick` now contains every rider-entry command in a try/catch that
+  logs and leaves the rift open rather than propagating, and it rebuilds a degenerate shape instead of
+  walking a zero-sized grid. `SiftSmokeTest` stages a real entry (summon -> `travel/begin` -> walk the
+  tunnel -> assert arrival) so a regression fails CI instead of the game.
+
+Still not seen in a client: whether the thicker rims and the sine wave read as "thicker wavy borders"
+at gameplay distance, and whether the floating crystal sits where the reference staffs hold theirs.
+Dials: `FLANGE`, the band widths inside `rim(...)`, and `borderWave`'s amplitudes.

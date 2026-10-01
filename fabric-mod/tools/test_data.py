@@ -154,8 +154,21 @@ class DataContracts(unittest.TestCase):
             item = json.loads((assets/f'items/{name}.json').read_text())
             self.assertEqual(item['model']['model'], f'entersift:item/{name}')
             model = json.loads((assets/f'models/item/{name}.json').read_text())
-            self.assertEqual(model['textures']['layer0'], f'entersift:item/{name}')
+            self.assertEqual(model['textures']['0'], f'entersift:item/{name}')
+            self.assertEqual(model['parent'], 'minecraft:item/handheld')
+            # 0.32: the staff is a real 3D model with a shaft and a floating crystal, not a flat sprite.
+            names = [e['name'] for e in model['elements']]
+            self.assertEqual(names, ['shaft', 'bindings', 'crystal'])
+            shaft, gem = model['elements'][0], model['elements'][2]
+            self.assertEqual((shaft['from'][0], shaft['to'][0]), (7.4, 8.6))          # a slim shaft, 5 px wide
+            self.assertGreaterEqual(shaft['to'][1] - shaft['from'][1], 10)            # long: 11 px
+            self.assertLess(gem['to'][1], shaft['from'][1])                           # the crystal sits above the tip
+            self.assertGreaterEqual(shaft['from'][1] - gem['to'][1], 0.5)             # and FLOATS: a visible gap
             self.assertTrue((assets/f'textures/item/{name}.png').is_file())
+        # The user's report: the staff art was byte-identical to the gauntlet art.
+        tex = assets/'textures/item'
+        self.assertNotEqual((tex/'rift_staff.png').read_bytes(), (tex/'rift_gauntlet.png').read_bytes())
+        self.assertNotEqual((tex/'rift_staff.png').read_bytes(), (tex/'rift_staff_blue.png').read_bytes())
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
         self.assertIn('RiftCrossing.crosses(shape', source)
@@ -702,7 +715,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.31.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.32.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -841,7 +854,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.31.0-alpha',props)
+        self.assertIn('mod_version=0.32.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

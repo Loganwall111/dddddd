@@ -58,25 +58,32 @@ public class RiftPortalEntity extends Entity {
             if (age() == 8 || age() == 33 || age() == 58 || age() == 83)
                 level.playSound(null, blockPosition(), SiftSounds.RIFT_GROWTH, net.minecraft.sounds.SoundSource.AMBIENT, 0.55f, 0.65f + age() * 0.006f);
             if (lifetime > 0 && --lifetime == 0) { discard(); return; }
-            if (shape == null) shape = RiftShape.build(riftType(), blockPosition().asLong() * 31 + riftType().id, riftWidth(), riftHeight());
+            if (shape == null || shape.cols < 1 || shape.rows < 1) shape = RiftShape.build(riftType(), blockPosition().asLong() * 31 + riftType().id, riftWidth(), riftHeight());
             java.util.Set<java.util.UUID> seen = new java.util.HashSet<>();
             for (var player : level.players()) {
                 if (player.isSpectator() || player.distanceToSqr(this) > 256) continue;
                 seen.add(player.getUUID());
-                // Inverse of the renderer's -yaw + 180 degree rotation.
-                double angle = Math.toRadians(getYRot() - 180), c = Math.cos(angle), sn = Math.sin(angle);
-                double dx = player.getX() - getX(), dz = player.getZ() - getZ();
-                var local = new net.minecraft.world.phys.Vec3(c * dx + sn * dz, player.getY() + 0.9 - getY(), -sn * dx + c * dz);
-                var old = previous.put(player.getUUID(), local);
-                if (age() < GROWN || old == null || old.distanceToSqr(local) > 64) continue;
-                if (RiftCrossing.crosses(shape, old.x, old.y, old.z, local.x, local.y, local.z)) {
-                    // Save the exact exit appearance per player, never in shared global storage.
-                    String guard = "execute if score @s sift.cooldown matches 0 run ";
-                    EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rstyle " + riftType().id);
-                    EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rwidth " + Math.round(riftWidth() * 100));
-                    EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rheight " + Math.round(riftHeight() * 100));
-                    EnterTheSift.runAs(player, guard + "particle minecraft:end_rod ~ ~0.9 ~ 0.25 0.65 0.25 0.025 32 force");
-                    EnterTheSift.runAs(player, guard + "function entersift:travel/begin {dest:" + (returnExit ? 5 : riftType().id) + "}");
+                // 0.32: the block below runs datapack commands, and the server is reported to crash when a
+                // player enters a rift. An exception escaping the entity tick kills the server, so every
+                // command is contained: the rift stays open and the player is left standing.
+                try {
+                    // Inverse of the renderer's -yaw + 180 degree rotation.
+                    double angle = Math.toRadians(getYRot() - 180), c = Math.cos(angle), sn = Math.sin(angle);
+                    double dx = player.getX() - getX(), dz = player.getZ() - getZ();
+                    var local = new net.minecraft.world.phys.Vec3(c * dx + sn * dz, player.getY() + 0.9 - getY(), -sn * dx + c * dz);
+                    var old = previous.put(player.getUUID(), local);
+                    if (age() < GROWN || old == null || old.distanceToSqr(local) > 64) continue;
+                    if (RiftCrossing.crosses(shape, old.x, old.y, old.z, local.x, local.y, local.z)) {
+                        // Save the exact exit appearance per player, never in shared global storage.
+                        String guard = "execute if score @s sift.cooldown matches 0 run ";
+                        EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rstyle " + riftType().id);
+                        EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rwidth " + Math.round(riftWidth() * 100));
+                        EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rheight " + Math.round(riftHeight() * 100));
+                        EnterTheSift.runAs(player, guard + "particle minecraft:end_rod ~ ~0.9 ~ 0.25 0.65 0.25 0.025 32 force");
+                        EnterTheSift.runAs(player, guard + "function entersift:travel/begin {dest:" + (returnExit ? 5 : riftType().id) + "}");
+                    }
+                } catch (Throwable error) {
+                    EnterTheSift.LOGGER.error("[Sift] rift entry failed; the rift stays open and the player is unaffected", error);
                 }
             }
             previous.keySet().retainAll(seen);

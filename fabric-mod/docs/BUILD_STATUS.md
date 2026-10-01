@@ -154,3 +154,18 @@ Interpretation risk worth recording: the user asked to "use these as backgrounds
 This batch reads that as "these are the look references" and keeps the real destination visible through a
 coloured frosted sheet (the shader samples the copied scene, never a baked image). Baking the uploaded
 frames in as the window texture would be a different change and has not been done.
+
+## Sift Overhaul 0.32.0-alpha: gates green locally (CI pending)
+
+- `python3 tools/validate.py` — passed: 613 JSON/metadata files, 155 functions, 12 Sift biomes.
+- `python3 tools/test_data.py` — all 67 data-contract tests passed. The staff contract now asserts the
+  3D chain (handheld parent, shaft + floating crystal elements) and that the staff art is no longer
+  byte-identical to the gauntlet art.
+- `python3 tools/regen_check.py` — seven live generators reproduce the shipped tree.
+- `python3 tools/check_shaders.py` — structure ok for 82 programs (no glslangValidator locally).
+- `git diff --check` — clean.
+
+The 26.3 compile is again the only gate that can catch a Java signature mistake: `EnterTheSift` gained
+`wearsGauntlet`/`toggleGauntlet` (chest-slot equip swap, `LivingEntity.getItemBySlot`/`setItemSlot` and
+`Entity.isShiftKeyDown`, all confirmed present in the probe signatures), and `RiftPortalRenderer` gained
+`tipFade`/`borderWave` with a new `SiftBudget.riftTipFade` flag. Nothing has been compiled locally.
