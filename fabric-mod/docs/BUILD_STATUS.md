@@ -44,12 +44,12 @@ Even a successful server smoke test cannot establish client-side visual quality.
 
 - 0.28 adds the rift back fade: structure dissolves with depth behind the opening plane, with a 45% floor on
   edges so the wireframe stays readable, a gentler radial falloff for the detached boxes and floating cubes,
-  and a per-quad window fade (carried in the vertex colour, applied in ) that leaves the opening
-  itself clear.  in  disables it.
--  — 65 tests passed (adds ).
--  — 613 JSON/metadata files, 155 functions;  — 7 live
+  and a per-quad window fade (carried in the vertex colour, applied in `rift.fsh`) that leaves the opening
+  itself clear. `rift_back_fade` in `config/entersift-client.properties` disables it.
+- `python3 tools/test_data.py` - 65 tests passed (adds `test_v028_back_fade_dissolves_the_receding_structure`).
+- `python3 tools/validate.py` - 613 JSON/metadata files, 155 functions. `tools/regen_check.py` - 7 live
   generators reproduce the shipped tree.
 - GitHub Actions: 26.3 client compile, shader checks, shader-pack bundling and the dedicated-server smoke
-  test (with the registered rift-core assertion) all passed, artifact `Sift-Overhaul-0.28.0-alpha-26.3`.
-- Still not verified anywhere: GPU rendering. The fade distances, edge floor and shell alphas are
-  parameter choices that need a client capture to judge.
+  test (with the registered rift-core assertion) all passed; artifact `Sift-Overhaul-0.28.0-alpha-26.3`.
+- Still not verified anywhere: GPU rendering. The fade distances, edge floor and shell alphas are parameter
+  choices that need a client capture to judge.
