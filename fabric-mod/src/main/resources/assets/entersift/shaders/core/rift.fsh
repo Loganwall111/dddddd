@@ -29,6 +29,38 @@ const vec3 FROST[8] = vec3[8](
     vec3(0.90, 0.75, 0.76), vec3(0.86, 0.44, 0.40), vec3(0.52, 0.44, 0.58), vec3(0.88, 0.81, 0.83),
     vec3(0.40, 0.70, 0.78), vec3(0.92, 0.88, 0.66), vec3(0.97, 0.96, 0.96), vec3(0.52, 0.55, 0.60));
 
+// 0.36: the destination seen through the opening, as a function so the frost can BLUR it by sampling
+// neighbouring directions. Everything is driven by the view ray, so walking past the rift parallaxes.
+vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t) {
+    float up = clamp(dir.y, -1.0, 1.0);
+    float az = atan(dir.z, dir.x);
+
+    vec3 zenith  = mix(tint, frost, 0.35) * 0.42;
+    vec3 horizon = mix(tint, vec3(1.0), 0.28);
+    vec3 floorC  = mix(frost, vec3(0.05, 0.06, 0.09), 0.55);
+    vec3 ridgeFar  = mix(tint, frost, 0.45) * 0.30;
+    vec3 ridgeNear = mix(frost, vec3(0.03, 0.04, 0.06), 0.40);
+
+    vec3 col = mix(horizon, zenith, smoothstep(0.02, 0.62, up));
+    col = mix(col, floorC, smoothstep(0.02, -0.22, up) * 0.85);
+    // A far ridge line, then a nearer, darker one: the destination reads as a PLACE, not a picture.
+    float farRidge  = 0.115 + 0.055 * sin(az * 2.3 + 0.8) + 0.030 * sin(az * 5.1 + 2.2);
+    float nearRidge = 0.045 + 0.045 * sin(az * 3.1 - 1.1) + 0.022 * sin(az * 7.3 + 0.4);
+    col = mix(col, ridgeFar,  1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up));
+    col = mix(col, ridgeNear, 1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up));
+    // A rift sun hanging over the ridge, with a wide glow.
+    float sun = length(vec2((az - 0.55) * 0.85, up - 0.34));
+    col += tint * exp(-sun * 3.2) * 0.55;
+    col = mix(col, vec3(1.0), 1.0 - smoothstep(0.020, 0.045, sun));
+    // Sparks drifting up through the opening.
+    float motes = sin(up * 26.0 - t * 2.2 + az * 5.0) * sin(up * 41.0 - t * 3.1 - az * 3.0 + 1.7);
+    col += tint * pow(max(0.0, motes), 6.0) * 0.55;
+    // The rift's own energy still breathes across the opening.
+    col = mix(col, vec3(1.0, 0.48, 0.12), crack * 0.35);
+    col += tint * (0.18 + 0.30 * strength) * exp(-1.6 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
+    return col;
+}
+
 float fogFade() {
     return 1.0 - smoothstep(FogRenderDistanceStart, FogRenderDistanceEnd, sphericalVertexDistance);
 }
@@ -65,48 +97,35 @@ void main() {
     float edgeFade = exp(-3.0 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
     float crack = 1.0 - smoothstep(0.012, 0.045, abs(uv.x - 0.5 - 0.1 * sin(floor(uv.y * 24.0) + floor(t * 5.0))));
     // -------------------------------------------------------------------------------------------
-    // 0.34: WHAT IS BEYOND THE OPENING.
+    // 0.34/0.36: WHAT IS BEYOND THE OPENING.
     // 0.31 sampled the copied framebuffer here, so the middle of the rift showed the world the player
     // was standing in - a literal window onto the Overworld, with no dimension behind it (reported in
-    // game). The opening now paints the dimension the rift leads to: a horizon, layered ridges, a
-    // distant sun and rising sparks, built from this rift's own style colours. The real scene is
-    // sampled ONLY in the thin outer rim, where the glass edge bends what surrounds the rift.
+    // game). The opening now paints the dimension the rift leads to and puts a BLURRED, FROSTED GLASS
+    // over it, exactly as the user described: "imagine a window and then gloss it over with the blurred
+    // frosted look". The real scene is sampled ONLY in the thin outer rim, where the glass edge bends
+    // what surrounds the rift.
     // -------------------------------------------------------------------------------------------
     vec3 dir = normalize(worldRay + vec3(0.0, 0.0, 0.0001)); // camera -> this point, world axes
-    float up = clamp(dir.y, -1.0, 1.0);
-    float az = atan(dir.z, dir.x);
 
-    vec3 zenith  = mix(tint, frost, 0.35) * 0.42;
-    vec3 horizon = mix(tint, vec3(1.0), 0.28);
-    vec3 floorC  = mix(frost, vec3(0.05, 0.06, 0.09), 0.55);
-    vec3 ridgeFar  = mix(tint, frost, 0.45) * 0.30;
-    vec3 ridgeNear = mix(frost, vec3(0.03, 0.04, 0.06), 0.40);
-
-    vec3 col = mix(horizon, zenith, smoothstep(0.02, 0.62, up));
-    col = mix(col, floorC, smoothstep(0.02, -0.22, up) * 0.85);
-    // A far ridge line, then a nearer, darker one: the destination reads as a PLACE, not a picture.
-    float farRidge  = 0.115 + 0.055 * sin(az * 2.3 + 0.8) + 0.030 * sin(az * 5.1 + 2.2);
-    float nearRidge = 0.045 + 0.045 * sin(az * 3.1 - 1.1) + 0.022 * sin(az * 7.3 + 0.4);
-    col = mix(col, ridgeFar,  1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up));
-    col = mix(col, ridgeNear, 1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up));
-    // A rift sun hanging over the ridge, with a wide glow.
-    float sun = length(vec2((az - 0.55) * 0.85, up - 0.34));
-    col += tint * exp(-sun * 3.2) * 0.55;
-    col = mix(col, vec3(1.0), 1.0 - smoothstep(0.020, 0.045, sun));
-    // Sparks drifting up through the opening.
-    float motes = sin(up * 26.0 - t * 2.2 + az * 5.0) * sin(up * 41.0 - t * 3.1 - az * 3.0 + 1.7);
-    col += tint * pow(max(0.0, motes), 6.0) * 0.55;
-    // The rift's own energy still breathes across the opening.
-    col = mix(col, vec3(1.0, 0.48, 0.12), crack * 0.35);
-    col += tint * (0.18 + 0.30 * strength) * exp(-1.6 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
+    // The frosted gloss blurs the destination: a wider spread at range (frostAmt high), sharper up close.
+    float blur = 0.006 + 0.020 * frostAmt;
+    vec3 col = destination(dir, tint, frost, uv, crack, strength, t);
+    col = mix(col, destination(normalize(dir + vec3(0.0, blur, 0.0)), tint, frost, uv, crack, strength, t), 0.5);
+    col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t), 0.35);
+    col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t), 0.35);
     // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
-    col = mix(col, frost, frostAmt * 0.65);
+    col = mix(col, frost, frostAmt * 0.62);
     col += vec3(0.05) * frostAmt;
+    // A slow gloss band sweeps the glass, the way the reference frames catch the light.
+    float gloss = smoothstep(0.72, 1.0, sin((uv.x * 1.25 + uv.y * 0.75) * 3.14159 + t * 0.25) * 0.5 + 0.5);
+    col += vec3(0.14) * gloss * (0.35 + frostAmt);
 
     // The opening is opaque: nothing of the world behind the rift may show through it. The captured
-    // scene is used only in the outer rim, where the glass edge bends the surroundings.
+    // scene is used only in the outer rim, where the glass edge bends the surroundings. Up close the
+    // pane clears to 0.86 (still glass); at range the frost takes it towards 0.98.
     float destAmt = smoothstep(0.05, 0.45, edgeFade);
-    float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;
+    float glass = mix(0.86, 0.98, frostAmt);
+    float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;
 #ifdef RIFT_REFRACT
     vec2 size = vec2(textureSize(Sampler1, 0));
     vec2 texel = 1.0 / size;

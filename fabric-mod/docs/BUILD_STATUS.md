@@ -291,3 +291,13 @@ compilation", printed `structure ok ... (compile skipped)` and exited 0. So no c
 compiled in CI. The step now uses `curl --fail` and `test -x "$TOOL"` and fails the build when the
 compiler is missing, and `check_shaders.py` fails (instead of skipping) whenever a tool path is passed
 but unusable.
+
+## Sift Overhaul 0.36.0-alpha: frosted gloss + the shader result is now provable from the API
+
+- `rift.fsh`: the destination is a `destination(dir, ...)` function of the view ray, sampled four times
+  for a frost blur, with a sweeping gloss band and a glass alpha of `mix(0.86, 0.98, frostAmt)`.
+- `check_shaders.py` now emits the compile outcome as a GitHub annotation (`::notice title=Shaders
+  compiled::...` or `::error`), because run-log downloads are blocked in the dev sandbox while
+  annotations are readable. That is how the next run is verified from here.
+- Obsolete contract: the 0.20-era assertion that `rift.fsh` must NOT contain a destination function is
+  replaced - the destination is now the whole point.

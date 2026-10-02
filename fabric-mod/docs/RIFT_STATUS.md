@@ -285,3 +285,24 @@ up empty.
 This also answers "why can I see the Overworld through the window": the build the user ran (0.32) had no
 working rift shader at all, and 0.32's window code sampled the copied framebuffer by design. 0.34
 replaces that with a painted destination, and that shader now compiles for the first time in 0.35.
+
+### 0.36 the frosted gloss (the user's own recipe)
+
+The user described the fix as "imagine a window and then gloss it over with the blurred frosted look",
+after the Immersive Portals approach (portal entities with one-way camera links). That recipe is now what
+the opening does, and it is also what the reference frames show:
+
+- `destination(dir, ...)` is a function of the view ray, so the interior parallaxes as you walk.
+- The frost BLURS it: three extra samples at small angular offsets, spread `0.006 + 0.020 * frostAmt`
+  (blurrier at range, sharper as you close in).
+- A slow gloss band sweeps the glass (`smoothstep(0.72, 1.0, sin(...))`), and the pane's alpha runs
+  `mix(0.86, 0.98, frostAmt)`: near-opaque frosted glass at range, still glass up close, and never the
+  world behind the rift.
+
+On Immersive Portals itself: it is a different mod, it does not support 26.3, and its technique needs a
+second render of the target dimension plus a portal entity pair. That second render is the one thing this
+mod cannot do from the supported Fabric hooks (`LevelRenderEvents` covers the single active render), which
+is why the destination is painted and then frosted rather than being a live render. If the user wants the
+real terrain visible through the glass, the honest next step is to scope that second-render feature
+separately: it would be the largest and least verifiable change in the mod, and it needs a client to
+iterate on.

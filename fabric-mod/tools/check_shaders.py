@@ -126,6 +126,19 @@ def main():
     errors += check_core(tool)
     if not tool:
         print(f"structure ok for {len(programs)} programs (glslangValidator not found; compile skipped)")
+        sys.exit(1 if errors else 0)
+    # 0.36: emit the outcome as a GitHub annotation. Log downloads are unavailable in the dev sandbox,
+    # but annotations are readable through the API, so this is how the compile result is verifiable.
+    version = ""
+    try:
+        version = subprocess.run([tool, "--version"], capture_output=True, text=True).stdout.strip().splitlines()[0]
+    except Exception:
+        pass
+    if errors:
+        print(f"::error title=Shader compile FAILED::{errors} problem(s); see the log")
+    else:
+        print(f"::notice title=Shaders compiled::{len(programs)} programs and the core shader variants "
+              f"compiled clean with {version or tool}")
     sys.exit(1 if errors else 0)
 
 

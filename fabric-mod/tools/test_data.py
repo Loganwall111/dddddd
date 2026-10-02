@@ -18,7 +18,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('riftData.a * 0.82',fsh)
         # 0.34: the opening is opaque over its interior (the scene copy is rim-only), so the world
         # behind the rift can never show through the middle.
-        self.assertIn('float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;',fsh)
+        self.assertIn('float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;',fsh)
         # The neon outline overlaps its segments, so it is a continuous band instead of dots.
         self.assertIn('float overlap = (0.05f + 0.04f * flash) * k;',rift)
         self.assertIn('x0 - ox',rift); self.assertIn('x1 + ox',rift)
@@ -79,7 +79,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('static float frostProximity(Vector3f cam)',rift)
         self.assertIn('float frost = 0.55f * frostProximity(cam);',rift)
         self.assertIn('float frostAmt = clamp(riftData.a * 2.0 - 1.0, 0.0, 1.0);',fsh)
-        self.assertIn('float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;',fsh)
+        self.assertIn('float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;',fsh)
         self.assertIn('riftProximity = flag(props, "rift_proximity", true)',budget)
         # Two silhouette variants: the usual wide cross and the tall wall, decided by w/h on both sides.
         self.assertIn('public static boolean tallVariant(float w, float h)',shape)
@@ -255,7 +255,11 @@ class DataContracts(unittest.TestCase):
         self.assertNotIn('mix(scene, tint', fsh)                     # the mirror is gone
         for token in ('float destAmt = smoothstep(0.05, 0.45, edgeFade);',
                       'col = mix(texture(Sampler1, sampleUv).rgb, col, destAmt);',
-                      'float a = mix(0.45 * edgeFade, 0.94, destAmt) * fogFade() * fade;'):
+                      'float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;',
+                      # 0.36: the frost BLURS the destination and glosses the glass (the user's
+                      # "imagine a window and then gloss it over with the blurred frosted look").
+                      'vec3 destination(vec3 dir,', 'float blur = 0.006 + 0.020 * frostAmt;',
+                      'float glass = mix(0.86, 0.98, frostAmt);', 'float gloss = smoothstep('):
             self.assertIn(token, fsh)                                # the scene copy is rim-only now
         # The destination itself: view-ray parallax, a horizon, two ridge lines, a sun and rising sparks,
         # all built from the rift's own style colours.
@@ -738,7 +742,11 @@ class DataContracts(unittest.TestCase):
         self.assertIn('worldRay = Position;',vsh)
         self.assertIn('texture(Sampler1, sampleUv)',fsh)
         self.assertIn('texture(Sampler0, sampleUv)',fsh)
-        self.assertNotIn('vec3 destination(',fsh)
+        # 0.36: the 0.20-era "no destination function" guard is obsolete. The opening now paints the
+        # destination from the view ray (and blurs it behind the frost); the copied scene must never be
+        # the interior again, which v034/v036 assert directly.
+        self.assertIn('vec3 destination(vec3 dir,',fsh)
+        self.assertNotIn('mix(scene, tint',fsh)
         # 2. Lifecycle (0.21: 0-100): ripple hard-stopped, tiered snap.
         self.assertIn('if (a > 4f) ripple(',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
         # 3. Wide soft additive night curtains replace laser poles.
@@ -829,7 +837,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.35.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.36.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -968,7 +976,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.35.0-alpha',props)
+        self.assertIn('mod_version=0.36.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
