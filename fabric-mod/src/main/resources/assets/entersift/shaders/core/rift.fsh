@@ -121,6 +121,4 @@ void main() {
 #endif
     fragColor = vec4(col, a) * ColorModulator;
 #endif
-#endif
-#endif
 }

@@ -272,3 +272,16 @@ active render only). The reference frames show a bright interior rather than a p
 so a painted world is the closest thing that can be delivered and verified without a second render.
 
 Dials to turn in a client: the interior alpha (0.94), `destAmt`'s band, and the ridge/sun sizes.
+
+### 0.35 shader crash: the pipelines had never compiled
+
+`rift.fsh` shipped with two extra `#endif` directives (one since 0.31/0.32, one added in the 0.34 window
+rewrite). Minecraft's pipeline builder rejects the whole file, so the four rift pipelines
+(`rift`, `rift_wall`, `rift_glow`, `rift_refract`) failed at resource reload, the client removed the
+resource packs, retried, failed again and exited. Nothing in the mod rendered because the shaders were
+never valid, and no gate caught it: CI's glslang step silently skipped every compile when its `find` came
+up empty.
+
+This also answers "why can I see the Overworld through the window": the build the user ran (0.32) had no
+working rift shader at all, and 0.32's window code sampled the copied framebuffer by design. 0.34
+replaces that with a painted destination, and that shader now compiles for the first time in 0.35.

@@ -268,3 +268,26 @@ new `EquipmentAssets.ROOT_ID` equipment component), shader-pack bundling and the
 test with the staged rift crossing and the new `checkWearable` assertion.
 
 Artifact: `Sift-Overhaul-0.34.0-alpha-26.3`.
+
+## Sift Overhaul 0.35.0-alpha: the client crash - two stray #endif and a gate that never ran
+
+The pasted crash log ended at
+`entersift:core/rift:92: error: '#endif' : mismatched statements` followed by
+`Failed to load required shader programs` and, after a second failed reload, the client stopping.
+Root cause found in `rift.fsh`: the file had more `#endif`s than `#if`s.
+
+- One was pre-existing (present in the 0.31/0.32 shader the user was running - their log says
+  `entersift 0.32.0-alpha`, and it crashed the same way).
+- One was mine, added in the 0.34 window rewrite (the block it replaced had an `#ifdef/#else/#endif`
+  pair; the replacement kept two `#endif`s where one was needed).
+
+Both removed. The shader is balanced now, and `check_shaders.py` counts `#if/#ifdef/#ifndef` against
+`#endif` for every core shader and every shaderpack program (105 files), ignoring commented-out
+directives. A new `test_data.py` contract calls the same function, so the Java test suite catches it too.
+
+WHY IT SHIPPED: the workflow's glslang step passed `"$(find /tmp/glslang -name glslangValidator ...)"`,
+and when that find came up empty the script received an empty path, treated "no compiler" as "skip the
+compilation", printed `structure ok ... (compile skipped)` and exited 0. So no core shader had EVER been
+compiled in CI. The step now uses `curl --fail` and `test -x "$TOOL"` and fails the build when the
+compiler is missing, and `check_shaders.py` fails (instead of skipping) whenever a tool path is passed
+but unusable.

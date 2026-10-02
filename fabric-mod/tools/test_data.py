@@ -269,6 +269,20 @@ class DataContracts(unittest.TestCase):
         self.assertIn('float a = 0.82f * fade;', r)
         self.assertNotIn('0.18f * fade); col(p, vc, wv, x1, y0, z, lo', r)
 
+    def test_shader_preprocessor_directives_are_balanced(self):
+        # 0.34: a stray #endif in rift.fsh crashed the client at resource reload ("Failed to load
+        # required shader programs" -> "'#endif' : mismatched statements"). Nothing in the Java build
+        # can see it, so this test and tools/check_shaders.py both check the nesting.
+        import sys as _sys
+        _sys.path.insert(0, str(ROOT/'tools'))
+        import check_shaders as shaders
+        files = sorted(set(shaders.CORE_DIR.glob('*.[vf]sh')) | set(shaders.ROOT.rglob('*.glsl')) | set(shaders.ROOT.rglob('*.[vf]sh')))
+        self.assertGreater(len(files), 50, 'expected the shaderpack and core shaders to be scanned')
+        problems = []
+        for prog in files:
+            problems += shaders.check_directives(prog)
+        self.assertEqual(problems, [])
+
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
         self.assertIn('RiftCrossing.crosses(shape', source)
@@ -815,7 +829,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.34.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.35.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -954,7 +968,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.34.0-alpha',props)
+        self.assertIn('mod_version=0.35.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

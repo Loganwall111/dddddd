@@ -28,10 +28,78 @@ def expand(path: Path, seen=()) -> list[str]:
     return out
 
 
-def main():
-    tool = sys.argv[1] if len(sys.argv) > 1 else shutil.which("glslangValidator")
-    programs = sorted(p for p in ROOT.rglob("*") if p.suffix in (".vsh", ".fsh") and p.parent.name != "program")
+CORE_DIR = Path(__file__).resolve().parents[1] / "src/main/resources/assets/entersift/shaders/core"
+DIRECTIVE = re.compile(r"^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)$")
+
+
+def strip_comments(text: str):
+    """Yield (line_number, code) with // and /* */ comments removed, so directives inside them are ignored."""
+    block = False
+    for n, line in enumerate(text.splitlines(), 1):
+        s = line
+        if block:
+            if "*/" in s:
+                s = s.split("*/", 1)[1]
+                block = False
+            else:
+                yield n, ""
+                continue
+        s = s.split("//", 1)[0]
+        if "/*" in s:
+            head, rest = s.split("/*", 1)
+            if "*/" in rest:
+                s = head + rest.split("*/", 1)[1]
+            else:
+                s = head
+                block = True
+        yield n, s
+
+
+def check_directives(path: Path) -> list[str]:
+    """Count #if/#endif nesting. A stray #endif or an unterminated #if makes the whole program fail to
+    compile inside Minecraft, which is a hard client crash at resource reload - and neither the Java
+    build nor a structure-only scan can see it."""
+    depth, problems = 0, []
+    for n, line in strip_comments(path.read_text()):
+        m = DIRECTIVE.match(line)
+        if not m:
+            continue
+        kind = m.group(1)
+        if kind in ("if", "ifdef", "ifndef"):
+            depth += 1
+        elif kind in ("elif", "else"):
+            if depth == 0:
+                problems.append(f"{path.name}:{n}: #{kind} with no #if")
+        else:
+            depth -= 1
+            if depth < 0:
+                problems.append(f"{path.name}:{n}: extra #endif (no #if to close)")
+                depth = 0
+    if depth:
+        problems.append(f"{path.name}: {depth} unterminated #if/#ifdef (missing #endif)")
+    return problems
+
+
+def check_all_directives() -> int:
     errors = 0
+    files = sorted(set(CORE_DIR.glob("*.[vf]sh")) | set(ROOT.rglob("*.glsl")) | set(ROOT.rglob("*.[vf]sh")))
+    for prog in files:
+        for problem in check_directives(prog):
+            print(f"FAIL {prog.relative_to(Path(__file__).resolve().parents[1])}: {problem}")
+            errors += 1
+    print(f"preprocessor balance ok for {len(files)} shader files")
+    return errors
+
+
+def main():
+    errors = check_all_directives()
+    tool = sys.argv[1] if len(sys.argv) > 1 else shutil.which("glslangValidator")
+    if len(sys.argv) > 1 and not (tool and Path(tool).is_file()):
+        # A caller that asked for a compiler must not silently get a structure-only run: that is how a
+        # broken shader shipped once already.
+        print(f"FAIL: glslangValidator was requested but not found at {tool!r}")
+        sys.exit(1)
+    programs = sorted(p for p in ROOT.rglob("*") if p.suffix in (".vsh", ".fsh") and p.parent.name != "program")
     with tempfile.TemporaryDirectory() as tmp:
         for prog in programs:
             lines = expand(prog)
