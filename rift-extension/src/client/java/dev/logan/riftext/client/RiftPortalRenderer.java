@@ -243,14 +243,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 // Color reveal: white fades to destination colors
                 float colorFade = (age < GROWN) ? clamp((age - COLOR_START) / (GROWN - COLOR_START), 0f, 1f) : 1f;
 
-                // Bind the rift dimension atlas texture for the frosted window
                 if (gpu) {
-                    // Lazy-load atlas on first render (GL context exists now)
-                    RiftExtensionClient.ensureAtlasLoaded();
-                    if (RiftExtensionClient.riftAtlasGlId != 0) {
-                        org.lwjgl.opengl.GL13.glActiveTexture(org.lwjgl.opengl.GL13.GL_TEXTURE0);
-                        org.lwjgl.opengl.GL11.glBindTexture(org.lwjgl.opengl.GL11.GL_TEXTURE_2D, RiftExtensionClient.riftAtlasGlId);
-                    }
                     out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s));
                 } else {
                     out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s));
