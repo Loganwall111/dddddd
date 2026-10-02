@@ -29,6 +29,7 @@ final class SiftSmokeTest {
             if (ticks == 120) stageTwo(server);
             if (ticks == 145) checkWearable(server);
             if (ticks == 140) checkAnchors(server);
+            if (ticks == 141) checkTerrainViews(server);
             // 0.16: the arena chunks are force-loaded first and built 80 ticks later (a slow runner may not
             // have generated them in the same tick), and the portal gets ~200 ticks of slack after opening.
             if (ticks == 30) forceRitualChunks(server);
@@ -204,6 +205,32 @@ final class SiftSmokeTest {
         EnterTheSift.LOGGER.info("SIFT-SMOKE anchors: rifts={} portals={} wrongType={}", rifts, portals, wrong);
         if (rifts == 0 || portals == 0 || wrong > 0)
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL rift_portal entities: rifts={} portals={} wrongType={}", rifts, portals, wrong);
+    }
+
+    /**
+     * 0.38: the destination relief must sample REAL terrain in every dimension a rift can lead to, and the
+     * string the server syncs to the client must decode - this is the only place the sampling runs
+     * against live worldgen, so it is the CI gate for the whole feature.
+     */
+    private static void checkTerrainViews(MinecraftServer server) {
+        int ok = 0, bad = 0;
+        for (RiftType type : RiftType.values()) {
+            net.minecraft.server.level.ServerLevel destination = server.getLevel(RiftTerrainView.destination(type));
+            if (destination == null) { bad++; continue; }
+            String data = RiftTerrainView.sample(destination, 0, 0);
+            RiftTerrainView.Relief relief = RiftTerrainView.decode(data);
+            if (relief == null) { bad++; continue; }
+            boolean real = false;
+            for (int j = 0; j < RiftTerrainView.GRID && !real; j++)
+                for (int i = 0; i < RiftTerrainView.GRID && !real; i++)
+                    if (RiftTerrainView.colourOf(relief, j * RiftTerrainView.GRID + i) != 0x7A7F85) real = true;
+            if (!real) { bad++; continue; }   // every column fell back to the unknown-block grey
+            ok++;
+            EnterTheSift.LOGGER.info("SIFT-SMOKE terrain {} minY={} span={} chars={}",
+                type.name(), relief.minY(), relief.spanY(), data.length());
+        }
+        if (bad > 0)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL terrain views: sampled={} bad={}", ok, bad);
     }
 
     // ------------------------------------------------------------------ ritual (0.14.1)

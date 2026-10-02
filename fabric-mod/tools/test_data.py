@@ -259,7 +259,8 @@ class DataContracts(unittest.TestCase):
                       # 0.36: the frost BLURS the destination and glosses the glass (the user's
                       # "imagine a window and then gloss it over with the blurred frosted look").
                       'vec3 destination(vec3 dir,', 'float blur = 0.006 + 0.020 * frostAmt;',
-                      'float glass = mix(0.86, 0.98, frostAmt);', 'float gloss = smoothstep('):
+                      # 0.38: with the real relief behind the glass it thins to let the terrain read
+                      'float glass = mix(0.34, 0.72, frostAmt)', 'float gloss = smoothstep('):
             self.assertIn(token, fsh)                                # the scene copy is rim-only now
         # The destination itself: view-ray parallax, a horizon, two ridge lines, a sun and rising sparks,
         # all built from the rift's own style colours.
@@ -291,7 +292,7 @@ class DataContracts(unittest.TestCase):
         # The user wants "another world" in the middle. Each style must paint a DISTINCT world, so the
         # opening can never read as the place the player stands in.
         fsh = (R/'assets/entersift/shaders/core/rift.fsh').read_text()
-        for token in ('vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t, int view)',
+        for token in ('vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t, int view, float hasTerrain)',
                       'bool ember  = (view == 1 || view == 7);',
                       'bool endish = (view == 2);',
                       'float island = 1.0 - smoothstep(0.0, 0.19,',            # the End silhouette
@@ -300,7 +301,40 @@ class DataContracts(unittest.TestCase):
                       'if (!endish) {'):                                       # the End has no sun
             self.assertIn(token, fsh)
         # the blur samples must all carry the style, or a blurred pixel would show the wrong world
-        self.assertEqual(fsh.count('strength, t, view)'), 4)
+        self.assertEqual(fsh.count('strength, t, view, hasTerrain)'), 4)
+        # 0.38: with a real relief behind the glass the painted ridges step aside so the two do not double up
+        self.assertIn('if (hasTerrain < 0.5) {', fsh)
+
+    def test_v038_real_destination_relief(self):
+        # The user wants the destination dimension visible, not the world they stand in. The server now
+        # samples the REAL surface of the dimension each rift leads to and the client draws it.
+        view = (ROOT/'src/main/java/dev/logan/entersift/RiftTerrainView.java').read_text()
+        for token in ('public static final int GRID = 24', 'public static final int LEVELS = 16',
+                      'Heightmap.Types.WORLD_SURFACE', 'case OVERWORLD -> Level.OVERWORLD',
+                      'case NETHER -> Level.NETHER', 'case END -> Level.END',
+                      'public static String encode(', 'public static Relief decode(',
+                      'SiftContent.SIFT_EARTH'):
+            self.assertIn(token, view)
+        entity = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
+        self.assertIn('EntityDataSerializers.STRING', entity)          # synced to the client
+        self.assertIn('RiftTerrainView.destination(riftType())', entity)  # sampled for the rift's destination
+        self.assertIn('public String terrainView()', entity)
+        renderer = (ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('RiftTerrainView.decode(s.terrain)', renderer)
+        self.assertIn('s.terrain = e.terrainView();', renderer)
+        self.assertIn('(relief ? 16 : 0)', renderer)                  # the relief flag in the view code
+        self.assertIn('terrainRelief(p, vc, wv, sh, s, look2, a, wf)', renderer)
+        # the shader thins the glass and drops its painted land when the real relief is behind it
+        fsh = (R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        self.assertIn('float hasTerrain = codeRaw >= 16 ? 1.0 : 0.0;', fsh)
+        self.assertIn('if (hasTerrain < 0.5) {', fsh)
+        self.assertIn('float glass = mix(0.34, 0.72, frostAmt) + (1.0 - hasTerrain) * 0.34;', fsh)
+        # the smoke test samples every dimension's real terrain, so CI proves the sampler runs
+        smoke = (ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text()
+        self.assertIn('checkTerrainViews(server)', smoke)
+        self.assertIn('RiftTerrainView.sample(destination, 0, 0)', smoke)
+        # a Java unit test covers the codec
+        self.assertTrue((ROOT/'src/test/java/dev/logan/entersift/RiftTerrainViewTest.java').is_file())
 
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
@@ -852,7 +886,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.37.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.38.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -991,7 +1025,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.37.0-alpha',props)
+        self.assertIn('mod_version=0.38.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

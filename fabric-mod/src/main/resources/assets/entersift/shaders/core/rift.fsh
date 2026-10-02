@@ -31,7 +31,7 @@ const vec3 FROST[8] = vec3[8](
 
 // 0.36: the destination seen through the opening, as a function so the frost can BLUR it by sampling
 // neighbouring directions. Everything is driven by the view ray, so walking past the rift parallaxes.
-vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t, int view) {
+vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t, int view, float hasTerrain) {
     float up = clamp(dir.y, -1.0, 1.0);
     float az = atan(dir.z, dir.x);
 
@@ -55,8 +55,10 @@ vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float st
     // A far ridge line, then a nearer, darker one: the destination reads as a PLACE, not a picture.
     float farRidge  = landY + 0.115 + 0.055 * sin(az * 2.3 + 0.8) + 0.030 * sin(az * 5.1 + 2.2);
     float nearRidge = landY + 0.045 + 0.045 * sin(az * 3.1 - 1.1) + 0.022 * sin(az * 7.3 + 0.4);
-    col = mix(col, ridgeFar,  1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up));
-    col = mix(col, ridgeNear, 1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up));
+    if (hasTerrain < 0.5) {   // with a real relief behind the glass the painted land would double it up
+        col = mix(col, ridgeFar,  1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up));
+        col = mix(col, ridgeNear, 1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up));
+    }
     if (!endish) {
         // A rift sun hanging over the ridge, with a wide glow. The End has no sun.
         float sun = length(vec2((az - 0.55) * 0.85, up - 0.34));
@@ -105,7 +107,11 @@ void main() {
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
     float t = GameTime * 1200.0;
-    int view = int(riftData.b * 32.0) % 8;
+    int codeRaw = int(riftData.b * 32.0);
+    int view = codeRaw % 8;
+    // 0.38: 16 bit set = the client also has the server's sampled destination relief behind the glass,
+    // so this shader keeps only the sky and weather and lets the real terrain carry the land.
+    float hasTerrain = codeRaw >= 16 ? 1.0 : 0.0;
     vec2 uv = riftData.rg;
     vec3 tint = TINT[view];
     vec3 frost = FROST[view];
@@ -134,10 +140,10 @@ void main() {
 
     // The frosted gloss blurs the destination: a wider spread at range (frostAmt high), sharper up close.
     float blur = 0.006 + 0.020 * frostAmt;
-    vec3 col = destination(dir, tint, frost, uv, crack, strength, t, view);
-    col = mix(col, destination(normalize(dir + vec3(0.0, blur, 0.0)), tint, frost, uv, crack, strength, t, view), 0.5);
-    col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t, view), 0.35);
-    col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t, view), 0.35);
+    vec3 col = destination(dir, tint, frost, uv, crack, strength, t, view, hasTerrain);
+    col = mix(col, destination(normalize(dir + vec3(0.0, blur, 0.0)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.5);
+    col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.35);
+    col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.35);
     // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
     col = mix(col, frost, frostAmt * 0.62);
     col += vec3(0.05) * frostAmt;
@@ -149,7 +155,9 @@ void main() {
     // scene is used only in the outer rim, where the glass edge bends the surroundings. Up close the
     // pane clears to 0.86 (still glass); at range the frost takes it towards 0.98.
     float destAmt = smoothstep(0.05, 0.45, edgeFade);
-    float glass = mix(0.86, 0.98, frostAmt);
+    // Thin glass when the real terrain is drawn behind it (the frosted look is the gloss on top),
+    // near-opaque only when the painted world is all there is.
+    float glass = mix(0.34, 0.72, frostAmt) + (1.0 - hasTerrain) * 0.34;
     float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;
 #ifdef RIFT_REFRACT
     vec2 size = vec2(textureSize(Sampler1, 0));

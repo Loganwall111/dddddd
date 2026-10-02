@@ -96,7 +96,7 @@ jobs:
           echo "::notice title=Shader pack bundled::$pack ($(stat -c %s "$RUNNER_TEMP/pack.zip") bytes) is inside $(basename "$jar")"
       - uses: actions/upload-artifact@v4
         with:
-          name: Sift-Overhaul-0.37.0-alpha-26.3
+          name: Sift-Overhaul-0.38.0-alpha-26.3
           path: |
             fabric-mod/build/libs/*.jar
       - name: Server smoke test (real 26.3 server loads data pack, worldgen, creatures)

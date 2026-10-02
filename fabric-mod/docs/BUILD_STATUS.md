@@ -328,3 +328,20 @@ Artifact `Sift-Overhaul-0.36.0-alpha-26.3` (5,208,195 bytes).
   `Minecraft.setLevel`/`levelRenderer`, `ClientLevel.hasChunk`) and what is not (the client has only the
   current dimension's level and chunks), plus the fact that a 26.3 Immersive-Portals-style mod exists
   (CurseForge 1511174, updated this week) which proves the technique but needs per-dimension chunk sync.
+
+## Sift Overhaul 0.38.0-alpha: the destination dimension's real terrain behind the glass
+
+- New `RiftTerrainView`: server-side sampling of the destination surface (`Heightmap.Types.WORLD_SURFACE`
+  over a 24x24 square spanning 64 blocks around the destination arrival point), a colour table for
+  vanilla and Sift surface blocks, a nibble-per-column codec (`min:span:palette:cells`) and a null-safe
+  decode. Unit-tested without a server in `RiftTerrainViewTest` (round trip, palette, flat terrain, bad
+  input, every `RiftType` has a destination).
+- `RiftPortalEntity`: new synched `TERRAIN` string, sampled once per rift on the server when it finishes
+  growing, from the dimension `RiftType` names.
+- `RiftPortalRenderer`: `State.terrain`, decoded per frame and drawn as six depth-layered skylines behind
+  the glazed square, under the frost; the relief flag is the `+16` bit of the existing view code.
+- `rift.fsh`: `destination(..., float hasTerrain)`; with a relief present the painted ridges step aside
+  (`if (hasTerrain < 0.5)`) so the real and painted land cannot double up, and the glass thins
+  (`mix(0.34, 0.72, frostAmt) + (1.0 - hasTerrain) * 0.34`) instead of the near-opaque 0.36 glass.
+- `tools/probe/classes.txt`: queued `EntityDataSerializers` to pin the synched-string API.
+- `gradle.properties` / workflow artifact: `0.38.0-alpha`.

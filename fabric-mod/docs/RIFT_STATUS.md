@@ -319,9 +319,11 @@ carry the style, so a blurred pixel can never show another rift's world.
 The user asked twice for the Immersive Portals technique: a portal that renders the destination dimension
 live. What this build can and cannot reach, from the probed 26.3 signatures:
 
-- Reachable: `LevelRenderer.setLevel(Level)` exists; `Minecraft.level`, `Minecraft.levelRenderer` and
-  `Minecraft.setLevel(ClientLevel)` are public; `ClientLevel` has `hasChunk(int,int)` and
-  `entitiesForRendering()`. So a second render pass is technically callable.
+- Reachable: `Minecraft.level`, `Minecraft.levelRenderer` and `Minecraft.setLevel(ClientLevel)` are
+  public; `ClientLevel` has `hasChunk(int,int)` and `getChunkSource()`. `LevelRenderer` exposes
+  `render(...)`, `prepareChunkRenders(...)`, `invalidateCompiledGeometry(...)`, `hasRenderedAllSections()`.
+  (The 0.37 note here claimed a `LevelRenderer.setLevel(Level)`; the probe dump of the class shows there is
+  **no** `setLevel` on `LevelRenderer` - the only level setter is `Minecraft.setLevel(ClientLevel)`.)
 - NOT reachable from this mod as it stands: the client holds exactly ONE `ClientLevel` - the dimension
   the player is in - and only that dimension's chunks (`ClientChunkCache`). Rendering another dimension
   would draw empty void unless the server streams that dimension's chunks to the client, which is
@@ -335,3 +337,23 @@ live. What this build can and cannot reach, from the probed 26.3 signatures:
 - Therefore: the look is achievable on 26.3, but by that architecture - a second render plus a
   server-to-client chunk stream - not by a shader change. The painted-and-frosted destination stays the
   in-mod approach until that work is scoped and a client is available to iterate on it.
+
+### 0.38 the real destination behind the glass
+
+0.37 painted a different world per style, but the world was still invented. 0.38 samples the actual
+destination: `RiftType` already *is* the destination (0 overworld, 1 nether, 2 end, 3 sift; `PORTAL`
+maps to the Sift), every destination arrival happens around that dimension's origin, so once a rift is
+grown the server samples a 24x24 square of surface heights and surface blocks with
+`Heightmap.Types.WORLD_SURFACE`, quantises each column to a height nibble plus a palette index, and
+writes the resulting ~1.2 kB string into a new synched `TERRAIN` `EntityDataAccessor`.
+
+On the client the string is decoded (`RiftTerrainView.decode`, null-safe; a bad sync can never break the
+renderer) and drawn as six depth-layered skylines inside the rift, far rows deeper and dimmer, so the
+real heights and surface colours parallax as you move. The relief flag rides the existing view code
+(`+16`); when it is set, `rift.fsh` keeps only the sky, sun and weather and drops the painted ridges, and
+the glass thins from `mix(0.86, 0.98, frostAmt)` to `mix(0.34, 0.72, frostAmt)` so the real terrain reads
+through the frost and gloss. Rifts that are still growing, or a server that cannot supply a sample, keep
+the 0.37 painted world unchanged.
+
+This is the closest honest stand-in for the Immersive Portals window available inside this mod: real
+destination terrain, real materials, real parallax, sampled once per rift instead of streamed per frame.

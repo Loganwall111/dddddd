@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.logan.entersift.RiftPortalEntity;
 import dev.logan.entersift.RiftType;
 import dev.logan.entersift.RiftShape;
+import dev.logan.entersift.RiftTerrainView;
 import dev.logan.entersift.SiftContent;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -69,6 +70,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         double ex, ey, ez;
         boolean inSift, night;
         int view;
+        /** 0.38: the destination's sampled surface, sent by the server (empty when unavailable). */
+        String terrain = "";
     }
 
     @Override public State createRenderState() { return new State(); }
@@ -80,6 +83,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     public void extractRenderState(RiftPortalEntity e, State s, float partial) {
         super.extractRenderState(e, s, partial);
         s.type = e.riftType();
+        s.terrain = e.terrainView();
         s.w = Float.isFinite(e.riftWidth()) ? Math.max(1.5f, Math.min(12f, e.riftWidth())) : 3f;
         s.h = Float.isFinite(e.riftHeight()) ? Math.max(1.5f, Math.min(12f, e.riftHeight())) : 4f;
         s.age = e.age() >= GROWN ? GROWN + 100f : e.age() + partial;
@@ -327,6 +331,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (age <= SHOCK_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> shockwave(p, vc, still, sh, look, s, cam, age));
             if (age >= CLUSTER_START) {
                 float a = age;
+                // 0.38: the real destination first (behind the glass), then the frosted opening over it.
+                out.submitCustomGeometry(pose, wallT, (p, vc) -> terrainRelief(p, vc, wv, sh, s, look2, a, wf));
                 if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf, frost));
                 else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf, frost, look2));
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look2, a, s));
@@ -353,7 +359,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     /** Encodes palette and tide; framebuffer capture belongs to RiftScene, not this method. */
     private static float encodeView(State s) {
-        return (s.view + (s.night ? 8 : 0) + 0.5f) / 32f;
+        boolean relief = s.terrain != null && !s.terrain.isEmpty();
+        return (s.view + (s.night ? 8 : 0) + (relief ? 16 : 0) + 0.5f) / 32f;
     }
 
     // ------------------------------------------------------------------ timeline
@@ -719,6 +726,38 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
         // The detached satellites stay HOLLOW, exactly like the reference's small outlined boxes (17345525):
         // rims() already draws their lit edges and corner posts, so no frosted pane goes on them.
+    }
+
+    /**
+     * 0.38: the REAL destination terrain, drawn as layered skylines behind the glazed square.
+     *
+     * <p>Each band reads one row of the 24x24 relief the server sampled in the dimension the rift leads
+     * to, so the layers carry the destination's true heights and surface colours and parallax as the
+     * camera moves. Sky, sun and weather stay with the frosted shader above it.
+     */
+    private static void terrainRelief(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Look look, float age, float fade) {
+        RiftTerrainView.Relief relief = RiftTerrainView.decode(s.terrain);
+        if (relief == null || age < GROWN) return;
+        float yBase = sh.y(0) + 0.06f, yTop = sh.y(sh.rows) - 0.12f;
+        float half = sh.w * 0.5f;
+        int bands = 6;
+        for (int band = 0; band < bands; band++) {
+            int row = Math.min(RiftTerrainView.GRID - 1, band * 4);
+            float depth = -1.35f - (bands - 1 - band) * 0.85f;   // far rows sit deeper in the rift
+            float lit = 0.34f + 0.66f * (band / (float) (bands - 1));
+            for (int i = 0; i < RiftTerrainView.GRID; i++) {
+                int cell = relief.packed(i, row);
+                float h = (cell >> 4) / (float) (RiftTerrainView.LEVELS - 1);
+                int rgb = RiftTerrainView.colourOf(relief, row * RiftTerrainView.GRID + i);
+                float[] c = {((rgb >> 16) & 0xFF) / 255f * lit, ((rgb >> 8) & 0xFF) / 255f * lit, (rgb & 0xFF) / 255f * lit};
+                float x0 = -half + sh.w * (i / (float) RiftTerrainView.GRID);
+                float x1 = -half + sh.w * ((i + 1) / (float) RiftTerrainView.GRID);
+                float y1 = yBase + (yTop - yBase) * h;
+                float a = 0.72f * fade * lit;
+                col(p, vc, wv, x0, yBase, depth, c, a); col(p, vc, wv, x1, yBase, depth, c, a);
+                col(p, vc, wv, x1, y1, depth, c, a); col(p, vc, wv, x0, y1, depth, c, a);
+            }
+        }
     }
 
     private static boolean isWindow(RiftShape sh, int i, int j) {

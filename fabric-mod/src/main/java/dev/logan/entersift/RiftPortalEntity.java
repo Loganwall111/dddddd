@@ -35,6 +35,8 @@ public class RiftPortalEntity extends Entity {
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> HEIGHT = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.FLOAT);
+    /** 0.38: the destination's real surface, sampled on the server and drawn behind the opening. */
+    private static final EntityDataAccessor<String> TERRAIN = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.STRING);
 
     public RiftPortalEntity(EntityType<? extends RiftPortalEntity> type, Level level) {
         super(type, level);
@@ -44,12 +46,14 @@ public class RiftPortalEntity extends Entity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(TYPE, RiftType.SIFT.id).define(AGE, 0).define(WIDTH, 7.0f).define(HEIGHT, 5.0f);
+        builder.define(TERRAIN, "");
     }
 
     public RiftType riftType() { return RiftType.byId(this.entityData.get(TYPE)); }
     public int age() { return this.entityData.get(AGE); }
     public float riftWidth() { return this.entityData.get(WIDTH); }
     public float riftHeight() { return this.entityData.get(HEIGHT); }
+    public String terrainView() { return this.entityData.get(TERRAIN); }
 
     @Override
     public void tick() {
@@ -90,6 +94,13 @@ public class RiftPortalEntity extends Entity {
         }
         // Only the growth phase is synced; afterwards the value stays constant (no network traffic).
         if (this.level() instanceof ServerLevel && age() <= GROWN + 20) this.entityData.set(AGE, age() + 1);
+        // 0.38: once the rift is grown, sample the dimension it leads to so the client can draw the
+        // REAL destination behind the glazed square (see RiftTerrainView).
+        if (this.level() instanceof ServerLevel server && age() >= GROWN && terrainView().isEmpty()
+                && server.getServer() != null) {
+            ServerLevel destination = server.getServer().getLevel(RiftTerrainView.destination(riftType()));
+            if (destination != null) this.entityData.set(TERRAIN, RiftTerrainView.sample(destination, 0, 0));
+        }
     }
 
     @Override public boolean isNoGravity() { return true; }
