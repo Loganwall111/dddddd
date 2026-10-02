@@ -358,3 +358,19 @@ Artifact `Sift-Overhaul-0.36.0-alpha-26.3` (5,208,195 bytes).
   load `RiftTerrainView` with no registries, and the per-line `put(colours, ...)` arity bug is corrected.
 - Gate additions: `test_v039_giant_window_wavy_border_and_the_fade`; the 0.33 wave contract is replaced by
   the reversal (`assertNotIn('borderWave', r)`).
+
+### 0.39 verification
+
+Run `36947640191` (**success**) on `477f86b`:
+
+- annotation `Dungeons-II-Overworld-0.15.zip (38739 bytes) is inside sift-overhaul-0.39.0-alpha.jar`
+- annotation `82 programs and the core shader variants compiled clean with Glslang Version: 11:15.1.0`
+- artifact `Sift-Overhaul-0.39.0-alpha-26.3`, 5,227,306 bytes
+- server smoke test reached `SIFT-SMOKE DONE` with no `SIFT-SMOKE FAIL` line, so the new
+  `checkTerrainViews` (tick 141) sampled all five destinations against live worldgen and found real
+  surfaces in each - including the Nether, where the sampler drops below the bedrock roof to the cavern
+  floor a traveller actually lands on.
+
+Earlier 0.38-only runs failed before any of this could run (`36946618280`: registry in a class
+initialiser; `36946822858`: `put(colours, ...)` arity). Both are fixed in this version; 0.39 is the first
+green build carrying the destination sampler, the giant window, the border-wave removal and the frame fade.
