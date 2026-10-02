@@ -357,3 +357,30 @@ the 0.37 painted world unchanged.
 
 This is the closest honest stand-in for the Immersive Portals window available inside this mod: real
 destination terrain, real materials, real parallax, sampled once per rift instead of streamed per frame.
+
+### 0.39 the giant window, the honest border, and the fade again
+
+Three things the user called out looking at the rift in game.
+
+**The whole interior is the window.** `RiftShape` used to glaze one 3x3 square of the 11x8 body and frost
+everything else, so the destination sat in a small frame in the middle. Now the frost is only a frame that
+hugs the silhouette: a BFS from outside the body finds every cell at least two steps inside the outline,
+those are open glass, and every other cell is a panel. The opening therefore follows the rift's own stepped
+outline - arms, tower, corner boxes - instead of a rectangle. The shader is told with a new +32 bit in the
+view code: `openWindow` fills the destination from the very edge inwards
+(`destAmt = min(1.0, mix(destAmt, destAmt * 2.4, openWindow))`), keeps the scene copy in the thin outer rim
+where the glass curve belongs, and drops the frost veil from 0.62 to 0.26 of `frostAmt`.
+
+**No more white finger.** The 0.32 travelling border wave offset the rim segments sideways with a sine
+(amplitudes 0.18 and 0.075). The user: "this weird white finger on the side that's WAVY - when I meant WAVY
+I meant the border itself is WAVY, not the implementer on top." Sliding whole rim segments sideways made
+individual white beams leave the panel they belong to and hang outside the silhouette, which is the finger.
+The sine is gone (`borderWave` deleted); the border's waviness is the shape's own stepped outline. The rim
+bands were also trimmed (core 0.20->0.16, halo 0.58->0.44 at rest) so the white reads as an edge with a
+glow rather than a slab.
+
+**The fade is back, and per beam.** 0.32-0.38 measured `tipFade` as distance from the structure centre,
+multiplied by a random per-cell tip toggle whose alpha floor was 0.45 - so outer cells stayed bright and
+the outline read as a circle-ish blob rather than beams dissolving. Now each frame cell carries its own
+fade: 1 where it meets the open interior, smoothstepped to 0 at the outer ends, and the walls, panels and
+rims all multiply by it. Beams dissolve along their own length, and the outermost ring is fully gone.

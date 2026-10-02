@@ -53,25 +53,25 @@ public final class RiftTerrainView {
 
     private static void fill(Map<Block, Integer> colours) {
         // Vanilla surfaces.
-        put(colours, Blocks.GRASS_BLOCK, 0x6a9c46); put(Blocks.DIRT, 0x866043); put(Blocks.COARSE_DIRT, 0x7b573c);
-        put(colours, Blocks.PODZOL, 0x6b4a2a); put(Blocks.MYCELIUM, 0x6f6265); put(Blocks.MOSS_BLOCK, 0x59762f);
-        put(colours, Blocks.STONE, 0x7d7d7d); put(Blocks.COBBLESTONE, 0x777777); put(Blocks.DEEPSLATE, 0x505054);
-        put(colours, Blocks.GRAVEL, 0x7f7a76); put(Blocks.SAND, 0xd9cf9a); put(Blocks.RED_SAND, 0xb4611f);
-        put(colours, Blocks.SANDSTONE, 0xd5cfa2); put(Blocks.TERRACOTTA, 0x985e43); put(Blocks.CLAY, 0xa0a7b4);
-        put(colours, Blocks.SNOW_BLOCK, 0xf0f6f6); put(Blocks.SNOW, 0xf0f6f6); put(Blocks.ICE, 0x7db4e8);
-        put(colours, Blocks.PACKED_ICE, 0x8bb8e8); put(Blocks.BLUE_ICE, 0x74a8ea); put(Blocks.WATER, 0x3552c4);
-        put(colours, Blocks.LAVA, 0xd45b12); put(Blocks.NETHERRACK, 0x6c2b2b); put(Blocks.SOUL_SAND, 0x544133);
-        put(colours, Blocks.SOUL_SOIL, 0x4c3a2e); put(Blocks.BASALT, 0x4d4b52); put(Blocks.BLACKSTONE, 0x2c2730);
-        put(colours, Blocks.MAGMA_BLOCK, 0x8e3f0a); put(Blocks.END_STONE, 0xdbdfa0); put(Blocks.OBSIDIAN, 0x140e1f);
-        put(colours, Blocks.SCULK, 0x0e1a1c); put(Blocks.MUD, 0x3c3139); put(Blocks.PRISMARINE, 0x639c97);
-        put(colours, Blocks.WARPED_NYLIUM, 0x2a7f78); put(Blocks.CRIMSON_NYLIUM, 0x8c2b3f);
+        put(colours, Blocks.GRASS_BLOCK, 0x6a9c46); put(colours, Blocks.DIRT, 0x866043); put(colours, Blocks.COARSE_DIRT, 0x7b573c);
+        put(colours, Blocks.PODZOL, 0x6b4a2a); put(colours, Blocks.MYCELIUM, 0x6f6265); put(colours, Blocks.MOSS_BLOCK, 0x59762f);
+        put(colours, Blocks.STONE, 0x7d7d7d); put(colours, Blocks.COBBLESTONE, 0x777777); put(colours, Blocks.DEEPSLATE, 0x505054);
+        put(colours, Blocks.GRAVEL, 0x7f7a76); put(colours, Blocks.SAND, 0xd9cf9a); put(colours, Blocks.RED_SAND, 0xb4611f);
+        put(colours, Blocks.SANDSTONE, 0xd5cfa2); put(colours, Blocks.TERRACOTTA, 0x985e43); put(colours, Blocks.CLAY, 0xa0a7b4);
+        put(colours, Blocks.SNOW_BLOCK, 0xf0f6f6); put(colours, Blocks.SNOW, 0xf0f6f6); put(colours, Blocks.ICE, 0x7db4e8);
+        put(colours, Blocks.PACKED_ICE, 0x8bb8e8); put(colours, Blocks.BLUE_ICE, 0x74a8ea); put(colours, Blocks.WATER, 0x3552c4);
+        put(colours, Blocks.LAVA, 0xd45b12); put(colours, Blocks.NETHERRACK, 0x6c2b2b); put(colours, Blocks.SOUL_SAND, 0x544133);
+        put(colours, Blocks.SOUL_SOIL, 0x4c3a2e); put(colours, Blocks.BASALT, 0x4d4b52); put(colours, Blocks.BLACKSTONE, 0x2c2730);
+        put(colours, Blocks.MAGMA_BLOCK, 0x8e3f0a); put(colours, Blocks.END_STONE, 0xdbdfa0); put(colours, Blocks.OBSIDIAN, 0x140e1f);
+        put(colours, Blocks.SCULK, 0x0e1a1c); put(colours, Blocks.MUD, 0x3c3139); put(colours, Blocks.PRISMARINE, 0x639c97);
+        put(colours, Blocks.WARPED_NYLIUM, 0x2a7f78); put(colours, Blocks.CRIMSON_NYLIUM, 0x8c2b3f);
         // The Sift's own surfaces, so a rift into the Sift looks like the Sift.
-        put(colours, SiftContent.SIFT_EARTH, 0xb08a6a); put(SiftContent.SALTSTONE, 0xd9d3c6);
-        put(colours, SiftContent.REEF_STONE, 0x6f7f86); put(SiftContent.CRAG_ROCK, 0x6b6f78);
-        put(colours, SiftContent.PALE_CRUST, 0xd7d2cf); put(SiftContent.SINGER_MOSS, 0x5c8a6a);
-        put(colours, SiftContent.SOULWOOD, 0x5a4636); put(SiftContent.SOUL_CANOPY, 0x4e6a4a);
-        put(colours, SiftContent.CORAL_PINK_BLOCK, 0xc27d92); put(SiftContent.CORAL_ORANGE_BLOCK, 0xc98a5a);
-        put(colours, SiftContent.TEAL_PATH, 0x3f7f74); put(SiftContent.ROSE_PATH, 0xa9756d);
+        put(colours, SiftContent.SIFT_EARTH, 0xb08a6a); put(colours, SiftContent.SALTSTONE, 0xd9d3c6);
+        put(colours, SiftContent.REEF_STONE, 0x6f7f86); put(colours, SiftContent.CRAG_ROCK, 0x6b6f78);
+        put(colours, SiftContent.PALE_CRUST, 0xd7d2cf); put(colours, SiftContent.SINGER_MOSS, 0x5c8a6a);
+        put(colours, SiftContent.SOULWOOD, 0x5a4636); put(colours, SiftContent.SOUL_CANOPY, 0x4e6a4a);
+        put(colours, SiftContent.CORAL_PINK_BLOCK, 0xc27d92); put(colours, SiftContent.CORAL_ORANGE_BLOCK, 0xc98a5a);
+        put(colours, SiftContent.TEAL_PATH, 0x3f7f74); put(colours, SiftContent.ROSE_PATH, 0xa9756d);
         put(colours, SiftContent.SPIRE_BRICKS, 0x8a8f96);
     }
 
@@ -88,6 +88,22 @@ public final class RiftTerrainView {
         };
     }
 
+    /**
+     * The height a traveller would stand on. In the Nether the plain heightmap is the bedrock roof, so the
+     * cavern floor below it is found instead - that is the Nether a player actually sees through a rift.
+     */
+    private static int surfaceY(ServerLevel level, int x, int z) {
+        int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+        if (level.dimension() == Level.NETHER && y > 120) {
+            for (int yy = Math.min(y - 1, 120); yy > level.getMinY() + 2; yy--) {
+                BlockPos pos = new BlockPos(x, yy, z);
+                if (!level.getBlockState(pos).isAir() && level.getBlockState(pos.above()).isAir()
+                        && level.getBlockState(pos.above(2)).isAir()) return yy + 1;
+            }
+        }
+        return y;
+    }
+
     /** Samples the destination surface around (cx, cz) into the compact string the entity syncs. */
     public static String sample(ServerLevel level, int cx, int cz) {
         int n = GRID * GRID;
@@ -98,7 +114,7 @@ public final class RiftTerrainView {
             int z = cz + offset(j);
             for (int i = 0; i < GRID; i++) {
                 int x = cx + offset(i);
-                int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+                int y = surfaceY(level, x, z);
                 Block block = level.getBlockState(new BlockPos(x, y - 1, z)).getBlock();
                 int k = j * GRID + i;
                 heights[k] = y;

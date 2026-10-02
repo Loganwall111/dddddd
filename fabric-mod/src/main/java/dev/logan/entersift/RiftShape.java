@@ -28,12 +28,16 @@ public final class RiftShape {
     public final float maxDepth;
     /** Satellite cells: {x0, y0, x1, y1, zFront, zBack, group, neighbourMask(1 L, 2 R, 4 D, 8 U)}. */
     public final List<float[]> sats = new ArrayList<>();
-    /** 0.29r: cells that stay clear window; everything else in the body is a frosted box face. */
+    /** 0.39: cells that stay clear window; everything else in the body is a frosted box face. */
     private final boolean[][] window;
+    /** 0.39: how bright a frame cell still is - 1 beside the open interior, 0 at the outer ends. */
+    private final float[][] fade;
 
-    private RiftShape(int cols, int rows, float w, float h, boolean[][] body, float[][] depth, int[][] tier, float maxDepth, boolean[][] window) {
+    private RiftShape(int cols, int rows, float w, float h, boolean[][] body, float[][] depth, int[][] tier, float maxDepth,
+                      boolean[][] window, float[][] fade) {
         this.cols = cols; this.rows = rows; this.w = w; this.h = h;
         this.window = window;
+        this.fade = fade;
         this.cw = w / cols; this.ch = h / rows;
         this.body = body; this.depth = depth; this.tier = tier; this.maxDepth = maxDepth;
     }
@@ -43,6 +47,52 @@ public final class RiftShape {
     public float x(int i) { return -w / 2 + i * cw; }
     public float y(int j) { return BASE + j * ch; }
     public float cy() { return BASE + h / 2; }
+
+    /**
+     * 0.39: distance in cells from the open interior, through the body. 1 = the ring of panels touching
+     * the interior, larger numbers work outwards to the silhouette ends. Cells outside the body are 0.
+     */
+    private static int[][] frameDistance(int cols, int rows, boolean[][] body) {
+        int[][] out = new int[cols][rows];
+        java.util.ArrayDeque<int[]> queue = new java.util.ArrayDeque<>();
+        // the interior first: every body cell at least two steps inside the outline
+        int[][] toEdge = new int[cols][rows];
+        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++)
+            toEdge[i][j] = body[i][j] ? Integer.MAX_VALUE : 0;
+        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++)
+            if (!body[i][j]) queue.add(new int[]{i, j});
+        while (!queue.isEmpty()) {
+            int[] c = queue.poll();
+            for (int[] step : STEPS) {
+                int ni = c[0] + step[0], nj = c[1] + step[1];
+                if (ni < 0 || nj < 0 || ni >= cols || nj >= rows || !body[ni][nj]) continue;
+                if (toEdge[ni][nj] > toEdge[c[0]][c[1]] + 1) { toEdge[ni][nj] = toEdge[c[0]][c[1]] + 1; queue.add(new int[]{ni, nj}); }
+            }
+        }
+        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) { out[i][j] = -1; if (body[i][j] && toEdge[i][j] >= 2) { out[i][j] = 0; queue.add(new int[]{i, j}); } }
+        while (!queue.isEmpty()) {
+            int[] c = queue.poll();
+            for (int[] step : STEPS) {
+                int ni = c[0] + step[0], nj = c[1] + step[1];
+                if (ni < 0 || nj < 0 || ni >= cols || nj >= rows || !body[ni][nj] || out[ni][nj] >= 0) continue;
+                out[ni][nj] = out[c[0]][c[1]] + 1;
+                queue.add(new int[]{ni, nj});
+            }
+        }
+        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) if (out[i][j] < 0) out[i][j] = 1;
+        return out;
+    }
+
+    private static final int[][] STEPS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    private static float clamp01(float v) { return v < 0f ? 0f : (v > 1f ? 1f : v); }
+
+    /** 0.39: the fade of the frame cell under (x, y): 1 next to the open interior, 0 out at the ends. */
+    public float fadeAt(float x, float y) {
+        int i = (int) Math.floor((x + w / 2) / cw), j = (int) Math.floor((y - BASE) / ch);
+        if (i < 0 || j < 0 || i >= cols || j >= rows || !body[i][j]) return 1f;   // off the silhouette: unchanged
+        return fade[i][j];
+    }
 
     /** Crisp voxel grid resolution (~11x8 for standard 7x5 rift). */
     public static float cell(float w, float h) { return Math.max(0.55f, Math.min(0.95f, Math.max(w, h) / 11f)); }
@@ -68,12 +118,28 @@ public final class RiftShape {
         }
         float[][] depth = new float[cols][rows];
         float max = boxes(type, seed, cols, rows, body, tier, depth);
+        // 0.39: the WHOLE interior is the window. The user: "the screen in the middle is right in the
+        // centre; it needs to be all around the whole interior - a giant window". The frost survives only
+        // as a frame that hugs the silhouette: cells two or more steps inside the outline are open glass,
+        // every other body cell is a panel. Each panel cell carries its fade, 1 where it meets the open
+        // interior falling to 0 at the outer ends, so the beams dissolve instead of ending in a point.
         boolean[][] window = new boolean[cols][rows];
-        boolean glazedSquare = type == RiftType.SIFT || type == RiftType.OVERWORLD;
+        float[][] fade = new float[cols][rows];
+        int[][] out = frameDistance(cols, rows, body);
+        int maxOut = 1;
+        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) if (body[i][j]) maxOut = Math.max(maxOut, out[i][j]);
         for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) {
-            window[i][j] = !glazedSquare || (Math.abs(i - 5) <= 1 && Math.abs(j - 3) <= 1);
+            if (!body[i][j]) continue;
+            if (out[i][j] <= 1) {
+                window[i][j] = true;                       // the open interior
+                fade[i][j] = 1f;                           // open glass never fades
+            } else {
+                float f = 1f - (out[i][j] - 2) / (float) Math.max(1, maxOut - 2);
+                f = clamp01(f);
+                fade[i][j] = f * f * (3f - 2f * f);        // smoothstep, so the ends dissolve to nothing
+            }
         }
-        RiftShape s = new RiftShape(cols, rows, w, h, body, depth, tier, max, window);
+        RiftShape s = new RiftShape(cols, rows, w, h, body, depth, tier, max, window, fade);
         s.satellites(type, seed);
         return s;
     }

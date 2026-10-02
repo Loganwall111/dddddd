@@ -345,3 +345,16 @@ Artifact `Sift-Overhaul-0.36.0-alpha-26.3` (5,208,195 bytes).
   (`mix(0.34, 0.72, frostAmt) + (1.0 - hasTerrain) * 0.34`) instead of the near-opaque 0.36 glass.
 - `tools/probe/classes.txt`: queued `EntityDataSerializers` to pin the synched-string API.
 - `gradle.properties` / workflow artifact: `0.38.0-alpha`.
+
+## Sift Overhaul 0.39.0-alpha: giant window, no border wave, the fade back
+
+- `RiftShape`: the window is now the whole interior (BFS `frameDistance`, `out <= 1` is open glass); each
+  panel cell carries `fade` (1 at the opening, 0 at the ends) exposed as `fadeAt(x, y)`.
+- `RiftPortalRenderer`: `borderWave` and its sine offsets deleted (the user's "white finger"); `tipFade`
+  reads the shape's frame fade; `walls()`, `boxFaces()` and `rims()` all carry it; rim bands trimmed.
+- `rift.fsh`: the view code is now 64-step; `+32` sets `openWindow`, which fills the destination to the
+  edge, thins the frost to 0.26 and lifts the glass to ~0.9. `+16` (0.38 relief) and `+8` (night) unchanged.
+- Includes the two 0.38 build fixes: the destination colour table is lazy (`Colours` holder) so JUnit can
+  load `RiftTerrainView` with no registries, and the per-line `put(colours, ...)` arity bug is corrected.
+- Gate additions: `test_v039_giant_window_wavy_border_and_the_fade`; the 0.33 wave contract is replaced by
+  the reversal (`assertNotIn('borderWave', r)`).

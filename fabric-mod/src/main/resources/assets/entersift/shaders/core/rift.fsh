@@ -107,11 +107,14 @@ void main() {
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
     float t = GameTime * 1200.0;
-    int codeRaw = int(riftData.b * 32.0);
+    int codeRaw = int(riftData.b * 64.0);
     int view = codeRaw % 8;
     // 0.38: 16 bit set = the client also has the server's sampled destination relief behind the glass,
     // so this shader keeps only the sky and weather and lets the real terrain carry the land.
-    float hasTerrain = codeRaw >= 16 ? 1.0 : 0.0;
+    float hasTerrain = float((codeRaw / 16) % 2);
+    // 0.39: 32 bit set = the rift's WHOLE interior is the window, so the destination fills it edge to
+    // edge, the frost is only a veil and the scene copy stays in the thin outer rim.
+    float openWindow = float((codeRaw / 32) % 2);
     vec2 uv = riftData.rg;
     vec3 tint = TINT[view];
     vec3 frost = FROST[view];
@@ -145,7 +148,8 @@ void main() {
     col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.35);
     col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.35);
     // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
-    col = mix(col, frost, frostAmt * 0.62);
+    // 0.39: a giant window is barely veiled - the frost is a gloss on the glass, not a curtain over it.
+    col = mix(col, frost, frostAmt * mix(0.62, 0.26, openWindow));
     col += vec3(0.05) * frostAmt;
     // A slow gloss band sweeps the glass, the way the reference frames catch the light.
     float gloss = smoothstep(0.72, 1.0, sin((uv.x * 1.25 + uv.y * 0.75) * 3.14159 + t * 0.25) * 0.5 + 0.5);
@@ -155,9 +159,14 @@ void main() {
     // scene is used only in the outer rim, where the glass edge bends the surroundings. Up close the
     // pane clears to 0.86 (still glass); at range the frost takes it towards 0.98.
     float destAmt = smoothstep(0.05, 0.45, edgeFade);
+    // 0.39: an open rift must show its destination from the very edge inwards; the scene copy that keeps
+    // the background bending is squeezed into the outermost rim (which is where the glass curve is).
+    destAmt = min(1.0, mix(destAmt, destAmt * 2.4, openWindow));
     // Thin glass when the real terrain is drawn behind it (the frosted look is the gloss on top),
     // near-opaque only when the painted world is all there is.
     float glass = mix(0.34, 0.72, frostAmt) + (1.0 - hasTerrain) * 0.34;
+    // 0.39: a giant window is glass you look THROUGH, not a film over the destination.
+    glass = max(glass, mix(0.70, 0.92, frostAmt) * openWindow);
     float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;
 #ifdef RIFT_REFRACT
     vec2 size = vec2(textureSize(Sampler1, 0));

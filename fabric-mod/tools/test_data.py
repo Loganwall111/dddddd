@@ -43,7 +43,9 @@ class DataContracts(unittest.TestCase):
         self.assertIn('private static boolean isWindow(RiftShape sh, int i, int j)',rift)
         self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a, s);',rift)
         self.assertIn('public boolean windowCell(int i, int j)',shape)
-        self.assertIn('window[i][j] = !glazedSquare || (Math.abs(i - 5) <= 1 && Math.abs(j - 3) <= 1);',shape)
+        # 0.39: the whole interior is the window; the frost is a frame that hugs the silhouette
+        self.assertIn('if (out[i][j] <= 1) {',shape)
+        self.assertIn('private static int[][] frameDistance(int cols, int rows, boolean[][] body)',shape)
         self.assertIn('private final boolean[][] window;',shape)
         for key in ('rift_box_face',):
             self.assertIn(key,budget)
@@ -203,9 +205,10 @@ class DataContracts(unittest.TestCase):
 
     def test_v033_thick_double_edged_wavy_borders_and_block_staff(self):
         r = (ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
-        # Thicker beams: the lip grew and the bands widened.
+        # Thicker beams: the lip grew and the bands widened (0.39 trimmed the halo so the white reads as
+        # an edge with a glow instead of a slab).
         self.assertIn('COLLAR = 0.12f, FLANGE = 0.06f', r)
-        self.assertIn('(0.20f + 0.12f * flash) * k, (0.58f + 0.24f * flash) * k', r)
+        self.assertIn('(0.16f + 0.10f * flash) * k, (0.44f + 0.18f * flash) * k', r)
         # White on BOTH sides of every border: rim() takes the cell centre and draws an inner line.
         self.assertIn('float cx, float cy) {', r)
         self.assertIn('float inx = 0f, iny = 0f;', r)
@@ -213,9 +216,12 @@ class DataContracts(unittest.TestCase):
         for site in ('tipFade(sh, x0, cym), cxm, cym', 'tipFade(sh, cxm, y1), cxm, cym',
                      'tipFade(sh, q[0], qcy), qcx, qcy', 'tipFade(sh, qcx, q[3]), qcx, qcy'):
             self.assertIn(site, r)                          # every rim site knows its cell centre
-        # Stronger wave.
-        self.assertIn('0.18f * (float) Math.sin(along * 1.9f', r)
-        self.assertIn('0.075f * (float) Math.sin(along * 3.7f', r)
+        # 0.39 reversal: the user rejected the travelling border wave ("this weird white finger on the
+        # side that's WAVY - when I meant WAVY I meant the border itself is WAVY, not the implementer on
+        # top"). Offsetting rims sideways is gone; the fade is per frame cell instead.
+        self.assertNotIn('borderWave', r)
+        self.assertNotIn('float wave, float time', r)
+        self.assertIn('public float fadeAt(float x, float y)', (ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text())
         # Frosted panels are framed panes.
         self.assertIn('float in = 0.13f, ie = 0.28f * tf;', r)
 
@@ -305,6 +311,25 @@ class DataContracts(unittest.TestCase):
         # 0.38: with a real relief behind the glass the painted ridges step aside so the two do not double up
         self.assertIn('if (hasTerrain < 0.5) {', fsh)
 
+    def test_v039_giant_window_wavy_border_and_the_fade(self):
+        # The user, looking at the rift: "the screen in the middle is right in the centre; it needs to be
+        # all around the whole interior - a giant window", plus no white finger and a visible fade.
+        shape = (ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
+        self.assertIn('boolean[][] window, float[][] fade)', shape)       # the frame fade is per cell
+        self.assertIn('fade[i][j] = 1f;', shape)                          # open glass never fades
+        self.assertIn('f * f * (3f - 2f * f)', shape)                     # smoothstep to nothing
+        r = (ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('return sh.fadeAt(x, y);', r)                       # tipFade reads the frame cell
+        self.assertIn('float wf = tipFade(sh, (x0 + x1) * 0.5f, (y0 + y1) * 0.5f);', r)  # walls fade too
+        self.assertIn('(s.open ? 32 : 0)', r)                             # the giant-window flag
+        self.assertIn('s.open = e.riftType() != RiftType.PORTAL;', r)
+        fsh = (R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        self.assertIn('int codeRaw = int(riftData.b * 64.0);', fsh)
+        self.assertIn('float openWindow = float((codeRaw / 32) % 2);', fsh)
+        self.assertIn('col = mix(col, frost, frostAmt * mix(0.62, 0.26, openWindow));', fsh)
+        self.assertIn('destAmt = min(1.0, mix(destAmt, destAmt * 2.4, openWindow));', fsh)
+        self.assertIn('glass = max(glass, mix(0.70, 0.92, frostAmt) * openWindow);', fsh)
+
     def test_v038_real_destination_relief(self):
         # The user wants the destination dimension visible, not the world they stand in. The server now
         # samples the REAL surface of the dimension each rift leads to and the client draws it.
@@ -315,6 +340,7 @@ class DataContracts(unittest.TestCase):
                       'public static String encode(', 'public static Relief decode(',
                       'SiftContent.SIFT_EARTH'):
             self.assertIn(token, view)
+        self.assertIn('private static int surfaceY(ServerLevel level, int x, int z)', view)
         entity = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
         self.assertIn('EntityDataSerializers.STRING', entity)          # synced to the client
         self.assertIn('RiftTerrainView.destination(riftType())', entity)  # sampled for the rift's destination
@@ -326,7 +352,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('terrainRelief(p, vc, wv, sh, s, look2, a, wf)', renderer)
         # the shader thins the glass and drops its painted land when the real relief is behind it
         fsh = (R/'assets/entersift/shaders/core/rift.fsh').read_text()
-        self.assertIn('float hasTerrain = codeRaw >= 16 ? 1.0 : 0.0;', fsh)
+        self.assertIn('float hasTerrain = float((codeRaw / 16) % 2);', fsh)
         self.assertIn('if (hasTerrain < 0.5) {', fsh)
         self.assertIn('float glass = mix(0.34, 0.72, frostAmt) + (1.0 - hasTerrain) * 0.34;', fsh)
         # the smoke test samples every dimension's real terrain, so CI proves the sampler runs
@@ -890,7 +916,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.38.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.39.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -1029,7 +1055,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.38.0-alpha',props)
+        self.assertIn('mod_version=0.39.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
