@@ -31,27 +31,52 @@ const vec3 FROST[8] = vec3[8](
 
 // 0.36: the destination seen through the opening, as a function so the frost can BLUR it by sampling
 // neighbouring directions. Everything is driven by the view ray, so walking past the rift parallaxes.
-vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t) {
+vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t, int view) {
     float up = clamp(dir.y, -1.0, 1.0);
     float az = atan(dir.z, dir.x);
 
+    // 0.37: each rift style paints ITS OWN world, so the opening can never be mistaken for the place
+    // the player is standing in: 1 and 7 are the nether-heavy looks (embers, low burning horizon),
+    // 2 is the end (a violet void with a floating island), the rest are temperate (sky, clouds, ridges).
+    bool ember  = (view == 1 || view == 7);
+    bool endish = (view == 2);
+    float landY = endish ? -0.05 : ember ? -0.17 : 0.0;
+
     vec3 zenith  = mix(tint, frost, 0.35) * 0.42;
     vec3 horizon = mix(tint, vec3(1.0), 0.28);
-    vec3 floorC  = mix(frost, vec3(0.05, 0.06, 0.09), 0.55);
+    vec3 floorC  = endish ? mix(frost, vec3(0.02, 0.02, 0.06), 0.70)
+                 : ember  ? mix(vec3(0.22, 0.05, 0.02), tint, 0.35)
+                 :          mix(frost, vec3(0.05, 0.06, 0.09), 0.55);
     vec3 ridgeFar  = mix(tint, frost, 0.45) * 0.30;
     vec3 ridgeNear = mix(frost, vec3(0.03, 0.04, 0.06), 0.40);
 
     vec3 col = mix(horizon, zenith, smoothstep(0.02, 0.62, up));
     col = mix(col, floorC, smoothstep(0.02, -0.22, up) * 0.85);
     // A far ridge line, then a nearer, darker one: the destination reads as a PLACE, not a picture.
-    float farRidge  = 0.115 + 0.055 * sin(az * 2.3 + 0.8) + 0.030 * sin(az * 5.1 + 2.2);
-    float nearRidge = 0.045 + 0.045 * sin(az * 3.1 - 1.1) + 0.022 * sin(az * 7.3 + 0.4);
+    float farRidge  = landY + 0.115 + 0.055 * sin(az * 2.3 + 0.8) + 0.030 * sin(az * 5.1 + 2.2);
+    float nearRidge = landY + 0.045 + 0.045 * sin(az * 3.1 - 1.1) + 0.022 * sin(az * 7.3 + 0.4);
     col = mix(col, ridgeFar,  1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up));
     col = mix(col, ridgeNear, 1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up));
-    // A rift sun hanging over the ridge, with a wide glow.
-    float sun = length(vec2((az - 0.55) * 0.85, up - 0.34));
-    col += tint * exp(-sun * 3.2) * 0.55;
-    col = mix(col, vec3(1.0), 1.0 - smoothstep(0.020, 0.045, sun));
+    if (!endish) {
+        // A rift sun hanging over the ridge, with a wide glow. The End has no sun.
+        float sun = length(vec2((az - 0.55) * 0.85, up - 0.34));
+        col += tint * exp(-sun * 3.2) * 0.55;
+        col = mix(col, vec3(1.0), 1.0 - smoothstep(0.020, 0.045, sun));
+    } else {
+        // A floating island silhouette: the unmistakable End shape.
+        float island = 1.0 - smoothstep(0.0, 0.19, length(vec2(az * 0.75, (up + 0.11) * 2.4)));
+        col = mix(col, mix(frost, tint, 0.5) * 0.35, island * 0.9);
+    }
+    if (ember) {
+        // Embers rising off a burning horizon.
+        float e = pow(max(0.0, sin(up * 30.0 + t * 2.0 + az * 6.0)), 10.0);
+        col += vec3(1.0, 0.45, 0.10) * e * 0.60;
+        col += vec3(1.0, 0.35, 0.10) * exp(-abs(up - landY) * 9.0) * 0.25;
+    } else if (!endish) {
+        // Temperate sky: slow cloud bands above the ridge.
+        float clouds = smoothstep(0.60, 0.85, sin(up * 9.0 + t * 0.03 + az * 0.5) * 0.5 + 0.5);
+        col = mix(col, vec3(1.0), clouds * 0.16);
+    }
     // Sparks drifting up through the opening.
     float motes = sin(up * 26.0 - t * 2.2 + az * 5.0) * sin(up * 41.0 - t * 3.1 - az * 3.0 + 1.7);
     col += tint * pow(max(0.0, motes), 6.0) * 0.55;
@@ -109,10 +134,10 @@ void main() {
 
     // The frosted gloss blurs the destination: a wider spread at range (frostAmt high), sharper up close.
     float blur = 0.006 + 0.020 * frostAmt;
-    vec3 col = destination(dir, tint, frost, uv, crack, strength, t);
-    col = mix(col, destination(normalize(dir + vec3(0.0, blur, 0.0)), tint, frost, uv, crack, strength, t), 0.5);
-    col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t), 0.35);
-    col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t), 0.35);
+    vec3 col = destination(dir, tint, frost, uv, crack, strength, t, view);
+    col = mix(col, destination(normalize(dir + vec3(0.0, blur, 0.0)), tint, frost, uv, crack, strength, t, view), 0.5);
+    col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t, view), 0.35);
+    col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t, view), 0.35);
     // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
     col = mix(col, frost, frostAmt * 0.62);
     col += vec3(0.05) * frostAmt;

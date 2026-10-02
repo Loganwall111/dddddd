@@ -287,6 +287,21 @@ class DataContracts(unittest.TestCase):
             problems += shaders.check_directives(prog)
         self.assertEqual(problems, [])
 
+    def test_v037_each_rift_shows_its_own_world(self):
+        # The user wants "another world" in the middle. Each style must paint a DISTINCT world, so the
+        # opening can never read as the place the player stands in.
+        fsh = (R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        for token in ('vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t, int view)',
+                      'bool ember  = (view == 1 || view == 7);',
+                      'bool endish = (view == 2);',
+                      'float island = 1.0 - smoothstep(0.0, 0.19,',            # the End silhouette
+                      'col += vec3(1.0, 0.45, 0.10) * e * 0.60;',              # nether embers
+                      'float clouds = smoothstep(0.60, 0.85,',                 # temperate cloud bands
+                      'if (!endish) {'):                                       # the End has no sun
+            self.assertIn(token, fsh)
+        # the blur samples must all carry the style, or a blurred pixel would show the wrong world
+        self.assertEqual(fsh.count('strength, t, view)'), 4)
+
     def test_crossing_uses_shared_silhouette_not_proximity(self):
         source = (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text()
         self.assertIn('RiftCrossing.crosses(shape', source)
@@ -837,7 +852,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.36.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.37.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -976,7 +991,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.36.0-alpha',props)
+        self.assertIn('mod_version=0.37.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

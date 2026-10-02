@@ -316,3 +316,15 @@ anything, and a stray `#endif` in `rift.fsh` shipped all the way into a client, 
 reload, made Minecraft drop the packs, retry, fail again and exit - the user's black screen.
 
 Artifact `Sift-Overhaul-0.36.0-alpha-26.3` (5,208,195 bytes).
+
+## Sift Overhaul 0.37.0-alpha: per-destination worlds, and the live-view question settled
+
+- `rift.fsh`: `destination(..., int view)` paints a distinct world per style (nether embers / burning
+  horizon, end void with a floating island and no sun, temperate clouds), all still blurred behind the
+  frost and still opaque over the interior.
+- `tools/probe/classes.txt`: queued `LevelRenderer` and `CompoundTag` (and re-queued `ClientLevel`) so the
+  next probe run dumps the signatures a live-destination render would need.
+- Docs: `RIFT_STATUS.md` records exactly what is reachable in 26.3 (`LevelRenderer.setLevel`,
+  `Minecraft.setLevel`/`levelRenderer`, `ClientLevel.hasChunk`) and what is not (the client has only the
+  current dimension's level and chunks), plus the fact that a 26.3 Immersive-Portals-style mod exists
+  (CurseForge 1511174, updated this week) which proves the technique but needs per-dimension chunk sync.

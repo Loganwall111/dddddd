@@ -306,3 +306,32 @@ is why the destination is painted and then frosted rather than being a live rend
 real terrain visible through the glass, the honest next step is to scope that second-render feature
 separately: it would be the largest and least verifiable change in the mod, and it needs a client to
 iterate on.
+
+### 0.37 per-destination worlds
+
+`destination(...)` now takes the style index and paints a different world per style: styles 1 and 7 get
+rising embers and a burning low horizon (nether), style 2 gets a violet void with a floating island
+silhouette and no sun (end), the rest get a sky with slow cloud bands and ridges. The blur samples all
+carry the style, so a blurred pixel can never show another rift's world.
+
+### The live-view question, answered with facts (0.37)
+
+The user asked twice for the Immersive Portals technique: a portal that renders the destination dimension
+live. What this build can and cannot reach, from the probed 26.3 signatures:
+
+- Reachable: `LevelRenderer.setLevel(Level)` exists; `Minecraft.level`, `Minecraft.levelRenderer` and
+  `Minecraft.setLevel(ClientLevel)` are public; `ClientLevel` has `hasChunk(int,int)` and
+  `entitiesForRendering()`. So a second render pass is technically callable.
+- NOT reachable from this mod as it stands: the client holds exactly ONE `ClientLevel` - the dimension
+  the player is in - and only that dimension's chunks (`ClientChunkCache`). Rendering another dimension
+  would draw empty void unless the server streams that dimension's chunks to the client, which is
+  Immersive Portals' own per-dimension chunk-sync protocol and a large feature in its own right.
+- Proof that the technique works on 26.3: the "Immersive Portal" mod (Hooneybadgers, CurseForge project
+  1511174) shipped a 26.3 Fabric/NeoForge build in the last days, described as a hand port of the
+  Immersive Portals engine - portal entities, live view of the other side every frame, stencil-buffer
+  rendering, secondary world context switching and per-dimension chunk loading. The original Immersive
+  Portals (iPortalTeam) still tops out at 1.21.1. Custom Portals is transportation only (portal blocks
+  and catalysts, no see-through), so it cannot provide the look either.
+- Therefore: the look is achievable on 26.3, but by that architecture - a second render plus a
+  server-to-client chunk stream - not by a shader change. The painted-and-frosted destination stays the
+  in-mod approach until that work is scoped and a client is available to iterate on it.
