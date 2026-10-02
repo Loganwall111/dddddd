@@ -1,7 +1,7 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
-// Rift Extension — rift fragment shader. FULLY SHADER-DRIVEN.
+// Rift Extension — rift fragment shader v2. Fully shader-driven.
 //   RIFT_WALL  inner walls with depth gradient + subtle frost.
 //   RIFT_GLOW  rims, halos, sparkles, lightning: additive with bloom.
 //   (default)  FROSTED WINDOW: rich procedural destination sky visible through
@@ -285,4 +285,4 @@ void main() {
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif
-}
+}# Latest
