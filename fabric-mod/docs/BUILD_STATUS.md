@@ -301,3 +301,18 @@ but unusable.
   annotations are readable. That is how the next run is verified from here.
 - Obsolete contract: the 0.20-era assertion that `rift.fsh` must NOT contain a destination function is
   replaced - the destination is now the whole point.
+
+## Sift Overhaul 0.36.0-alpha: CI verified, and the shaders really were compiled this time
+
+Run 36944533363 on `02a4037` is green end to end. The check-run annotation is the evidence that the
+shader gate is finally real:
+
+    notice: 82 programs and the core shader variants compiled clean with Glslang Version: 11:15.1.0
+
+Until 0.35 that step silently skipped every compile (its `find` came up empty, the script was handed an
+empty tool path and reported "structure ok (compile skipped)" with exit 0). So the four rift pipelines
+(`rift`, `rift_wall`, `rift_glow`, `rift_refract`) and the tunnel shader had never been compiled by
+anything, and a stray `#endif` in `rift.fsh` shipped all the way into a client, where it failed resource
+reload, made Minecraft drop the packs, retry, fail again and exit - the user's black screen.
+
+Artifact `Sift-Overhaul-0.36.0-alpha-26.3` (5,208,195 bytes).
