@@ -20,14 +20,11 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 packLight;
 layout(location = 2) out vec4 packNormal;
 
-float fogFade() {
-    return 1.0 - smoothstep(FogRenderDistanceStart, FogRenderDistanceEnd, sphericalVertexDistance);
-}
+// ============================================================
+// Shared noise functions — available to ALL variants
+// ============================================================
 
-#if !defined(RIFT_WALL) && !defined(RIFT_GLOW)
 const float PI = 3.14159265;
-
-// ------------------------------------------------------------------ noise
 
 float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -60,7 +57,15 @@ float voronoi(vec2 p) {
     return sqrt(d);
 }
 
-// ------------------------------------------------------------------ frost distortion
+float fogFade() {
+    return 1.0 - smoothstep(FogRenderDistanceStart, FogRenderDistanceEnd, sphericalVertexDistance);
+}
+
+// ============================================================
+// Frosted window — destination views, distortion, frost (default variant only)
+// ============================================================
+
+#if !defined(RIFT_WALL) && !defined(RIFT_GLOW)
 
 vec2 frostDistortion(vec2 uv, float t) {
     vec2 swirl = vec2(
@@ -84,8 +89,6 @@ float frostIntensity(vec2 uv, float t) {
     return clamp(base + clouds - vein + edgeFrost - centre, 0.2, 0.85);
 }
 
-// ------------------------------------------------------------------ RICH procedural destination views
-
 float ridge(float yaw, float seed, float cols, float lo, float hi) {
     float c = floor((yaw + PI) / (2.0 * PI) * cols);
     float n = hash21(vec2(c, seed)) * 0.45 + hash21(vec2(floor(c / 4.0), seed + 7.0)) * 0.55;
@@ -99,7 +102,6 @@ float clouds(vec3 dir, float t, float scale, float cover, float seed) {
     return step(cover, n);
 }
 
-// 0 Overworld: rich sunset with multiple cloud layers, terrain detail
 vec3 viewOverworld(vec3 dir, float yaw, float t) {
     float el = dir.y;
     vec3 c = mix(vec3(1.00, 0.70, 0.36), vec3(0.95, 0.40, 0.32), smoothstep(-0.05, 0.55, el));
@@ -109,13 +111,11 @@ vec3 viewOverworld(vec3 dir, float yaw, float t) {
     c = mix(c, vec3(1.00, 0.82, 0.60), clouds(dir, t * 0.8, 0.8, 0.45, 7.0) * 0.5);
     if (el < ridge(yaw, 3.0, 90.0, -0.03, 0.09)) c = mix(c, vec3(0.88, 0.40, 0.32), 0.6);
     if (el < ridge(yaw, 9.0, 40.0, -0.12, 0.02)) c = vec3(0.74, 0.30, 0.26);
-    // Sun glow
     float sun = exp(-abs(el - 0.05) * 30.0) * 0.3;
     c += vec3(1.0, 0.9, 0.6) * sun;
     return c;
 }
 
-// 5 Gold (Overworld from Sift)
 vec3 viewGold(vec3 dir, float yaw, float t) {
     float el = dir.y;
     vec3 c = mix(vec3(1.00, 0.94, 0.58), vec3(0.93, 0.80, 0.25), smoothstep(-0.05, 0.5, el));
@@ -126,7 +126,6 @@ vec3 viewGold(vec3 dir, float yaw, float t) {
     return c;
 }
 
-// 1 Nether: crimson sky, rolling smoke, fortress, embers, lava glow
 vec3 viewNether(vec3 dir, float yaw, float t) {
     float el = dir.y;
     vec3 c = mix(vec3(1.00, 0.38, 0.12), vec3(0.45, 0.05, 0.05), smoothstep(-0.05, 0.6, el));
@@ -136,13 +135,11 @@ vec3 viewNether(vec3 dir, float yaw, float t) {
     c += vec3(1.0, 0.45, 0.12) * smoothstep(-0.02, -0.25, el) * 0.6;
     vec2 e = floor(vec2(yaw * 30.0, el * 30.0 - t * 1.5));
     c += vec3(1.0, 0.72, 0.3) * step(0.975, hash21(e));
-    // Extra smoke layers
     float smoke2 = fbm(vec2(yaw * 4.0 + 5.0, el * 3.0 - t * 0.08));
     c = mix(c, vec3(0.30, 0.05, 0.06), smoothstep(0.55, 0.8, smoke2) * 0.35);
     return c;
 }
 
-// 2 End: deep blue starlit, violet nebula, island silhouettes, purple rim
 vec3 viewEnd(vec3 dir, float yaw, float t) {
     float el = dir.y;
     vec3 c = mix(vec3(0.30, 0.28, 0.62), vec3(0.04, 0.05, 0.16), smoothstep(-0.05, 0.6, el));
@@ -158,7 +155,6 @@ vec3 viewEnd(vec3 dir, float yaw, float t) {
     return c;
 }
 
-// 3 Sift: pale mint sky, pink panels, rows of pink and teal pillars
 vec3 viewSift(vec3 dir, float yaw, float t) {
     float el = dir.y;
     vec3 c = mix(vec3(0.62, 0.90, 0.86), vec3(0.88, 0.97, 0.95), smoothstep(-0.05, 0.6, el));
@@ -178,7 +174,6 @@ vec3 viewSift(vec3 dir, float yaw, float t) {
     return c;
 }
 
-// 4 Portal: cyan mosaic
 vec3 viewPortal(vec3 dir, float yaw, float t) {
     vec2 g = floor(vec2(yaw * 24.0, dir.y * 24.0));
     float n = hash21(g) * 0.5 + vnoise(g * 0.25 + t * 0.2) * 0.5;
@@ -195,16 +190,11 @@ vec3 destination(int view, vec3 dir, float t) {
     return viewPortal(dir, yaw, t);
 }
 
-// ------------------------------------------------------------------ frosted window with depth
-
 vec3 frostedWindow(vec3 baseDir, vec2 uv, int view, bool night, float t) {
     vec2 frost = frostDistortion(uv, t);
     float frostK = frostIntensity(uv, t);
-
-    // Distorted direction through frosted glass
     vec3 distorted = normalize(baseDir + vec3(frost.x, frost.y, 0.0));
 
-    // Multi-tap blur (5 samples through frost)
     vec3 col = destination(view, distorted, t) * 0.4;
     float blurR = 0.015 + frostK * 0.02;
     for (int i = 0; i < 4; i++) {
@@ -215,19 +205,15 @@ vec3 frostedWindow(vec3 baseDir, vec2 uv, int view, bool night, float t) {
         col += destination(view, tapDir, t) * 0.15;
     }
 
-    // Depth parallax: shift the view slightly based on distance from center
     vec2 parallax = (uv - 0.5) * 0.08;
     vec3 deepDir = normalize(baseDir + vec3(parallax.x, parallax.y, 0.0));
-    col += destination(view, deepDir, t) * 0.1;  // subtle depth layer
+    col += destination(view, deepDir, t) * 0.1;
 
-    // Frost tint
     col = mix(col, vec3(0.92, 0.95, 1.0), frostK * 0.25);
 
-    // Ice sparkle
     float sparkle = pow(voronoi(uv * 18.0 + t * 0.05), 4.0) * frostK;
     col += vec3(1.0, 0.98, 0.95) * sparkle * 0.25;
 
-    // Surface sheen
     float sheen = pow(max(0.0, dot(normalize(baseDir), vec3(0.3, 0.7, 0.5))), 12.0);
     col += vec3(1.0) * sheen * frostK * 0.1;
 
@@ -242,21 +228,17 @@ void main() {
     packNormal = vec4(0.0);
     fragColor = vec4(riftData.rgb, riftData.a * fogFade()) * ColorModulator;
 #elif defined(RIFT_WALL)
-    // Shader-driven walls: depth gradient from edge to center
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
     vec3 wallCol = riftData.rgb;
-    // Add subtle depth gradient — edges brighter, centre darker (thick rift look)
     vec2 wd = riftData.rg - 0.5;
     float wDist = length(wd);
-    wallCol *= 0.85 + 0.15 * wDist;  // brighter at edges
-    // Subtle frost shimmer on walls
+    wallCol *= 0.85 + 0.15 * wDist;
     float wFrost = vnoise(riftData.rg * 8.0 + GameTime * 600.0) * 0.05;
     wallCol += vec3(wFrost);
     fragColor = apply_fog(vec4(wallCol, 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #else
-    // --- FROSTED INTERDIMENSIONAL WINDOW ---
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
     float t = GameTime * 1200.0;
@@ -266,23 +248,19 @@ void main() {
     vec3 dir = normalize(worldRay);
     vec2 uv = riftData.rg;
 
-    // Frosted window with rich procedural destination
     vec3 col = frostedWindow(dir, uv, view, night, t);
 
-    // Centre glow — light pouring through the rift
     vec2 d = uv - 0.5;
     float core = exp(-dot(d, d) * 10.0);
     float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
     col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
 
-    // Night glow for Sift
     if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), uv.y), 0.55);
 
-    // Edge vignette — darkens the edges for the "fading into nothing" look
     float vignette = 1.0 - smoothstep(0.35, 0.55, max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0);
     col *= 0.4 + 0.6 * vignette;
 
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif
-}# Latest
+}

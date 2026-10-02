@@ -98,13 +98,7 @@ public final class SiftRenderTypes {
             Class<? extends Enum> program = (Class<? extends Enum>) Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
             Object iris = api.getMethod("getInstance").invoke(null);
             java.lang.reflect.Method assign = api.getMethod("assignPipeline", RenderPipeline.class, program);
-            // Register ALL pipelines with Iris so it doesn't try to compile our
-            // custom rift shaders through its own pipeline (causes black screen).
-            Object[][] pairs = {
-                {SOLID_PIPELINE, "BASIC_COLOR"}, {GLOW_PIPELINE, "BASIC_COLOR"},
-                {RIFT_PIPELINE, "BASIC_COLOR"}, {RIFT_WALL_PIPELINE, "BASIC_COLOR"},
-                {RIFT_GLOW_PIPELINE, "BASIC_COLOR"}
-            };
+            Object[][] pairs = {{SOLID_PIPELINE, "BASIC_COLOR"}, {GLOW_PIPELINE, "BASIC_COLOR"}};
             for (Object[] pair : pairs) {
                 try {
                     assign.invoke(iris, pair[0], Enum.valueOf(program, (String) pair[1]));
