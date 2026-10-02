@@ -333,6 +333,10 @@ class DataContracts(unittest.TestCase):
         smoke = (ROOT/'src/main/java/dev/logan/entersift/SiftSmokeTest.java').read_text()
         self.assertIn('checkTerrainViews(server)', smoke)
         self.assertIn('RiftTerrainView.sample(destination, 0, 0)', smoke)
+        # the surface table must be lazy: a bare JUnit run has no bootstrapped registries, and a static
+        # table naming SiftContent blocks broke CI once already (RiftTerrainViewTest:63)
+        self.assertIn('private static Map<Block, Integer> colours() { return Colours.MAP; }', view)
+        self.assertNotIn('static {\n        // Vanilla surfaces.', view)
         # a Java unit test covers the codec
         self.assertTrue((ROOT/'src/test/java/dev/logan/entersift/RiftTerrainViewTest.java').is_file())
 

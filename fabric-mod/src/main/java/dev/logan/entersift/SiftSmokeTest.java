@@ -223,7 +223,7 @@ final class SiftSmokeTest {
             boolean real = false;
             for (int j = 0; j < RiftTerrainView.GRID && !real; j++)
                 for (int i = 0; i < RiftTerrainView.GRID && !real; i++)
-                    if (RiftTerrainView.colourOf(relief, j * RiftTerrainView.GRID + i) != 0x7A7F85) real = true;
+                    if (RiftTerrainView.colourOf(relief, j * RiftTerrainView.GRID + i) != RiftTerrainView.UNKNOWN) real = true;
             if (!real) { bad++; continue; }   // every column fell back to the unknown-block grey
             ok++;
             EnterTheSift.LOGGER.info("SIFT-SMOKE terrain {} minY={} span={} chars={}",

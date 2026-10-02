@@ -33,32 +33,46 @@ public final class RiftTerrainView {
     /** Height quantisation steps (a nibble per column). */
     public static final int LEVELS = 16;
 
-    private static final Map<Block, Integer> COLOURS = new LinkedHashMap<>();
+    /** Shown for any block the table does not know. */
+    public static final int UNKNOWN = 0x7a7f85;
 
-    private static void put(Block block, int rgb) { COLOURS.put(block, rgb); }
+    private static Map<Block, Integer> colours() { return Colours.MAP; }
 
-    static {
+    /** Built on first use, never in this class's initialiser, so the codec stays testable off-line. */
+    private static final class Colours {
+        static final Map<Block, Integer> MAP = build();
+
+        private static Map<Block, Integer> build() {
+            Map<Block, Integer> map = new LinkedHashMap<>();
+            fill(map);
+            return map;
+        }
+    }
+
+    private static void put(Map<Block, Integer> colours, Block block, int rgb) { colours.put(block, rgb); }
+
+    private static void fill(Map<Block, Integer> colours) {
         // Vanilla surfaces.
-        put(Blocks.GRASS_BLOCK, 0x6a9c46); put(Blocks.DIRT, 0x866043); put(Blocks.COARSE_DIRT, 0x7b573c);
-        put(Blocks.PODZOL, 0x6b4a2a); put(Blocks.MYCELIUM, 0x6f6265); put(Blocks.MOSS_BLOCK, 0x59762f);
-        put(Blocks.STONE, 0x7d7d7d); put(Blocks.COBBLESTONE, 0x777777); put(Blocks.DEEPSLATE, 0x505054);
-        put(Blocks.GRAVEL, 0x7f7a76); put(Blocks.SAND, 0xd9cf9a); put(Blocks.RED_SAND, 0xb4611f);
-        put(Blocks.SANDSTONE, 0xd5cfa2); put(Blocks.TERRACOTTA, 0x985e43); put(Blocks.CLAY, 0xa0a7b4);
-        put(Blocks.SNOW_BLOCK, 0xf0f6f6); put(Blocks.SNOW, 0xf0f6f6); put(Blocks.ICE, 0x7db4e8);
-        put(Blocks.PACKED_ICE, 0x8bb8e8); put(Blocks.BLUE_ICE, 0x74a8ea); put(Blocks.WATER, 0x3552c4);
-        put(Blocks.LAVA, 0xd45b12); put(Blocks.NETHERRACK, 0x6c2b2b); put(Blocks.SOUL_SAND, 0x544133);
-        put(Blocks.SOUL_SOIL, 0x4c3a2e); put(Blocks.BASALT, 0x4d4b52); put(Blocks.BLACKSTONE, 0x2c2730);
-        put(Blocks.MAGMA_BLOCK, 0x8e3f0a); put(Blocks.END_STONE, 0xdbdfa0); put(Blocks.OBSIDIAN, 0x140e1f);
-        put(Blocks.SCULK, 0x0e1a1c); put(Blocks.MUD, 0x3c3139); put(Blocks.PRISMARINE, 0x639c97);
-        put(Blocks.WARPED_NYLIUM, 0x2a7f78); put(Blocks.CRIMSON_NYLIUM, 0x8c2b3f);
+        put(colours, Blocks.GRASS_BLOCK, 0x6a9c46); put(Blocks.DIRT, 0x866043); put(Blocks.COARSE_DIRT, 0x7b573c);
+        put(colours, Blocks.PODZOL, 0x6b4a2a); put(Blocks.MYCELIUM, 0x6f6265); put(Blocks.MOSS_BLOCK, 0x59762f);
+        put(colours, Blocks.STONE, 0x7d7d7d); put(Blocks.COBBLESTONE, 0x777777); put(Blocks.DEEPSLATE, 0x505054);
+        put(colours, Blocks.GRAVEL, 0x7f7a76); put(Blocks.SAND, 0xd9cf9a); put(Blocks.RED_SAND, 0xb4611f);
+        put(colours, Blocks.SANDSTONE, 0xd5cfa2); put(Blocks.TERRACOTTA, 0x985e43); put(Blocks.CLAY, 0xa0a7b4);
+        put(colours, Blocks.SNOW_BLOCK, 0xf0f6f6); put(Blocks.SNOW, 0xf0f6f6); put(Blocks.ICE, 0x7db4e8);
+        put(colours, Blocks.PACKED_ICE, 0x8bb8e8); put(Blocks.BLUE_ICE, 0x74a8ea); put(Blocks.WATER, 0x3552c4);
+        put(colours, Blocks.LAVA, 0xd45b12); put(Blocks.NETHERRACK, 0x6c2b2b); put(Blocks.SOUL_SAND, 0x544133);
+        put(colours, Blocks.SOUL_SOIL, 0x4c3a2e); put(Blocks.BASALT, 0x4d4b52); put(Blocks.BLACKSTONE, 0x2c2730);
+        put(colours, Blocks.MAGMA_BLOCK, 0x8e3f0a); put(Blocks.END_STONE, 0xdbdfa0); put(Blocks.OBSIDIAN, 0x140e1f);
+        put(colours, Blocks.SCULK, 0x0e1a1c); put(Blocks.MUD, 0x3c3139); put(Blocks.PRISMARINE, 0x639c97);
+        put(colours, Blocks.WARPED_NYLIUM, 0x2a7f78); put(Blocks.CRIMSON_NYLIUM, 0x8c2b3f);
         // The Sift's own surfaces, so a rift into the Sift looks like the Sift.
-        put(SiftContent.SIFT_EARTH, 0xb08a6a); put(SiftContent.SALTSTONE, 0xd9d3c6);
-        put(SiftContent.REEF_STONE, 0x6f7f86); put(SiftContent.CRAG_ROCK, 0x6b6f78);
-        put(SiftContent.PALE_CRUST, 0xd7d2cf); put(SiftContent.SINGER_MOSS, 0x5c8a6a);
-        put(SiftContent.SOULWOOD, 0x5a4636); put(SiftContent.SOUL_CANOPY, 0x4e6a4a);
-        put(SiftContent.CORAL_PINK_BLOCK, 0xc27d92); put(SiftContent.CORAL_ORANGE_BLOCK, 0xc98a5a);
-        put(SiftContent.TEAL_PATH, 0x3f7f74); put(SiftContent.ROSE_PATH, 0xa9756d);
-        put(SiftContent.SPIRE_BRICKS, 0x8a8f96);
+        put(colours, SiftContent.SIFT_EARTH, 0xb08a6a); put(SiftContent.SALTSTONE, 0xd9d3c6);
+        put(colours, SiftContent.REEF_STONE, 0x6f7f86); put(SiftContent.CRAG_ROCK, 0x6b6f78);
+        put(colours, SiftContent.PALE_CRUST, 0xd7d2cf); put(SiftContent.SINGER_MOSS, 0x5c8a6a);
+        put(colours, SiftContent.SOULWOOD, 0x5a4636); put(SiftContent.SOUL_CANOPY, 0x4e6a4a);
+        put(colours, SiftContent.CORAL_PINK_BLOCK, 0xc27d92); put(SiftContent.CORAL_ORANGE_BLOCK, 0xc98a5a);
+        put(colours, SiftContent.TEAL_PATH, 0x3f7f74); put(SiftContent.ROSE_PATH, 0xa9756d);
+        put(colours, SiftContent.SPIRE_BRICKS, 0x8a8f96);
     }
 
     private RiftTerrainView() {}
@@ -69,7 +83,8 @@ public final class RiftTerrainView {
             case OVERWORLD -> Level.OVERWORLD;
             case NETHER -> Level.NETHER;
             case END -> Level.END;
-            case SIFT, PORTAL -> ResourceKey.create(Registries.DIMENSION, SiftContent.id("the_sift"));
+            case SIFT, PORTAL -> ResourceKey.create(Registries.DIMENSION,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath("entersift", "the_sift"));
         };
     }
 
@@ -87,7 +102,7 @@ public final class RiftTerrainView {
                 Block block = level.getBlockState(new BlockPos(x, y - 1, z)).getBlock();
                 int k = j * GRID + i;
                 heights[k] = y;
-                rgb[k] = COLOURS.getOrDefault(block, 0x7a7f85);
+                rgb[k] = colours().getOrDefault(block, UNKNOWN);
                 min = Math.min(min, y);
                 max = Math.max(max, y);
             }
@@ -103,7 +118,7 @@ public final class RiftTerrainView {
     public static String encode(int[] heights, int[] rgb, int min, int max) {
         List<Integer> palette = new ArrayList<>();
         for (int colour : rgb) if (!palette.contains(colour) && palette.size() < LEVELS) palette.add(colour);
-        if (palette.isEmpty()) palette.add(0x7a7f85);
+        if (palette.isEmpty()) palette.add(UNKNOWN);
         int span = Math.max(0, max - min);
         StringBuilder out = new StringBuilder(4 + palette.size() * 6 + heights.length * 2);
         out.append(min).append(':').append(span).append(':');
