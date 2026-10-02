@@ -451,3 +451,153 @@ No shader pack, no stencil and no world see-through. The old block_display ancho
 
 Generator run order: … → `phase9.py` → `phase10.py` (then `preview_sky.py` / `preview_features.py` for previews).
 
+Hand off for the future # Rift Extension — Agent Handoff Document
+**Date:** October 2, 2026  
+**Branch:** `arena/01a0fcfa-dddddd`  
+**Latest CI build:** `37036697604` (✅ passed)  
+**Repo:** `Loganwall111/dddddd` → `rift-extension/` subfolder  
+
+---
+
+## What This Mod Does
+Fabric mod for Minecraft 26.3 that renders **interdimensional rifts** — portal-like tear-openings that show a frosted glass view of another dimension's sky. The rifts grow through a 6-phase animation cycle (TEAR→GROW→SHOCK→BUILD→COLOR→STABLE) and then persist with animated effects (sparkles, lightning, energy particles, curtains).
+
+---
+
+## Current State (as of latest commit `baf126c`)
+
+### What's Working
+- **CI builds pass** — Java compilation succeeds on every push
+- **Mod loads** — no startup crash (lazy GL init fixed previously)
+- **Rift shape system** — procedural jagged shapes per `RiftType` (OVERWORLD, NETHER, END, SIFT, PORTAL, GOLD) with depth boxes, satellites, collision
+- **6-phase growth animation** — white construction → color reveal → stable with effects
+- **Energy particles** — transparent light rectangles floating UP, disintegrating at top (noon/night only)
+- **Sparkles, lightning, aura curtains, rim glow** — all in stable phase
+- **Shader compiles** (as of latest commit) — noise functions moved to shared scope, garbage text removed
+
+### What Needs Verification / Might Still Be Wrong
+- **The frosted window visuals** — the shader is complex (289 lines of GLSL). It SHOULD show: procedural destination sky through distorted frosted glass with ice sparkle, depth parallax, frost tint, edge vignette, centre glow. **But the user has never confirmed it looks right.** The previous builds all had shader compilation errors so the frosted effect was never actually rendered.
+- **User says it "looks like the old version"** — this likely means either:
+  - They're still running a cached old JAR (version always shows `0.1.0-alpha`)
+  - The shader compiles but produces unexpected output (wrong colors, no frost, etc.)
+  - The rift is showing the white construction phase and hasn't reached color phase yet
+
+---
+
+## Architecture Overview
+
+### Key Files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `RiftPortalRenderer.java` | ~1040 | ALL rendering: growth phases, walls, windows, rims, frame, sparkles, lightning, energy, curtains |
+| `RiftShape.java` | ~273 | Procedural rift shape generation (body grid, depth boxes, satellites) |
+| `SiftRenderTypes.java` | ~146 | Render pipeline definitions + Iris registration |
+| `SiftBudget.java` | ~small | Performance budget (tick limits for effects) |
+| `RiftExtensionClient.java` | ~30 | Client entrypoint (registers renderer, Iris pipelines) |
+| `rift.fsh` | ~288 | Fragment shader — ALL the frosted window visuals |
+| `rift.vsh` | ~28 | Vertex shader — passes position + rift data to fragment |
+
+### Render Pipeline Architecture
+Three rift pipelines share the same shader file (`rift.fsh`/`rift.vsh`) with `#ifdef` variants:
+
+1. **`RIFT`** (default) — The frosted window. Uses `riftData.rg` as UV, `riftData.b` as view code, `worldRay` as 3D direction. Renders procedural destination sky through frost distortion.
+2. **`RIFT_WALL`** (`#define RIFT_WALL`) — Inner wall surfaces. Uses `riftData.rgb` as vertex color + frost shimmer via `vnoise()`.
+3. **`RIFT_GLOW`** (`#define RIFT_GLOW`) — Rims, halos, sparks, lightning. Additive blend, no depth write.
+
+Two additional pipelines (SOLID, GLOW) use `DEBUG_FILLED_SNIPPET` (Minecraft's built-in) for fallback when GPU shader is disabled.
+
+### Pipeline Registration (SiftRenderTypes.java)
+- `SOLID_PIPELINE` and `GLOW_PIPELINE` are registered with Iris as `BASIC_COLOR`
+- `RIFT`, `RIFT_WALL`, `RIFT_GLOW` are NOT registered with Iris (they use our custom shader)
+- Iris may log "Found okay program match" warnings for the rift pipelines — this is expected
+
+### Shader Details (`rift.fsh`)
+
+**Shared across all variants (before `#if` guard):**
+- `hash21()` — hash function
+- `vnoise()` — value noise
+- `fbm()` — fractal brownian motion (5 octaves)
+- `voronoi()` — Voronoi distance
+- `fogFade()` — fog distance fade
+
+**Default variant only (inside `#if !defined(RIFT_WALL) && !defined(RIFT_GLOW)`):**
+- `frostDistortion()` — swirl + crystal + breath animation
+- `frostIntensity()` — base frost + clouds + veins + edge frost
+- 6 procedural destination views: `viewOverworld`, `viewNether`, `viewEnd`, `viewSift`, `viewPortal`, `viewGold`
+- `destination()` — dispatches to correct view based on code
+- `frostedWindow()` — multi-tap blur, depth parallax, frost tint, ice sparkle, surface sheen
+
+**main() dispatch:**
+- `RIFT_GLOW` → simple color pass-through with fog
+- `RIFT_WALL` → color + depth gradient + vnoise frost shimmer
+- Default → frostedWindow() + centre glow + night glow + edge vignette
+
+### View Code Mapping (in riftData.b)
+- 0 = Overworld, 1 = Nether, 2 = End, 3 = Sift, 4 = Portal, 5 = Gold
+- Code >= 8 means night mode (bit 3)
+
+---
+
+## Recent Changes (this session)
+
+### Commit History (newest first)
+1. `baf126c` — **fix: GLSL shader compilation** — moved noise functions before `#if` guard, removed `}# Latest` garbage text
+2. `d43cf6c` — fix: Iris compatibility — register all pipelines + remove dead GL code  
+3. `4c23286` — ci: add concurrency group, trigger rebuild
+4. `28df7d5` — rebuild: shader + thicker rift geometry
+5. `2e78d0c` — trigger rebuild: rift shape + shader improvements
+6. `06c336a` — fix: thicker rifts + shader-driven frost + depth parallax + vignette
+7. `6323232` — feat: thicker rifts + fully shader-driven visuals + back wall depth
+8. `89fc19b` — fix: lazy-load rift atlas on first render, not during mod init
+9. `40fd83c` — fix: trailer-accurate rift — no voxel growth, light rectangles, edge fade
+
+### What Changed in This Session
+- **rift.fsh completely rewritten** — from simple fog-based view to rich procedural frost system with multi-tap blur, depth parallax, Voronoi ice, 6 dimension views
+- **RiftShape.java** — deeper centre box (1.85 was 1.65), bigger collar/flange
+- **RiftPortalRenderer.java** — removed dead GL texture binding, added back wall depth layer
+- **SiftRenderTypes.java** — added `RIFT_PIPELINE`, `RIFT_WALL_PIPELINE`, `RIFT_GLOW_PIPELINE` (were already there, just tweaked)
+- **RiftExtensionClient.java** — removed all GL/LWJGL imports, removed atlas loading entirely
+
+---
+
+## Known Issues / Gotchas
+
+1. **Version always says `0.1.0-alpha`** — the mod version in `gradle.properties` doesn't change per build. User must check CI run number to verify they have the right JAR.
+
+2. **No texture atlas anymore** — the shader is fully procedural. The `textures/environment/` PNGs exist in the repo but are NOT used. The shader generates all sky views mathematically.
+
+3. **Iris compatibility** — with Iris installed, our custom rift shaders may or may not compile through Iris's pipeline. The SOLID/GLOW fallback pipelines are registered with Iris as BASIC_COLOR. If Iris breaks the rift shaders, the fallback won't activate automatically — the game may error. Consider adding graceful fallback.
+
+4. **User's dimension reference images** — user uploaded WEBP/JPG files for Overworld, Nether, End, Sift backgrounds. These were never converted or integrated because the shader became fully procedural. If the user wants real images visible through the frost, that requires either:
+   - Texture atlas binding (currently removed from renderer)
+   - A different shader approach using `sampler2D`
+
+5. **Sodium compatibility** — user has Sodium installed. Sodium overrides some rendering. The mod uses `submitCustomGeometry` which should work, but visual glitches are possible.
+
+6. **The `COLLAR` and `FLANGE` constants** were increased (0.42 and 0.22) for thicker rift frame. Verify this looks right visually.
+
+7. **Back wall layer** — `wallsColor()` draws an additional back wall at `z - 0.4` with darker colors for depth. This is new and untested visually.
+
+---
+
+## What To Do Next
+
+### Immediate
+1. **Have the user download build `37036697604`** artifact and verify it loads (no black screen)
+2. **Check `latest.log`** for any `Couldn't compile pipeline` errors — if the shader still fails, the `}# Latest` fix didn't make it into the build
+3. **Visual inspection of rift** — does the frosted window show? Is the destination sky visible through frost? Does it look like the trailer reference?
+
+### If Shader Still Fails
+- The `rift.fsh` file might have trailing whitespace or BOM issues. Check with `hexdump -C rift.fsh | tail -5`
+- The `#include <minecraft:globals.glsl>` and `<minecraft:dynamictransforms.glsl>` may not exist in MC 26.3's shader system. Check what includes are available.
+
+### If Shader Works But Looks Wrong
+- The procedural views are generated mathematically — they won't look like real screenshots
+- User wanted their own WEBP/JPG images visible through frost — that requires re-adding texture binding
+- Frost intensity, blur radius, vignette strength are all tunable constants in the shader
+
+### User's Original Requests Still Outstanding
+- Background dimension images (user's own files) visible through frosted glass
+- Rifts should look like the trailer reference screenshots
+- Energy particles (light rectangles) — implemented but unverified visually
