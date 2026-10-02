@@ -335,7 +335,8 @@ class DataContracts(unittest.TestCase):
         # samples the REAL surface of the dimension each rift leads to and the client draws it.
         view = (ROOT/'src/main/java/dev/logan/entersift/RiftTerrainView.java').read_text()
         for token in ('public static final int GRID = 24', 'public static final int LEVELS = 16',
-                      'Heightmap.Types.WORLD_SURFACE', 'case OVERWORLD -> Level.OVERWORLD',
+                      'Heightmap.Types.WORLD_SURFACE', 'public static String destinationId(RiftType type)',
+                      'case OVERWORLD -> "minecraft:overworld"', 'case SIFT, PORTAL -> "entersift:the_sift"',
                       'case NETHER -> Level.NETHER', 'case END -> Level.END',
                       'public static String encode(', 'public static Relief decode(',
                       'SiftContent.SIFT_EARTH'):

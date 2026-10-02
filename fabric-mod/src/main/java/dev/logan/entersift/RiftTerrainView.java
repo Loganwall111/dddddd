@@ -78,6 +78,20 @@ public final class RiftTerrainView {
     private RiftTerrainView() {}
 
     /** The dimension a rift leads to. {@code RiftType} IS the destination (see rift/style.mcfunction). */
+    public static String destinationId(RiftType type) {
+        return switch (type) {
+            case OVERWORLD -> "minecraft:overworld";
+            case NETHER -> "minecraft:the_nether";
+            case END -> "minecraft:the_end";
+            case SIFT, PORTAL -> "entersift:the_sift";
+        };
+    }
+
+    /**
+     * The key the server resolves the destination with. Split from {@link #destinationId} because building
+     * a dimension key needs a bootstrapped registry, which a bare JUnit run does not have - the tests pin
+     * the pure id mapping instead.
+     */
     public static ResourceKey<Level> destination(RiftType type) {
         return switch (type) {
             case OVERWORLD -> Level.OVERWORLD;

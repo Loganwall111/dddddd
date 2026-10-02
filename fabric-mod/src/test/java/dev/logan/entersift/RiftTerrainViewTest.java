@@ -60,6 +60,13 @@ class RiftTerrainViewTest {
     }
 
     @Test void everyRiftTypeHasADestination() {
-        for (RiftType type : RiftType.values()) assertNotNull(RiftTerrainView.destination(type));
+        // Pure ids only: RiftType and these strings need no bootstrapped registry, so the test stays
+        // runnable in a bare JUnit environment (building the actual dimension key does not).
+        java.util.Map<RiftType, String> expected = java.util.Map.of(
+            RiftType.OVERWORLD, "minecraft:overworld", RiftType.NETHER, "minecraft:the_nether",
+            RiftType.END, "minecraft:the_end", RiftType.SIFT, "entersift:the_sift",
+            RiftType.PORTAL, "entersift:the_sift");
+        for (RiftType type : RiftType.values())
+            assertEquals(expected.get(type), RiftTerrainView.destinationId(type));
     }
 }
