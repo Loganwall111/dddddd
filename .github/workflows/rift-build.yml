@@ -1,0 +1,42 @@
+name: Rift Extension — build
+on:
+  push:
+    paths: ['rift-extension/**', '.github/workflows/rift-build.yml']
+  pull_request:
+    paths: ['rift-extension/**', '.github/workflows/rift-build.yml']
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: rift-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+jobs:
+  fabric:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rift-extension
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compile and build
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon build 2>&1 | tee "$RUNNER_TEMP/rift-build.log" || {
+            echo "=== LAST 80 LINES ==="
+            tail -80 "$RUNNER_TEMP/rift-build.log"
+            exit 1
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rift-Extension-alpha
+          path: |
+            rift-extension/build/libs/*.jar
