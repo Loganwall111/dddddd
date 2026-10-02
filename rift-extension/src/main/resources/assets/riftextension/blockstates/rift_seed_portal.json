@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "riftextension:block/rift_seed_portal"
+    }
+  }
+}
