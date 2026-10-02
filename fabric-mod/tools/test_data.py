@@ -313,6 +313,20 @@ class DataContracts(unittest.TestCase):
         # 0.38: with a real relief behind the glass the painted ridges step aside so the two do not double up
         self.assertIn('if (hasTerrain < 0.5) {', fsh)
 
+    def test_v0392_no_stray_white_and_a_fade_that_reaches_the_tips(self):
+        # Re-reading the screenshots: two pieces of geometry sat OUTSIDE the fading structure, so however
+        # well the panels dissolved, bright white still ran to the tips.
+        r = (ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        # a) the outer flange was drawn at a flat alpha of 1 with no fade at all
+        frame = r[r.index('private static void frame('):r.index('private static void frame(') + 2000]
+        self.assertIn('float tf = tipFade(sh, (x0 + x1) * 0.5f, (y0 + y1) * 0.5f);', frame)
+        self.assertIn('if (tf <= 0.02f) continue;', frame)
+        self.assertNotIn(', C, face, 1f);', frame)
+        # b) the jittered hair-line that flickered off every border, and the bands' tangent overhang
+        self.assertNotIn('y0 + jit[1] - oy', r)
+        self.assertIn('float ex = 0f, ey = 0f, ez = 0f;', r)
+        self.assertNotIn('float e = core / 2, ex = dx / dl * e', r)
+
     def test_v039_giant_window_wavy_border_and_the_fade(self):
         # The user, looking at the rift: "the screen in the middle is right in the centre; it needs to be
         # all around the whole interior - a giant window", plus no white finger and a visible fade.
@@ -925,14 +939,16 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.39.1-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.39.2-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
         fsh=(S/'rift.fsh').read_text(); sky=(C/'SiftSky.java').read_text()
         aura=(C/'AuraColumns.java').read_text(); clouds=(C/'SiftClouds.java').read_text()
         # Unified stepped-cross cavity + wavy side walls & wavy interior vistas
-        self.assertIn('box[i][j] = 0;',shape); self.assertIn('rectSub(',rift); self.assertIn('wavySideVeils(',rift)
+        self.assertIn('box[i][j] = 0;',shape); self.assertIn('rectSub(',rift)
+        # 0.39.2: the sideways wavy veils WERE the user's "weird white finger on the side that's WAVY"
+        self.assertNotIn('wavySideVeils', rift)
         self.assertIn('vec2 bend =',fsh); self.assertNotIn('canopyTreesAndMesas(',fsh)
         # Sift aurora panels + floating musical note glyphs inside rainbow columns
         self.assertIn('0x68FFD0',sky); self.assertIn('noteGlyphs(',aura)
@@ -1064,7 +1080,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.39.1-alpha',props)
+        self.assertIn('mod_version=0.39.2-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

@@ -53,7 +53,8 @@ public final class SiftBudget {
 
     public static boolean overworldClouds = true, riftEffects = true, transitionHud = true, riftShader = true, auraGlow = true;
 
-    public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = true, riftBackFade = true, riftBolts = true, riftShock = true, riftBoxFace = true, riftProximity = true, riftTipFade = true;
+    /** {@code riftSpill} is retired: it gated the sideways wavy veils the user rejected in 0.39.2. */
+    public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = false, riftBackFade = true, riftBolts = true, riftShock = true, riftBoxFace = true, riftProximity = true, riftTipFade = true;
 
     public static void load(Path configDir) {
         Path file = configDir.resolve("entersift-client.properties");
@@ -69,7 +70,7 @@ public final class SiftBudget {
         riftRefraction = flag(props, "rift_refraction", true);
         riftBloom = flag(props, "rift_glow", true);
         riftFlares = flag(props, "enable_flares", true);
-        riftSpill = flag(props, "rift_spill", true);
+        riftSpill = flag(props, "rift_spill", false);   // retired (0.39.2): no such geometry is drawn any more
         riftBackFade = flag(props, "rift_back_fade", true);
         riftBolts = flag(props, "rift_bolts", true);
         riftShock = flag(props, "rift_shockwave", true);

@@ -393,3 +393,24 @@ Two things had also been quietly cancelling the fade, both fixed here:
 
 Measured on the standard 11x8 cross: fade 1.00 through the core, 0.55 at the mid-arm, 0.05-0.23 at the
 outer boxes and the tower, 0.00 at the very ends.
+
+### 0.39.2 where the stray white actually came from
+
+0.39.1 fixed the fade's maths, but two pieces of geometry were still drawn OUTSIDE the structure that
+fades, which is why bright white kept running to the tips no matter what the fade did.
+
+**The flange had no fade at all.** `frame()` - the bright lip that runs around the whole outline - was
+drawn at a flat alpha of `1f` on every quad, and it is the outermost layer of the whole structure. The
+panels, walls and rims could dissolve perfectly and a full-brightness rim still reached the ends of every
+arm. It now takes the same `tipFade` as everything else, and cells past the end draw nothing.
+
+**The sideways wavy veils are deleted.** `wavySideVeils` drew two ribbons of `look.halo()` down the left
+and right sides, wobbling with `sin(y * 2.3 - time * 2.8) * 0.18` and sticking `0.28` blocks out to each
+side. That is a wavy bright strip hanging off the edge of the rift - the user's "weird white finger on the
+side that's WAVY". Removed, along with the `riftSpill` flag that gated it (now a documented no-op).
+
+**No more whiskers.** Every border also drew a jittered hair-line offset by `0.022` on two out-of-phase
+sines, and `band()` extended each segment by `core / 2` along its own tangent - so wherever two segments
+met, a little white whisker poked past the corner. Both are gone; bands now end exactly on their segment.
+
+The border's waviness remains what it always should have been: the rift's own stepped silhouette.

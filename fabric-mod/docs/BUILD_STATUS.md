@@ -382,3 +382,12 @@ Three fixes after re-reading the screenshots: the per-cell fade above was replac
 `spokeFade` no longer floors the detached boxes at half brightness; and the cyan ritual portal keeps its
 fully glazed mosaic instead of acquiring a frosted frame. `RiftShapeWindowTest` now measures all of it in
 CI - interior coverage per type, the core at 1.0, the ends under 0.25 and exactly 0 past r 1.05.
+
+### 0.39.2: the stray white, and the flange that never faded
+
+- `frame()`: the outermost lip was drawn at a flat `1f` alpha on every quad - it now takes `tipFade(sh, ...)`
+  like the panels, walls and rims, and skips cells whose fade has reached zero.
+- `wavySideVeils` deleted (the ribbons that hung off both sides of the rift), and `riftSpill` retired.
+- `rim()`: the jittered hair-line is gone and `band()` no longer extends segments along their tangent, so
+  nothing pokes past a corner any more.
+- Contract `test_v0392_no_stray_white_and_a_fade_that_reaches_the_tips` pins all three; `0.39.2-alpha`.

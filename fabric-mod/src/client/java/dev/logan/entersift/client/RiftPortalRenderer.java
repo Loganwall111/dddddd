@@ -345,7 +345,6 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                         glitchTeeth(p, vc, sh, s, a);
                         clawRibbons(p, vc, sh, s, cam, a);
                     }
-                    if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look2, s);
                 });
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look2, a));
                 if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
@@ -914,7 +913,6 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float[] fa = {x0 - ox, y0 - oy, zf + 0.006f}, fb = {x1 + ox, y1 + oy, zf + 0.006f};
             // 0.32: thick soft borders — the references' edges are broad glowing bands, not thin lines.
             band(p, vc, wv, cam, fa, fb, (0.16f + 0.10f * flash) * k, (0.44f + 0.18f * flash) * k, core, halo, a);
-            line(p, vc, wv, cam, new float[]{x0 + jit[0] - ox, y0 + jit[1] - oy, zf + 0.01f}, new float[]{x1 + jit[0] + ox, y1 + jit[1] + oy, zf + 0.01f}, 0.075f * k, core, 0.30f * fade);
             line(p, vc, wv, cam, new float[]{x0 - ox + inx * inside, y0 - oy + iny * inside, zf + 0.014f},
                 new float[]{x1 + ox + inx * inside, y1 + oy + iny * inside, zf + 0.014f}, 0.05f * k, core, 0.35f * fade);
             band(p, vc, wv, cam, new float[]{x0 - ox, y0 - oy, zb + 0.012f}, new float[]{x1 + ox, y1 + oy, zb + 0.012f}, 0.05f, 0.18f, core, halo, 0.40f * fade);
@@ -925,29 +923,6 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * Translucent wavy reality-ripple / heat-haze ribbons undulating along the left and right outer flanks
      * of the rift (Images 7, 22, 23, 24, 26).
      */
-    private static void wavySideVeils(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s) {
-        float[] c = look.halo();
-        int segs = 14;
-        float yMin = RiftShape.BASE + sh.h * 0.08f, yMax = RiftShape.BASE + sh.h * 0.92f;
-        for (int side = -1; side <= 1; side += 2) {
-            float bx = side * (sh.w * 0.42f);
-            for (int k = 0; k < segs; k++) {
-                float f0 = k / (float) segs, f1 = (k + 1) / (float) segs;
-                float y0 = yMin + (yMax - yMin) * f0, y1 = yMin + (yMax - yMin) * f1;
-                float env0 = (float) Math.sin(f0 * Math.PI), env1 = (float) Math.sin(f1 * Math.PI);
-                float w0 = (float) Math.sin(y0 * 2.3f - s.time * 2.8f + side) * 0.18f * env0;
-                float w1 = (float) Math.sin(y1 * 2.3f - s.time * 2.8f + side) * 0.18f * env1;
-                float span0 = 0.28f * env0, span1 = 0.28f * env1;
-                col(p, vc, wv, bx + w0, y0, COLLAR * 0.6f, c, 0.22f * env0);
-                col(p, vc, wv, bx + w0 + side * span0, y0, COLLAR * 0.6f, c, 0f);
-                col(p, vc, wv, bx + w1 + side * span1, y1, COLLAR * 0.6f, c, 0f);
-                col(p, vc, wv, bx + w1, y1, COLLAR * 0.6f, c, 0.22f * env1);
-            }
-        }
-        // 0.28: the flat backdrop quad that used to sit behind the rift was removed. It read as a
-        // floating transparent rectangle ("it is just a window"). The stepped cavity, its outer box
-        // walls and the depth fade now carry the back of the structure instead.
-    }
 
     /** Summon distortion stretch + ring/ripple (Image 7 right-most): on `age < 30` the ground around the anchor
      *  emits a thin expanding ring and behind the opening a short-lived vertical stretch veil.
@@ -1034,19 +1009,25 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
+            // 0.39.2: the flange is the OUTERMOST layer of the structure, and it used to be drawn at a
+            // flat alpha of 1 with no fade at all - so no matter how well the panels dissolved, a bright
+            // rim still ran to the very tips of every arm. That is the "fade disappeared" report. It now
+            // carries the same fade as the panels and the borders, and the tips draw nothing.
+            float tf = tipFade(sh, (x0 + x1) * 0.5f, (y0 + y1) * 0.5f);
+            if (tf <= 0.02f) continue;
             boolean L = !shown(sh, i - 1, j, age), R = !shown(sh, i + 1, j, age), D = !shown(sh, i, j - 1, age), U = !shown(sh, i, j + 1, age);
-            if (L) { rectSub(p, vc, wv, x0 - F, y0, x0, y1, C, face, 1f);
-                wall(p, vc, wv, x0 - F, y0 - (D ? F : 0), x0 - F, y1 + (U ? F : 0), C, 0f, side, side, 0.9f); }
-            if (R) { rectSub(p, vc, wv, x1, y0, x1 + F, y1, C, face, 1f);
-                wall(p, vc, wv, x1 + F, y0 - (D ? F : 0), x1 + F, y1 + (U ? F : 0), C, 0f, side, side, 0.82f); }
-            if (D) { rectSub(p, vc, wv, x0, y0 - F, x1, y0, C, face, 1f);
-                wall(p, vc, wv, x0 - (L ? F : 0), y0 - F, x1 + (R ? F : 0), y0 - F, C, 0f, side, side, 0.7f); }
-            if (U) { rectSub(p, vc, wv, x0, y1, x1, y1 + F, C, face, 1f);
-                wall(p, vc, wv, x0 - (L ? F : 0), y1 + F, x1 + (R ? F : 0), y1 + F, C, 0f, side, side, 1f); }
-            if (L && D) rect(p, vc, wv, x0 - F, y0 - F, x0, y0, C, face, 1f);
-            if (R && D) rect(p, vc, wv, x1, y0 - F, x1 + F, y0, C, face, 1f);
-            if (L && U) rect(p, vc, wv, x0 - F, y1, x0, y1 + F, C, face, 1f);
-            if (R && U) rect(p, vc, wv, x1, y1, x1 + F, y1 + F, C, face, 1f);
+            if (L) { rectSub(p, vc, wv, x0 - F, y0, x0, y1, C, face, tf);
+                wall(p, vc, wv, x0 - F, y0 - (D ? F : 0), x0 - F, y1 + (U ? F : 0), C, 0f, side, side, 0.9f * tf); }
+            if (R) { rectSub(p, vc, wv, x1, y0, x1 + F, y1, C, face, tf);
+                wall(p, vc, wv, x1 + F, y0 - (D ? F : 0), x1 + F, y1 + (U ? F : 0), C, 0f, side, side, 0.82f * tf); }
+            if (D) { rectSub(p, vc, wv, x0, y0 - F, x1, y0, C, face, tf);
+                wall(p, vc, wv, x0 - (L ? F : 0), y0 - F, x1 + (R ? F : 0), y0 - F, C, 0f, side, side, 0.7f * tf); }
+            if (U) { rectSub(p, vc, wv, x0, y1, x1, y1 + F, C, face, tf);
+                wall(p, vc, wv, x0 - (L ? F : 0), y1 + F, x1 + (R ? F : 0), y1 + F, C, 0f, side, side, 1f * tf); }
+            if (L && D) rect(p, vc, wv, x0 - F, y0 - F, x0, y0, C, face, tf);
+            if (R && D) rect(p, vc, wv, x1, y0 - F, x1 + F, y0, C, face, tf);
+            if (L && U) rect(p, vc, wv, x0 - F, y1, x0, y1 + F, C, face, tf);
+            if (R && U) rect(p, vc, wv, x1, y1, x1 + F, y1 + F, C, face, tf);
         }
     }
 
@@ -1333,7 +1314,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         float len = (float) Math.sqrt(sx * sx + sy * sy + sz * sz), dl = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (len < 1e-6f || dl < 1e-6f) return;
         sx /= len; sy /= len; sz /= len;
-        float e = core / 2, ex = dx / dl * e, ey = dy / dl * e, ez = dz / dl * e;
+        // 0.39.2: no along-tangent extension. It let each band poke `core/2` past its own segment ends, so
+        // the outline carried little white whiskers wherever two segments met (the "finger" on the side).
+        float ex = 0f, ey = 0f, ez = 0f;
         float ax = a[0] - ex, ay = a[1] - ey, az = a[2] - ez, bx = b[0] + ex, by = b[1] + ey, bz = b[2] + ez;
         float half = Math.max(outer / 2, core * 1.3f);
         float[] off = {-half, -core * 1.15f, -core / 2, core / 2, core * 1.15f, half};
