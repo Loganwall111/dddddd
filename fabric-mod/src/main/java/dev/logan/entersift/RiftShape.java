@@ -30,14 +30,10 @@ public final class RiftShape {
     public final List<float[]> sats = new ArrayList<>();
     /** 0.39: cells that stay clear window; everything else in the body is a frosted box face. */
     private final boolean[][] window;
-    /** 0.39: how bright a frame cell still is - 1 beside the open interior, 0 at the outer ends. */
-    private final float[][] fade;
-
     private RiftShape(int cols, int rows, float w, float h, boolean[][] body, float[][] depth, int[][] tier, float maxDepth,
-                      boolean[][] window, float[][] fade) {
+                      boolean[][] window) {
         this.cols = cols; this.rows = rows; this.w = w; this.h = h;
         this.window = window;
-        this.fade = fade;
         this.cw = w / cols; this.ch = h / rows;
         this.body = body; this.depth = depth; this.tier = tier; this.maxDepth = maxDepth;
     }
@@ -87,11 +83,21 @@ public final class RiftShape {
 
     private static float clamp01(float v) { return v < 0f ? 0f : (v > 1f ? 1f : v); }
 
-    /** 0.39: the fade of the frame cell under (x, y): 1 next to the open interior, 0 out at the ends. */
+    /**
+     * 0.39: how much of a point's brightness survives - 1 in the middle of the structure, 0 at its own
+     * ends, smoothstepped in between.
+     *
+     * <p>The first attempt measured a cell's distance THROUGH the body from the open interior, but the
+     * arms of the standard rift are only two cells thick, so that distance never exceeds two and every
+     * cell came out at full brightness - the user's "I don't see the fading effect anymore". Distance from
+     * the structure's centre, normalised per axis, always has a real gradient and still fades to nothing
+     * exactly at the extremities of the arms, the tower and the boxes.
+     */
     public float fadeAt(float x, float y) {
-        int i = (int) Math.floor((x + w / 2) / cw), j = (int) Math.floor((y - BASE) / ch);
-        if (i < 0 || j < 0 || i >= cols || j >= rows || !body[i][j]) return 1f;   // off the silhouette: unchanged
-        return fade[i][j];
+        float nx = x / Math.max(0.001f, w * 0.5f), ny = (y - cy()) / Math.max(0.001f, h * 0.5f);
+        float r = (float) Math.sqrt(nx * nx + ny * ny);
+        float f = clamp01((r - 0.45f) / 0.62f);
+        return 1f - f * f * (3f - 2f * f);
     }
 
     /** Crisp voxel grid resolution (~11x8 for standard 7x5 rift). */
@@ -120,26 +126,20 @@ public final class RiftShape {
         float max = boxes(type, seed, cols, rows, body, tier, depth);
         // 0.39: the WHOLE interior is the window. The user: "the screen in the middle is right in the
         // centre; it needs to be all around the whole interior - a giant window". The frost survives only
-        // as a frame that hugs the silhouette: cells two or more steps inside the outline are open glass,
-        // every other body cell is a panel. Each panel cell carries its fade, 1 where it meets the open
-        // interior falling to 0 at the outer ends, so the beams dissolve instead of ending in a point.
+        // as a thin frame that hugs the silhouette: every body cell within a step of the inside of the
+        // outline is open glass, and the rest of the body is panel. How much of that frame and the borders
+        // survive is the fade in fadeAt().
         boolean[][] window = new boolean[cols][rows];
-        float[][] fade = new float[cols][rows];
-        int[][] out = frameDistance(cols, rows, body);
-        int maxOut = 1;
-        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) if (body[i][j]) maxOut = Math.max(maxOut, out[i][j]);
-        for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) {
-            if (!body[i][j]) continue;
-            if (out[i][j] <= 1) {
-                window[i][j] = true;                       // the open interior
-                fade[i][j] = 1f;                           // open glass never fades
-            } else {
-                float f = 1f - (out[i][j] - 2) / (float) Math.max(1, maxOut - 2);
-                f = clamp01(f);
-                fade[i][j] = f * f * (3f - 2f * f);        // smoothstep, so the ends dissolve to nothing
-            }
+        if (type == RiftType.PORTAL) {
+            // The cyan ritual portal is a mosaic of separate teeth and was always glazed edge to edge;
+            // it keeps that look unchanged (the renderer's open-window flag is off for it too).
+            for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) window[i][j] = body[i][j];
+        } else {
+            int[][] out = frameDistance(cols, rows, body);
+            for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++)
+                window[i][j] = body[i][j] && out[i][j] <= 1;    // every cell but the outer frame is glass
         }
-        RiftShape s = new RiftShape(cols, rows, w, h, body, depth, tier, max, window, fade);
+        RiftShape s = new RiftShape(cols, rows, w, h, body, depth, tier, max, window);
         s.satellites(type, seed);
         return s;
     }

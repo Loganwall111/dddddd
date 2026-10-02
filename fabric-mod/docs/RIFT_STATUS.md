@@ -379,8 +379,17 @@ The sine is gone (`borderWave` deleted); the border's waviness is the shape's ow
 bands were also trimmed (core 0.20->0.16, halo 0.58->0.44 at rest) so the white reads as an edge with a
 glow rather than a slab.
 
-**The fade is back, and per beam.** 0.32-0.38 measured `tipFade` as distance from the structure centre,
-multiplied by a random per-cell tip toggle whose alpha floor was 0.45 - so outer cells stayed bright and
-the outline read as a circle-ish blob rather than beams dissolving. Now each frame cell carries its own
-fade: 1 where it meets the open interior, smoothstepped to 0 at the outer ends, and the walls, panels and
-rims all multiply by it. Beams dissolve along their own length, and the outermost ring is fully gone.
+**The fade is back, and it reaches zero.** `tipFade` is now `RiftShape.fadeAt(x, y)`: a radial gradient,
+normalised per axis, 1 through the middle of the structure and smoothstepped to 0 at r >= 1.07, i.e. at
+the extremities of the arms, the tower and the boxes. Walls, panels and rims all multiply by it.
+
+Two things had also been quietly cancelling the fade, both fixed here:
+
+- the first 0.39 attempt measured a cell's distance *through the body* from the open interior, but the
+  standard rift's arms are only two cells thick, so that distance never exceeded two and every cell came
+  out at full brightness - exactly the "I don't see the fading effect anymore" report;
+- `spokeFade`, which drives the detached boxes, stopped at half brightness (`1 - 0.5 f^2`), so the
+  outermost satellites could never dissolve. It now reaches 0.
+
+Measured on the standard 11x8 cross: fade 1.00 through the core, 0.55 at the mid-arm, 0.05-0.23 at the
+outer boxes and the tower, 0.00 at the very ends.

@@ -44,7 +44,9 @@ class DataContracts(unittest.TestCase):
         self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a, s);',rift)
         self.assertIn('public boolean windowCell(int i, int j)',shape)
         # 0.39: the whole interior is the window; the frost is a frame that hugs the silhouette
-        self.assertIn('if (out[i][j] <= 1) {',shape)
+        self.assertIn('window[i][j] = body[i][j] && out[i][j] <= 1;',shape)
+        # the cyan ritual portal stays a fully glazed mosaic (it was never a rift window)
+        self.assertIn('if (type == RiftType.PORTAL) {',shape)
         self.assertIn('private static int[][] frameDistance(int cols, int rows, boolean[][] body)',shape)
         self.assertIn('private final boolean[][] window;',shape)
         for key in ('rift_box_face',):
@@ -315,12 +317,18 @@ class DataContracts(unittest.TestCase):
         # The user, looking at the rift: "the screen in the middle is right in the centre; it needs to be
         # all around the whole interior - a giant window", plus no white finger and a visible fade.
         shape = (ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
-        self.assertIn('boolean[][] window, float[][] fade)', shape)       # the frame fade is per cell
-        self.assertIn('fade[i][j] = 1f;', shape)                          # open glass never fades
-        self.assertIn('f * f * (3f - 2f * f)', shape)                     # smoothstep to nothing
+        # the fade is a radial gradient from the structure's centre: 1 in the core, 0 past the ends.
+        # (The first attempt measured distance through the body from the opening, but the standard rift's
+        # arms are two cells thick, so every cell came out at 1 - the user's "I don't see the fade".)
+        self.assertIn('public float fadeAt(float x, float y)', shape)
+        self.assertIn('float f = clamp01((r - 0.45f) / 0.62f);', shape)
+        self.assertIn('return 1f - f * f * (3f - 2f * f);', shape)
         r = (ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('return sh.fadeAt(x, y);', r)                       # tipFade reads the frame cell
         self.assertIn('float wf = tipFade(sh, (x0 + x1) * 0.5f, (y0 + y1) * 0.5f);', r)  # walls fade too
+        # the detached boxes used to stop at half brightness (1 - 0.5 f^2), so the ends never faded
+        self.assertIn('return 1f - f * f;', r)
+        self.assertNotIn('1f - 0.5f * f * f', r)
         self.assertIn('(s.open ? 32 : 0)', r)                             # the giant-window flag
         self.assertIn('s.open = e.riftType() != RiftType.PORTAL;', r)
         fsh = (R/'assets/entersift/shaders/core/rift.fsh').read_text()
@@ -917,7 +925,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.39.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.39.1-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -1056,7 +1064,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.39.0-alpha',props)
+        self.assertIn('mod_version=0.39.1-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.

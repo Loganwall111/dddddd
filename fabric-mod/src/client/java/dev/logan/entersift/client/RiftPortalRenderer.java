@@ -236,9 +236,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      */
     static float tipFade(RiftShape sh, float x, float y) {
         if (!SiftBudget.riftTipFade) return 1f;
-        // 0.39: per-cell fade from the open interior outwards, so the beams dissolve at THEIR OWN ends.
-        // 0.32-0.38 measured distance from the structure centre and multiplied it by a random per-cell tip
-        // toggle, which made single bright cells protrude past the outline - the user's "white finger".
+        // 0.39: 1 in the middle of the structure, 0 at its own ends, applied to rims, panels and walls, so
+        // the beams dissolve along their length instead of stopping at a bright outline.
         return sh.fadeAt(x, y);
     }
 
@@ -250,10 +249,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     static float spokeFade(RiftShape sh, float x, float y) {
         if (!SiftBudget.riftBackFade) return 1f;
+        // 0.39: the detached boxes must dissolve too. This used to stop at 0.5 (1 - 0.5 f^2), so the
+        // outermost satellites could never drop below half brightness - one more reason the user saw no
+        // fade at the ends. It now reaches zero.
         float dx = x / Math.max(0.001f, sh.w * 0.5f), dy = (y - sh.cy()) / Math.max(0.001f, sh.h * 0.5f);
         float r = (float) Math.sqrt(dx * dx + dy * dy);
-        float f = clamp((r - 1.05f) / 1.15f, 0f, 1f);
-        return 1f - 0.5f * f * f;
+        float f = clamp((r - 0.85f) / 0.85f, 0f, 1f);
+        return 1f - f * f;
     }
 
     /** Coloured vertex (walls, rims, glow). */

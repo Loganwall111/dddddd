@@ -348,8 +348,9 @@ Artifact `Sift-Overhaul-0.36.0-alpha-26.3` (5,208,195 bytes).
 
 ## Sift Overhaul 0.39.0-alpha: giant window, no border wave, the fade back
 
-- `RiftShape`: the window is now the whole interior (BFS `frameDistance`, `out <= 1` is open glass); each
-  panel cell carries `fade` (1 at the opening, 0 at the ends) exposed as `fadeAt(x, y)`.
+- `RiftShape`: the window is now the whole interior (BFS `frameDistance`, `out <= 1` is open glass). The
+  fade is `fadeAt(x, y)`, a radial gradient (1 in the core, smoothstepped to 0 past r 1.07) - the
+  cell-distance version was degenerate on two-cell-thick arms and produced no fade at all.
 - `RiftPortalRenderer`: `borderWave` and its sine offsets deleted (the user's "white finger"); `tipFade`
   reads the shape's frame fade; `walls()`, `boxFaces()` and `rims()` all carry it; rim bands trimmed.
 - `rift.fsh`: the view code is now 64-step; `+32` sets `openWindow`, which fills the destination to the
@@ -374,3 +375,10 @@ Run `36947640191` (**success**) on `477f86b`:
 Earlier 0.38-only runs failed before any of this could run (`36946618280`: registry in a class
 initialiser; `36946822858`: `put(colours, ...)` arity). Both are fixed in this version; 0.39 is the first
 green build carrying the destination sampler, the giant window, the border-wave removal and the frame fade.
+
+### 0.39.1: the fade actually visible, and the portal left alone
+
+Three fixes after re-reading the screenshots: the per-cell fade above was replaced by the radial one;
+`spokeFade` no longer floors the detached boxes at half brightness; and the cyan ritual portal keeps its
+fully glazed mosaic instead of acquiring a frosted frame. `RiftShapeWindowTest` now measures all of it in
+CI - interior coverage per type, the core at 1.0, the ends under 0.25 and exactly 0 past r 1.05.
