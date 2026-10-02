@@ -30,4 +30,4 @@ public final class RiftExtension implements ModInitializer {
             LOGGER.info("Rift Extension: server stopped.");
         });
     }
-}
+}// rebuild trigger
