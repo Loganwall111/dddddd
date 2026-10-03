@@ -615,7 +615,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('lockedTick',server); self.assertIn('long lockedTick()',server)
         # And /sifttide has to be executed somewhere, not just compiled: the smoke test drives every branch.
         smoke=(main/'SiftSmokeTest.java').read_text()
-        for sub in ('sifttide info','sifttide set ','sifttide time ','sifttide cycle on','sifttide cycle off','sift tide '):
+        for sub in ('sifttide info','sifttide set ','sifttide time ','sifttide cycle on','sifttide cycle off','sift tide info','sift tide '):
             self.assertIn('"'+sub,smoke,sub)
         self.assertIn('checkTide(',smoke); self.assertIn('SIFT-SMOKE FAIL tide',smoke)
     def test_eight_fixture_notes_have_sonorous_support(self):

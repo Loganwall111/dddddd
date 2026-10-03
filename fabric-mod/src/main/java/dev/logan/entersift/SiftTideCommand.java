@@ -32,14 +32,18 @@ public final class SiftTideCommand {
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(Commands.literal("sifttide").then(tideNode()));
-            // "/sift tide ..." as well, so both spellings work.
-            dispatcher.register(Commands.literal("sift").then(tideNode()));
+            // The subcommands hang directly off /sifttide, and off /sift tide as the second spelling.
+            // (Registering the same builder twice under two names would leave the first path broken: the
+            // smoke test caught exactly that, every "/sifttide ..." form answering "Incorrect argument".)
+            dispatcher.register(tideNode("sifttide"));
+            dispatcher.register(Commands.literal("sift").then(tideNode("tide")));
         });
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> tideNode() {
-        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("tide");
+    private static LiteralArgumentBuilder<CommandSourceStack> tideNode(String name) {
+        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(name);
+        // Bare /sifttide (and /sift tide) prints the same summary as "info".
+        root.executes(ctx -> { info(ctx.getSource()); return 1; });
         root.then(Commands.literal("info").executes(ctx -> { info(ctx.getSource()); return 1; }));
         for (String alias : new String[]{"set", "change"}) {
             root.then(Commands.literal(alias)

@@ -164,10 +164,12 @@ final class SiftSmokeTest {
     // tree would land in the log as an unknown/incomplete command and fail the smoke report), then the
     // Overworld clock is read back to prove the tide actually parked it in its own band.
     private static void tideCommands(MinecraftServer server) {
+        run(server, "sifttide");                 // bare node: answers with usage, must not throw
         run(server, "sifttide info");
         run(server, "sifttide set not_a_tide");   // must answer, not throw
         run(server, "sifttide set night");        // alias -> thrive
         run(server, "sifttide time 13000");
+        run(server, "sift tide info");
         run(server, "sift tide change lava_lamp");
         run(server, "sift tide time dusk");       // invalid time: answer, do not move the clock
         run(server, "sift tide lava_lamp");

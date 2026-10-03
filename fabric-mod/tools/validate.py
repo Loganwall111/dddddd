@@ -41,4 +41,5 @@ for _f in (r/'data/entersift/worldgen/feature').glob('*.json'):
             if _pl.get('type') == 'minecraft:offset':
                 assert max(abs(_pl['x']), abs(_pl['y']), abs(_pl['z'])) <= 16, f'{_f.name}: offset > 16'
 print(f'PASS: {count} JSON/metadata files, {len(functions)} functions, local models/textures, animations, wrapper and nine biomes.')
-print('Minecraft 26.3 compilation, registry codecs, command parsing and in-game behavior still require Gradle/client/server tests.')
+print('Above is the offline half only: compilation, registry codecs, command parsing and the server smoke test are run by '
+      'the CI workflow .github/workflows/sift-build.yml, and how it looks in-game still needs a human.')
