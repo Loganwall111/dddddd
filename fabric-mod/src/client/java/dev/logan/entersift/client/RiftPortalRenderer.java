@@ -19,34 +19,33 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * 0.20 CLEAN-SLATE rift renderer (everything before 0.20 was deleted: textured interiors, veils, the
- * screen-copy lens, per-vertex jitter). Matches the Dungeons II trailer frames:
+ * 0.22 rift renderer — COMPLETE REWRITE. The construction is specified in {@code docs/RIFT_SPEC.md}:
  *
- *  - A voxel puzzle cluster of hollow boxes recessed to different depths ({@link RiftShape}), with
- *    near-white inner walls tinted by the destination, and thin white neon rims with a soft halo.
- *  - TRUE WINDOW interior: every back face runs the rift core shader, which samples the destination's sky,
- *    blocky clouds and horizon by the WORLD-SPACE VIEW DIRECTION of each pixel. The picture therefore
- *    moves only with the camera's yaw and pitch, is identical across every quad (no splitting or
- *    shearing), and stays sharp and un-warped.
- *  - Slow WAVE: the whole rift sways as one continuous surface, strongest along the bottom. Every piece
- *    shares corner vertices (one canvas per cell, one wall per cell edge: no T-junctions), and the wave is
- *    a pure function of position, so the geometry can never crack.
+ *  - a fixed voxel cross ({@link RiftShape}) with concentric recessed plates (2.0 blocks of recess),
+ *  - a crisp white rim on every plate edge with a soft halo and a jittering ghost copy,
+ *  - a milky interior (value-noise clouds) with a white-hot core and a per-destination tint,
+ *  - a white opening animation: fade in (0-14) -> the whole rift is WHITE (14-54) -> the destination
+ *    colour bleeds in from the centre outward (54-86) -> the wave settles (86-130) -> stable,
+ *  - a back fade (deeper plates fade out) and a back distortion (a boiling strip behind every step),
+ *  - wavy exteriors: the whole rift sways, most strongly along the bottom,
+ *  - floating light squares and small drifting cubes around and inside the opening.
  *
- * Growth timeline (server-synced entity age, 20 ticks = 1 s), 0.21:
- *   0-30    RIPPLE + SPARK: a flat translucent ripple in the wall plane scaling 0 % -> 100 % while erratic
- *           lightning flashes; the voxel structure is still invisible (the ripple is gone by tick 36).
- *   31-60   INCUBATION SEED: only the tiny central rectangular box, its glow pulsing rapidly.
- *   61-100  CLUSTER FRACTURE: one ring of boxes every 10 ticks (4 tiers, centre outward) with a white flash.
- *   100+    STABLE: large dissolving voxel energy cubes drift out, hollow cubes float, the rims shimmer,
- *           and at night wide neon curtains glow on the flanks.
+ * DELETED in 0.22 (the sources of the "chaotic mess"): the ripple ring, the seed box, the per-tier pop-in
+ * flashes, the lightning bolts, the hollow window cubes, the energy-cube disintegrators, the destination
+ * sky paintings in the window and every texture-based interior. The walk-through tunnel is untouched.
  */
 public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, RiftPortalRenderer.State> {
     static final Identifier THE_SIFT = SiftContent.id("the_sift");
-    static final float RIPPLE_END = 30, SEED_START = 31, CLUSTER_START = 61, GROWN = 100;
-    /** 0.21 recessed alcove: the outer lip stands COLLAR in front of the wall plane with a FLANGE-wide frame face. */
-    static final float COLLAR = 0.3f, FLANGE = 0.16f;
+
+    /** Opening animation, in ticks (20 = 1 s). Mirrored by {@code RiftPortalEntity.GROWN}. */
+    static final float FADE_END = 14f, WHITE_END = 54f, COLOUR_END = 86f, SETTLE_END = 130f;
+    /** The recessed alcove: front lip stands COLLAR in front of the anchor plane, FLANGE wide. */
+    static final float COLLAR = 0.30f, FLANGE = 0.16f;
+    /** Rim widths (blocks) and the ghost-copy jitter. */
+    static final float RIM = 0.075f, RIM_HALO = 0.16f, JITTER = 0.03f;
+
     private static final Map<Long, RiftShape> SHAPES = new LinkedHashMap<>(32, 0.75f, true) {
-        @Override protected boolean removeEldestEntry(Map.Entry<Long, RiftShape> eldest) { return size() > 48; }
+        @Override protected boolean removeEldestEntry(Map.Entry<Long, RiftShape> eldest) { return size() > 64; }
     };
 
     public RiftPortalRenderer(EntityRendererProvider.Context context) { super(context); }
@@ -68,8 +67,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         s.type = e.riftType();
         s.w = Float.isFinite(e.riftWidth()) ? Math.max(1.5f, Math.min(12f, e.riftWidth())) : 3f;
         s.h = Float.isFinite(e.riftHeight()) ? Math.max(1.5f, Math.min(12f, e.riftHeight())) : 4f;
-        // The age is synced from the server, so re-tracking a rift never replays its opening.
-        s.age = e.age() >= GROWN ? GROWN + 100f : e.age() + partial;
+        s.age = e.age() >= SETTLE_END ? SETTLE_END + 100f : e.age() + partial;   // re-tracking never replays
         s.time = (float) ((System.nanoTime() / 1.0e9) % 3600.0);
         s.yaw = e.getYRot();
         s.seed = e.blockPosition().asLong() * 31 + s.type.id;
@@ -77,88 +75,104 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         var level = net.minecraft.client.Minecraft.getInstance().level;
         s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
         long day = level == null ? 0L : level.getOverworldClockTime() % 24000L;
-        s.night = day >= 11500L && day <= 23300L;        // evening through midnight only, never by day
+        s.night = day >= 11500L && day <= 23300L;
         s.view = viewCode(s.type, s.inSift);
     }
 
     @Override
     protected AABB getBoundingBoxForCulling(RiftPortalEntity e, float partial) {
-        float r = Math.max(e.riftWidth(), e.riftHeight()) + 8f;   // night curtains reach past the cluster
+        float r = Math.max(e.riftWidth(), e.riftHeight()) + 5f;      // squares and aura reach past the cross
         return e.getBoundingBox().inflate(r, r * 2f, r);
     }
 
-    /**
-     * Destination shown in the window (the rift type IS the destination): 0 Overworld (coral sky, blocky
-     * cream clouds), 1 Nether (crimson smoke, fortress), 2 End (blue starlit islands), 3 Sift (mint sky,
-     * pillars; pink-white at night), 4 ritual portal (cyan mosaic), 5 the Overworld seen from the Sift (gold).
-     */
+    /** Destination shown in the window (the rift type IS the destination). */
     static int viewCode(RiftType type, boolean inSift) {
         if (inSift && (type == RiftType.SIFT || type == RiftType.OVERWORLD)) return 5;
         return type.id;
     }
 
-    /** Per-destination colours: rim core, rim halo, wall at the lip, wall at the back (trailer frames). */
-    private record Look(float[] core, float[] halo, float[] wallFront, float[] wallBack) {}
+    /** Per-destination look: interior tint, rim halo, frame face, aura. */
+    private record Look(float[] tint, float[] halo, float[] frame) {}
 
     private static final Look[] LOOKS = {
-        new Look(c(1f, 0.98f, 0.95f), c(1f, 0.62f, 0.50f), c(1f, 0.97f, 0.93f), c(1f, 0.78f, 0.66f)),   // 0 overworld: peach
-        new Look(c(1f, 0.96f, 0.85f), c(1f, 0.45f, 0.25f), c(1f, 0.92f, 0.85f), c(0.95f, 0.55f, 0.45f)), // 1 nether
-        new Look(c(0.96f, 1f, 0.86f), c(0.75f, 0.95f, 0.60f), c(1f, 0.82f, 0.93f), c(0.82f, 0.44f, 0.68f)), // 2 end: lime rims, pink walls
-        new Look(c(1f, 1f, 1f), c(1f, 0.55f, 0.80f), c(1f, 0.98f, 0.97f), c(1f, 0.80f, 0.86f)),         // 3 sift: pink
-        new Look(c(0.9f, 1f, 1f), c(0.35f, 0.95f, 1f), c(0.90f, 1f, 1f), c(0.45f, 0.80f, 0.90f)),        // 4 portal: cyan
-        new Look(c(1f, 0.97f, 0.55f), c(1f, 0.88f, 0.20f), c(1f, 0.96f, 0.75f), c(0.90f, 0.78f, 0.30f)),  // 5 gold
+        new Look(rgb(0xFFE2A8), rgb(0xFFB86A), rgb(0xFFF3DC)),   // 0 overworld: warm gold
+        new Look(rgb(0xFF6242), rgb(0xFF3A1E), rgb(0xFFE8DE)),   // 1 nether: burning red
+        new Look(rgb(0xC6A4FF), rgb(0x9A6CFF), rgb(0xF2E8FF)),   // 2 end: violet
+        new Look(rgb(0xFFC2DE), rgb(0xFF8CC0), rgb(0xFFF2F8)),   // 3 sift: pink
+        new Look(rgb(0x9BF2FF), rgb(0x35E0FF), rgb(0xEAFEFF)),   // 4 portal: cyan
+        new Look(rgb(0xFFE98A), rgb(0xFFD23C), rgb(0xFFFBE0)),   // 5 gold, Overworld seen from the Sift
     };
 
-    /** Night curtain colours: electric blue, pale cyan, deep magenta, purple. */
-    static final float[][] CURTAIN = {rgb(0x2F6BFF), rgb(0x9FF6FF), rgb(0xD13CFF), rgb(0x7A3CFF)};
+    private static float[] rgb(int c) { return new float[]{(c >> 16 & 255) / 255f, (c >> 8 & 255) / 255f, (c & 255) / 255f}; }
 
-    // ------------------------------------------------------------------ slow wave (crack-free)
+    // ------------------------------------------------------------------ slow wave (wavy exteriors)
 
     /**
-     * The rift's slow sway. A smooth function of position only, so every shared corner moves identically.
-     * Amplitude grows toward the bottom of the cluster ("the bottoms are wavy"); periods are 10-15 s.
+     * The rift's sway. A pure function of position, so shared cell corners always move together and the
+     * gapless mesh can never crack. Amplitude grows toward the bottom (spec section 5); periods 10-15 s.
      */
     static final class Warp {
         static final Warp STILL = new Warp(0f, 0f, 1f, false);
-        final float t, base, h;
+        final float t, base, h, k;
         final boolean on;
-        Warp(float t, float base, float h, boolean on) { this.t = t; this.base = base; this.h = h; this.on = on; }
+        Warp(float t, float base, float h, boolean on) { this(t, base, h, on, 1f); }
+        Warp(float t, float base, float h, boolean on, float k) { this.t = t; this.base = base; this.h = h; this.on = on; this.k = k; }
         float amp(float y) {
             if (!on) return 0f;
             float low = Math.max(0f, Math.min(1f, 1f - (y - base) / h));
-            return 0.035f + 0.11f * low * low;
+            return (0.045f + 0.13f * low * low) * k;
         }
-        float dx(float x, float y, float z) { return amp(y) * (float) Math.sin(t * 0.55f + y * 0.8f + z * 0.5f); }
+        float dx(float x, float y, float z) { return amp(y) * (float) Math.sin(t * 0.50f + y * 0.8f + z * 0.5f); }
         float dy(float x, float y, float z) { return amp(y) * 0.35f * (float) Math.sin(t * 0.42f + x * 0.9f); }
         float dz(float x, float y, float z) { return amp(y) * 0.8f * (float) Math.sin(t * 0.47f + x * 0.7f + y * 0.4f); }
     }
 
-    /** Coloured vertex (walls, rims, glow). */
-    private static void col(PoseStack.Pose p, VertexConsumer vc, Warp wv, float x, float y, float z, float[] c, float a) {
-        if (!SiftBudget.take(vc)) return;
-        float wx = x + wv.dx(x, y, z), wy = y + wv.dy(x, y, z), wz = z + wv.dz(x, y, z);
-        if (!Float.isFinite(wx + wy + wz)) { wx = 0f; wy = 0f; wz = 0f; a = 0f; }
-        vc.addVertex(p, wx, wy, wz).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), Math.max(0f, Math.min(1f, a)));
+    /**
+     * Extra displacement of the OUTER silhouette only: the outline undulates as if the tear were alive.
+     * Wave (spec section 5, "wavy exteriors"). Applied to rim vertices, keyed on the local edge position.
+     */
+    private static float edgeWave(float u, float t) { return 0.075f * (float) Math.sin(u * 5.1f + t * 1.6f) + 0.035f * (float) Math.sin(u * 11.3f - t * 2.3f); }
+
+    // ------------------------------------------------------------------ model-space helpers
+
+    /** Model-space offset of a vertex: the slow wave plus the wavy outline (edge parameter u in blocks). */
+    private static float[] warp(float x, float y, float z, float u, Warp wv) {
+        float ex = 0f, ey = edgeWave(u, wv.t) * (wv.on ? 1f : 0f);
+        return new float[]{x + wv.dx(x, y, z) + ex, y + wv.dy(x, y, z) + ey, z + wv.dz(x, y, z)};
     }
 
-    /** Window vertex: colour carries (face u, face v, view code, 1). The shader samples by view direction. */
-    private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code) {
+    private static void col(PoseStack.Pose p, VertexConsumer vc, Warp wv, float x, float y, float z, float[] c, float a) {
+        if (!SiftBudget.take(vc)) return;
+        float[] q = warp(x, y, z, y, wv);
+        if (!Float.isFinite(q[0] + q[1] + q[2])) { q[0] = 0f; q[1] = 0f; q[2] = 0f; a = 0f; }
+        vc.addVertex(p, q[0], q[1], q[2]).setColor(Math.min(1f, c[0]), Math.min(1f, c[1]), Math.min(1f, c[2]), Math.max(0f, Math.min(1f, a)));
+    }
+
+    /**
+     * Window vertex: colour carries (face u, face v, view code, colour phase). The core shader paints the
+     * milk on the GPU with the exact same maths as {@link #interior}, so both modes look identical; the
+     * alpha channel is the 0..1 destination-colour phase (0 = the white opening phase).
+     */
+    private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code, float colourK) {
         if (!SiftBudget.take(vc)) return;
         float span = Math.max(sh.w, sh.h) * 1.15f;
         float u = clamp(0.5f + x / span, 0f, 1f), v = clamp(0.5f + (y - sh.cy()) / span, 0f, 1f);
-        float wx = x + wv.dx(x, y, z), wy = y + wv.dy(x, y, z), wz = z + wv.dz(x, y, z);
-        if (!Float.isFinite(wx + wy + wz)) { wx = 0f; wy = 0f; wz = 0f; }
-        vc.addVertex(p, wx, wy, wz).setColor(u, v, code, 1f);
+        float[] q = warp(x, y, z, y, wv);
+        if (!Float.isFinite(q[0] + q[1] + q[2])) { q[0] = 0f; q[1] = 0f; q[2] = 0f; }
+        vc.addVertex(p, q[0], q[1], q[2]).setColor(u, v, code, clamp(colourK, 0f, 1f));
     }
 
     // ------------------------------------------------------------------ submit
 
     @Override
     public void submit(State s, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
-        if (SiftRenderTypes.irisShadowPass()) return;       // self-lit: nothing in the shadow map
+        if (SiftRenderTypes.irisShadowPass()) return;                       // self-lit: nothing in the shadow map
         RiftShape sh = SHAPES.computeIfAbsent(s.seed * 1315423911L + Float.floatToIntBits(s.w) * 131L + Float.floatToIntBits(s.h),
-            k -> RiftShape.build(s.type, s.seed, s.w, s.h));
-        Look look = LOOKS[Math.max(0, Math.min(LOOKS.length - 1, s.view))];
+            k -> RiftShape.build(s.type, s.seed, s.w, s.h).meshed());
+        int vi = Math.max(0, Math.min(LOOKS.length - 1, s.view));
+        Look look = LOOKS[vi];
+        float[] tint = look.tint();
+        if (s.night) tint = mix(tint, WHITE, 0.12f);
         Vector3f cam = new Vector3f((float) (camera.pos.x - s.ex), (float) (camera.pos.y - s.ey), (float) (camera.pos.z - s.ez))
             .rotateY((float) Math.toRadians(s.yaw));
         boolean gpu = SiftBudget.riftShader;
@@ -166,308 +180,197 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
         RenderType winT = gpu ? SiftRenderTypes.RIFT : SiftRenderTypes.SOLID;
         float age = s.age;
-        Warp wv = new Warp(s.time, RiftShape.BASE, sh.h, true);
-        Warp still = Warp.STILL;
+        // Opening: a stronger, faster wave while the tear is fresh, settling to the 1x idle sway.
+        float wk = age < FADE_END ? 2.1f : (age < SETTLE_END ? 1.6f - 0.6f * (age - FADE_END) / (SETTLE_END - FADE_END) : 1f);
+        Warp wv = new Warp(s.time, RiftShape.BASE, sh.h, true, wk);
         float code = (s.view + (s.night ? 8 : 0) + 0.5f) / 16f;
+        final float[] tintF = tint;
         pose.pushPose();
         try {
             pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw)));
-            if (age < RIPPLE_END + 6 && age < GROWN) {
-                float a = age;
-                out.submitCustomGeometry(pose, glowT, (p, vc) -> { ripple(p, vc, still, sh, look, a); spark(p, vc, still, sh, s, cam, look, a); });
-            }
-            if (age >= SEED_START && age < appearAt(1) + 8) {
-                float a = age;
-                out.submitCustomGeometry(pose, glowT, (p, vc) -> { seedBox(p, vc, still, sh, look, a); seedGlow(p, vc, still, sh, s, cam, look, a); });
-            }
-            if (age >= CLUSTER_START) {
-                float a = age;
-                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s));
-                else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s));
-                out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look, a, s));
-                out.submitCustomGeometry(pose, glowT, (p, vc) -> rims(p, vc, wv, sh, look, cam, a, s));
-                out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, a));
-                if (SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
-                if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look, cam, s));
-                if (age >= GROWN && s.night && SiftBudget.auraGlow) out.submitCustomGeometry(pose, glowT, (p, vc) -> curtains(p, vc, sh, s, cam));
-            }
+            // 1. Opening: rim ghost + centre glow, then the white phase (rims of the frame included).
+            if (age < WHITE_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> opening(p, vc, wv, sh, s, tintF, age));
+            // 2. Interior plates: the milky window.
+            if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> interiorGpu(p, vc, wv, sh, code, age));
+            else out.submitCustomGeometry(pose, winT, (p, vc) -> interior(p, vc, wv, sh, s, tintF, age));
+            // 3. Plate return walls (the recessed alcove seen from the side), fading toward the back.
+            out.submitCustomGeometry(pose, wallT, (p, vc) -> plates(p, vc, wv, sh, look, tintF, age));
+            // 4. Crisp white rims, halos, ghost copies and the back-distortion strips.
+            out.submitCustomGeometry(pose, glowT, (p, vc) -> rims(p, vc, wv, sh, look, tintF, s, age));
+            // 5. Chunky alcove frame at the front lip.
+            out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, age));
+            if (SiftBudget.riftEffects && age >= FADE_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> motes(p, vc, sh, s, tintF, age, cam));
+            if (SiftBudget.auraGlow && age >= SETTLE_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> aura(p, vc, sh, s, tintF, cam));
         } finally {
             pose.popPose();
         }
     }
 
-    // ------------------------------------------------------------------ timeline
+    // ------------------------------------------------------------------ animation timeline
 
-    /** One tier (ring of boxes) every 10 ticks: 61, 71, 81, 91. */
-    private static float appearAt(int tier) { return CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f; }
+    /** 0 -> 1 over the first FADE_END ticks. */
+    private static float fadeIn(float age) { return clamp(age / FADE_END, 0f, 1f); }
 
-    private static boolean shown(RiftShape sh, int i, int j, float age) { return sh.on(i, j) && age >= appearAt(sh.tier[i][j]); }
-
-    private static float satAt(float[] b) { return appearAt(RiftShape.TIERS - 1) + 2f + b[6] % 3; }
-
-    /** Front z of the wall toward neighbour (ni, nj): 0 open edge, -dn step to a shallower box, 1 = no wall. */
-    private static float wallTop(RiftShape sh, int ni, int nj, float d, float age) {
-        if (!shown(sh, ni, nj, age)) return 0f;
-        float dn = sh.d(ni, nj);
-        return dn < d - 1e-4f ? -dn : 1f;
+    /**
+     * How much destination colour a cell has: 0 during the white phase, then a ring travelling OUT from
+     * the centre (small radius takes colour first), full colour after COLOUR_END.
+     */
+    static float colourOf(float radial, float age) {
+        if (age < WHITE_END) return 0f;
+        if (age >= COLOUR_END) return 1f;
+        float prog = (age - WHITE_END) / (COLOUR_END - WHITE_END);
+        return clamp((prog * 1.4f - radial) / 0.4f, 0f, 1f);
     }
 
-    /** PHASE 1: flat translucent puddle ripple in the wall plane, 0 % -> 100 % over ticks 0-30, gone by 36. */
-    private static void ripple(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
-        float f = Math.min(1f, age / RIPPLE_END), ease = 1 - (1 - f) * (1 - f);
-        float fade = age <= RIPPLE_END ? 1f : Math.max(0f, 1f - (age - RIPPLE_END) / 6f);
-        float radius = Math.max(sh.w, sh.h) * 0.62f;
-        for (int rn = 0; rn < 3; rn++) {
-            float rr = Math.max(0.001f, ease - rn * 0.22f) * radius;
-            float a = fade * (rn == 0 ? 0.5f : 0.28f) * (1 - f * 0.5f);
-            ring(p, vc, wv, 0f, sh.cy(), 0.02f, rr * 0.8f, rr, look.halo(), a);
-            ring(p, vc, wv, 0f, sh.cy(), 0.02f, 0f, rr * 0.8f, look.halo(), a * 0.15f);
+    /** The white wave that rolls across the plates while the rift is white (spec section 6). */
+    private static float whiteWave(float u, float v, float t) { return 0.5f + 0.5f * (float) Math.sin(u * 2.3f + v * 1.7f - t * 2.4f); }
+
+    // ------------------------------------------------------------------ 1. opening (fade + white)
+
+    private static void opening(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, float[] tint, float age) {
+        float fade = fadeIn(age);
+        float white = 1f - clamp((age - WHITE_END + 12f) / 12f, 0f, 1f);   // ghost rims fade out after the white phase
+        float grow = 0.25f + 0.75f * fade;
+        // Centre glow: a white hot spot that grows out of nothing and pulses while the tear opens.
+        float pulse = 0.55f + 0.45f * (0.5f + 0.5f * (float) Math.sin(s.time * 6.1f));
+        halo(p, vc, wv, 0f, sh.cy(), 0.06f, Math.max(sh.w, sh.h) * 0.55f * grow, WHITE, 0.55f * fade * pulse);
+        // Rim ghost: the whole outline drawn early, wobbling, so the rift "fades in" instead of popping.
+        float wob = 0.09f * (float) Math.sin(s.time * 5.3f);
+        for (float[] e : sh.rimEdges) {
+            float z = e[4] + 0.03f;
+            float[] a = {(float) e[0], (float) e[1], z}, b = {(float) e[2], (float) e[3], z};
+            a[0] += wob; a[1] -= wob; b[0] -= wob; b[1] += wob;
+            line(p, vc, wv, a, b, RIM * 1.4f, WHITE, 0.85f * fade * white);
+            band(p, vc, wv, a, b, RIM * 2.4f, RIM_HALO * 2.2f, WHITE, tint, 0.35f * fade * white);
         }
     }
 
-    /** PHASE 2: the tiny central seed box (tilted like the trailer), its glow pulsing rapidly; it shrinks away as the cluster snaps in. */
-    private static void seedBox(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
-        float k = seedScale(age);
-        if (k <= 0f) return;
-        float hx = 0.45f * k, hy = 0.17f * k, hz = 0.17f * k, cy = sh.cy();
-        float tilt = 0.18f * (float) Math.sin(age * 0.15f);
-        float[][] v = new float[8][];
-        for (int n = 0; n < 8; n++) {
-            float x = (n & 1) == 0 ? -hx : hx, y = (n & 2) == 0 ? -hy : hy, z = (n & 4) == 0 ? -hz : hz;
-            float rx = x * (float) Math.cos(tilt) - y * (float) Math.sin(tilt), ry = x * (float) Math.sin(tilt) + y * (float) Math.cos(tilt);
-            v[n] = new float[]{rx, cy + ry, z};
-        }
-        int[][] faces = {{0, 1, 3, 2}, {4, 6, 7, 5}, {0, 4, 5, 1}, {2, 3, 7, 6}, {0, 2, 6, 4}, {1, 5, 7, 3}};
-        float[] hot = mix(look.core(), c(1f, 1f, 1f), 0.6f);
-        float pulse = 0.45f + 0.55f * (0.5f + 0.5f * (float) Math.sin(age * 2.2f));   // rapid alpha pulse (seed phase only)
-        for (int[] f : faces) for (int idx : f) col(p, vc, wv, v[idx][0], v[idx][1], v[idx][2], hot, pulse);
-    }
+    // ------------------------------------------------------------------ 2. interior (the milky window)
 
-    /** PHASE 1 spark: erratic lightning flashing over the ripple (re-aimed every 2 ticks, flickering on and off). */
-    private static void spark(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
-        if (age > RIPPLE_END) return;
-        int burst = (int) (age / 2f);
-        if (RiftShape.hash(s.seed, burst, 85) < 0.3f) return;
-        float r = Math.max(sh.w, sh.h) * 0.55f * Math.min(1f, age / RIPPLE_END + 0.2f);
-        int n = 1 + (int) (RiftShape.hash(s.seed, burst, 86) * 3f);
-        for (int b = 0; b < n; b++) {
-            double a0 = RiftShape.hash(s.seed, burst * 5 + b, 87) * Math.PI * 2, a1 = a0 + 1.2 + RiftShape.hash(s.seed, burst * 5 + b, 88) * 2.5;
-            float[] from = {(float) Math.cos(a0) * r * 0.2f, sh.cy() + (float) Math.sin(a0) * r * 0.2f, 0.05f};
-            float[] to = {(float) Math.cos(a1) * r, sh.cy() + (float) Math.sin(a1) * r, 0.1f};
-            bolt(p, vc, wv, cam, from, to, s.seed + burst * 13L + b, look, 0.9f);
-        }
-    }
-
-    private static float seedScale(float age) {
-        float grow = Math.min(1f, (age - SEED_START) / 4f);
-        float shrink = 1f - Math.max(0f, Math.min(1f, (age - appearAt(1)) / 8f));
-        return Math.max(0f, grow * shrink);
-    }
-
-    /** PHASE 2 glow: halo round the seed and erratic lightning re-aimed at nearby block positions every 3 ticks. */
-    private static void seedGlow(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
-        float k = seedScale(age);
-        if (k <= 0f) return;
-        halo(p, vc, wv, 0f, sh.cy(), 0.2f, 1.1f * k, look.halo(), 0.35f * k);
-        int burst = (int) (age / 3f);
-        int n = 2 + (int) (RiftShape.hash(s.seed, burst, 81) * 3f);
-        for (int b = 0; b < n; b++) {
-            float tx = Math.round((RiftShape.hash(s.seed, burst * 7 + b, 82) - 0.5f) * 8f);
-            float ty = Math.round(sh.cy() + (RiftShape.hash(s.seed, burst * 7 + b, 83) - 0.5f) * 6f);
-            float tz = Math.round((RiftShape.hash(s.seed, burst * 7 + b, 84) - 0.5f) * 3f);
-            bolt(p, vc, wv, cam, new float[]{0f, sh.cy(), 0f}, new float[]{tx, ty, tz}, s.seed + burst * 31L + b, look, k);
-        }
-    }
-
-    // ------------------------------------------------------------------ windows (the destination view)
-
-    private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s) {
+    /** CPU milky interior: value-noise clouds, white core, destination tint and the white/colour phases. */
+    private static void interior(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, float[] tint, float age) {
+        if (age < FADE_END) return;                                     // nothing solid during the fade-in
+        float t = s.time;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
-            if (!shown(sh, i, j, age)) continue;
-            float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
-            win(p, vc, wv, sh, x0, y0, z, code); win(p, vc, wv, sh, x1, y0, z, code);
-            win(p, vc, wv, sh, x1, y1, z, code); win(p, vc, wv, sh, x0, y1, z, code);
-        }
-        for (float[] b : sh.sats) {
-            if (age < satAt(b)) continue;
-            win(p, vc, wv, sh, b[0], b[1], b[5], code); win(p, vc, wv, sh, b[2], b[1], b[5], code);
-            win(p, vc, wv, sh, b[2], b[3], b[5], code); win(p, vc, wv, sh, b[0], b[3], b[5], code);
-        }
-        if (age >= GROWN) for (int k = 0; k < 7; k++) {               // floating hollow cubes show the view too
-            float[] c = cube(sh, s, k);
-            float q = c[3], z = c[2] - q;
-            win(p, vc, wv, sh, c[0] - q, c[1] - q, z, code); win(p, vc, wv, sh, c[0] + q, c[1] - q, z, code);
-            win(p, vc, wv, sh, c[0] + q, c[1] + q, z, code); win(p, vc, wv, sh, c[0] - q, c[1] + q, z, code);
+            if (!sh.on(i, j)) continue;
+            float d = -sh.depthOf(i, j), x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
+            float k = colourOf(sh.radial(i, j), age);
+            float wave = age < SETTLE_END ? whiteWave(sh.x(i) * 0.6f, sh.y(j) * 0.6f, t) : 0f;
+            float[][] c = new float[4][];
+            float[][] q = {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}};
+            for (int n = 0; n < 4; n++) c[n] = milkColour(q[n][0], q[n][1], sh, t, tint, k, wave);
+            float a = backFade(sh, d);
+            quad(p, vc, wv, x0, y0, x1, y1, d, c, a);
         }
     }
 
-    /** rift_shader=false fallback: flat vertical gradient in the destination colours (no shader). */
-    private static void windowsFlat(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, State s) {
-        float[][] g = switch (s.view) {
-            case 1 -> new float[][]{c(0.95f, 0.30f, 0.12f), c(0.45f, 0.05f, 0.05f)};
-            case 2 -> new float[][]{c(0.30f, 0.28f, 0.62f), c(0.05f, 0.06f, 0.18f)};
-            case 3 -> new float[][]{c(0.62f, 0.90f, 0.86f), c(0.88f, 0.97f, 0.95f)};
-            case 4 -> new float[][]{c(0.30f, 0.85f, 0.95f), c(0.70f, 1f, 1f)};
-            case 5 -> new float[][]{c(1f, 0.93f, 0.55f), c(0.93f, 0.80f, 0.25f)};
-            default -> new float[][]{c(1f, 0.70f, 0.36f), c(0.95f, 0.40f, 0.32f)};
-        };
+    /** GPU interior: the vertex colour stays (u, v, code, 1) and {@code core/rift.fsh} paints the milk. */
+    private static void interiorGpu(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float code, float age) {
+        if (age < FADE_END) return;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
-            if (!shown(sh, i, j, age)) continue;
-            float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
-            float[] lo = mix(g[0], g[1], (float) j / sh.rows), hi = mix(g[0], g[1], (float) (j + 1) / sh.rows);
-            col(p, vc, wv, x0, y0, z, lo, 1f); col(p, vc, wv, x1, y0, z, lo, 1f);
-            col(p, vc, wv, x1, y1, z, hi, 1f); col(p, vc, wv, x0, y1, z, hi, 1f);
-        }
-        for (float[] b : sh.sats) {
-            if (age < satAt(b)) continue;
-            col(p, vc, wv, b[0], b[1], b[5], g[0], 1f); col(p, vc, wv, b[2], b[1], b[5], g[0], 1f);
-            col(p, vc, wv, b[2], b[3], b[5], g[1], 1f); col(p, vc, wv, b[0], b[3], b[5], g[1], 1f);
+            if (!sh.on(i, j)) continue;
+            float d = -sh.depthOf(i, j), x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
+            float k = colourOf(sh.radial(i, j), age);
+            win(p, vc, wv, sh, x0, y0, d, code, k); win(p, vc, wv, sh, x1, y0, d, code, k);
+            win(p, vc, wv, sh, x1, y1, d, code, k); win(p, vc, wv, sh, x0, y1, d, code, k);
         }
     }
 
-    // ------------------------------------------------------------------ walls
+    /** One milky sample: tint -> white clouds, white core, white phase. */
+    private static float[] milkColour(float x, float y, RiftShape sh, float t, float[] tint, float colourK, float wave) {
+        float u = (x + sh.w / 2) / Math.max(0.001f, sh.w), v = (y - RiftShape.BASE) / Math.max(0.001f, sh.h);
+        float n = fbm(u * 3.1f + t * 0.05f, v * 3.1f - t * 0.04f);
+        float cloud = smooth(0.28f, 0.82f, n);
+        float dx = u - 0.5f, dy = v - 0.5f;
+        float core = (float) Math.exp(-(dx * dx + dy * dy) * 5.2f);
+        float whiteK = clamp(0.18f + 0.72f * cloud + 0.75f * core + 0.25f * wave * (1f - colourK), 0f, 1f);
+        float[] c = mix(tint, WHITE, whiteK);
+        // Until COLOUR_END the rift is pure white; from there the destination tint bleeds in cell by cell.
+        return mix(WHITE, c, colourK);
+    }
 
-    private static void walls(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age, State s) {
-        float[] f = look.wallFront(), b = look.wallBack();
-        for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
-            if (!shown(sh, i, j, age)) continue;
-            float d = sh.d(i, j), x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
-            float zl = wallTop(sh, i - 1, j, d, age), zr = wallTop(sh, i + 1, j, d, age);
-            float zd = wallTop(sh, i, j - 1, d, age), zu = wallTop(sh, i, j + 1, d, age);
-            if (zl <= 0) wall(p, vc, wv, x0, y0, x0, y1, lip(zl), -d, f, b, 0.92f);
-            if (zr <= 0) wall(p, vc, wv, x1, y0, x1, y1, lip(zr), -d, f, b, 0.84f);
-            if (zd <= 0) wall(p, vc, wv, x0, y0, x1, y0, lip(zd), -d, f, b, 1f);
-            if (zu <= 0) wall(p, vc, wv, x0, y1, x1, y1, lip(zu), -d, f, b, 0.76f);
-        }
-        for (float[] q : sh.sats) {
-            if (age < satAt(q)) continue;
-            int m = (int) q[7];
-            if ((m & 1) == 0) wall(p, vc, wv, q[0], q[1], q[0], q[3], q[4], q[5], f, b, 0.92f);
-            if ((m & 2) == 0) wall(p, vc, wv, q[2], q[1], q[2], q[3], q[4], q[5], f, b, 0.84f);
-            if ((m & 4) == 0) wall(p, vc, wv, q[0], q[1], q[2], q[1], q[4], q[5], f, b, 1f);
-            if ((m & 8) == 0) wall(p, vc, wv, q[0], q[3], q[2], q[3], q[4], q[5], f, b, 0.76f);
-        }
-        if (age >= GROWN) for (int k = 0; k < 7; k++) {
-            float[] c = cube(sh, s, k);
-            float q = c[3], zf = c[2] + q, zb = c[2] - q;
-            wall(p, vc, wv, c[0] - q, c[1] - q, c[0] - q, c[1] + q, zf, zb, f, b, 0.92f);
-            wall(p, vc, wv, c[0] + q, c[1] - q, c[0] + q, c[1] + q, zf, zb, f, b, 0.84f);
-            wall(p, vc, wv, c[0] - q, c[1] - q, c[0] + q, c[1] - q, zf, zb, f, b, 1f);
-            wall(p, vc, wv, c[0] - q, c[1] + q, c[0] + q, c[1] + q, zf, zb, f, b, 0.76f);
+    /** Plates deeper in the throat fade out (spec section 5, "back fade"). */
+    private static float backFade(RiftShape sh, float depth) {
+        return clamp(1f - 0.42f * (Math.abs(depth) / Math.max(0.01f, sh.maxDepth)), 0.35f, 1f);
+    }
+
+    private static void quad(PoseStack.Pose p, VertexConsumer vc, Warp wv, float x0, float y0, float x1, float y1, float z, float[][] c, float a) {
+        col(p, vc, wv, x0, y0, z, c[0], a); col(p, vc, wv, x1, y0, z, c[1], a);
+        col(p, vc, wv, x1, y1, z, c[2], a); col(p, vc, wv, x0, y1, z, c[3], a);
+    }
+
+    // ------------------------------------------------------------------ 3. plate return walls
+
+    /** The vertical returns between plates: only visible from the side, shaded by depth. */
+    private static void plates(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float[] tint, float age) {
+        float[] face = mix(look.frame(), tint, 0.35f), back = mix(look.frame(), tint, 0.75f);
+        for (float[] q : sh.steps) {
+            float zf = q[4], zb = q[5];
+            float depth = Math.max(Math.abs(zf), Math.abs(zb));
+            float a = backFade(sh, depth);
+            float shade = clamp(1f - 0.30f * (depth / Math.max(0.01f, sh.maxDepth)), 0.55f, 1f);
+            float[] cf = new float[]{face[0] * shade, face[1] * shade, face[2] * shade};
+            float[] cb = new float[]{back[0] * shade, back[1] * shade, back[2] * shade};
+            wall(p, vc, wv, q[0], q[1], q[2], q[3], zf, zb, cf, cb);
         }
     }
 
     private static void wall(PoseStack.Pose p, VertexConsumer vc, Warp wv, float xa, float ya, float xb, float yb, float zf, float zb,
-                             float[] front, float[] back, float shade) {
-        float[] f = {front[0] * shade, front[1] * shade, front[2] * shade}, b = {back[0] * shade, back[1] * shade, back[2] * shade};
-        col(p, vc, wv, xa, ya, zf, f, 1f); col(p, vc, wv, xb, yb, zf, f, 1f);
-        col(p, vc, wv, xb, yb, zb, b, 1f); col(p, vc, wv, xa, ya, zb, b, 1f);
+                             float[] front, float[] back) {
+        col(p, vc, wv, xa, ya, zf, front, 1f); col(p, vc, wv, xb, yb, zf, front, 1f);
+        col(p, vc, wv, xb, yb, zb, back, backFadeAt(zb)); col(p, vc, wv, xa, ya, zb, back, backFadeAt(zb));
     }
 
-    // ------------------------------------------------------------------ rims (thin white neon + soft halo)
+    private static float backFadeAt(float z) { return clamp(1f - 0.30f * Math.abs(z), 0.45f, 1f); }
 
-    private static void rims(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, float age, State s) {
-        float[] core = look.core(), halo = look.halo(), white = c(1f, 1f, 1f);
-        // 0.21 "reality tearing" shimmer: ghost copies of every rim, offset by one uniform vibrating vector
-        // for the whole rift. They are additive overlays on top of intact geometry, so nothing can open up.
-        float[] jit = {0.022f * (float) Math.sin(s.time * 7.3f), 0.022f * (float) Math.sin(s.time * 5.1f + 1.7f)};
-        for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
-            if (!shown(sh, i, j, age)) continue;
-            float d = sh.d(i, j), x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
-            float flash = Math.max(0f, 1f - (age - appearAt(sh.tier[i][j])) / 6f);
-            if (flash > 0f) rect(p, vc, wv, x0, y0, x1, y1, -d + 0.02f, white, flash * 0.85f);
-            float zl = wallTop(sh, i - 1, j, d, age), zr = wallTop(sh, i + 1, j, d, age);
-            float zd = wallTop(sh, i, j - 1, d, age), zu = wallTop(sh, i, j + 1, d, age);
-            if (zl <= 0) rim(p, vc, wv, cam, x0, y0, x0, y1, lip(zl), -d, core, halo, zl < 0, flash, jit);
-            if (zr <= 0) rim(p, vc, wv, cam, x1, y0, x1, y1, lip(zr), -d, core, halo, zr < 0, flash, jit);
-            if (zd <= 0) rim(p, vc, wv, cam, x0, y0, x1, y0, lip(zd), -d, core, halo, zd < 0, flash, jit);
-            if (zu <= 0) rim(p, vc, wv, cam, x0, y1, x1, y1, lip(zu), -d, core, halo, zu < 0, flash, jit);
-        }
-        for (float[] q : sh.sats) {
-            if (age < satAt(q)) continue;
-            float flash = Math.max(0f, 1f - (age - satAt(q)) / 6f);
-            int m = (int) q[7];
-            if ((m & 1) == 0) rim(p, vc, wv, cam, q[0], q[1], q[0], q[3], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 2) == 0) rim(p, vc, wv, cam, q[2], q[1], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 4) == 0) rim(p, vc, wv, cam, q[0], q[1], q[2], q[1], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 8) == 0) rim(p, vc, wv, cam, q[0], q[3], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
-            float[][] corners = {{q[0], q[1], m & 5}, {q[2], q[1], m & 6}, {q[0], q[3], m & 9}, {q[2], q[3], m & 10}};
-            for (float[] cr : corners)
-                if (cr[2] == 0) line(p, vc, wv, cam, new float[]{cr[0], cr[1], q[4]}, new float[]{cr[0], cr[1], q[5]}, 0.05f, core, 0.8f);
-        }
-    }
+    // ------------------------------------------------------------------ 4. rims (crisp white + ghost + distortion)
 
-    /** Front neon rim at {@code zf} (full or lip) and a faint line where the wall meets the window at {@code zb}. */
-    private static void rim(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
-                            float[] core, float[] halo, boolean lip, float flash, float[] jit) {
-        float k = lip ? 0.75f : 1f, a = lip ? 0.85f : 1f;
-        float[] fa = {xa, ya, zf + 0.006f}, fb = {xb, yb, zf + 0.006f};
-        band(p, vc, wv, cam, fa, fb, (0.065f + 0.05f * flash) * k, (0.32f + 0.15f * flash) * k, core, halo, a);
-        line(p, vc, wv, cam, fa, fb, 0.8f * k, halo, 0.04f);
-        line(p, vc, wv, cam, new float[]{xa + jit[0], ya + jit[1], zf + 0.01f}, new float[]{xb + jit[0], yb + jit[1], zf + 0.01f}, 0.04f * k, core, 0.22f);
-        line(p, vc, wv, cam, new float[]{xa - jit[1], ya + jit[0], zf + 0.012f}, new float[]{xb - jit[1], yb + jit[0], zf + 0.012f}, 0.04f * k, halo, 0.18f);
-        band(p, vc, wv, cam, new float[]{xa, ya, zb + 0.012f}, new float[]{xb, yb, zb + 0.012f}, 0.035f, 0.14f, core, halo, 0.35f);
-    }
-
-    // ------------------------------------------------------------------ stable details
-
-    private static void stable(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, State s) {
-        float[] white = c(1f, 1f, 1f), core = look.core();
-        // Floating hollow cubes: white outlines (their walls and windows are drawn in the other passes).
-        for (int k = 0; k < 7; k++) {
-            float[] c = cube(sh, s, k);
-            float q = c[3];
-            float[][] v = new float[8][];
-            for (int n = 0; n < 8; n++) v[n] = new float[]{c[0] + ((n & 1) == 0 ? -q : q), c[1] + ((n & 2) == 0 ? -q : q), c[2] + ((n & 4) == 0 ? -q : q)};
-            int[][] edges = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
-            for (int[] e : edges) line(p, vc, wv, cam, v[e[0]], v[e[1]], 0.045f, core, 0.95f);
-        }
-        // White pixel sparkles drifting slowly up through the opening (fade in and out over their life).
-        for (int k = 0; k < 30; k++) {
-            float life = (RiftShape.hash(s.seed, k, 70) + s.time * (0.04f + 0.04f * RiftShape.hash(s.seed, k, 71))) % 1f;
-            float x = (RiftShape.hash(s.seed, k, 72) - 0.5f) * sh.w * 1.1f, y = RiftShape.BASE + life * (sh.h + 1f);
-            float z = -sh.maxDepth * RiftShape.hash(s.seed, k, 73) * 0.8f + (RiftShape.hash(s.seed, k, 74) < 0.35f ? 0.6f : 0.05f);
-            float a = (float) Math.sin(life * Math.PI) * 0.9f, q = 0.035f + 0.03f * RiftShape.hash(s.seed, k, 75);
+    private static void rims(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float[] tint, State s, float age) {
+        float fade = fadeIn(age);
+        float white = age >= WHITE_END ? 1f : clamp(age / WHITE_END, 0f, 1f);   // rims are white from early on
+        float[] halo = mix(look.halo(), tint, 0.4f);
+        // "Reality tear" ghost: two additive copies of every rim, offset by one vibrating vector.
+        float jx = JITTER * (float) Math.sin(s.time * 7.3f), jy = JITTER * (float) Math.sin(s.time * 5.1f + 1.7f);
+        for (float[] e : sh.rimEdges) {
+            float xa = e[0], ya = e[1], xb = e[2], yb = e[3], z = e[4];
+            float a = fade * clamp(backFade(sh, z) + 0.25f, 0f, 1f);
             if (a < 0.03f) continue;
-            line(p, vc, wv, cam, new float[]{x, y - q, z}, new float[]{x, y + q, z}, q * 2f, white, a);
+            band(p, vc, wv, new float[]{xa, ya, z + 0.006f}, new float[]{xb, yb, z + 0.006f}, RIM, RIM_HALO, WHITE, halo, a * white);
+            line(p, vc, wv, new float[]{xa + jx, ya + jy, z + 0.012f}, new float[]{xb + jx, yb + jy, z + 0.012f}, RIM * 0.6f, WHITE, 0.22f * white);
+            line(p, vc, wv, new float[]{xa - jy, ya + jx, z + 0.014f}, new float[]{xb - jy, yb + jx, z + 0.014f}, RIM * 0.6f, halo, 0.18f * white);
         }
-        // Occasional lightning arc from the rim into the air (one every ~4 s, visible for 6 ticks).
-        float cycle = s.time * 20f / 80f;
-        int n = (int) cycle;
-        if (cycle - n < 6f / 80f) {
-            double ang = RiftShape.hash(s.seed, n, 91) * Math.PI * 2;
-            float ax = (float) Math.cos(ang) * sh.w * 0.45f, ay = sh.cy() + (float) Math.sin(ang) * sh.h * 0.45f;
-            float bx = ax + (float) Math.cos(ang) * (2.5f + 2f * RiftShape.hash(s.seed, n, 92));
-            float by = ay + (float) Math.sin(ang) * 2f + 1.5f * RiftShape.hash(s.seed, n, 93);
-            bolt(p, vc, wv, cam, new float[]{ax, ay, 0.05f}, new float[]{bx, by, 0.3f}, s.seed + n * 17L, look, 0.9f);
+        if (age < FADE_END) return;
+        // Back distortion: a boiling additive strip just behind every step edge (spec section 5).
+        for (float[] q : sh.steps) {
+            float z = q[4] - 0.06f;
+            float wob = 0.05f * (float) Math.sin(s.time * 9f + (q[0] + q[1]) * 3f);
+            float[] a = {q[0] + wob, q[1], z}, b = {q[2] + wob, q[3], z};
+            line(p, vc, wv, a, b, 0.05f, mix(WHITE, halo, 0.45f), 0.30f * fade);
         }
     }
 
-    /** Open edges of the silhouette get the raised alcove lip; inner step walls keep their own front. */
-    private static float lip(float z) { return z == 0f ? COLLAR : z; }
-
-    // ------------------------------------------------------------------ 0.21 recessed alcove frame
+    // ------------------------------------------------------------------ 5. alcove frame
 
     /**
-     * Chunky double-layer frame: along every open edge of the silhouette a flat face FLANGE wide stands at
-     * z = COLLAR and an outer wall drops back to the wall plane, so the opening sits recessed in a thick
-     * alcove instead of lying flush on the blocks. Convex corners get a corner square and extended walls.
+     * Chunky frame along every open silhouette edge: a flat FLANGE-wide face stands COLLAR in front of the
+     * anchor plane and an outer wall drops back to it, so the opening sits in a thick alcove. The face is
+     * the near-white "frame" colour of the destination, exactly like the cream frames in the references.
      */
     private static void frame(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
-        float[] face = look.wallFront(), side = mix(look.wallFront(), look.wallBack(), 0.35f);
+        float[] face = look.frame(), side = mix(look.frame(), look.tint(), 0.45f);
         float F = FLANGE, C = COLLAR;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
-            if (!shown(sh, i, j, age)) continue;
+            if (!sh.on(i, j)) continue;
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
-            boolean L = !shown(sh, i - 1, j, age), R = !shown(sh, i + 1, j, age), D = !shown(sh, i, j - 1, age), U = !shown(sh, i, j + 1, age);
+            boolean L = !sh.on(i - 1, j), R = !sh.on(i + 1, j), D = !sh.on(i, j - 1), U = !sh.on(i, j + 1);
             if (L) { rect(p, vc, wv, x0 - F, y0, x0, y1, C, face, 1f);
-                wall(p, vc, wv, x0 - F, y0 - (D ? F : 0), x0 - F, y1 + (U ? F : 0), C, 0f, side, side, 0.9f); }
+                wall(p, vc, wv, x0 - F, y0 - (D ? F : 0), x0 - F, y1 + (U ? F : 0), C, 0f, side, side); }
             if (R) { rect(p, vc, wv, x1, y0, x1 + F, y1, C, face, 1f);
-                wall(p, vc, wv, x1 + F, y0 - (D ? F : 0), x1 + F, y1 + (U ? F : 0), C, 0f, side, side, 0.82f); }
+                wall(p, vc, wv, x1 + F, y0 - (D ? F : 0), x1 + F, y1 + (U ? F : 0), C, 0f, side, side); }
             if (D) { rect(p, vc, wv, x0, y0 - F, x1, y0, C, face, 1f);
-                wall(p, vc, wv, x0 - (L ? F : 0), y0 - F, x1 + (R ? F : 0), y0 - F, C, 0f, side, side, 0.7f); }
+                wall(p, vc, wv, x0 - (L ? F : 0), y0 - F, x1 + (R ? F : 0), y0 - F, C, 0f, side, side); }
             if (U) { rect(p, vc, wv, x0, y1, x1, y1 + F, C, face, 1f);
-                wall(p, vc, wv, x0 - (L ? F : 0), y1 + F, x1 + (R ? F : 0), y1 + F, C, 0f, side, side, 1f); }
+                wall(p, vc, wv, x0 - (L ? F : 0), y1 + F, x1 + (R ? F : 0), y1 + F, C, 0f, side, side); }
             if (L && D) rect(p, vc, wv, x0 - F, y0 - F, x0, y0, C, face, 1f);
             if (R && D) rect(p, vc, wv, x1, y0 - F, x1 + F, y0, C, face, 1f);
             if (L && U) rect(p, vc, wv, x0 - F, y1, x0, y1 + F, C, face, 1f);
@@ -475,108 +378,89 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
-    // ------------------------------------------------------------------ 0.21 dissolving voxel energy cubes
-
-    /** Per rift type (0 overworld, 1 nether, 2 end, 3 sift, 4 portal): three emissive trailer hues. */
-    static final float[][][] ENERGY = {
-        {rgb(0xFF9A6A), rgb(0xFFE3B0), rgb(0xFF6F5A)},     // overworld: coral, cream, salmon
-        {rgb(0xC0142A), rgb(0xFF6A1A), rgb(0xE0B040)},     // nether: dark crimson, volcanic orange, ash gold
-        {rgb(0x6A7CFF), rgb(0xC07CFF), rgb(0xD8FF8A)},     // end: blue, violet, pale lime
-        {rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)},     // sift: pastel mint, electric cyan, pale pink
-        {rgb(0x3FE8FF), rgb(0xA0FFFF), rgb(0x2F9CFF)},     // portal: cyan
-    };
+    // ------------------------------------------------------------------ 6. floating light squares + cubes
 
     /**
-     * Large 3D voxel cubes (0.25-0.5 blocks) drifting out of the rift, additive and emissive. Each one keeps
-     * its cube shape for 75 % of its life, then flattens (Y squashes, X/Z stretch) into a wide thin slab
-     * while fading to nothing: the trailer's disintegration flare. Deterministic from the wall clock, so it
-     * costs no entities and no network traffic.
+     * The "weird floating light squares": additive camera-facing squares that drift up through and around
+     * the opening (spec section 7), plus three small white cube outlines (spec section 8).
      */
-    private static void energyCubes(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float age) {
-        float[][] pal = ENERGY[Math.max(0, Math.min(ENERGY.length - 1, s.type.id))];
-        float ramp = clamp((age - CLUSTER_START) / (GROWN - CLUSTER_START), 0f, 1f);
-        int count = Math.round(18 * (0.3f + 0.7f * ramp));
-        for (int k = 0; k < count; k++) {
-            float life = 2.2f + 1.6f * RiftShape.hash(s.seed, k, 120), period = life + 0.9f * RiftShape.hash(s.seed, k, 121);
-            float tt = s.time + RiftShape.hash(s.seed, k, 122) * period;
-            int gen = (int) (tt / period);
-            float f = (tt - gen * period) / life;
-            if (f >= 1f || f < 0f) continue;
-            long g = s.seed + gen * 7919L;
-            float secs = f * life;
-            float x = (RiftShape.hash(g, k, 1) - 0.5f) * sh.w * 0.85f + (RiftShape.hash(g, k, 4) - 0.5f) * 0.5f * secs;
-            float y = sh.cy() + (RiftShape.hash(g, k, 2) - 0.5f) * sh.h * 0.8f + (0.15f + 0.35f * RiftShape.hash(g, k, 5)) * secs;
-            float z = -0.4f * RiftShape.hash(g, k, 3) + (0.45f + 0.7f * RiftShape.hash(g, k, 6)) * secs;
-            float half = (0.25f + 0.25f * RiftShape.hash(g, k, 7)) / 2f;
-            float hx = half, hy = half, a = 0.85f * Math.min(1f, f / 0.08f);
-            if (f >= 0.75f) {
-                float d = (f - 0.75f) / 0.25f;
-                hy = half * (1f - 0.88f * d);
-                hx = half * (1f + 1.6f * d);
-                a *= 1f - d;
-            }
-            if (a < 0.01f) continue;
-            voxel(p, vc, x, y, z, hx, hy, hx, pal[(int) (RiftShape.hash(g, k, 8) * 3f) % 3], a);
+    private static void motes(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float[] tint, float age, Vector3f cam) {
+        float burst = clamp((age - FADE_END) / 30f, 0f, 1f);
+        for (int k = 0; k < 26; k++) {
+            float speed = 0.15f + 0.60f * RiftShape.hash(s.seed, k, 11);
+            float life = (RiftShape.hash(s.seed, k, 12) + s.time * speed / (sh.h + 2.2f)) % 1f;
+            float spread = k < 16 ? 1.0f : (k < 24 ? 1.35f : 1.75f);
+            float q = k < 16 ? 0.05f + 0.09f * RiftShape.hash(s.seed, k, 13)
+                    : k < 24 ? 0.16f + 0.10f * RiftShape.hash(s.seed, k, 13)
+                    : 0.30f + 0.15f * RiftShape.hash(s.seed, k, 13);
+            float x = (RiftShape.hash(s.seed, k, 14) - 0.5f) * sh.w * spread;
+            float y = RiftShape.BASE + life * (sh.h + 0.6f);
+            float z = 0.6f - RiftShape.hash(s.seed, k, 15) * (sh.maxDepth + 1.2f);
+            float a = (float) Math.sin(life * Math.PI) * 0.85f * burst;
+            if (a < 0.03f) continue;
+            float sway = 0.06f * (float) Math.sin(s.time * 0.8f + k);
+            float[] c = mix(WHITE, tint, 0.25f);
+            float[] v0 = {x + sway - q / 2, y - q / 2, z}, v1 = {x + sway + q / 2, y - q / 2, z};
+            float[] v2 = {x + sway + q / 2, y + q / 2, z}, v3 = {x + sway - q / 2, y + q / 2, z};
+            face(p, vc, v0, v1, v2, v3, c, a);
+        }
+        if (age < SETTLE_END) return;
+        for (int k = 0; k < 3; k++) {
+            float speed = 0.10f + 0.10f * RiftShape.hash(s.seed, k, 21);
+            float life = (RiftShape.hash(s.seed, k, 22) + s.time * speed / (sh.h + 2f)) % 1f;
+            float q = 0.10f + 0.08f * RiftShape.hash(s.seed, k, 23);
+            float x = (RiftShape.hash(s.seed, k, 24) - 0.5f) * sh.w * 0.7f;
+            float y = RiftShape.BASE + life * (sh.h + 0.4f);
+            float z = -0.4f - 0.7f * RiftShape.hash(s.seed, k, 25);
+            float a = (float) Math.sin(life * Math.PI) * 0.7f;
+            if (a < 0.03f) continue;
+            float[][] v = new float[8][];
+            for (int n = 0; n < 8; n++) v[n] = new float[]{x + ((n & 1) == 0 ? -q : q), y + ((n & 2) == 0 ? -q : q), z + ((n & 4) == 0 ? -q : q)};
+            int[][] edges = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+            for (int[] e : edges) line(p, vc, wvStill, v[e[0]], v[e[1]], 0.03f, WHITE, a * 0.8f);
         }
     }
 
-    /** Solid additive box with per-face shading (not a flat billboard). */
-    private static void voxel(PoseStack.Pose p, VertexConsumer vc, float cx, float cy, float cz, float hx, float hy, float hz, float[] c, float a) {
-        Warp w = Warp.STILL;
-        float[] top = c, sideA = mix(c, c(0f, 0f, 0f), 0.15f), sideB = mix(c, c(0f, 0f, 0f), 0.3f);
-        float x0 = cx - hx, x1 = cx + hx, y0 = cy - hy, y1 = cy + hy, z0 = cz - hz, z1 = cz + hz;
-        rect(p, vc, w, x0, y0, x1, y1, z1, sideA, a);                    // front
-        rect(p, vc, w, x0, y0, x1, y1, z0, sideA, a * 0.6f);             // back
-        col(p, vc, w, x0, y1, z0, top, a); col(p, vc, w, x1, y1, z0, top, a); col(p, vc, w, x1, y1, z1, top, a); col(p, vc, w, x0, y1, z1, top, a);
-        col(p, vc, w, x0, y0, z0, sideB, a * 0.7f); col(p, vc, w, x1, y0, z0, sideB, a * 0.7f); col(p, vc, w, x1, y0, z1, sideB, a * 0.7f); col(p, vc, w, x0, y0, z1, sideB, a * 0.7f);
-        col(p, vc, w, x0, y0, z0, sideB, a); col(p, vc, w, x0, y1, z0, sideB, a); col(p, vc, w, x0, y1, z1, sideB, a); col(p, vc, w, x0, y0, z1, sideB, a);
-        col(p, vc, w, x1, y0, z0, sideB, a); col(p, vc, w, x1, y1, z0, sideB, a); col(p, vc, w, x1, y1, z1, sideB, a); col(p, vc, w, x1, y0, z1, sideB, a);
+    private static final Warp wvStill = Warp.STILL;
+
+    /** A camera-facing square from four already-placed corners (the primitive itself stays axis-aligned). */
+    private static void face(PoseStack.Pose p, VertexConsumer vc, float[] a, float[] b, float[] c, float[] d, float[] col, float alpha) {
+        if (!SiftBudget.take(vc)) return;
+        vc.addVertex(p, a[0], a[1], a[2]).setColor(col[0], col[1], col[2], alpha);
+        vc.addVertex(p, b[0], b[1], b[2]).setColor(col[0], col[1], col[2], alpha);
+        vc.addVertex(p, c[0], c[1], c[2]).setColor(col[0], col[1], col[2], alpha);
+        vc.addVertex(p, d[0], d[1], d[2]).setColor(col[0], col[1], col[2], alpha);
     }
 
-    private static float[] cube(RiftShape sh, State s, int k) {
-        double a = RiftShape.hash(s.seed, k, 1) * Math.PI * 2;
-        float reach = 0.8f + 0.45f * RiftShape.hash(s.seed, k, 2);
-        float cx = (float) Math.cos(a) * sh.w / 2 * reach * 1.25f, cy = sh.cy() + (float) Math.sin(a) * sh.h / 2 * reach * 1.2f;
-        float cz = 0.3f + 0.9f * RiftShape.hash(s.seed, k, 3), half = 0.2f + 0.22f * RiftShape.hash(s.seed, k, 4);
-        return new float[]{cx, cy, cz, half};
-    }
+    // ------------------------------------------------------------------ 7. soft aura
 
-    // ------------------------------------------------------------------ night neon curtains
-
-    /**
-     * Wide soft vertical curtains on the rift's outer flanks (not thin poles): each is a camera-facing sheet
-     * 2.5-5 blocks wide made of 8 strips with a smooth bell profile, fading in above the ground and out toward
-     * the top. Additive, depth-tested, no depth write, so they glow into the night sky without sorting errors.
-     */
-    private static void curtains(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, Vector3f cam) {
-        Warp still = Warp.STILL;
-        int n = 8;
-        for (int k = 0; k < n; k++) {
-            float side = k % 2 == 0 ? -1f : 1f, rank = k / 2;
-            float hx = RiftShape.hash(s.seed, k, 101), hz = RiftShape.hash(s.seed, k, 102), hh = RiftShape.hash(s.seed, k, 103);
-            float x = side * (sh.w * 0.35f + rank * 1.9f + hx * 1.2f);
-            float z = -sh.maxDepth - 1.5f - 4f * hz;
-            float width = 2.5f + 2.5f * hh, height = 18f + 16f * RiftShape.hash(s.seed, k, 104);
-            float[] base = CURTAIN[(k + (int) (s.seed & 3)) % CURTAIN.length];
-            float[] top = mix(base, CURTAIN[(k + 1) % CURTAIN.length], 0.35f);
-            // Face the camera around the vertical axis.
+    /** Five wide soft sheets on the rift's flanks; additive bells, no hard poles (spec section 9). */
+    private static void aura(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float[] tint, Vector3f cam) {
+        float strength = s.night ? 0.30f : 0.18f;
+        for (int k = 0; k < 5; k++) {
+            float side = k % 2 == 0 ? -1f : 1f;
+            float x = side * (sh.w * 0.42f + (k / 2) * 1.7f + 0.6f * RiftShape.hash(s.seed, k, 41));
+            float z = -0.2f - 0.8f * RiftShape.hash(s.seed, k, 42);
+            float width = 2.0f + 1.4f * RiftShape.hash(s.seed, k, 43);
+            float height = 7f + 5f * RiftShape.hash(s.seed, k, 44);
             float vx = cam.x - x, vz = cam.z - z, len = (float) Math.sqrt(vx * vx + vz * vz);
             if (len < 1e-3f) continue;
             float rx = -vz / len, rz = vx / len;
-            int strips = 8;
-            float[] ys = {-1f, 1.2f, height * 0.45f, height};
-            float[] va = {0f, 1f, 0.8f, 0f};
+            int strips = 6;
+            float[] base = mix(tint, WHITE, 0.35f);
+            float[] top = mix(base, WHITE, 0.55f);
+            float[] ys = {-1f, 1.0f, height * 0.45f, height};
+            float[] va = {0f, 1f, 0.75f, 0f};
             for (int st = 0; st < strips; st++) {
                 float s0 = st / (float) strips * 2f - 1f, s1 = (st + 1) / (float) strips * 2f - 1f;
                 float a0 = (float) Math.exp(-s0 * s0 * 2.6f), a1 = (float) Math.exp(-s1 * s1 * 2.6f);
                 float o0 = s0 * width / 2, o1 = s1 * width / 2;
                 for (int seg = 0; seg < 3; seg++) {
                     float[] cA = mix(base, top, ys[seg] / height), cB = mix(base, top, ys[seg + 1] / height);
-                    float peak = 0.3f;
-                    col(p, vc, still, x + rx * o0, ys[seg], z + rz * o0, cA, peak * a0 * va[seg]);
-                    col(p, vc, still, x + rx * o1, ys[seg], z + rz * o1, cA, peak * a1 * va[seg]);
-                    col(p, vc, still, x + rx * o1, ys[seg + 1], z + rz * o1, cB, peak * a1 * va[seg + 1]);
-                    col(p, vc, still, x + rx * o0, ys[seg + 1], z + rz * o0, cB, peak * a0 * va[seg + 1]);
+                    col(p, vc, wvStill, x + rx * o0, ys[seg], z + rz * o0, cA, strength * a0 * va[seg]);
+                    col(p, vc, wvStill, x + rx * o1, ys[seg], z + rz * o1, cA, strength * a1 * va[seg]);
+                    col(p, vc, wvStill, x + rx * o1, ys[seg + 1], z + rz * o1, cB, strength * a1 * va[seg + 1]);
+                    col(p, vc, wvStill, x + rx * o0, ys[seg + 1], z + rz * o0, cB, strength * a0 * va[seg + 1]);
                 }
             }
         }
@@ -585,23 +469,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ primitives
 
     private static void rect(PoseStack.Pose p, VertexConsumer vc, Warp wv, float x0, float y0, float x1, float y1, float z, float[] c, float a) {
-        col(p, vc, wv, x0, y0, z, c, a); col(p, vc, wv, x1, y0, z, c, a); col(p, vc, wv, x1, y1, z, c, a); col(p, vc, wv, x0, y1, z, c, a);
-    }
-
-    /** Annulus in the wall plane (inner..outer), alpha fading toward the inner edge. */
-    private static void ring(PoseStack.Pose p, VertexConsumer vc, Warp wv, float cx, float cy, float z, float inner, float outer, float[] c, float a) {
-        int n = 48;
-        for (int k = 0; k < n; k++) {
-            double t0 = k * Math.PI * 2 / n, t1 = (k + 1) * Math.PI * 2 / n;
-            float c0 = (float) Math.cos(t0), s0 = (float) Math.sin(t0), c1 = (float) Math.cos(t1), s1 = (float) Math.sin(t1);
-            float ai = inner > 0 ? 0f : a;
-            col(p, vc, wv, cx + c0 * inner, cy + s0 * inner, z, c, ai); col(p, vc, wv, cx + c0 * outer, cy + s0 * outer, z, c, a);
-            col(p, vc, wv, cx + c1 * outer, cy + s1 * outer, z, c, a); col(p, vc, wv, cx + c1 * inner, cy + s1 * inner, z, c, ai);
-        }
+        col(p, vc, wv, x0, y0, z, c, a); col(p, vc, wv, x1, y0, z, c, a);
+        col(p, vc, wv, x1, y1, z, c, a); col(p, vc, wv, x0, y1, z, c, a);
     }
 
     private static void halo(PoseStack.Pose p, VertexConsumer vc, Warp wv, float cx, float cy, float z, float r, float[] c, float a) {
-        int n = 32;
+        int n = 40;
         for (int k = 0; k < n; k++) {
             double t0 = k * Math.PI * 2 / n, t1 = (k + 1) * Math.PI * 2 / n;
             col(p, vc, wv, cx, cy, z, c, a); col(p, vc, wv, cx, cy, z, c, a);
@@ -610,26 +483,11 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
-    /** Jagged lightning: thin white core plus a soft coloured glow, 10 segments with random kinks. */
-    private static void bolt(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float[] a, float[] b, long seed, Look look, float alpha) {
-        float[] prev = a, white = c(1f, 1f, 1f);
-        float len = (float) Math.sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]) + (b[2] - a[2]) * (b[2] - a[2]));
-        for (int i = 1; i <= 10; i++) {
-            float f = i / 10f, jit = i == 10 ? 0 : len * 0.12f;
-            float[] q = {a[0] + (b[0] - a[0]) * f + (RiftShape.hash(seed, i, 61) - 0.5f) * jit,
-                a[1] + (b[1] - a[1]) * f + (RiftShape.hash(seed, i, 62) - 0.5f) * jit,
-                a[2] + (b[2] - a[2]) * f + (RiftShape.hash(seed, i, 63) - 0.5f) * jit};
-            line(p, vc, wv, cam, prev, q, 0.045f, white, alpha);
-            line(p, vc, wv, cam, prev, q, 0.22f, look.halo(), alpha * 0.25f);
-            prev = q;
-        }
-    }
-
-    /** Camera-facing gradient strip: halo (0) -> halo (0.4) -> core (1) -> halo (0.4) -> halo (0). */
-    private static void band(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float[] a, float[] b, float core, float outer,
+    /** Camera-facing gradient strip: halo (0) -> halo (0.4) -> white core (1) -> halo (0.4) -> halo (0). */
+    private static void band(PoseStack.Pose p, VertexConsumer vc, Warp wv, float[] a, float[] b, float core, float outer,
                              float[] white, float[] halo, float alpha) {
         float dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
-        float vx = (a[0] + b[0]) / 2 - cam.x, vy = (a[1] + b[1]) / 2 - cam.y, vz = (a[2] + b[2]) / 2 - cam.z;
+        float vx = (a[0] + b[0]) / 2, vy = (a[1] + b[1]) / 2, vz = (a[2] + b[2]) / 2;
         float sx = dy * vz - dz * vy, sy = dz * vx - dx * vz, sz = dx * vy - dy * vx;
         float len = (float) Math.sqrt(sx * sx + sy * sy + sz * sz), dl = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (len < 1e-6f || dl < 1e-6f) return;
@@ -650,9 +508,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /** Camera-facing flat strip from a to b. */
-    private static void line(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float[] a, float[] b, float width, float[] c, float alpha) {
+    private static void line(PoseStack.Pose p, VertexConsumer vc, Warp wv, float[] a, float[] b, float width, float[] c, float alpha) {
         float dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
-        float vx = (a[0] + b[0]) / 2 - cam.x, vy = (a[1] + b[1]) / 2 - cam.y, vz = (a[2] + b[2]) / 2 - cam.z;
+        float vx = (a[0] + b[0]) / 2, vy = (a[1] + b[1]) / 2, vz = (a[2] + b[2]) / 2;
         float sx = dy * vz - dz * vy, sy = dz * vx - dx * vz, sz = dx * vy - dy * vx;
         float len = (float) Math.sqrt(sx * sx + sy * sy + sz * sz);
         if (len < 1e-6f) return;
@@ -665,11 +523,32 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         col(p, vc, wv, bx + sx, by + sy, bz + sz, c, alpha); col(p, vc, wv, ax + sx, ay + sy, az + sz, c, alpha);
     }
 
+    // ------------------------------------------------------------------ milky field (shared with rift.fsh)
+
+    static final float[] WHITE = {1f, 1f, 1f};
+
+    private static float hash21(float x, float y) {
+        float n = (float) Math.sin(x * 127.1f + y * 311.7f) * 43758.5453f;
+        return n - (float) Math.floor(n);
+    }
+
+    private static float vnoise(float x, float y) {
+        float ix = (float) Math.floor(x), iy = (float) Math.floor(y);
+        float fx = x - ix, fy = y - iy;
+        fx = fx * fx * (3f - 2f * fx); fy = fy * fy * (3f - 2f * fy);
+        return mix(mix(hash21(ix, iy), hash21(ix + 1f, iy), fx), mix(hash21(ix, iy + 1f), hash21(ix + 1f, iy + 1f), fx), fy);
+    }
+
+    private static float fbm(float x, float y) {
+        float s = 0f, a = 0.5f;
+        for (int i = 0; i < 3; i++) { s += a * vnoise(x, y); x = x * 2.03f + 17.1f; y = y * 2.03f + 9.2f; a *= 0.5f; }
+        return s;
+    }
+
     // ------------------------------------------------------------------ small helpers
 
     private static float clamp(float v, float lo, float hi) { return Math.max(lo, Math.min(hi, v)); }
-    private static float[] c(float r, float g, float b) { return new float[]{r, g, b}; }
-    static float[] rgb(int c) { return new float[]{(c >> 16 & 255) / 255f, (c >> 8 & 255) / 255f, (c & 255) / 255f}; }
+    private static float smooth(float e0, float e1, float x) { float t = clamp((x - e0) / (e1 - e0), 0f, 1f); return t * t * (3f - 2f * t); }
     private static float[] mix(float[] a, float[] b, float t) {
         return new float[]{a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
     }

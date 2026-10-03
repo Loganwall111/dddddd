@@ -170,9 +170,12 @@ public final class EnterTheSift implements ModInitializer {
         SiftSounds.initialize();
         SiftEntities.initialize();
         SiftSmokeTest.register();
+        // 0.22: /sifttide — the Sift sky is chosen by command instead of following the clock on its own.
+        SiftTideCommand.register();
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { rituals.clear(); openingUntil.clear(); lastStrike.clear(); knownFrames.clear(); ticks=0; });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             ticks++;
+            SiftTideServer.tick(server);
             if (ticks%100==0) {
                 rituals.values().removeIf(s -> s.expired(ticks));
                 lastStrike.values().removeIf(t -> ticks-t>200);

@@ -150,6 +150,19 @@ vec3 destination(int view, vec3 dir, float t) {
     if (view == 5) return viewGold(dir, yaw, t);
     return viewPortal(dir, yaw, t);
 }
+
+// 0.22: the destination tint of each window (docs/RIFT_SPEC.md section 4). The interior is a MILKY
+// field of this tint, not a picture of the other world: the view is only hinted at 28 %.
+vec3 viewTint(int view, bool night) {
+    vec3 t;
+    if (view == 0) t = vec3(1.000, 0.886, 0.659);       // overworld: warm gold
+    else if (view == 1) t = vec3(1.000, 0.384, 0.259);  // nether: burning red
+    else if (view == 2) t = vec3(0.776, 0.643, 1.000);  // end: violet
+    else if (view == 3) t = vec3(1.000, 0.761, 0.871);  // sift: pink
+    else if (view == 4) t = vec3(0.608, 0.949, 1.000);  // portal: cyan
+    else t = vec3(1.000, 0.914, 0.541);                 // gold
+    return night ? mix(t, vec3(1.0), 0.12) : t;
+}
 #endif
 
 void main() {
@@ -170,14 +183,20 @@ void main() {
     int view = code - (code / 8) * 8;
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
-    vec3 col = destination(view, dir, t);
-    // Light pouring through the middle of the rift (face coordinates are global, so no seams either).
-    vec2 d = riftData.rg - 0.5;
-    float core = exp(-dot(d, d) * 10.0);
-    float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
-    col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
-    // The Sift at night glows pink-white through the rift (trailer night frames).
-    if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), riftData.g), 0.55);
+    // ---- 0.22 milky interior (identical maths to RiftPortalRenderer.milkColour). ----
+    // riftData.a is the colour phase: 0 while the rift is white, 1 when it is fully the destination's.
+    float colourK = riftData.a;
+    vec2 p = vec2(riftData.r, riftData.g);
+    float cloud = smoothstep(0.28, 0.82, fbm(p * 3.1 + vec2(t * 0.05, -t * 0.04)));
+    vec2 d = p - 0.5;
+    float core = exp(-dot(d, d) * 5.2);
+    vec3 tint = viewTint(view, night);
+    float whiteK = clamp(0.18 + 0.72 * cloud + 0.75 * core, 0.0, 1.0);
+    vec3 col = mix(tint, vec3(1.0), whiteK);
+    // Only a hint of the destination sky/clouds shows through the milk.
+    col = mix(col, mix(col, destination(view, dir, t), 0.28), colourK);
+    // Until the colour phase ends the rift is pure white (docs/RIFT_SPEC.md section 6).
+    col = mix(vec3(1.0), col, colourK);
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif

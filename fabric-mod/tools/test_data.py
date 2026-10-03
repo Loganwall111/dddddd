@@ -260,6 +260,7 @@ class DataContracts(unittest.TestCase):
         b=read('worldgen/biome/singer_meadow.json')
         self.assertIn('entersift:weeping_soul_tree',b['features'][9])
         self.assertIn('entersift:ruined_arch',b['features'][9])
+    
     def test_v012_iris_compat_and_accurate_rifts(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         rt=(c/'client/SiftRenderTypes.java').read_text()
@@ -276,9 +277,9 @@ class DataContracts(unittest.TestCase):
         self.assertIn('gl_FragData[0] = glcolor;',col)
         self.assertNotIn('#if SIFT_SKY_GLOW',(sp/'world_sift/composite.fsh').read_text())  # float #if is invalid GLSL
         self.assertIn('SIFT_SKY_GLOW',(sp/'shaders.properties').read_text())
-        # Rifts: dimension-dependent views, inset canvas, gradient rim, distance zoom + parallax.
+        # 0.22 rifts: one milky opening per destination, drawn with rim bands and the interior pass.
         rift=(c/'client/RiftPortalRenderer.java').read_text()
-        for k in ['the_sift','void band(','float[] cube(']:
+        for k in ['the_sift','void band(','void interior(']:
             self.assertIn(k,rift)
     def test_v012_soft_aurora_curtains(self):
         sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
@@ -391,6 +392,7 @@ class DataContracts(unittest.TestCase):
         sky=(C/'SiftSky.java').read_text()
         self.assertIn('softPanels(',sky); self.assertIn('rgb(0xC86A92)',sky)
 
+    
     def test_v015_portal_rifts_and_bundled_pack(self):
         import re
         code=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
@@ -398,16 +400,19 @@ class DataContracts(unittest.TestCase):
         pack=re.search(r'PACK = "([^"]+)"',code).group(1)
         self.assertIn(f"archiveFileName = '{pack}'",gradle)      # 0.14 shipped mismatched names: no pack installed
         r=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
-        self.assertIn('4 ritual portal (cyan mosaic)',r)
+        self.assertIn('new Look(rgb(0x9BF2FF)',r)                # 0.22: the portal is the cyan destination
         self.assertIn('vec3 viewPortal(',(R/'assets/entersift/shaders/core/rift.fsh').read_text())
+    
     def test_v019_stacked_box_rifts_crack_free_and_coral_interior(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
-        # Stacked hollow boxes at different depths, with step walls and lip rims between them.
+        # 0.22 (docs/RIFT_SPEC.md): fixed crosses, concentric recessed plates, one shared depth table.
         shape=(C/'RiftShape.java').read_text()
-        self.assertIn('boxes(',shape); self.assertIn('maxDepth',shape)
-        # 0.20: no per-vertex jitter and no pixelated lens view; the window is sampled by view direction.
+        for k in ('CROSS_SIFT','CROSS_NETHER','CROSS_END','RING0','RING_STEP','meshed()','rimEdges','steps'):
+            self.assertIn(k,shape)
+        self.assertNotIn('boxes(',shape)                       # the random cluster is gone for good
         self.assertNotIn('gameTime() * 0.4f',rift); self.assertNotIn('px(lens',fsh)
+    
     def test_v020_clean_slate_rifts(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); shape=(C/'RiftShape.java').read_text()
@@ -419,20 +424,25 @@ class DataContracts(unittest.TestCase):
         for t in ('rift_interiors.py','rift_scenes.py','preview_rifts.py'): self.assertFalse((ROOT/'tools'/t).exists())
         self.assertFalse(list((D/'function/rift').glob('pose_*.mcfunction')))
         self.assertNotIn('#riftphase',fn('rift/tick'))
-        # 1. Direction-sampled window: sharp, un-warped, moves only with yaw and pitch.
+        # 1. Direction-sampled window kept, but the destination view is only a hint in the milk.
         self.assertIn('worldRay = Position;',vsh)
         self.assertIn('vec3 dir = normalize(worldRay);',fsh)
         self.assertIn('float clouds(vec3 dir',fsh); self.assertIn('float ridge(float yaw',fsh)
-        self.assertNotIn('Sampler0',fsh)
-        # 2. Lifecycle (0.21: 0-100): ripple hard-stopped, tiered snap.
-        self.assertIn('age < RIPPLE_END + 6 && age < GROWN',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
-        # 3. Wide soft additive night curtains replace laser poles.
-        self.assertIn('private static void curtains(',rift)
-        for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
-        self.assertIn('age >= GROWN && s.night',rift)
-        # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
-        self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
-        self.assertIn('no T-junctions',rift)
+        self.assertNotIn('Sampler0',fsh); self.assertIn('vec3 viewTint(',fsh)
+        # 2. 0.22 phase 1 deletes: ripple, seed, tiered snap, sparks, cubes, curtains.
+        for gone in ('RIPPLE_END','SEED_START','CLUSTER_START','seedGlow(','seedBox(','private static void spark(',
+                     'private static void energyCubes(','private static void curtains(','float[] cube(','appearAt('):
+            self.assertNotIn(gone,rift)
+        # 3. Opening animation: fade in, white, colour bleed, settle (docs/RIFT_SPEC.md section 6).
+        for k in ('FADE_END = 14f','WHITE_END = 54f','COLOUR_END = 86f','SETTLE_END = 130f'):
+            self.assertIn(k,rift)
+        self.assertIn('static float colourOf(float radial, float age)',rift)
+        self.assertIn('float fadeIn(float age)',rift)
+        # 4. Wavy exterior strongest at the bottom, back fade, back distortion, floating light squares.
+        self.assertIn('0.045f + 0.13f * low * low',rift); self.assertIn('t * 0.42f',rift)
+        self.assertIn('backFade(',rift); self.assertIn('Back distortion',rift)
+        self.assertIn('private static void motes(',rift); self.assertIn('RIFT_SPEC.md',rift)
+    
     def test_v021_biome_skies_awakening_voxels_warp_overlay(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); sky=(C/'SiftSky.java').read_text(); hud=(C/'SiftTransition.java').read_text()
@@ -444,23 +454,42 @@ class DataContracts(unittest.TestCase):
         for b in ('rose_spires','titan_crags'):
             a=read(f'worldgen/biome/{b}.json')['attributes']
             self.assertLess(a['minecraft:visual/fog_end_distance'],200)
-        # Directive 2: 100-tick awakening, one tier every 10 ticks, large dissolving voxel cubes per rift type.
-        self.assertIn('RIPPLE_END = 30, SEED_START = 31, CLUSTER_START = 61, GROWN = 100',rift)
-        self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f',rift)
-        self.assertIn('TIERS = 4',(C/'RiftShape.java').read_text())
-        self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
-        self.assertIn('(0.25f + 0.25f * RiftShape.hash(g, k, 7)) / 2f',rift)        # 0.25-0.5 block cubes
-        self.assertIn('if (f >= 0.75f)',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
-        self.assertIn('rgb(0xC0142A), rgb(0xFF6A1A), rgb(0xE0B040)',rift)
-        self.assertIn('GROWN = 100',(ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
+        # Directive 2 (0.22): the rift age is synced for the whole opening animation; gameplay still opens
+        # the rift to travel at tick 100, while the visuals settle at 130.
+        self.assertIn('GROWN = 130',(ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
         self.assertIn('matches 100..5990',fn('rift/tick'))
-        # Directive 3: direction window kept, safe rim shimmer, recessed alcove frame, warp overlay then tunnel.
-        self.assertIn('float[] jit',rift); self.assertIn('private static void frame(',rift); self.assertIn('COLLAR = 0.3f',rift)
+        self.assertIn('SETTLE_END = 130f',rift)
+        # Directive 3: safe rim shimmer, recessed alcove frame, warp overlay then tunnel.
+        self.assertIn('float jx',rift); self.assertIn('private static void frame(',rift); self.assertIn('COLLAR = 0.30f',rift)
         self.assertIn('travel/warp {dest:',fn('rift/transport'))
         self.assertIn('effect give @s entersift:rift_transit 4 0 true',fn('travel/warp'))
         self.assertIn('matches 160.. run function entersift:travel/warp_go',fn('travel/transit_tick'))
         self.assertIn('matches 61..99 run function entersift:travel/transit_go',fn('travel/transit_tick'))
         self.assertIn('private static void warp(',hud); self.assertIn('Math.sin(seconds * 9.0) * 0.15f',hud)
+    def test_v022_sift_tides_and_rift_spec(self):
+        j=ROOT/'src/main/java/dev/logan/entersift'; C=ROOT/'src/client/java/dev/logan/entersift/client'
+        # The three tides are a real enum with a clock band each.
+        tide=(j/'SiftTide.java').read_text()
+        for k in ('FLOW("flow"','THRIVE("thrive"','LAVA_LAMP("lava_lamp"','byName','int ticks'):
+            self.assertIn(k,tide)
+        # /sifttide (and /sift tide) with set/change, cycle on|off and a direct time set.
+        cmd=(j/'SiftTideCommand.java').read_text()
+        for k in ('"sifttide"','"tide"','"change"','"set"','"cycle"','"flow"','"thrive"','"lava_lamp"','SiftTideServer.set(level, tide)'):
+            self.assertIn(k,cmd)
+        srv=(j/'SiftTideServer.java').read_text()
+        for k in ('time set ','entersift-tide.txt','tideOf(','setCycling('): self.assertIn(k,srv)
+        self.assertIn('SiftTideCommand.register()',(j/'EnterTheSift.java').read_text())
+        self.assertIn('SiftTideServer.tick(server)',(j/'EnterTheSift.java').read_text())
+        # Client: the sky reads the tide from the clock and draws its own layers.
+        sky=(C/'SiftSky.java').read_text()
+        for k in ('SiftTideState.tide()','domeArches(','godRays(','lightSquares(','RAY_COUNT = 3200','tidePalette('):
+            self.assertIn(k,sky)
+        for k in ('SiftTide.FLOW','SiftTide.THRIVE','SiftTide.LAVA_LAMP'): self.assertIn(k,sky)
+        self.assertIn('static void set(SiftTide tide, boolean lock)',(C/'SiftTideState.java').read_text())
+        # The spec document is the single source of truth for the rift mesh.
+        spec=(ROOT/'docs/RIFT_SPEC.md').read_text().lower()
+        for k in ('concentric recessed plates','back fade','back distortion','floating light squares','white before full colour'.replace('white before full colour','fade in')):
+            self.assertIn(k,spec)
     def test_v0182_gpu_rifts_under_iris_and_pack_updates(self):
         c=ROOT/'src/client/java/dev/logan/entersift'
         types=(c/'client/SiftRenderTypes.java').read_text()
@@ -493,13 +522,15 @@ class DataContracts(unittest.TestCase):
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
         self.assertIn('mod_version=0.21',(ROOT/'gradle.properties').read_text())
+    
     def test_v0181_destination_viewports_jitter_and_evening_columns(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
         for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
         self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
         self.assertIn('day >= 11500L && day <= 23300L',rift)                               # evening + night only
-        self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
+        self.assertIn('JITTER = 0.03f',rift)                                               # rim ghost copies
+        self.assertIn('private static void aura(',rift)                                    # soft flanks, no laser poles
     def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); types=(C/'SiftRenderTypes.java').read_text()

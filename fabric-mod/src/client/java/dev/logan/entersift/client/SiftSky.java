@@ -3,6 +3,7 @@ package dev.logan.entersift.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.logan.entersift.SiftContent;
+import dev.logan.entersift.SiftTide;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import java.util.ArrayList;
@@ -110,7 +111,7 @@ public final class SiftSky {
             }
             updateMode(mc, context.levelState().cameraRenderState.pos);
             final float sw = swirl;
-            Palette pal = palette(tick);
+            Palette pal = tidePalette(tick);
             Vec3 cam = context.levelState().cameraRenderState.pos;
             float beamRange = Math.min(chunks * 16f, 176f);
             List<float[]> beams = collectBeams(mc, cam, beamRange, tick);
@@ -132,6 +133,20 @@ public final class SiftSky {
                 });
                 // World-space diagonal beams slicing into the terrain, with a tint pool where each one lands.
                 if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange));
+                // 0.22 LAYER 4 — the tide. FLOW: the wavy dome border with arch bands. THRIVE: the god-ray
+                // fan filling the screen. Both get floating light squares; LAVA_LAMP keeps a faint dusting.
+                SiftTide tide = SiftTideState.tide();
+                out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
+                    if (tide == SiftTide.FLOW) {
+                        domeArches(p, vc, radius * 0.97f, pal, seconds);
+                        lightSquares(p, vc, radius * 0.94f, pal, seconds, 1f);
+                    } else if (tide == SiftTide.THRIVE) {
+                        godRays(p, vc, radius * 0.95f, pal, seconds);
+                        lightSquares(p, vc, radius * 0.94f, pal, seconds, 1.6f);
+                    } else if (tide == SiftTide.LAVA_LAMP) {
+                        lightSquares(p, vc, radius * 0.94f, pal, seconds, 0.4f);
+                    }
+                });
             } finally {
                 pose.popPose();
             }
@@ -193,6 +208,36 @@ public final class SiftSky {
         float pillars = (a == 3 ? 1 - f : 0) + (b == 3 ? f : 0);
         float noon = (a == 1 ? 1 - f : 0) + (b == 1 ? f : 0);
         return new Palette(lerp(HORIZON[a], HORIZON[b], f), lerp(MID[a], MID[b], f), lerp(ZENITH[a], ZENITH[b], f), blobs, pillars, noon);
+    }
+
+    /**
+     * 0.22 tide palette. The tide IS the time of day (the command parks the Sift clock in the tide's
+     * band), so the four-stage cycle already gives the right base colours; each tide then shifts its own
+     * features a little further so the three look clearly different:
+     *   FLOW  brighter mint and pearl, softly pink at the top (the wavy dome tide);
+     *   THRIVE heavier crimson/magenta with dense haze (the god-ray tide, near night);
+     *   LAVA_LAMP exactly the shipped cycle (day -> noon -> evening -> night, biome aware).
+     */
+    static Palette tidePalette(float tick) {
+        Palette pal = palette(tick);
+        SiftTide tide = SiftTideState.tide();
+        if (tide == SiftTide.FLOW) {
+            float[] horizon = lerp(pal.horizon(), rgb(0x7FD3CF), 0.35f);
+            float[] mid = lerp(pal.mid(), rgb(0x6FD8D0), 0.35f);
+            float[] zenith = lerp(pal.zenith(), rgb(0x4FB0BE), 0.30f);
+            float[][] blobs = new float[4][];
+            for (int k = 0; k < 4; k++) blobs[k] = lerp(pal.blobs()[k], k % 2 == 0 ? rgb(0xFF9FD0) : rgb(0x8CF0E4), 0.30f);
+            return new Palette(horizon, mid, zenith, blobs, pal.pillars() * 0.4f, Math.max(pal.noon(), 0.45f));
+        }
+        if (tide == SiftTide.THRIVE) {
+            float[] horizon = lerp(pal.horizon(), rgb(0xD8628C), 0.45f);
+            float[] mid = lerp(pal.mid(), rgb(0xC0547E), 0.45f);
+            float[] zenith = lerp(pal.zenith(), rgb(0x8A3A78), 0.40f);
+            float[][] blobs = new float[4][];
+            for (int k = 0; k < 4; k++) blobs[k] = lerp(pal.blobs()[k], k % 2 == 0 ? rgb(0xFFB0C8) : rgb(0xFFD08A), 0.35f);
+            return new Palette(horizon, mid, zenith, blobs, Math.max(pal.pillars(), 0.9f), 0f);
+        }
+        return pal;
     }
 
     /** Sun direction: rises in the east (+X) at tick 0, overhead at 6000, sets at 12000. */
@@ -517,6 +562,130 @@ public final class SiftSky {
                 v(p, vc, dir(a0z, e0), r, c, al0); v(p, vc, dir(a0z + w0, e0), r, c, 0f);
                 v(p, vc, dir(a1z + w1, e1), r, c, 0f); v(p, vc, dir(a1z, e1), r, c, al1);
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ 0.22 SIFT TIDES
+
+    private static final int ARCH_BANDS = 5, ARCH_SEGS = 96;
+    private static final float ARCH_BASE = 0.42f;
+
+    /**
+     * FLOW tide: the WAVY DOME. The top of the skybox is domed by a set of big arch bands whose lower
+     * edge undulates, plus a bright wavy border ring around the whole dome (the "wavy border and aura").
+     * Every band is two quads per segment with the alpha on the border line and zero above it, so the
+     * arches glow and fade into the sky without a single hard edge.
+     */
+    private static void domeArches(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float[] border = lerp(rgb(0x9CFFEE), pal.zenith(), 0.25f);
+        float[] aura = lerp(rgb(0x63F0E0), pal.horizon(), 0.45f);
+        for (int b = 0; b < ARCH_BANDS; b++) {
+            double base = ARCH_BASE + 0.145 * b + 0.02 * Math.sin(t * 0.05 + b);
+            float bandAlpha = 0.44f * (1f - 0.55f * b / (float) (ARCH_BANDS + 1));
+            float[] c = lerp(border, b % 2 == 0 ? aura : rgb(0xFFC8E8), 0.35f);
+            for (int k = 0; k < ARCH_SEGS; k++) {
+                double f0 = k / (double) ARCH_SEGS, f1 = (k + 1) / (double) ARCH_SEGS;
+                double az0 = f0 * Math.PI * 2, az1 = f1 * Math.PI * 2;
+                // The wavy lower edge of the arch: two sine terms in azimuth, slowly drifting.
+                double w0 = base + 0.055 * Math.sin(az0 * 3 + t * 0.09) + 0.022 * Math.sin(az0 * 7 - t * 0.13);
+                double w1 = base + 0.055 * Math.sin(az1 * 3 + t * 0.09) + 0.022 * Math.sin(az1 * 7 - t * 0.13);
+                float a0 = bandAlpha * (0.6f + 0.4f * (float) Math.sin(t * 0.11 + k * 0.05));
+                v(p, vc, dir(az0, w0 - 0.02), r, c, 0f);
+                v(p, vc, dir(az0, w0), r, c, a0);
+                v(p, vc, dir(az1, w1), r, c, a0);
+                v(p, vc, dir(az1, w1 - 0.02), r, c, 0f);
+                // The aura: the soft light that sits just under the arch line.
+                v(p, vc, dir(az0, w0), r, c, a0);
+                v(p, vc, dir(az0, w0 + 0.10), r, c, 0f);
+                v(p, vc, dir(az1, w1 + 0.10), r, c, 0f);
+                v(p, vc, dir(az1, w1), r, c, a0);
+            }
+        }
+    }
+
+    private static final int RAY_COUNT = 3200;
+
+    /**
+     * THRIVE tide: THOUSANDS of god rays. A fan of RAY_COUNT thin wedges spreading from a source high
+     * above the sky, each one soft across its width, slowly swirling and breathing so the whole screen is
+     * veiled in light. This is the "thousands and thousands of them covering the screen" requirement.
+     */
+    private static void godRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        // The rays fan out from a point just above the zenith, so they read as light coming from off screen.
+        double srcAz = t * 0.010, srcEl = 1.44 + 0.03 * Math.sin(t * 0.07);
+        float[] src = dir(srcAz, srcEl);
+        float[] right = norm(cross(src, new float[]{0f, 1f, 0f}));
+        float[] up2 = norm(cross(right, src));
+        float fan = 1.55f;                      // how far the fan opens
+        float[] base = lerp(rgb(0xFFF2D8), pal.horizon(), 0.30f);
+        float[] warm = lerp(rgb(0xFFD9A0), pal.mid(), 0.25f);
+        float[] rose = lerp(rgb(0xFFB6D8), pal.zenith(), 0.20f);
+        for (int k = 0; k < RAY_COUNT; k++) {
+            // Deterministic, evenly spread wedges with a slow swirl; a third of them are brighter and wider.
+            float h1 = hash(k, 7, 1), h2 = hash(k, 8, 2), h3 = hash(k, 9, 3);
+            double spread = fan * (h1 * 2 - 1) + 0.12 * Math.sin(t * 0.05 + k * 0.02);
+            float w = 0.004f + 0.013f * h2 * h2;
+            float len = 0.62f + 0.45f * h3;
+            float a = 0.045f + 0.085f * h2 * h2;
+            float[] c = switch (k % 3) { case 0 -> base; case 1 -> warm; default -> rose; };
+            float[] dir2 = norm(new float[]{src[0] + right[0] * spread + up2[0] * (spread * 0.35f),
+                src[1] + right[1] * spread + up2[1] * (spread * 0.35f),
+                src[2] + right[2] * spread + up2[2] * (spread * 0.35f)});
+            float[] side = norm(cross(new float[]{0f, 1f, 0f}, dir2));
+            // ONE trapezoid per ray (4 vertices), starting away from the source (drawing through it would
+            // stack thousands of quads into a blinding blob) and widening as it crosses the sky. Odd rays
+            // fade toward their left edge, even rays toward their right, so the overlapping bank of 3200
+            // wedges reads as soft light instead of hard blades.
+            float START = 0.10f;
+            float[] d0 = norm(new float[]{src[0] + dir2[0] * len * START, src[1] + dir2[1] * len * START, src[2] + dir2[2] * len * START});
+            float[] d1 = norm(new float[]{src[0] + dir2[0] * len, src[1] + dir2[1] * len, src[2] + dir2[2] * len});
+            float w0 = w * (1f + 2.0f * START), w1 = w * 3.0f;
+            float a0 = a * smooth(-0.25f, 0.15f, d0[1]);
+            if (a0 < 0.002f) continue;
+            float hero = k % 8 == 0 ? 1.7f : 1f;
+            float[] l0 = norm(add(d0, side, -w0 * hero)), r0 = norm(add(d0, side, w0 * hero));
+            float[] l1 = norm(add(d1, side, -w1 * hero)), r1 = norm(add(d1, side, w1 * hero));
+            if (k % 2 == 0) {
+                v(p, vc, l0, r, c, 0f); v(p, vc, r0, r, c, a0); v(p, vc, r1, r, c, 0f); v(p, vc, l1, r, c, 0f);
+            } else {
+                v(p, vc, l0, r, c, a0); v(p, vc, r0, r, c, 0f); v(p, vc, r1, r, c, 0f); v(p, vc, l1, r, c, 0f);
+            }
+        }
+    }
+
+    private static float[] add(float[] a, float[] b, float s) {
+        return new float[]{a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s};
+    }
+
+    private static final int SKY_SQUARES = 220;
+
+    /**
+     * Floating light squares in the sky (all three tides; weight 1.0 for FLOW, 1.6 for THRIVE, 0.4 for
+     * LAVA_LAMP). Camera-facing additive squares in the destination's colours, drifting upward, wrapping
+     * around the dome — the "weird floating light squares" of the reference footage.
+     */
+    private static void lightSquares(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float weight) {
+        if (weight <= 0.01f) return;
+        int count = (int) (SKY_SQUARES * Math.min(1.6f, weight));
+        for (int k = 0; k < count; k++) {
+            float h1 = hash(k, 31, 5), h2 = hash(k, 32, 6), h3 = hash(k, 33, 7), h4 = hash(k, 34, 8);
+            // Azimuth drifts slowly; elevation wraps upward so squares rise through the dome.
+            double az = h1 * Math.PI * 2 + t * 0.006 * (k % 2 == 0 ? 1 : -1);
+            double el = (h2 + t * (0.004 + 0.010 * h3)) % 1.0 * 1.45 - 0.05;
+            if (el < 0.02) continue;
+            float size = 0.012f + 0.030f * h3;
+            float a = weight * (0.28f + 0.30f * h4) * (float) Math.sin(Math.PI * Math.min(1.0, Math.max(0.0, el / 1.45)));
+            if (a < 0.01f) continue;
+            float[] c = lerp(k % 4 == 0 ? rgb(0xFFFFFF) : lerp(rgb(0xFFE0F0), rgb(0xD8FFF4), h4), pal.zenith(), 0.22f);
+            float[] f = dir(az, el);
+            float[] a1 = norm(cross(f, new float[]{0f, 1f, 0f}));
+            float[] b1 = norm(cross(a1, f));
+            float[] v0 = norm(add(add(f, a1, -size), b1, -size));
+            float[] v1 = norm(add(add(f, a1, size), b1, -size));
+            float[] v2 = norm(add(add(f, a1, size), b1, size));
+            float[] v3 = norm(add(add(f, a1, -size), b1, size));
+            v(p, vc, v0, r, c, 0f); v(p, vc, v1, r, c, a); v(p, vc, v2, r, c, a); v(p, vc, v3, r, c, 0f);
+            v(p, vc, v0, r, c, 0f); v(p, vc, v3, r, c, 0f); v(p, vc, v2, r, c, a); v(p, vc, v1, r, c, a);
         }
     }
 

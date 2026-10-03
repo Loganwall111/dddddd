@@ -15,18 +15,19 @@ import net.minecraft.world.level.storage.ValueOutput;
  * A reality rift or portal opening (entity id {@code entersift:rift_portal}).
  *
  * It is a hollow, collision-free, unpickable volume with no model of its own. All visuals come from
- * the client {@code RiftPortalRenderer}. The server only ticks its age, which is synced so every
- * client plays the same growth timeline:
- *   ticks 0-30   puddle ripple with erratic lightning (the structure is still invisible)
- *   ticks 31-60  incubation seed: one tiny pulsing box
- *   ticks 61-100 voxel cluster fracture, one ring of boxes every 10 ticks
- *   ticks 100+   stable: dissolving voxel energy cubes, floating hollow cubes, rim shimmer
+ * the client {@code RiftPortalRenderer} (the construction is specified in {@code docs/RIFT_SPEC.md}).
+ * The server only ticks its age, which is synced so every client plays the same opening animation:
+ *   ticks 0-14   fade in: a wobbling white rim ghost and a growing centre glow; no solid geometry
+ *   ticks 14-54  the whole rift is WHITE
+ *   ticks 54-86  the destination colour bleeds in as a ring travelling outward from the centre
+ *   ticks 86-130 the wave settles; 130+ stable (light squares, drifting cubes, soft aura)
  *
  * NBT (summon): RiftType (int, see {@link RiftType}), Width, Height (blocks), Rotation[0] = facing yaw.
  * Travel and lifetime stay in the data pack (marker tagged sift.rift), which owns these entities.
  */
 public class RiftPortalEntity extends Entity {
-    public static final int GROWN = 100;
+    /** 0.22: the opening animation ends at tick 130; the age is synced until then (and then it stays put). */
+    public static final int GROWN = 130;
     private static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.FLOAT);
