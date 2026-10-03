@@ -56,7 +56,7 @@ public final class SiftTideCommand {
                             .append(Component.literal(tide.tide).withStyle(ChatFormatting.AQUA))
                             .append(Component.literal("  (time " + tide.ticks + ")").withStyle(ChatFormatting.DARK_GRAY)));
                         return 1;
-                    }));
+                    })));
         }
         root.then(Commands.literal("cycle")
             .then(Commands.literal("on").executes(ctx -> {
