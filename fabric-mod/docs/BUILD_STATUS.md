@@ -3,7 +3,8 @@
 ## 2026-10-03 — the mod compiles and boots (CI green)
 
 GitHub Actions (`Enter the Sift — build & validate`) now does what this workspace cannot: it installs a JDK
-and Gradle, resolves Minecraft 26.3 + Fabric, and builds. Run **37088920699** finished with every step green:
+and Gradle, resolves Minecraft 26.3 + Fabric, and builds. Runs **37088920699** (first full compile) and
+**37090005761** (with the `/sifttide` runtime checks below) finished with every step green:
 
 - `python3 tools/validate.py` — 601 JSON/metadata files, 149 functions, models/textures, animations, wrapper, nine biomes.
 - `python3 tools/test_data.py` — 52 offline contract tests.
@@ -24,9 +25,27 @@ spread that had to be `float`. The client source set had never compiled before; 
 
 Runtime checks added in the same pass: the smoke test now **executes** every `/sifttide` and `/sift tide`
 branch against the real dispatcher and reads the Overworld clock back, so the command can no longer be
-"compiled but dead". That caught a real bug — `LAVA_LAMP` parked the clock at 6000, which is inside the
-**flow** clock band, so `/sifttide lava_lamp` used to show the flow dome. Its canonical tick is now 18000,
-and `tools/test_data.py` asserts that every tide's tick sits inside its own band.
+"compiled but dead". It found three real bugs the compiler could not see:
+
+- `LAVA_LAMP` parked the clock at 6000, which is inside the **flow** clock band, so `/sifttide lava_lamp`
+  used to show the flow dome. Its canonical tick is now 18000, and `tools/test_data.py` asserts that every
+  tide's tick sits inside its own band.
+- The whole `/sifttide ...` path was **dead**: it was registered with the alias node, so the dispatcher
+  wanted `/sifttide tide ...` and answered "Incorrect argument for command" to every documented spelling.
+  The alias tree is now built per name (`/sifttide <subcommand>` and `/sift tide <subcommand>`), and a bare
+  `/sifttide` prints the summary.
+- The locked clock could wander up to 100 ticks between re-asserts; `syncIfDrifted` is now called every
+  server tick, and `/sifttide time <ticks>` parks the lock on that tick (so a tide can be walked through
+  its own stages) while adopting the tide of the time it lands in.
+
+The real-server proof, straight from run 37090005761's annotations:
+
+```
+SIFT-SMOKE anchors: rifts=1 portals=1 wrongType=0
+SIFT-SMOKE tide locked on thrive: tide=THRIVE (want THRIVE), locked=true, clock=13020 (want ~13000)
+SIFT-SMOKE tide cycle off after time 1000: tide=FLOW (want FLOW), locked=true, clock=1020 (want ~1000)
+SIFT-SMOKE ritual: portalMarker=true portalAnchor=false portalBlocks=true stillOpening=false  (0.17+: the anchor is retired once the block portal fills the frame)
+```
 
 Honest limits of this record: there is no client run, no screenshot, no audio check and no GPU/GLSL check of
 the in-game rift shaders (`rift.vsh`/`rift.fsh` are only checked for includes and structure, and the Iris
