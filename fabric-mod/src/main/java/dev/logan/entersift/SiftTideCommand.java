@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 
@@ -21,6 +20,9 @@ import net.minecraft.server.level.ServerLevel;
  *   /sifttide cycle on|off    let the clock drive the sky again / lock the current tide
  *   /sifttide time <ticks|day|noon|evening|night|midnight>
  *   /sifttide info            what is set right now
+ *
+ * The tide names are also plain literals, so tab-completion works without a custom suggestion provider
+ * (26.3 moved {@code SharedSuggestionProvider}'s string helpers around; the literals sidestep that).
  */
 public final class SiftTideCommand {
     private SiftTideCommand() {}
@@ -41,7 +43,7 @@ public final class SiftTideCommand {
         root.then(Commands.literal("info").executes(ctx -> { info(ctx.getSource()); return 1; }));
         for (String alias : new String[]{"set", "change"}) {
             root.then(Commands.literal(alias)
-                .then(Commands.argument("tide", StringArgumentType.word()).suggests(SharedSuggestionProvider.suggest(TIDE_NAMES))
+                .then(Commands.argument("tide", StringArgumentType.word())
                     .executes(ctx -> {
                         String name = StringArgumentType.getString(ctx, "tide");
                         SiftTide tide = SiftTide.byName(name);
@@ -71,7 +73,7 @@ public final class SiftTideCommand {
                 return 1;
             })));
         root.then(Commands.literal("time")
-            .then(Commands.argument("when", StringArgumentType.word()).suggests(SharedSuggestionProvider.suggest(TIME_NAMES))
+            .then(Commands.argument("when", StringArgumentType.word())
                 .executes(ctx -> {
                     String when = StringArgumentType.getString(ctx, "when").toLowerCase(java.util.Locale.ROOT);
                     long ticks = switch (when) {
