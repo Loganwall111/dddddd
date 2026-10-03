@@ -1,3 +1,23 @@
+## 0.22.0-alpha — rifts rewritten from scratch, and the Sift tides
+
+**Rifts are authored props now.** `fabric-mod/docs/RIFT_SPEC.md` is the exact description of what a rift is
+made of, and `RiftShape`/`RiftPortalRenderer` implement it: a fixed voxel cross per destination, concentric
+recessed plates 0.30 -> 1.34 blocks deep, a gapless mesh, crisp white rims with halos and a jitter ghost,
+a milky interior with a white core and the destination's tint, a back fade plus a back distortion at every
+step, wavy exteriors, and floating light squares. The opening animation is fade in (0-14 ticks) -> the
+whole rift WHITE (14-54) -> the destination colour bleeding out from the centre (54-86) -> settle (86-130).
+Deleted: the ripple ring, seed box, tiered pop-ins, lightning, hollow window cubes, energy-cube
+disintegrators, night curtains and the destination paintings inside the window. The walk-through tunnel is
+untouched. The GPU window shader paints the same milk (`colourK` colour phase + `viewTint`).
+
+**The sky is chosen by command, not by the clock.** `/sifttide <flow|thrive|lava_lamp>`,
+`/sifttide change <tide>`, `/sifttide cycle on|off`, `/sifttide time <ticks|day|...>` and `/sifttide info`
+(`/sift tide ...` works too). FLOW is the wavy mint dome with arch bands, a glowing border and light
+squares; THRIVE is near night with thousands of god rays fanning over the screen; LAVA_LAMP is the shipped
+lava-lamp sky. The command parks and locks the clock that the Sift timeline reads, so fog, light and water
+colours can never disagree with the skybox. Skybox previews: `fabric-mod/art/sky/sift_tides.png`
+(`python3 tools/preview_tide.py`).
+
 # Enter the Sift — Fabric mod project
 
 The requested Minecraft mod is in **[`fabric-mod/`](fabric-mod/README.md)**. It targets **Minecraft Java 26.3 / Fabric / JDK 25** and includes source, original animated textures, dimension/worldgen data, gameplay functions, vanilla-Java rendering (no shader pack), tests and a GitHub Actions build workflow.

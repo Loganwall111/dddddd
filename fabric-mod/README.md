@@ -5,7 +5,31 @@
 
 > **Build status:** Source and assets authored; offline resource checks and 20 data-contract tests pass. A Minecraft JAR has **not** been compiled or playtested in this environment. Java is unavailable, and attempts to download Java, Minecraft/Fabric dependencies and shader-validation tools were blocked by network failures. Do not install this in an important world yet.
 
-**New in 0.2:** screenshot-driven cyan threshold, warm stepped rifts with drifting shards, six-colour note rims, richer souls, rose saltstone, and a dimension-scoped ribbon sky with day/night variation. See the [screenshot comparison and remaining gaps](docs/VISUAL_STATUS.md). All are still runtime-unverified.
+**New in 0.22 — rifts rewritten from scratch.** A rift is now an authored prop, not a random cluster. [`docs/RIFT_SPEC.md`](docs/RIFT_SPEC.md) is the exact description of what a rift is made of, and the renderer implements it literally:
+
+- a **fixed voxel cross** per destination (no per-rift randomness) with **concentric recessed plates** (0.30 → 1.34 blocks deep) and a gapless mesh, so the surface can never crack;
+- **crisp white rims** with soft halos and a jittering ghost copy, over a **chunky alcove frame**;
+- a **milky interior** with a white-hot core, the destination's tint showing through, then a **back fade** and a **back distortion** at every depth step;
+- the **opening animation**: fade in (0–14 ticks) → the whole rift is **WHITE** (14–54) → the destination colour bleeds out from the centre (54–86) → the wave settles (86–130) → stable;
+- **wavy exteriors** (bottom-weighted sway and outline undulation) and **floating light squares** drifting around and inside the opening.
+
+Deleted for good: the ripple ring, the seed box, the tiered pop-in flashes, the lightning, the hollow window cubes, the energy-cube disintegrators, the night curtains and the destination paintings in the window. The walk-through tunnel is unchanged.
+
+**New in 0.22 — Sift tides (`/sifttide`).** The sky is no longer dragged along by the day/night cycle. Pick it:
+
+```mcfunction
+/sifttide flow           # the wavy mint dome: arch bands across the top, a glowing wavy border, light squares
+/sifttide thrive         # near night: rose sky with thousands of god rays fanning over the screen
+/sifttide lava_lamp      # the shipped lava-lamp sky (the old cycle)
+/sifttide change <tide>  # the same, spelled the way the request did
+/sifttide cycle on|off   # let the clock drive the sky again | lock the tide you are in
+/sifttide time <ticks|day|noon|evening|night|midnight>
+/sifttide info
+```
+
+`/sift tide ...` works too. Because the tide parks and locks the clock the Sift timeline reads, the fog, light colour and water colour always agree with the skybox. The three skyboxes are previewed in [`art/sky/sift_tides.png`](art/sky/sift_tides.png), regenerable with `python3 tools/preview_tide.py`. It is a preview image, not an in-game screenshot.
+
+**Earlier:** screenshot-driven cyan threshold, warm stepped rifts with drifting shards, six-colour note rims, richer souls, rose saltstone, and a dimension-scoped ribbon sky with day/night variation. See the [screenshot comparison and remaining gaps](docs/VISUAL_STATUS.md). All are still runtime-unverified.
 
 This is a separate Minecraft project. The existing Lumital React/Three.js app at the repository root is preserved and is **not** the mod.
 
