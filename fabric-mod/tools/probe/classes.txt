@@ -120,3 +120,5 @@ net.minecraft.world.level.Level
 net.minecraft.network.chat.Component
 net.minecraft.network.chat.MutableComponent
 net.minecraft.ChatFormatting
+net.minecraft.commands.SharedSuggestionProvider
+com.mojang.brigadier.suggestion.SuggestionsBuilder
