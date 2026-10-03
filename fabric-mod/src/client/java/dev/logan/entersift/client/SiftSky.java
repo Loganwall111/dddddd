@@ -623,7 +623,7 @@ public final class SiftSky {
         for (int k = 0; k < RAY_COUNT; k++) {
             // Deterministic, evenly spread wedges with a slow swirl; a third of them are brighter and wider.
             float h1 = hash(k, 7, 1), h2 = hash(k, 8, 2), h3 = hash(k, 9, 3);
-            double spread = fan * (h1 * 2 - 1) + 0.12 * Math.sin(t * 0.05 + k * 0.02);
+            float spread = fan * (h1 * 2 - 1) + 0.12f * (float) Math.sin(t * 0.05 + k * 0.02);
             float w = 0.004f + 0.013f * h2 * h2;
             float len = 0.62f + 0.45f * h3;
             float a = 0.045f + 0.085f * h2 * h2;

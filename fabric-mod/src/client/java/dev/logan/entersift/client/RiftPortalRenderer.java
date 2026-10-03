@@ -527,6 +527,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     static final float[] WHITE = {1f, 1f, 1f};
 
+    /** Scalar lerp; the vector overload below is for colours. */
+    private static float mix(float a, float b, float t) { return a + (b - a) * t; }
+
     private static float hash21(float x, float y) {
         float n = (float) Math.sin(x * 127.1f + y * 311.7f) * 43758.5453f;
         return n - (float) Math.floor(n);
