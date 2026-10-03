@@ -74,12 +74,13 @@ float sdMainCross(vec2 p, float u_Progress, float shrink) {
 }
 
 // Evaluates the 10 attached & detached hollow voxel boxes and L/Z tetrominoes (Tiers 2 & 3).
-// Returns vec2(dFrontOutline, dRecessedBackOutline).
+// Returns vec2(dFrontOutline, dRecessedBackOutline) using perspective foreshortening + camera parallax.
 vec2 sdHollowOverlays(vec2 p, vec2 parallax, float u_Progress) {
     float dFront = 1e5;
     float dBack  = 1e5;
-    vec2 pBack = p + parallax * 0.95;
-    vec2 inset = vec2(0.022);
+    // Perspective-foreshortened coordinate for the recessed back frame of each hollow box (195224.png, 195319.png):
+    vec2 pBack = p * 1.095 + parallax * 0.95;
+    vec2 inset = vec2(0.016);
 
     // Tier 2 (unlocks at u_Progress >= 0.78):
     //   L1: Lower-left drop-step square box
@@ -123,14 +124,14 @@ vec2 sdHollowOverlays(vec2 p, vec2 parallax, float u_Progress) {
         float bS4 = sdBox(p - vec2(-0.34, -0.53), vec2(0.044, 0.044) * g3);
         dFront = min(dFront, min(min(bL3, bR3), min(min(bS1, bS2), min(bS3, bS4))));
 
-        vec2 pBack3 = p + parallax * 0.70;
-        float kL3 = min(sdBox(pBack3 - vec2(-0.52, 0.05), max(vec2(0.008), vec2(0.030, 0.068) * g3)),
-                        sdBox(pBack3 - vec2(-0.46, 0.15), max(vec2(0.008), vec2(0.030, 0.074) * g3)));
-        float kR3 = sdBox(pBack3 - vec2(0.73, 0.35), max(vec2(0.008), vec2(0.044, 0.024) * g3));
-        float kS1 = sdBox(pBack3 - vec2(-0.19, 0.42), max(vec2(0.008), vec2(0.032, 0.032) * g3));
-        float kS2 = sdBox(pBack3 - vec2(0.32, 0.19), max(vec2(0.008), vec2(0.032, 0.032) * g3));
-        float kS3 = sdBox(pBack3 - vec2(-0.77, -0.25), max(vec2(0.008), vec2(0.030, 0.030) * g3));
-        float kS4 = sdBox(pBack3 - vec2(-0.34, -0.53), max(vec2(0.008), vec2(0.030, 0.030) * g3));
+        vec2 pBack3 = p * 1.075 + parallax * 0.75;
+        float kL3 = min(sdBox(pBack3 - vec2(-0.52, 0.05), max(vec2(0.008), vec2(0.032, 0.070) * g3)),
+                        sdBox(pBack3 - vec2(-0.46, 0.15), max(vec2(0.008), vec2(0.032, 0.076) * g3)));
+        float kR3 = sdBox(pBack3 - vec2(0.73, 0.35), max(vec2(0.008), vec2(0.046, 0.026) * g3));
+        float kS1 = sdBox(pBack3 - vec2(-0.19, 0.42), max(vec2(0.008), vec2(0.034, 0.034) * g3));
+        float kS2 = sdBox(pBack3 - vec2(0.32, 0.19), max(vec2(0.008), vec2(0.034, 0.034) * g3));
+        float kS3 = sdBox(pBack3 - vec2(-0.77, -0.25), max(vec2(0.008), vec2(0.032, 0.032) * g3));
+        float kS4 = sdBox(pBack3 - vec2(-0.34, -0.53), max(vec2(0.008), vec2(0.032, 0.032) * g3));
         dBack = min(dBack, min(min(kL3, kR3), min(min(kS1, kS2), min(kS3, kS4))));
     }
 
@@ -237,7 +238,7 @@ vec3 innerGlow(vec2 uv, float r2, int v) {
     return mix(TINT[v], vec3(1.0, 0.98, 0.96), 0.58) * rimProx * 0.38;
 }
 
-// Layer 7: Crisp Floating Pixel-Square Sparkles & Two-Depth Mosaic inside the Rift cavity (195208.png, 195216.png, 194743.png)
+// Layer 7: Crisp Floating Pixel-Square Sparkles & Two-Depth Mosaic inside the Rift cavity (195208.png, 195224.png, 194905.png)
 vec3 floatingLightSquares(vec2 uv, vec3 dir, float t, int v) {
     vec2 parUv = uv + vec2(dir.x, dir.y) * 0.08;
     vec2 backCell = floor(parUv * 9.0 + vec2(0.0, -t * 0.22));
@@ -397,7 +398,7 @@ void main() {
         float initAlpha = 0.0;
 
         if (u_Progress < 0.30) {
-            // PHASE 1 (Ticks 0 - 30): White-Out Flash & Expanding Circular Ripple (183624.png)
+            // PHASE 1 (Ticks 0 - 30): White-Out Flash & Expanding Circular Ripple (183624.png, 194733.png)
             float p1 = clamp(u_Progress / 0.30, 0.0, 1.0);
             float r = length(p + rippleOffset * 0.6);
             float ringRad = mix(0.06, 0.92, 1.0 - pow(1.0 - p1, 2.3));
@@ -412,12 +413,12 @@ void main() {
             initCol = mix(initCol, vec3(1.0), clamp(coreFlash * 0.9 + ringBand * 0.6, 0.0, 1.0));
             initAlpha = clamp((innerDisk * 0.88 + ringBand * 0.95 + coreFlash + bolts * 0.85) * (1.0 - 0.15 * p1), 0.0, 0.98);
         } else {
-            // PHASE 2 (Ticks 31 - 60): Tilted Pulsing Incubation Seed & Lightning Arcs (183539.png - 183618.png)
+            // PHASE 2 (Ticks 31 - 60): Tilted Pulsing Incubation Seed & Lightning Arcs (183539.png - 183618.png, 194733.png)
             float p2 = clamp((u_Progress - 0.30) / 0.30, 0.0, 1.0);
             float tilt = -0.36 + 0.24 * sin(p2 * 3.14159265 + t * 1.6);
             vec2 halfSeed = vec2(0.085 + 0.025 * p2, 0.25 + 0.07 * p2);
             float dSeed = sdBox(rot2D(p + rippleOffset * 0.3, tilt), halfSeed);
-            float dSeedBack = sdBox(rot2D(p + parallax * 0.85 + rippleOffset * 0.3, tilt), halfSeed - vec2(0.022));
+            float dSeedBack = sdBox(rot2D(p * 1.08 + parallax * 0.85 + rippleOffset * 0.3, tilt), halfSeed - vec2(0.018));
 
             float pulse = 0.72 + 0.28 * sin(t * 14.0);
             float seedInside = smoothstep(0.008, -0.008, dSeed);
@@ -425,7 +426,7 @@ void main() {
             float seedHalo = exp(-max(dSeed, 0.0) * 6.5) * pulse;
             float bolts = shaderLightning(p, t * 1.15, 0.98);
 
-            vec3 seedFill = mix(vec3(1.0, 0.64, 0.76), vec3(1.0, 0.96, 0.92), 0.55 * pulse);
+            vec3 seedFill = mix(vec3(1.0, 0.68, 0.56), vec3(1.0, 0.96, 0.90), 0.58 * pulse);
             initCol = seedFill * seedInside + vec3(1.0, 0.99, 0.96) * clamp(seedRim + bolts, 0.0, 1.2)
                     + vec3(1.0, 0.58, 0.80) * seedHalo * 0.75;
             initAlpha = clamp((seedInside * 0.94 * pulse + seedRim + seedHalo * 0.62 + bolts * 0.90), 0.0, 0.98);
@@ -440,14 +441,16 @@ void main() {
     // PART 2 & 3: STEPPED-CROSS SDF SILHOUETTE, CANAL BEVELS & VIEWPORT
     // ========================================================================
     vec2 pWavy = p + rippleOffset * 0.42;
+    // Perspective-foreshortened recessed back coordinate (195224.png, 195319.png, 194905.png):
+    vec2 pBackMain = pWavy * 1.115 + parallax * 1.10;
     float dMain = sdMainCross(pWavy, u_Progress, 0.0);
-    float dMainBack = sdMainCross(pWavy + parallax * 1.15, u_Progress, 0.042);
+    float dMainBack = sdMainCross(pBackMain, u_Progress, 0.018);
     vec2 dHollow = sdHollowOverlays(pWavy, parallax, u_Progress);
     float dBoxes = dHollow.x;
     float dBoxesBack = dHollow.y;
     float dAll = min(dMain, dBoxes);
 
-    // Distance fade for the outer detached boxes ("tip fade" from 195208.png & 175013.png).
+    // Distance fade for the outer detached boxes ("tip fade" from 195208.png, 195224.png & 175013.png).
     float radialNorm = length(p * vec2(0.85, 1.05));
     float tipFade = 1.0 - smoothstep(0.62, 1.08, radialNorm);
 
@@ -483,6 +486,12 @@ void main() {
     vec4 darkBand = soulFaceBand(uv, dir, t, night);
     col = mix(col, darkBand.rgb, darkBand.a);
 
+    // Warm stepped inner core radiance in the heart of the cavity (194756.png, 194905.png, 195224.png):
+    float dInnerCore = min(sdBox(pWavy - vec2(0.0, -0.04), vec2(0.095, 0.165)),
+                           sdBox(pWavy - vec2(0.0, -0.02), vec2(0.145, 0.095)));
+    float coreGlow = smoothstep(0.075, -0.025, dInnerCore);
+    col = mix(col, mix(TINT_B[v], vec3(1.0, 0.99, 0.95), 0.72), coreGlow * 0.42);
+
     col += floatingLightSquares(uv, dir, t, v) * apField;
     col += riftGodRays(uv, dir, t, v, night);
     col += innerGlow(uv, r2, v);
@@ -491,28 +500,35 @@ void main() {
     // Frosted glass sheen over the cavity
     vec3 frost = mix(FROST[v], vec3(1.0), 0.22);
     float gloss = smoothstep(0.18, 0.85, uv.y) * 0.14 + exp(-r2 * 4.5) * 0.08;
-    col = mix(col, frost, 0.14);
+    col = mix(col, frost, 0.12);
     col += vec3(1.0, 0.98, 0.95) * gloss * 0.28;
 
-    // Recessed 3D-illusion inner canal walls inside the main stepped cross (dMain < 0 && dMainBack > 0):
-    float mainInside = smoothstep(0.006, -0.006, dMain);
-    float mainCanalBevel = mainInside * smoothstep(-0.010, 0.008, dMainBack);
-    float mainInnerStepRim = mainInside * smoothstep(0.009, 0.0015, abs(dMainBack));
-    vec3 bevelCol = mix(FROST[v], mix(TINT[v], vec3(1.0, 0.94, 0.88), 0.55), 0.65);
-    col = mix(col, bevelCol, mainCanalBevel * 0.72);
-    col = mix(col, vec3(1.0, 0.98, 0.95), mainInnerStepRim * 0.58);
+    // Directional 3D-illusion recessed canal bevels (horizontal ledges brighter cream, vertical side walls warm taupe-peach):
+    float horizBevel = smoothstep(0.35, 0.75, abs(pWavy.y) / (abs(pWavy.x) + abs(pWavy.y) + 1e-4));
+    vec3 sideWallCol = mix(FROST[v] * 0.84, mix(TINT[v], vec3(0.95, 0.88, 0.82), 0.48), 0.55);
+    vec3 ledgeWallCol = mix(FROST[v], vec3(1.0, 0.97, 0.93), 0.58);
+    vec3 bevelCol = mix(sideWallCol, ledgeWallCol, horizBevel);
+
+    // Main stepped-cross recessed canal bevel (dMain < 0 && dMainBack > 0):
+    float mainInside = smoothstep(0.005, -0.005, dMain);
+    float mainCanalBevel = mainInside * smoothstep(-0.006, 0.006, dMainBack);
+    float mainInnerStepRim = mainInside * smoothstep(0.008, 0.0015, abs(dMainBack));
+    col = mix(col, bevelCol, mainCanalBevel * 0.82);
+    col = mix(col, vec3(1.0, 0.985, 0.96), mainInnerStepRim * 0.62);
 
     // Attached & detached hollow voxel boxes (L1, L2, L3, R1, R2, R3, S1..S4):
-    float boxInside = smoothstep(0.006, -0.006, dBoxes) * (1.0 - mainInside);
-    float boxRecessedWall = boxInside * smoothstep(-0.008, 0.008, dBoxesBack);
-    vec3 boxPaneCol = mix(FROST[v], mix(TINT[v], vec3(1.0, 0.92, 0.86), 0.45), 0.52);
-    col = mix(col, boxPaneCol, boxInside * (0.55 + 0.30 * boxRecessedWall));
+    //   - Recessed canal wall (dBoxes < 0 && dBoxesBack > 0) gets the 3D directional bevel shading.
+    //   - Inner hollow window (dBoxesBack < 0) shows the warm blurred destination viewport (195224.png, 195319.png, 194905.png).
+    float boxInside = smoothstep(0.005, -0.005, dBoxes) * (1.0 - mainInside);
+    float boxCanalBevel = boxInside * smoothstep(-0.005, 0.005, dBoxesBack);
+    col = mix(col, frost, boxInside * 0.16);
+    col = mix(col, bevelCol, boxCanalBevel * 0.80);
 
-    // Razor-sharp blinding pure-white SDF outlines (front rim + parallax-recessed back rim):
+    // Razor-sharp blinding pure-white SDF outlines (front rim + perspective-recessed back rim):
     float mainRim = smoothstep(0.013, 0.002, abs(dMain));
-    float boxFrontRim = smoothstep(0.011, 0.0018, abs(dBoxes)) * (0.45 + 0.55 * tipFade);
-    float boxBackRim = smoothstep(0.008, 0.0015, abs(dBoxesBack)) * (0.32 + 0.45 * tipFade);
-    float totalWhiteRim = clamp(mainRim + boxFrontRim + boxBackRim * 0.70, 0.0, 1.0);
+    float boxFrontRim = smoothstep(0.011, 0.0018, abs(dBoxes)) * (0.48 + 0.52 * tipFade);
+    float boxBackRim = smoothstep(0.008, 0.0015, abs(dBoxesBack)) * boxInside * (0.38 + 0.48 * tipFade);
+    float totalWhiteRim = clamp(mainRim + boxFrontRim + boxBackRim * 0.78, 0.0, 1.0);
     col = mix(col, vec3(1.0, 0.995, 0.985), totalWhiteRim);
 
     // Outer Aurora Borealis curtains & soft neon rim bloom outside the SDF silhouette (dAll > 0):
@@ -546,7 +562,7 @@ void main() {
     float glass = mix(0.86, 0.98, frostAmt);
     float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;
     float auroraAlpha = clamp(length(auroraHalo) * 0.72 + exp(-max(dAll, 0.0) * 11.0) * 0.48, 0.0, 0.85);
-    float shapeAlpha = clamp(mainInside * 0.97 + boxInside * (0.48 + 0.42 * tipFade) + totalWhiteRim, 0.0, 0.99);
+    float shapeAlpha = clamp(mainInside * 0.97 + boxInside * (0.62 + 0.34 * tipFade) + totalWhiteRim, 0.0, 0.99);
     a = max(shapeAlpha, auroraAlpha) * quadEdgeMask * fogFade() * fade;
     fragColor = vec4(clamp(col, 0.0, 1.0), a) * ColorModulator;
 #endif
