@@ -139,9 +139,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      */
     static int viewCode(RiftType type, boolean inSift, long seed) {
         float pick = RiftShape.hash(seed, 7, 233); // stable per rift, and the only source of the style
-        if (type == RiftType.SIFT || type == RiftType.OVERWORLD) return pick < 0.30f ? 6 : pick < 0.60f ? 0 : 5;
-        if (type == RiftType.NETHER) return pick < 0.30f ? 7 : pick < 0.60f ? 1 : 5;
-        if (type == RiftType.END) return pick < 0.40f ? 6 : 2;
+        if (type == RiftType.SIFT) return pick < 0.55f ? 4 : 3;
+        if (type == RiftType.OVERWORLD) return pick < 0.45f ? 4 : pick < 0.80f ? 3 : 0;
+        if (type == RiftType.NETHER) return pick < 0.65f ? 1 : 3;
+        if (type == RiftType.END) return pick < 0.65f ? 2 : 4;
         return type.id;
     }
 
@@ -586,6 +587,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     /** Fifteen small teeth along each exposed horizontal boundary, refreshed every four ticks. */
     private static void glitchTeeth(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, float age) {
+        if (SiftBudget.riftShader && age > RIFT_BIRTH) return;
         int step = (int) (s.time * 5f);
         for (int tooth = 0; tooth < 15; tooth++) {
             int i = Math.min(sh.cols - 1, tooth * sh.cols / 15);
@@ -601,6 +603,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     /** Two curling ribbon tendrils. Opening-only sideways glitch leaves the collision plane unchanged. */
     private static void clawRibbons(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, Vector3f cam, float age) {
+        if (SiftBudget.riftShader && age > RIFT_BIRTH) return;
         float glitch = age >= 20 && age <= 60 ? 0.08f * (float) Math.sin(Math.floor(age / 4) * 2.7) : 0;
         for (int side : new int[]{-1, 1}) {
             float[] previous = {side * sh.w * 0.52f, sh.cy() - sh.h * 0.3f, 0.1f};
@@ -681,7 +684,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s, float fade, float frost) {
-        boolean boxFace = SiftBudget.riftBoxFace;
+        boolean boxFace = SiftBudget.riftBoxFace && !SiftBudget.riftShader;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
             if (boxFace && !sh.windowCell(i, j)) continue; // the stepped box is frosted; boxFaces draws it
@@ -710,7 +713,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * This is what turns the rift from "a window" into the reference's stepped grey box with one glazed square.
      */
     private static void boxFaces(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, float age, State s) {
-        if (!SiftBudget.riftBoxFace) return;
+        if (!SiftBudget.riftBoxFace || SiftBudget.riftShader) return;
         // The frosted layer carries the rift's own colour (green / lime / red / yellow / orange), and the
         // frosted tips are the cells furthest from the window, warmed towards the inner glow.
         float[] face = look.frost();
@@ -827,12 +830,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                              float[] front, float[] back, float shade, float alphaMul) {
         float[] f = {front[0] * shade, front[1] * shade, front[2] * shade}, b = {back[0] * shade, back[1] * shade, back[2] * shade};
         float af = faceA(zf, alphaMul), ab = faceA(zb, alphaMul);
+        float wallScale = SiftBudget.riftShader ? 0.16f : 1f;
         for (int s = 0; s < SUB; s++) {
             float t0 = s / (float) SUB, t1 = (s + 1) / (float) SUB;
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
             float x1 = xa + (xb - xa) * t1, y1 = ya + (yb - ya) * t1;
-            col(p, vc, wv, x0, y0, zf, f, af); col(p, vc, wv, x1, y1, zf, f, af);
-            col(p, vc, wv, x1, y1, zb, b, ab); col(p, vc, wv, x0, y0, zb, b, ab);
+            col(p, vc, wv, x0, y0, zf, f, af * wallScale); col(p, vc, wv, x1, y1, zf, f, af * wallScale);
+            col(p, vc, wv, x1, y1, zb, b, ab * wallScale); col(p, vc, wv, x0, y0, zb, b, ab * wallScale);
         }
     }
 
@@ -884,7 +888,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static void rim(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
                             float[] core, float[] halo, boolean lip, float flash, float[] jit, float wave, float time, float fade,
                             float cx, float cy) {
-        float k = lip ? 0.75f : 1f, a = (lip ? 0.85f : 1f) * fade;
+        if (SiftBudget.riftShader && lip) return;
+        float k = lip ? 0.75f : 1f, a = (lip ? 0.85f : 1f) * fade * (SiftBudget.riftShader ? 0.55f : 1f);
         // 0.33: the references' beams are white on BOTH sides with translucent glass between, so every border
         // also carries an inner line running parallel to it, offset towards the cell centre.
         float inx = 0f, iny = 0f;
@@ -897,7 +902,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
             float x1 = xa + (xb - xa) * t1, y1 = ya + (yb - ya) * t1;
             // 0.32: vertical side borders undulate; horizontal borders ride a smaller wave.
-            if (wave > 0f) {
+            if (wave > 0f && !SiftBudget.riftShader) {
                 if (Math.abs(yb - ya) >= Math.abs(xb - xa)) { x0 += borderWave(y0, time) * wave; x1 += borderWave(y1, time) * wave; }
                 else { y0 += borderWave(x0, time) * wave * 0.55f; y1 += borderWave(x1, time) * wave * 0.55f; }
             }
@@ -906,10 +911,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float[] fa = {x0 - ox, y0 - oy, zf + 0.006f}, fb = {x1 + ox, y1 + oy, zf + 0.006f};
             // 0.32: thick soft borders — the references' edges are broad glowing bands, not thin lines.
             band(p, vc, wv, cam, fa, fb, (0.20f + 0.12f * flash) * k, (0.58f + 0.24f * flash) * k, core, halo, a);
-            line(p, vc, wv, cam, new float[]{x0 + jit[0] - ox, y0 + jit[1] - oy, zf + 0.01f}, new float[]{x1 + jit[0] + ox, y1 + jit[1] + oy, zf + 0.01f}, 0.075f * k, core, 0.30f * fade);
-            line(p, vc, wv, cam, new float[]{x0 - ox + inx * inside, y0 - oy + iny * inside, zf + 0.014f},
-                new float[]{x1 + ox + inx * inside, y1 + oy + iny * inside, zf + 0.014f}, 0.05f * k, core, 0.35f * fade);
-            band(p, vc, wv, cam, new float[]{x0 - ox, y0 - oy, zb + 0.012f}, new float[]{x1 + ox, y1 + oy, zb + 0.012f}, 0.05f, 0.18f, core, halo, 0.40f * fade);
+            if (!SiftBudget.riftShader) {
+                line(p, vc, wv, cam, new float[]{x0 + jit[0] - ox, y0 + jit[1] - oy, zf + 0.01f}, new float[]{x1 + jit[0] + ox, y1 + jit[1] + oy, zf + 0.01f}, 0.075f * k, core, 0.30f * fade);
+                line(p, vc, wv, cam, new float[]{x0 - ox + inx * inside, y0 - oy + iny * inside, zf + 0.014f},
+                    new float[]{x1 + ox + inx * inside, y1 + oy + iny * inside, zf + 0.014f}, 0.05f * k, core, 0.35f * fade);
+            }
+            band(p, vc, wv, cam, new float[]{x0 - ox, y0 - oy, zb + 0.012f}, new float[]{x1 + ox, y1 + oy, zb + 0.012f}, 0.05f, 0.18f, core, halo, 0.40f * fade * (SiftBudget.riftShader ? 0.5f : 1f));
         }
     }
 
@@ -918,6 +925,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * of the rift (Images 7, 22, 23, 24, 26).
      */
     private static void wavySideVeils(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s) {
+        if (SiftBudget.riftShader) return;
         float[] c = look.halo();
         int segs = 14;
         float yMin = RiftShape.BASE + sh.h * 0.08f, yMax = RiftShape.BASE + sh.h * 0.92f;
@@ -1021,6 +1029,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ sleek recessed bevel lip (frame)
 
     private static void frame(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
+        if (SiftBudget.riftShader) return;
         float[] face = look.wallFront(), side = mix(look.wallFront(), look.wallBack(), 0.35f);
         float F = FLANGE, C = COLLAR;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
@@ -1247,7 +1256,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      * direction). Re-aimed a few times per second; brighter and more frequent at night.
      */
     private static void riftBolts(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
-        if (!SiftBudget.riftBolts) return;
+        if (!SiftBudget.riftBolts || (SiftBudget.riftShader && age > RIFT_BIRTH)) return;
         int step = (int) (s.time * (s.night ? 2.8f : 1.5f));
         int count = s.night ? 3 : 2;
         for (int k = 0; k < count; k++) {
