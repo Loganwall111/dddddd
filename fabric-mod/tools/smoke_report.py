@@ -44,4 +44,8 @@ for p in problems:
     annotate("Server runtime error", p)
     if len(seen) >= 7:
         break
+if done and not problems:
+    checks = [l for l in log if any(k in l for k in ("SIFT-SMOKE anchors", "SIFT-SMOKE time state", "SIFT-SMOKE ritual", "SIFT-SMOKE DONE"))]
+    msg = "\n".join(checks).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::notice title=Sift runtime checks::{msg}")
 sys.exit(1 if problems or not done else 0)

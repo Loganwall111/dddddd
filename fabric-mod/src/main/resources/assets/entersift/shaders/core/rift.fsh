@@ -114,13 +114,28 @@ vec3 viewEnd(vec3 dir, float yaw, float t) {
     return c;
 }
 
-// 3 Sift: pale mint sky, soft pink panels, rows of pink and teal pillars on the horizon.
+// 3 Sift: cyan/turquoise/pastel-green sky dome, pink/magenta & soft-yellow luminous shapes,
+// wavy dark charcoal "soul face" bands, volumetric god rays, and horizon pillars.
 vec3 viewSift(vec3 dir, float yaw, float t) {
     float el = dir.y;
-    vec3 c = mix(vec3(0.62, 0.90, 0.86), vec3(0.88, 0.97, 0.95), smoothstep(-0.05, 0.6, el));
+    vec3 c = mix(vec3(0.50, 0.88, 0.86), vec3(0.84, 0.97, 0.95), smoothstep(-0.05, 0.6, el));
+    // Pastel green, cyan, pink/magenta, and soft yellow atmospheric currents
+    float flowWave = 0.5 + 0.5 * sin(yaw * 3.0 + el * 4.5 - t * 0.14);
+    float magWave = 0.5 + 0.5 * cos(yaw * 2.0 - el * 3.5 + t * 0.11);
+    c = mix(c, vec3(0.55, 0.96, 0.78), flowWave * 0.28 * smoothstep(0.0, 0.55, el));
+    c = mix(c, vec3(0.96, 0.52, 0.84), magWave * 0.24 * smoothstep(0.05, 0.65, el));
     vec2 pg = vec2(yaw * 5.0 + t * 0.01, el * 7.0);
     float panel = smoothstep(0.55, 0.7, vnoise(floor(pg) * 0.7 + 3.0)) * smoothstep(0.02, 0.15, el);
     c = mix(c, vec3(0.98, 0.80, 0.90), panel * 0.45);
+    // Low-frequency wavy dark charcoal "soul face" bands across the upper dome
+    float bandCenter = 0.28 + 0.09 * sin(yaw * 2.0 + t * 0.12) + 0.05 * cos(yaw * 3.0 - t * 0.09);
+    float bandThick = 0.055 * (0.65 + 0.35 * sin(yaw * 2.0 - 0.7));
+    float soulBand = smoothstep(bandThick, 0.0, abs(el - bandCenter)) * smoothstep(0.05, 0.20, el);
+    c = mix(c, vec3(0.06, 0.08, 0.14), soulBand * 0.52);
+    // Soft accumulated volumetric god-ray light shafts
+    float ray = 0.5 + 0.5 * sin(yaw * 14.0 + sin(yaw * 3.0 - t * 0.15) * 1.6);
+    float shaft = pow(ray, 4.0) * smoothstep(-0.02, 0.45, el) * smoothstep(0.85, 0.18, el);
+    c += mix(vec3(0.35, 0.95, 0.92), vec3(0.98, 0.58, 0.88), magWave) * shaft * 0.22;
     for (int i = 2; i >= 0; i--) {
         float cols = 36.0 + 24.0 * float(i);
         float cid = floor((yaw + PI) / (2.0 * PI) * cols);
@@ -171,13 +186,23 @@ void main() {
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
     vec3 col = destination(view, dir, t);
-    // Light pouring through the middle of the rift (face coordinates are global, so no seams either).
+    // Layer 5 & 6: Colored interior energy & vertically-dominant inner luminance spine
     vec2 d = riftData.rg - 0.5;
     float core = exp(-dot(d, d) * 10.0);
-    float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
-    col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
-    // The Sift at night glows pink-white through the rift (trailer night frames).
-    if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), riftData.g), 0.55);
+    float vertSpine = exp(-d.x * d.x * 22.0 - d.y * d.y * 4.2);
+    float energyWave = 0.5 + 0.5 * sin(riftData.g * 8.0 - t * 0.65 + sin(riftData.r * 6.0 + t * 0.4));
+    vec3 siftEnergy = mix(vec3(0.25, 0.95, 0.96), vec3(0.95, 0.46, 0.86), energyWave);
+    col = mix(col, siftEnergy, (view == 3 ? 0.24 : 0.10) * smoothstep(0.48, 0.05, length(d)));
+    float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.82 : 0.42) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.25)));
+    col = mix(col, view == 3 ? vec3(0.96, 0.98, 1.0) : vec3(1.0, 0.98, 0.93), max(core, vertSpine * 0.75) * coreK);
+    // The Sift at night / THRIVE glows magenta-cyan-white with stronger volumetric luminance
+    if (view == 3 && night) {
+        vec3 thriveTint = mix(vec3(0.96, 0.48, 0.84), vec3(0.65, 0.98, 1.0), riftData.g);
+        col = mix(col, thriveTint, 0.52);
+    }
+    // Phase C (White Ignition) -> Phase D (Color Reveal) & Phase F (Closing collapse)
+    float reveal = clamp(riftData.a, 0.0, 1.0);
+    col = mix(vec3(0.97, 0.99, 1.00), col, smoothstep(0.05, 0.95, reveal));
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif

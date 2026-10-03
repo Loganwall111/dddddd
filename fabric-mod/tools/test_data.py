@@ -563,4 +563,32 @@ class DataContracts(unittest.TestCase):
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))
+    def test_v022_sift_rift_sky_dome_and_time_states(self):
+        M=ROOT/'src/main/java/dev/logan/entersift'
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        S=R/'assets/entersift/shaders/core'
+        # Independent SiftTimeState + /sift time command family (flow, thrive, lymph/lava_lamp)
+        ts=(M/'SiftTimeState.java').read_text()
+        for k in ('FLOW','THRIVE','LYMPH','"flow"','"thrive"','"lymph"','"lava_lamp"','Parameters','lerp','getIndependentClockFloat'):
+            self.assertIn(k,ts)
+        cmd=(M/'SiftTimeCommand.java').read_text()
+        for k in ('Commands.literal("sift")','buildTimeBranch("time")','"set"','"flow"','"thrive"','"lymph"','"lava_lamp"'):
+            self.assertIn(k,cmd)
+        self.assertIn('SiftTimeCommand.register()',(M/'EnterTheSift.java').read_text())
+        smoke=(M/'SiftSmokeTest.java').read_text()
+        for k in ('sift time set thrive','sift time set lymph','sift time set flow','SIFT-SMOKE time state verified'):
+            self.assertIn(k,smoke)
+        # Supplied Sift Sky PNGs + SiftSky panoramic dome, wavy dark soul bands, sky rift & floating squares
+        for tex in ('sift_flow_sky.png','sift_thrive_sky.png'):
+            self.assertTrue((R/f'assets/entersift/textures/sky/{tex}').is_file(),tex)
+        sky=(C/'SiftSky.java').read_text()
+        for k in ('samplePanorama','wavySoulBands','skyRiftBackDistortion','skyRiftOuterBands','skyRiftApertureAndEnergy','skyRiftFloatingSquares','SiftTimeState.currentParameters()'):
+            self.assertIn(k,sky)
+        # Rift 10-layer visual stack & Phases A-F opening/closing animation
+        rift=(C/'RiftPortalRenderer.java').read_text()
+        for k in ('backDistortionField','wavyOuterSoulBands','whiteIgnitionCore','innerCoreLuminance','floatingLightSquares','volumetricGodRaysAndBloom','colorRevealForAge','RiftPortalEntity.MAX_TICKS - s.rawAge'):
+            self.assertIn(k,rift)
+        fsh=(S/'rift.fsh').read_text()
+        for k in ('soulBand','vertSpine','siftEnergy','reveal'):
+            self.assertIn(k,fsh)
 if __name__=='__main__': unittest.main(verbosity=2)

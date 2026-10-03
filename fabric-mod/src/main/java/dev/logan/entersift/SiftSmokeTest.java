@@ -94,6 +94,17 @@ final class SiftSmokeTest {
         EnterTheSift.LOGGER.info("SIFT-SMOKE anchors: rifts={} portals={} wrongType={}", rifts, portals, wrong);
         if (rifts == 0 || portals == 0 || wrong > 0)
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL rift_portal entities: rifts={} portals={} wrongType={}", rifts, portals, wrong);
+        run(server, "sift time set thrive");
+        if (SiftTimeState.getState() != SiftTimeState.State.THRIVE || !SiftTimeState.isLocked())
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL sift time set thrive: state={}", SiftTimeState.getState());
+        run(server, "sift time set lymph");
+        if (SiftTimeState.getState() != SiftTimeState.State.LYMPH)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL sift time set lymph: state={}", SiftTimeState.getState());
+        run(server, "sift time set flow");
+        run(server, "sift time");
+        if (SiftTimeState.getState() != SiftTimeState.State.FLOW || !SiftTimeState.isLocked())
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL sift time set flow: state={}", SiftTimeState.getState());
+        EnterTheSift.LOGGER.info("SIFT-SMOKE time state verified: state={}, locked={}", SiftTimeState.getState(), SiftTimeState.isLocked());
     }
 
     // ------------------------------------------------------------------ ritual (0.14.1)
