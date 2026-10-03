@@ -24,6 +24,15 @@ def annotate(title, text):
     text = text[:3500].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
     print(f"::error title={title}::{text}")
 
+def notice(title, text):
+    text = text[:3500].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::notice title={title}::{text}")
+
+# Keep the evidence in the run itself: on a green build these notices show what the server actually did.
+checks = [l.split("] ", 1)[-1] for l in log if "SIFT-SMOKE tide" in l or "SIFT-SMOKE ritual:" in l or "SIFT-SMOKE anchors:" in l]
+if checks:
+    notice("Sift runtime checks", "\n".join(checks[:12]))
+
 if not started:
     annotate("Smoke test", "SIFT-SMOKE never enabled; server did not start the mod.\n" + "\n".join(log[-60:]))
 if started and not done:
