@@ -301,3 +301,32 @@ but unusable.
   annotations are readable. That is how the next run is verified from here.
 - Obsolete contract: the 0.20-era assertion that `rift.fsh` must NOT contain a destination function is
   replaced - the destination is now the whole point.
+
+## Sift Overhaul 0.36.0-alpha (GLSL 10-Layer Rift, Sift Sky Dome Panoramas & SiftTimeState): CI verified (run 37137548686, c861c14)
+
+- Built directly on top of `02a4037fb7759c73a38b0a26adbac3b567f35a5b` (`0.36.0-alpha`), preserving all
+  `0.36.0-alpha` features, worldgen, tunnel (`SiftTunnel`), wearable gauntlets, 3D staffs, and frosted
+  destination view.
+- `rift.fsh`: full 10-layer GLSL Rift visual stack (`destination`, `fogFade`, `backDistortion`,
+  `apertureField`, `soulFaceBand` into `vec3(0.02, 0.02, 0.04)` with `smoothstep(0.70, 0.88, faceMask)`,
+  `interiorEnergy`, `innerGlow`, `floatingLightSquares` with 16 multi-depth squares, `riftGodRays`,
+  `riftBloom`).
+- `SiftSky.java`: panoramic dome overlays (`sift_flow_sky.png` and `sift_thrive_sky.png` from
+  `art/sift-day-sky.png` and `art/sift-night-sky.png`), animated wavy dark "soul face" bands
+  (`soulFaceMask`, `soulFaceBands`), subtle Flow rainbow upper dome, and Thrive god-ray boost.
+- `SiftTimeState.java` & `SiftTimeCommand.java`: independent Sift time-state controller (`FLOW`,
+  `THRIVE`, `ENDURE` / `LYMPH` / `LAVA_LAMP`) with smooth 2.4s transitions and `/sift time` commands
+  synced to the `entersift:sift` world clock.
+- GitHub Actions (`sift-build.yml`, run `37137548686`):
+  - 73/73 data-contract tests (`tools/test_data.py`), 615-file validation (`tools/validate.py`), and 8
+    regenerated live generators (`tools/regen_check.py`) passed.
+  - `glslangValidator` (`11:15.1.0`): all 82 shaderpack programs and all 4 core shader variants
+    (`rift.vsh`/`rift.fsh` default, `RIFT_REFRACT`, `RIFT_WALL`, `RIFT_GLOW`, `tunnel.vsh`/`tunnel.fsh`)
+    compiled clean.
+  - Gradle 26.3 build (`./gradlew --no-daemon build`): compiled cleanly (`sift-overhaul-0.36.0-alpha.jar`
+    with bundled `Dungeons-II-Overworld-0.15.zip`), uploaded as artifact `Sift-Overhaul-0.36.0-alpha-26.3`
+    (Artifact ID `11279285966`, 5,947,901 bytes).
+  - Dedicated 26.3 server smoke test (`SiftSmokeTest.java` + `smoke_report.py`): passed end-to-end,
+    including `/sift time set flow`, `/sift time set thrive`, `/sift time set lymph`, `/sift time query`,
+    and `/sift time cycle on`.
+

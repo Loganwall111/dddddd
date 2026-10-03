@@ -44,4 +44,8 @@ for p in problems:
     annotate("Server runtime error", p)
     if len(seen) >= 7:
         break
+if not problems and done:
+    tail_notice = " | ".join(l.strip()[-120:] for l in summary[-6:])
+    tail_notice = tail_notice[:1200].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::notice title=Server smoke test passed::{tail_notice}")
 sys.exit(1 if problems or not done else 0)
