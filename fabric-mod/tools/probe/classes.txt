@@ -117,3 +117,6 @@ net.minecraft.network.RegistryFriendlyByteBuf
 net.minecraft.network.FriendlyByteBuf
 net.minecraft.client.Minecraft
 net.minecraft.world.level.Level
+net.minecraft.network.chat.Component
+net.minecraft.network.chat.MutableComponent
+net.minecraft.ChatFormatting

@@ -3,8 +3,10 @@ package dev.logan.entersift;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 
 /**
@@ -27,14 +29,10 @@ public final class SiftTideCommand {
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(build("sifttide"));
+            dispatcher.register(Commands.literal("sifttide").then(tideNode()));
             // "/sift tide ..." as well, so both spellings work.
             dispatcher.register(Commands.literal("sift").then(tideNode()));
         });
-    }
-
-    private static LiteralArgumentBuilder<CommandSourceStack> build(String name) {
-        return Commands.literal(name).then(tideNode());
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> tideNode() {
@@ -49,27 +47,26 @@ public final class SiftTideCommand {
                         CommandSourceStack src = ctx.getSource();
                         ServerLevel level = src.getLevel();
                         if (tide == null) {
-                            say(src, "{\"text\":\"\",\"extra\":[{\"text\":\"Unknown tide '\",\"color\":\"red\"},"
-                                + "{\"text\":\"" + name + "\",\"color\":\"white\"},"
-                                + "{\"text\":\"'. Try: " + SiftTide.names() + "\",\"color\":\"red\"}]}");
+                            say(src, Component.literal("Unknown tide '" + name + "'. Try: " + SiftTide.names())
+                                .withStyle(ChatFormatting.RED));
                             return 0;
                         }
                         SiftTideServer.set(level, tide);
-                        say(src, "{\"text\":\"\",\"extra\":[{\"text\":\"Sift tide: \",\"color\":\"gray\"},"
-                            + "{\"text\":\"" + tide.tide + "\",\"color\":\"aqua\"},"
-                            + "{\"text\":\"  (time \" + tide.ticks + ")\",\"color\":\"dark_gray\"}]}");
+                        say(src, Component.literal("Sift tide: ").withStyle(ChatFormatting.GRAY)
+                            .append(Component.literal(tide.tide).withStyle(ChatFormatting.AQUA))
+                            .append(Component.literal("  (time " + tide.ticks + ")").withStyle(ChatFormatting.DARK_GRAY)));
                         return 1;
                     }));
         }
         root.then(Commands.literal("cycle")
             .then(Commands.literal("on").executes(ctx -> {
                 SiftTideServer.setCycling(ctx.getSource().getLevel(), true);
-                say(ctx.getSource(), "{\"text\":\"Sift tide: the clock drives the sky again.\",\"color\":\"aqua\"}");
+                say(ctx.getSource(), Component.literal("Sift tide: the clock drives the sky again.").withStyle(ChatFormatting.AQUA));
                 return 1;
             }))
             .then(Commands.literal("off").executes(ctx -> {
                 SiftTideServer.setCycling(ctx.getSource().getLevel(), false);
-                say(ctx.getSource(), "{\"text\":\"Sift tide locked to the time of day.\",\"color\":\"aqua\"}");
+                say(ctx.getSource(), Component.literal("Sift tide locked to the time of day.").withStyle(ChatFormatting.AQUA));
                 return 1;
             })));
         root.then(Commands.literal("time")
@@ -88,30 +85,40 @@ public final class SiftTideCommand {
                         try { ticks = Long.parseLong(when); } catch (NumberFormatException ignored) { ticks = -1L; }
                     }
                     if (ticks < 0L) {
-                        say(ctx.getSource(), "{\"text\":\"Use day, noon, evening, night, midnight or a tick count.\",\"color\":\"red\"}");
+                        say(ctx.getSource(), Component.literal("Use day, noon, evening, night, midnight or a tick count.")
+                            .withStyle(ChatFormatting.RED));
                         return 0;
                     }
                     SiftTideServer.setTime(ctx.getSource().getLevel(), ticks);
-                    say(ctx.getSource(), "{\"text\":\"\",\"extra\":[{\"text\":\"Sift clock set to \",\"color\":\"gray\"},"
-                        + "{\"text\":\"" + ticks + "\",\"color\":\"aqua\"}]}");
+                    say(ctx.getSource(), Component.literal("Sift clock set to ").withStyle(ChatFormatting.GRAY)
+                        .append(Component.literal(Long.toString(ticks)).withStyle(ChatFormatting.AQUA)));
                     return 1;
                 })));
-        root.then(Commands.literal("flow").executes(ctx -> { SiftTideServer.set(ctx.getSource().getLevel(), SiftTide.FLOW); say(ctx.getSource(), "{\"text\":\"Sift tide: flow (the wavy mint dome).\",\"color\":\"aqua\"}"); return 1; }));
-        root.then(Commands.literal("thrive").executes(ctx -> { SiftTideServer.set(ctx.getSource().getLevel(), SiftTide.THRIVE); say(ctx.getSource(), "{\"text\":\"Sift tide: thrive (rose sky, god rays).\",\"color\":\"aqua\"}"); return 1; }));
-        root.then(Commands.literal("lava_lamp").executes(ctx -> { SiftTideServer.set(ctx.getSource().getLevel(), SiftTide.LAVA_LAMP); say(ctx.getSource(), "{\"text\":\"Sift tide: lava_lamp (the shipped sky).\",\"color\":\"aqua\"}"); return 1; }));
+        root.then(Commands.literal("flow").executes(ctx -> { quick(ctx.getSource(), SiftTide.FLOW); return 1; }));
+        root.then(Commands.literal("thrive").executes(ctx -> { quick(ctx.getSource(), SiftTide.THRIVE); return 1; }));
+        root.then(Commands.literal("lava_lamp").executes(ctx -> { quick(ctx.getSource(), SiftTide.LAVA_LAMP); return 1; }));
         return root;
     }
 
-    private static void info(CommandSourceStack src) {
-        say(src, "{\"text\":\"\",\"extra\":[{\"text\":\"Sift tide: \",\"color\":\"gray\"},{\"text\":\""
-            + SiftTideServer.tide().tide + "\",\"color\":\"aqua\"},{\"text\":\"  cycle: \",\"color\":\"gray\"},{\"text\":\""
-            + (SiftTideServer.locked() ? "locked (off)" : "on") + "\",\"color\":\"white\"}]}");
+    private static void quick(CommandSourceStack src, SiftTide tide) {
+        SiftTideServer.set(src.getLevel(), tide);
+        say(src, Component.literal("Sift tide: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(tide.tide).withStyle(ChatFormatting.AQUA)));
     }
 
-    /** Broadcasts raw JSON through the command dispatcher; no chat APIs are used, so nothing can break. */
-    private static void say(CommandSourceStack src, String json) {
+    private static void info(CommandSourceStack src) {
+        say(src, Component.literal("Sift tide: ").withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(SiftTideServer.tide().tide).withStyle(ChatFormatting.AQUA))
+            .append(Component.literal("  cycle: ").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(SiftTideServer.locked() ? "locked (off)" : "on").withStyle(ChatFormatting.WHITE)));
+    }
+
+    /** Command feedback through the vanilla API (no raw JSON, nothing can be mis-escaped). */
+    private static void say(CommandSourceStack src, Component message) {
         try {
-            src.getServer().getCommands().performPrefixedCommand(src.withSuppressedOutput(), "tellraw @a " + json);
-        } catch (Throwable ignored) { }
+            src.sendSuccess(() -> message, false);
+        } catch (Throwable error) {
+            EnterTheSift.LOGGER.info("Sift tide: {}", message.getString());
+        }
     }
 }
