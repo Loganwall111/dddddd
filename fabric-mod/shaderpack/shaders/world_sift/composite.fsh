@@ -87,10 +87,11 @@ vec3 siftRays(vec3 base) {
     float phase = 0.25 + 1.6 * pow(max(cosT, 0.0), 6.0) + 0.4 * pow(max(cosT, 0.0), 2.0);
     float tod = mod(float(worldTime), 24000.0);
     float dusk = smoothstep(10000.0, 12000.0, tod) * (1.0 - smoothstep(14000.0, 16000.0, tod));
-    float strength = 0.3 + 2.2 * dusk;
+    float thriveBoost = smoothstep(0.68, 0.22, dot(skyColor, vec3(0.3, 0.4, 0.3))) * 0.85;
+    float strength = 0.38 + 2.2 * max(dusk, thriveBoost);
     vec3 hue = skyColor / max(max(skyColor.r, max(skyColor.g, skyColor.b)), 0.05);
-    vec3 rayCol = mix(hue, vec3(1.0, 0.55, 0.62), dusk * 0.45);
-    float up = max(smoothstep(0.0, 0.1, L.y), 0.6 * dusk);
+    vec3 rayCol = mix(hue, vec3(0.96, 0.52, 0.82), max(dusk, thriveBoost) * 0.48);
+    float up = max(smoothstep(0.0, 0.1, L.y), 0.65 * max(dusk, thriveBoost));
     return base + rayCol * scatter * phase * SIFT_SIFT_RAYS * strength * 0.2 * up;
 }
 

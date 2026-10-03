@@ -1,51 +1,50 @@
-# Screenshot comparison — 0.2 source alpha
+# Sift Rift & Sky Dome Visual Architecture — 0.22
 
-The fifteen screenshots attached in the latest request replace the earlier sci-fi moodboard as the primary visual reference. They show **two distinct portal families**, a bright aurora sky, opalescent liquid and rose/cyan terrain. The following is an implementation inventory, **not a claim of an in-game visual match**.
+## 1. Independent Sift Time-State System (`SiftTimeState` & `/sift time`)
 
-| Asked-for detail | What now exists in source | Still missing / unverified |
-|---|---|---|
-| Ribbon sky / wavy aurora | Sift-only procedural sky shader with five cyan/green/pink ribbons, world-direction anchoring, slow motion and adjustable intensity/speed. | Iris/GPU validation, final art tuning, exact reference sky geometry. No ribbon sky without Iris. |
-| Day and night | Normal Overworld clock/timelines, skylight enabled; shader transitions from teal day to rose dusk to indigo night with stars. | Minecraft 26.3 lighting/timeline behavior needs testing. Time is shared with the Overworld, not an independent realm clock. |
-| Ancient City connection | Six coloured wool-backed note blocks feed the existing reinforced-frame detector. Completing the song opens a dimension-crossing aperture in that frame. | Still needs verification against a real vanilla Ancient City. It does not automatically activate every city on load. |
-| Cyan rectangular portal | New 32px, 64-frame tiled cyan mosaic texture, bright perimeter, full-bright display scaled to the detected aperture. | Actual bloom/scale testing; no view into the destination world through the surface. |
-| Orange fragmented rift | Separate coral/gold animated membrane; stepped silhouette with white outer trim; four drifting/rotating detached fragments. 27 display entities per rift. | No literal lightning bolts, refracted world view, true translucent membrane or exact recreation. |
-| Coloured note glow | Red, magenta, pink, cyan, blue and purple full-bright rims and particles. Responds to both player input and the Singer's six replies. Clears after four seconds. | This is visual emission/bloom, **not RGB light cast onto adjacent blocks**. Notes must be near a valid ritual frame. |
-| Souls everywhere | Richer recipient-local soul/flame particles, with off/subtle/rich control and no persistent ambient-entity population. | These are atmospheric particles, not a new population of sentient soul mobs. |
-| Rainbow ichor | New 32px, 64-frame pastel/oil-slick animation with glints. Real registered fluid gameplay is unchanged. | Reflections/refraction, terrain interaction, fluid rendering and damage need a runtime pass. |
-| Landscape palette | Rose saltstone under salt caps; brighter teal meadow surfaces; biome fog adjusted to the supplied landscapes. | No matching authored canyon layout, giant cyan trees, ruins, decorative arch structures or reference vegetation yet. |
-| Animals | Existing red-eyed crawling Blub display/rabbit prototype remains. | No newly added fauna in 0.2. Large spirit creatures, full custom AI/renderers and an animal ecosystem are not implemented. |
+The Sift's atmosphere and Rift visuals are controlled by `dev.logan.entersift.SiftTimeState`, completely independent from the Overworld day/night clock:
 
-## Selecting the new shader
+- **`/sift time set flow`** (`State.FLOW`):
+  - Bright Sift atmospheric state dominated by cyan, turquoise, pale blue, pastel green, subtle pink/magenta, subtle upper-dome rainbow dispersion, large wavy dark charcoal "soul face" boundaries, and soft luminous shapes.
+  - Maps the supplied panoramic `sift_flow_sky.png` (`art/sift-day-sky.png`) seamlessly across the upper sky dome.
+- **`/sift time set thrive`** (`State.THRIVE`):
+  - Near-night Sift atmospheric state with darker blue/cyan base, stronger magenta/pink accents, heightened contrast, **extremely strong accumulated soft volumetric god rays / light shafts**, stronger Rift luminance/bloom, and deeper back distortion.
+  - Maps the supplied panoramic `sift_thrive_sky.png` (`art/sift-night-sky.png`) seamlessly across the upper sky dome.
+- **`/sift time set lymph`** (aliases: `lava_lamp`, `lavalamp`, `legacy`, `pulse` — `State.LYMPH`):
+  - Preserves and integrates the organic lava-lamp / lymph-field Sift atmosphere with metaball blobs, soft panels, and its own Rift parameter set.
+- **`/sift time` / `/sift time query`**:
+  - Displays the active Sift time state, lock/cycle mode, independent Sift clock ticks, and interpolated parameters.
+- **`/sift time cycle on|off`**:
+  - Toggles smooth automatic cycling along the independent Sift clock.
 
-The mod now bundles and installs **Sift-Cinematic-0.2.zip**. This is a new filename so an old user-edited pack is not overwritten. After building and installing with compatible Iris, select the **0.2** pack in Video Settings → Shader Packs. Selecting an older pack will not show the new ribbons.
+## 2. Sift Sky Dome (`SiftSky.java`)
 
-- `Sift sky ribbons`: set to `0.0` to disable the effect.
-- `Ribbon motion speed`: set to `0.0` to stop ribbon movement.
-- The custom sky is mapped only to `entersift:the_sift`; the Overworld/Nether/End do not receive this sky.
-- Shader bloom now thresholds peak colour rather than only luminance, to retain saturated red/blue note glows.
-- No lightning strobe, camera shake or forced motion blur has been added.
+- **Layer 0 & 1 — Background Sky Dome & Panoramic PNG Overlay**:
+  - Equirectangular panoramic sampling (`samplePanorama`) of `/assets/entersift/textures/sky/sift_flow_sky.png` and `/assets/entersift/textures/sky/sift_thrive_sky.png` blended smoothly across 360° azimuth and faded into the horizon (`HORIZON` keyframes) with zero seams.
+  - Includes upper-dome subtle rainbow dispersion in `FLOW` and organic metaball modulation in `LYMPH`.
+- **Layer 2 — Soft Luminous Shapes & Wavy Dark "Soul Face" Bands (`softPanels`, `wavySoulBands`)**:
+  - Slow-moving, soft-edged, translucent charcoal/near-black (`0x0B0E18`) wavy bands driven by layered low-frequency sine/cosine deformation (`sin`, `cos`, `smooth`, `mix`) that pinch and bow apart around luminous hollows to form the signature "soul face" silhouettes.
+- **Layers 3–9 — Giant Sky Rift, Floating Light Squares & Volumetric God Rays**:
+  - High in the Sift sky dome sits the Giant Sky Rift (`skyRiftBackDistortion`, `skyRiftOuterBands`, `skyRiftApertureAndEnergy`, `skyRiftFloatingSquares`) with 18 deterministic, soft-edged, semi-translucent floating light squares and accumulated soft volumetric god-ray shafts (`skyRays`), dramatically amplified in `THRIVE`.
 
-## Atmospheric controls
+## 3. World Rift 10-Layer Stack & Opening/Closing Sequence (`RiftPortalRenderer.java`, `RiftShape.java`, `rift.fsh`)
 
-```mcfunction
-/scoreboard players set #souls_fx sift.roll 0
-# 0 = extra scripted ambience off; biome particles still follow Minecraft particle settings.
-/scoreboard players set #souls_fx sift.roll 1
-# 1 = subtle: 6 soul particles per nearby player per second, sent only to that player.
-/scoreboard players set #souls_fx sift.roll 2
-# 2 = rich (default): 22 souls + 8 small soul flames per second, recipient-local.
-```
-
-These controls do not suppress gameplay feedback, ritual particles or potion effects.
-
-## Runtime checks still required
-
-1. Compile the Fabric project and load all functions and worldgen registries without errors.
-2. Confirm Iris routes the custom dimension to `world_sift` and both composite programs compile.
-3. Test at `/time set day`, `/time set sunset`, `/time set midnight`, with and without the shader.
-4. Turn the camera, hide the horizon behind terrain and hold an item: sky ribbons must stay world-anchored and never paint over geometry or the hand.
-5. Test saturated note glows, cleanup on repeat activation and display cleanup on unload/reload.
-6. Watch a wandering rift for its full lifetime: fragments drift, traversal works, and all 27 visual pieces disappear when it closes.
-7. Check server and GPU performance with several players/rifts; particle quality reductions must remain usable.
-
-**No installable JAR or Minecraft screenshot has been produced.** The image `visual-assets.png` is a flat review of generated source textures, not a rendering of the mod in Minecraft.
+- **Layer 1 & 2 — Distant Atmospheric Fade & Back Distortion / Opening Depth (`backDistortionField`)**:
+  - Concentric organic deformed depth rings rendered behind the Rift opening on `SiftRenderTypes.SKY_BLEND` with chromatic cyan/violet/magenta depth and smooth outer feather (never a flat black hole or opaque rectangle).
+- **Layer 3 — Giant Vertically-Dominant Organic Rift Aperture (`RiftShape`, `windows`, `walls`, `frame`)**:
+  - Crack-free (`no T-junctions`) recessed stepped/curved aperture with slow breathing wave deformation (`Warp`).
+- **Layer 4 — Wavy Dark Outer Bands (`wavyOuterSoulBands`)**:
+  - Translucent charcoal wavy outer bands framing the Rift perimeter with layered low-frequency sine/cosine waves.
+- **Layer 5 & 6 — Colored Interior Energy & Inner Glow (`rift.fsh`, `innerCoreLuminance`, `rims`)**:
+  - Direction-sampled viewport (`vec3 dir = normalize(worldRay);`) with cyan, turquoise, pastel green, pink/magenta, violet, and soft yellow interior energy currents, wavy dark soul bands, volumetric shafts, and a high-luminance white-cyan vertical core spine.
+- **Layer 7 — Floating Light Squares (`floatingLightSquares`, `energyCubes`)**:
+  - 16 deterministic, soft-edged, semi-translucent luminous square/rectangular fragments of small, medium, and larger sizes floating in 3D depth around and through the Rift.
+- **Layer 8 & 9 — Volumetric God Rays & Bloom (`volumetricGodRaysAndBloom`, `curtains`)**:
+  - Soft overlapping accumulated volumetric light shafts and radial bloom envelope, scaled by `SiftTimeState` (`godRayIntensity` and `riftBloomStrength`).
+- **Opening & Closing Animation Sequence (Phases A–F)**:
+  - **Phase A (Dormant, `age 0..10`)**: Subtle distortion seed and faint luminance.
+  - **Phase B (Distortion, `age 10..35`)**: Radial back-distortion depth field expands and lightning sparks ripple across the distortion plane.
+  - **Phase C (White Ignition, `age 31..65`)**: Central seed and vertical rupture ignite with pure brilliant white luminance (`whiteIgnitionCore`).
+  - **Phase D (Color Reveal, `age 61..100`)**: White ignition transitions smoothly (`colorRevealForAge`) into cyan, turquoise, pastel green, pink, magenta, and violet as tiers snap open and wavy dark outer bands unfurl.
+  - **Phase E (Stable Open Rift, `age 100..5900`)**: Full colored interior depth, breathing waves, wavy dark outer bands, floating light squares, volumetric god rays, and bloom.
+  - **Phase F (Closing, `age 5900..6000`)**: Clean reverse sequence — color drains back toward white, outer bands and floating squares contract, aperture collapses, and back distortion fades out.

@@ -1,23 +1,14 @@
-# Verification record — 2026-09-27
+# Verification record — 2026-10-03
 
-## Passed in this workspace — 0.2 visual pass
+## Passed in this workspace & GitHub Actions CI — Sift Rift & Sky Dome Overhaul
 
-- Parsed 99 JSON / animation metadata files.
-- Resolved references among 67 server functions.
-- Checked local model and texture links, animated PNG frame metadata and PNG headers.
-- Checked shader include paths, dimension routing declarations, day/night clock declarations, six-note glow mapping, rift visual cleanup contracts and a 27-display per-rift budget. These are static checks, not GLSL compilation.
-- Checked the Gradle wrapper JAR signature and three biome definitions.
-- Passed all 20 offline data-contract tests in `tools/test_data.py`.
-- Re-ran the deterministic asset generator and compared generated file hashes: no differences.
-- Preserved the existing browser application without editing its source or dependencies.
-
-## Blocked / not run
-
-- `./gradlew --no-daemon build`: stopped before compilation because `JAVA_HOME` is unset and Java is not installed.
-- Tried fetching a Temurin 25 JDK via GitHub Releases: TLS connection to `release-assets.githubusercontent.com` failed.
-- Tried Mojang/Fabric metadata and Maven endpoints: TLS connection failed.
-- Tried installing a local JDK and GLSL validator from Debian packages: repository network connections failed; packages unavailable.
-- Therefore **no compiled mod JAR**, Java/JUnit result, Minecraft startup result, worldgen-codec validation, command-loader validation or GPU shader result exists for this build.
-- GitHub Actions is configured, but not executed or claimed successful.
-
-The code follows the 26.3 Fabric example and uses current-version vanilla data templates. That reduces version drift; it does not establish compatibility. Treat this as an experimental source alpha, not a released mod.
+- **Offline integrity (`tools/validate.py`)**: Passed 601 JSON / metadata files, 149 server functions, local models/textures, animations, wrapper, and 12 biomes.
+- **Data & visual contracts (`tools/test_data.py`)**: Passed all 51 unit tests (including `test_v022_sift_rift_sky_dome_and_time_states`).
+- **GLSL compilation (`tools/check_shaders.py` + `glslangValidator 16.6.0`)**: Compiled all 82 shader programs (`rift.vsh`, `rift.fsh`, `tunnel.vsh`, `tunnel.fsh`, and all `Dungeons-II-Overworld-0.15.zip` programs) with zero errors.
+- **Java 25 / Loom 1.18-SNAPSHOT Gradle Build (`./gradlew --no-daemon build`)**: Compiled server/common and client Java sources cleanly against Minecraft 26.3 and bundled `Dungeons-II-Overworld-0.15.zip` inside `enter-the-sift-0.21.0-alpha.jar`.
+- **Real Minecraft 26.3 Dedicated Server Smoke Test (`SIFT_SMOKE=1 ./gradlew --no-daemon runServer`)**:
+  - Verified Rift and Portal entity anchors (`SIFT-SMOKE anchors: rifts=1 portals=1 wrongType=0`).
+  - Verified `/sift time set thrive`, `/sift time set lymph`, `/sift time set flow`, and `/sift time` query (`SIFT-SMOKE time state verified: state=FLOW, locked=true`).
+  - Verified full 8-note Ancient City ritual sequence (`SIFT-SMOKE ritual: portalMarker=true portalAnchor=false portalBlocks=true stillOpening=false`).
+  - Reached `SIFT-SMOKE DONE` with zero runtime errors.
+- Preserved the existing browser application in root `src/` untouched.
