@@ -43,6 +43,8 @@ public final class SiftClient implements ClientModInitializer {
         dev.logan.entersift.client.SiftBudget.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
         net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context -> dev.logan.entersift.client.SiftBudget.reset());
         dev.logan.entersift.client.SiftTransition.register(); // 0.16 chromatic + orange-flash rift transition overlay
+        dev.logan.entersift.client.RiftScene.register();
+        dev.logan.entersift.client.RiftSounds.register();
         SiftSky.register();
         dev.logan.entersift.client.SiftTunnel.register(); // 0.18 warp-tunnel view inside the rift tunnel
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
@@ -50,6 +52,7 @@ public final class SiftClient implements ClientModInitializer {
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
         EntityRendererRegistry.register(SiftEntities.AURA_COLUMN, dev.logan.entersift.client.AuraColumnRenderer::new);
+        dev.logan.entersift.client.RiftEnergyCubeParticle.register(); // rising motes; the rift border itself is a shader frame
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,
             new FluidModel.Unbaked(
                 new Material(SiftContent.id("block/ichor_still")),

@@ -1,6 +1,7 @@
 package dev.logan.entersift;
 
 import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -8,7 +9,10 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.equipment.Equippable;
+import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -19,6 +23,21 @@ public final class SiftContent {
     private static ResourceKey<Block> blockKey(String path) { return ResourceKey.create(Registries.BLOCK, id(path)); }
     private static Item.Properties itemProperties(String path) {
         return new Item.Properties().setId(ResourceKey.create(Registries.ITEM, id(path)));
+    }
+    /**
+     * 0.34: real wearable equipment. The gauntlets carry the EQUIPPABLE component for the chest slot
+     * (the arm) and point at assets/entersift/equipment/&lt;path&gt;.json, so 26.3's data-driven equipment
+     * layer draws them on the player's arms and vanilla right-click/shift-click equips them — they are
+     * worn, not merely held.
+     */
+    private static Item.Properties wearable(Item.Properties props, String path) {
+        // Signature checked against the CI probe (probe-output/signatures.txt): Equippable.builder(slot),
+        // Builder.setAsset(ResourceKey<EquipmentAsset>) and EquipmentAssets.ROOT_ID. 26.3 has no
+        // Registries.EQUIPMENT_ASSET - that guess is what failed the previous build.
+        return props.component(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.CHEST)
+            .setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID, id(path)))
+            .setEquipOnInteract(true)
+            .build());
     }
     private static Block block(String name, Block base, int light) {
         var key = blockKey(name);
@@ -74,6 +93,11 @@ public final class SiftContent {
     public static final Block CARAPACE = block("carapace", Blocks.BONE_BLOCK, 0);
     public static final Block SINGER_MOSS = block("singer_moss", Blocks.MOSS_BLOCK, 3);
     public static final Block THRESHOLD = block("threshold", Blocks.AMETHYST_BLOCK, 15);
+    public static final Block RIFT_CORE = Registry.register(BuiltInRegistries.BLOCK, blockKey("rift_core"),
+        new RiftCoreBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.AMETHYST_BLOCK).setId(blockKey("rift_core"))
+            .lightLevel(state -> state.getValue(RiftCoreBlock.POWER))));
+    public static final Item RIFT_CORE_ITEM = Registry.register(BuiltInRegistries.ITEM, id("rift_core"),
+        new BlockItem(RIFT_CORE, itemProperties("rift_core").useBlockDescriptionPrefix()));
     public static final Block RIFT_OVERWORLD = riftSeed("rift_overworld", 0, 0);
     public static final Block RIFT_END = riftSeed("rift_end", 2, 2);
     public static final Block RIFT_SIFT = riftSeed("rift_sift", 1, 1);
@@ -155,10 +179,21 @@ public final class SiftContent {
             BuiltInRegistries.MOB_EFFECT, id("rift_transit"),
             new net.minecraft.world.effect.MobEffect(net.minecraft.world.effect.MobEffectCategory.NEUTRAL, 0xFF6A2A) {});
 
+    /**
+     * Trailer gauntlets (Image 2, 6, 7): the rift gauntlet is worn on the hand and shows a glowing
+     * bracelet ring when held; both gauntlet and staff can punch rifts any time, day or night.
+     * The staff has floating blue cubes at its tip (Image 6) — rendered as a particle aura around the
+     * hand when held, handled client-side in {@link dev.logan.entersift.client.SiftClient}.
+     */
     public static final Item GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("rift_gauntlet"),
-        new Item(itemProperties("rift_gauntlet").stacksTo(1)));
+        new Item(wearable(itemProperties("rift_gauntlet"), "rift_gauntlet").stacksTo(1)));
     public static final Item RED_GAUNTLET = Registry.register(BuiltInRegistries.ITEM, id("red_rift_gauntlet"),
-        new Item(itemProperties("red_rift_gauntlet").stacksTo(1)));
+        new Item(wearable(itemProperties("red_rift_gauntlet"), "red_rift_gauntlet").stacksTo(1)));
+    /** Rift staff with a glowing blue cube cluster floating at its tip (Image 6). */
+    public static final Item RIFT_STAFF = Registry.register(BuiltInRegistries.ITEM, id("rift_staff"),
+        new Item(itemProperties("rift_staff").stacksTo(1)));
+    public static final Item RIFT_STAFF_BLUE = Registry.register(BuiltInRegistries.ITEM, id("rift_staff_blue"),
+        new Item(itemProperties("rift_staff_blue").stacksTo(1)));
     private static Item egg(String creature) {
         String name = creature + "_spawn_egg";
         return Registry.register(BuiltInRegistries.ITEM, id(name), new CreatureEggItem(itemProperties(name), creature));
@@ -182,7 +217,7 @@ public final class SiftContent {
             for (Item item : new Item[]{BLUB_EGG,SCULKER_EGG,SCULKLING_EGG,ANTLERLING_EGG,JELLYFISH_EGG,LICKER_EGG,OVERSEER_EGG,NOTE_BIRD_EGG,SOUL_BEE_EGG,WATCHLING_EGG,WARDEN_EGG,SINGER_EGG}) output.accept(item);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
-            output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
+            output.accept(RIFT_CORE_ITEM); output.accept(GAUNTLET); output.accept(RED_GAUNTLET); output.accept(RIFT_STAFF); output.accept(RIFT_STAFF_BLUE); output.accept(SOUL_POTION); output.accept(ICHOR_BUCKET);
         });
         net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents.modifyOutputEvent(net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS).register(output -> {
             output.accept(SONOROUS_DEEPSLATE); output.accept(SALT); output.accept(SOUL_SALT); output.accept(SOULWOOD); output.accept(SOUL_CANOPY);

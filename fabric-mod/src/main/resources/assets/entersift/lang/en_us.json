@@ -7,6 +7,8 @@
   "block.entersift.blub_jelly": "Blub Jelly",
   "block.entersift.ichor": "Ichor",
   "item.entersift.rift_gauntlet": "Blue Rift Gauntlet",
+  "item.entersift.rift_staff": "Rift Staff",
+  "item.entersift.rift_staff_blue": "Blue Rift Staff",
   "item.entersift.soul_potion": "Soul Potion",
   "item.entersift.ichor_bucket": "Ichor Bucket",
   "biome.entersift.carapace": "Carapace",
@@ -78,7 +80,7 @@
   "item.entersift.note_bird_spawn_egg": "Note Bird Spawn Egg",
   "entity.entersift.note_bird": "Note Bird",
   "subtitles.entersift.ritual.song": "The ancient city sings",
-  "biome.entersift.boneyard": "Boneyard",
+  "biome.entersift.boneyard": "Canopy",
   "biome.entersift.coral_expanse": "Coral Expanse",
   "biome.entersift.titan_crags": "Frostbloom Spires",
   "entity.entersift.rift_portal": "Rift",
@@ -160,5 +162,12 @@
   "block.entersift.tunnel_wall": "Rift Tunnel Wall",
   "block.entersift.tunnel_rib": "Rift Tunnel Rib",
   "entity.entersift.aura_column": "Aura Glow",
-  "biome.entersift.rift_tunnel": "Rift Tunnel"
+  "biome.entersift.rift_tunnel": "Rift Tunnel",
+  "time_marker.entersift.flow": "Flow",
+  "time_marker.entersift.thrive": "Thrive",
+  "time_marker.entersift.endure": "Endure",
+  "biome.entersift.jelly_lands": "Jelly Lands",
+  "block.entersift.rift_core": "Rift Core",
+  "subtitles.entersift.rift.hum": "Rift hums",
+  "subtitles.entersift.rift.growth": "Rift fractures"
 }

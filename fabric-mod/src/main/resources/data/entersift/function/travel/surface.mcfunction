@@ -1,0 +1,14 @@
+# Search loaded surface columns; retry from the tunnel if terrain is not ready.
+forceload add -32 -32 32 32
+execute positioned 0.5 0 0.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned 8.5 0 0.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned -8.5 0 0.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned 0.5 0 8.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned 0.5 0 -8.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned 16.5 0 16.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned -16.5 0 -16.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned 24.5 0 0.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+execute positioned 0.5 0 24.5 if loaded ~ ~ ~ positioned over motion_blocking_no_leaves if block ~ ~ ~ minecraft:air if block ~ ~1 ~ minecraft:air if block ~ ~-1 ~ #entersift:arrival_ground run return run function entersift:travel/arrive
+# Nothing matched anywhere near the anchor. Rather than stranding the traveler in the corridor, lay a
+# small ledge on top of the column and arrive there: every rift always has a walkable far side.
+execute positioned 0.5 0 0.5 if loaded ~ ~ ~ positioned over world_surface positioned ~ ~1 ~ run function entersift:travel/fallback_ledge

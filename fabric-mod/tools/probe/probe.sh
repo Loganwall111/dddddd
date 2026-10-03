@@ -193,3 +193,19 @@ for c in net.minecraft.world.level.chunk.ChunkGenerator net.minecraft.world.leve
 done
 echo "=== ItemPickupParticleGroup\$State bytecode"; javap -c -p -cp "$CP" 'net.minecraft.client.particle.ItemPickupParticleGroup$State' 2>&1 | head -140
 } > build/probe/snapshot_api.txt 2>&1
+# 0.27: registered block entities, looping audio and render scheduling (not legacy mappings).
+{
+for c in net.minecraft.client.resources.sounds.AbstractTickableSoundInstance net.minecraft.client.resources.sounds.AbstractSoundInstance \
+ net.minecraft.client.resources.sounds.SoundInstance net.minecraft.client.sounds.SoundManager \
+ net.minecraft.world.level.block.entity.BlockEntity net.minecraft.world.level.block.entity.BlockEntityType \
+ net.minecraft.world.level.block.EntityBlock net.minecraft.world.level.block.BaseEntityBlock \
+ net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder \
+ net.minecraft.commands.Commands net.minecraft.server.permissions.Permissions net.minecraft.server.permissions.PermissionCheck \
+ net.minecraft.server.permissions.PermissionSet; do
+ echo "===== $c"; javap -protected -cp "$CP" "$c" 2>&1
+done
+for c in net.fabricmc.fabric.mixin.client.rendering.LevelRendererMixin net.minecraft.client.renderer.feature.CustomGeometryFeatureRenderer \
+ com.mojang.blaze3d.pipeline.RenderTarget net.minecraft.client.renderer.rendertype.RenderSetup; do
+ echo "===== bytecode $c"; javap -c -p -cp "$CP" "$c" 2>&1
+done
+} > $OUT/rift027_api.txt

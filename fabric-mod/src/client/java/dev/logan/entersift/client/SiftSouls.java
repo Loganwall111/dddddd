@@ -85,7 +85,7 @@ public final class SiftSouls {
     }
 
     // ------------------------------------------------------------------ trail
-    private static final float[] HEAD_C = {0.55f, 0.84f, 1f}, MID_C = {0.22f, 0.52f, 1f}, TAIL_C = {0.1f, 0.2f, 0.9f}, STREAK_C = {0.62f, 0.9f, 1f};
+    private static final float[] HEAD_C = {0.72f, 0.97f, 1f}, MID_C = {0.20f, 0.72f, 1f}, TAIL_C = {0.08f, 0.34f, 0.96f}, STREAK_C = {0.82f, 0.98f, 1f};
 
     private static void trail(PoseStack.Pose p, VertexConsumer vc, Soul s, double t, Vec3 cam, float range) {
         double[][] pts = new double[TRAIL][];

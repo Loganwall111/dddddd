@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import dev.logan.entersift.SiftContent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
@@ -76,7 +77,7 @@ public final class SiftRenderTypes {
     /**
      * 0.17 GPU rift interior: our own core shader (assets/entersift/shaders/core/rift.vsh/.fsh).
      * Built on MATRICES_FOG_SNIPPET, which binds Globals (GameTime), Projection, DynamicTransforms
-     * and Fog. Vertex colour carries rift data (face u/v, type, fade), not a colour. Opaque, writes depth.
+     * and Fog. Vertex colour carries rift data (face u/v, type, fade), not a colour. Alpha blend, no depth writes.
      */
     public static final RenderPipeline RIFT_PIPELINE = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
@@ -85,15 +86,25 @@ public final class SiftRenderTypes {
             .withFragmentShader(SiftContent.id("core/rift"))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .withCull(false)
             .build());
 
+    /** A separate texture-bound variant; transparent default remains usable without a scene copy. */
+    public static final RenderPipeline RIFT_REFRACT_PIPELINE = RenderPipelines.register(riftVariant("rift_refract", "RIFT_REFRACT")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0_SAMPLER1)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build());
+    public static final RenderType RIFT_REFRACT = RenderType.create("entersift_rift_refract",
+        RenderSetup.builder(RIFT_REFRACT_PIPELINE)
+            .withTexture("Sampler0", RiftScene.DEPTH).withTexture("Sampler1", RiftScene.COLOR).createRenderSetup());
+
     /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
     public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .build());
 
     /** 0.18 rim glow and sparks: RIFT_GLOW, additive, depth-tested, no depth write. */
@@ -141,6 +152,13 @@ public final class SiftRenderTypes {
             .build());
     public static final RenderType SKY_BLEND = RenderType.create("entersift_sky_blend", RenderSetup.builder(SKY_BLEND_PIPELINE).createRenderSetup());
 
+    public static final RenderPipeline GLASS_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/rift_glass"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withCull(false).build());
+    public static final RenderType GLASS = RenderType.create("entersift_glass", RenderSetup.builder(GLASS_PIPELINE).createRenderSetup());
     public static final RenderType SKY = RenderType.create("entersift_sky", RenderSetup.builder(SKY_PIPELINE).createRenderSetup());
     public static final RenderType SOLID = RenderType.create("entersift_solid", RenderSetup.builder(SOLID_PIPELINE).createRenderSetup());
     public static final RenderType GLOW = RenderType.create("entersift_glow", RenderSetup.builder(GLOW_PIPELINE).createRenderSetup());

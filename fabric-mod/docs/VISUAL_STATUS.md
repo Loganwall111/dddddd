@@ -42,7 +42,9 @@ These controls do not suppress gameplay feedback, ritual particles or potion eff
 
 1. Compile the Fabric project and load all functions and worldgen registries without errors.
 2. Confirm Iris routes the custom dimension to `world_sift` and both composite programs compile.
-3. Test at `/time set day`, `/time set sunset`, `/time set midnight`, with and without the shader.
+3. Test at `/time set day`, `/time set night`, `/time set midnight` (26.3 time markers; `/time set sunset`
+   no longer exists), and inside the Sift at `/time set entersift:flow`, `entersift:thrive`, `entersift:endure`,
+   with and without the shader.
 4. Turn the camera, hide the horizon behind terrain and hold an item: sky ribbons must stay world-anchored and never paint over geometry or the hand.
 5. Test saturated note glows, cleanup on repeat activation and display cleanup on unload/reload.
 6. Watch a wandering rift for its full lifetime: fragments drift, traversal works, and all 27 visual pieces disappear when it closes.

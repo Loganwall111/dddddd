@@ -1,4 +1,4 @@
-name: Enter the Sift — build & validate
+name: Sift Overhaul — build & validate
 on:
   push:
     paths: ['fabric-mod/**', '.github/workflows/sift-build.yml']
@@ -45,11 +45,30 @@ jobs:
           PY
       - run: python3 tools/validate.py
       - run: python3 tools/test_data.py
-      - name: Compile-check shaderpack (glslang)
+      - name: Regeneration baseline (live generators reproduce the shipped tree)
+        run: python3 tools/regen_check.py
+      - name: Compile-check shaderpack and core shaders (glslang)
         run: |
-          curl -sSL -o /tmp/glslang.tgz https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-linux-x86_64-release.tar.gz
-          mkdir -p /tmp/glslang && tar xzf /tmp/glslang.tgz -C /tmp/glslang
-          python3 tools/check_shaders.py "$(find /tmp/glslang -name glslangValidator -type f | head -1)"
+          # 0.35: this step used to pass an empty string when its `find` came up empty, and
+          # check_shaders.py treated "no compiler" as "skip the compile" and exited 0 - so no core
+          # shader was ever compiled and a stray #endif shipped and crashed the client. The compiler is
+          # now obtained from the distro when possible, from the pinned release otherwise, and a missing
+          # compiler fails the build.
+          TOOL=""
+          if ! command -v glslangValidator >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools || true
+          fi
+          TOOL=$(command -v glslangValidator || true)
+          if [ -z "$TOOL" ]; then
+            curl -sSL --fail -o /tmp/glslang.tgz https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-linux-x86_64-release.tar.gz
+            mkdir -p /tmp/glslang && tar xzf /tmp/glslang.tgz -C /tmp/glslang
+            # Gluon releases name the CLI either glslangValidator or glslang depending on version.
+            TOOL=$(find /tmp/glslang -type f \( -name glslangValidator -o -name glslang \) | head -1)
+          fi
+          test -x "$TOOL" || { echo "::error title=glslang missing::no glslangValidator could be installed or extracted"; exit 1; }
+          echo "using $TOOL"
+          "$TOOL" --version | head -2 || true
+          python3 tools/check_shaders.py "$TOOL"
       - name: Compile mod and report diagnostics
         shell: bash
         run: |
@@ -77,7 +96,7 @@ jobs:
           echo "::notice title=Shader pack bundled::$pack ($(stat -c %s "$RUNNER_TEMP/pack.zip") bytes) is inside $(basename "$jar")"
       - uses: actions/upload-artifact@v4
         with:
-          name: Enter-the-Sift-26.3-alpha
+          name: Sift-Overhaul-0.36.0-alpha-26.3
           path: |
             fabric-mod/build/libs/*.jar
       - name: Server smoke test (real 26.3 server loads data pack, worldgen, creatures)

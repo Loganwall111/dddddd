@@ -174,6 +174,39 @@
       "type": "minecraft:condition",
       "if_true": {
         "type": "minecraft:biome",
+        "biome_is": "entersift:jelly_lands"
+      },
+      "then_run": {
+        "type": "minecraft:condition",
+        "if_true": "minecraft:on_floor",
+        "then_run": {
+          "type": "minecraft:sequence",
+          "sequence": [
+            {
+              "type": "minecraft:condition",
+              "if_true": {
+                "type": "minecraft:noise_threshold",
+                "noise": "minecraft:surface",
+                "min_threshold": 0.45,
+                "max_threshold": 10.0
+              },
+              "then_run": {
+                "type": "minecraft:block",
+                "result_state": "entersift:blue_turf"
+              }
+            },
+            {
+              "type": "minecraft:block",
+              "result_state": "entersift:pink_turf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "minecraft:condition",
+      "if_true": {
+        "type": "minecraft:biome",
         "biome_is": "entersift:pale_grove"
       },
       "then_run": {

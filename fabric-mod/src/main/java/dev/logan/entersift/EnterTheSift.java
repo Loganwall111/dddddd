@@ -14,8 +14,10 @@ import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -49,7 +51,45 @@ public final class EnterTheSift implements ModInitializer {
         level.getServer().getCommands().performPrefixedCommand(source, query);
         return found.get();
     }
-    private static boolean gauntlet(ItemStack stack) { return stack.is(SiftContent.GAUNTLET) || stack.is(SiftContent.RED_GAUNTLET); }
+    private static boolean gauntlet(ItemStack stack) { return stack.is(SiftContent.GAUNTLET) || stack.is(SiftContent.RED_GAUNTLET) || stack.is(SiftContent.RIFT_STAFF) || stack.is(SiftContent.RIFT_STAFF_BLUE); }
+
+    /** 0.32: the gauntlet can be WORN on the arm (chest slot) instead of held — the user's request. */
+    private static boolean wearsGauntlet(Player player) {
+        return gauntlet(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST));
+    }
+
+    /** 0.32: the rift staffs are the ranged spell; the gauntlets tear space at touch. */
+    private static boolean staff(ItemStack stack) { return stack.is(SiftContent.RIFT_STAFF) || stack.is(SiftContent.RIFT_STAFF_BLUE); }
+
+    /** Casts the spell of whichever rift item is doing the work: the hand's item, else the worn one. */
+    private static void cast(ServerPlayer sp, Player player, InteractionHand hand) {
+        ItemStack trigger = player.getItemInHand(hand);
+        if (trigger.isEmpty()) trigger = player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST);
+        runAs(sp, staff(trigger) ? "function entersift:rift/staff_cast" : "function entersift:rift/punch");
+    }
+
+    /** Sneak-right-click swaps a held gauntlet onto the arm, or takes a worn one back into the hand. */
+    private static boolean toggleGauntlet(ServerPlayer sp, InteractionHand hand) {
+        var slot = net.minecraft.world.entity.EquipmentSlot.CHEST;
+        ItemStack held = sp.getItemInHand(hand);
+        if (gauntlet(held)) {
+            if (wearsGauntlet(sp)) return false;
+            ItemStack worn = sp.getItemBySlot(slot);
+            sp.setItemSlot(slot, held.copy());
+            sp.setItemInHand(hand, worn); // whatever was on the chest takes its place, nothing is destroyed
+            runAs(sp, "title @s actionbar {\"text\":\"The gauntlet locks onto your arm.\",\"color\":\"aqua\"}");
+            return true;
+        }
+        if (held.isEmpty() && wearsGauntlet(sp)) {
+            ItemStack worn = sp.getItemBySlot(slot);
+            sp.setItemSlot(slot, ItemStack.EMPTY);
+            sp.setItemInHand(hand, worn);
+            runAs(sp, "title @s actionbar {\"text\":\"The gauntlet comes loose.\",\"color\":\"aqua\"}");
+            return true;
+        }
+        return false;
+    }
+    private static boolean isStaff(ItemStack stack) { return stack.is(SiftContent.RIFT_STAFF) || stack.is(SiftContent.RIFT_STAFF_BLUE); }
     private static boolean note(Level world, BlockPos pos) {
         return world.getBlockState(pos).is(Blocks.NOTE_BLOCK) && world.getBlockState(pos.below()).is(SiftContent.SONOROUS_DEEPSLATE);
     }
@@ -66,7 +106,10 @@ public final class EnterTheSift implements ModInitializer {
         else LOGGER.info("Sift ritual: {}", text);
     }
     private static void shaft(ServerPlayer player, BlockPos pos, int pitch) {
-        runAs(player,"execute positioned "+pos.getX()+".0 "+pos.getY()+".0 "+pos.getZ()+".0 run function entersift:notes/shaft_"+RitualSequence.COLORS[pitch-1]);
+        if (player.level() instanceof ServerLevel level) shaft(level, pos, pitch);
+    }
+    private static void shaft(ServerLevel level, BlockPos pos, int pitch) {
+        run(level,"execute in "+level.dimension().identifier()+" positioned "+pos.getX()+".0 "+pos.getY()+".0 "+pos.getZ()+".0 run function entersift:notes/shaft_"+RitualSequence.COLORS[pitch-1]);
     }
     private static void ensureEncounter(ServerLevel level, AncientFrame f) {
         if (!hasTag(level,f,"sift.encounter")) runAt(level,f,"function entersift:guardian/begin");
@@ -112,6 +155,7 @@ public final class EnterTheSift implements ModInitializer {
         lastStrike.put(pos.immutable(), ticks);
         int pitch=level.getBlockState(pos).getValue(NoteBlock.NOTE)%8+1;
         glow(level,pos,pitch);
+        shaft(level,pos,pitch);
         run(level,"execute in "+level.dimension().identifier()+" positioned "+pos.getX()+".5 "+pos.getY()+".5 "+pos.getZ()+".5 run playsound minecraft:block.note_block.chime block @a[distance=..24] ~ ~ ~ 1 "+Math.pow(2,(pitch-5)/12.0));
         if (!level.dimension().equals(Level.OVERWORLD)) return;
         AncientFrame f=frameNear(level,pos);
@@ -167,6 +211,7 @@ public final class EnterTheSift implements ModInitializer {
     }
     @Override public void onInitialize() {
         SiftContent.initialize();
+        RiftBlockEntities.initialize();
         SiftSounds.initialize();
         SiftEntities.initialize();
         SiftSmokeTest.register();
@@ -210,8 +255,8 @@ public final class EnterTheSift implements ModInitializer {
         });
         AttackBlockCallback.EVENT.register((player,world,hand,pos,direction) -> {
             if (player.isSpectator()) return InteractionResult.PASS;
-            if (gauntlet(player.getItemInHand(hand))) {
-                if (player instanceof ServerPlayer sp) runAs(sp,"function entersift:rift/punch");
+            if (gauntlet(player.getItemInHand(hand)) || wearsGauntlet(player)) {
+                if (player instanceof ServerPlayer sp) cast(sp, player, hand);
                 return InteractionResult.SUCCESS;
             }
             if (!note(world,pos)) return InteractionResult.PASS;
@@ -219,15 +264,22 @@ public final class EnterTheSift implements ModInitializer {
             return InteractionResult.SUCCESS;
         });
         AttackEntityCallback.EVENT.register((player,level,hand,entity,hit) -> {
-            if (!player.isSpectator() && gauntlet(player.getItemInHand(hand))) {
-                if(player instanceof ServerPlayer sp)runAs(sp,"function entersift:rift/punch");
+            if (!player.isSpectator() && (gauntlet(player.getItemInHand(hand)) || wearsGauntlet(player))) {
+                if (player instanceof ServerPlayer sp) cast(sp, player, hand);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
         });
         UseItemCallback.EVENT.register((player,level,hand) -> {
-            if (!player.isSpectator() && gauntlet(player.getItemInHand(hand))) {
-                if(player instanceof ServerPlayer sp)runAs(sp,"function entersift:rift/punch");
+            if (player.isSpectator()) return InteractionResult.PASS;
+            // 0.32: sneak-right-click wears a held gauntlet (or takes a worn one back off).
+            if (player.isShiftKeyDown() && player instanceof ServerPlayer sneaking && toggleGauntlet(sneaking, hand))
+                return InteractionResult.SUCCESS;
+            // Casting: gauntlet in hand, or worn on the arm with an empty hand.
+            boolean casting = gauntlet(player.getItemInHand(hand))
+                || (player.getItemInHand(hand).isEmpty() && wearsGauntlet(player));
+            if (casting) {
+                if (player instanceof ServerPlayer sp) cast(sp, player, hand);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;

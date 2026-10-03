@@ -28,7 +28,9 @@ public class RiftSeedBlock extends Block {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!(level instanceof ServerLevel server)) return;
         server.removeBlock(pos, false);
-        float yaw = placer == null ? 0f : placer.getYRot() + 180f;
+        // 0.26: rift front-face fix — the renderer now adds 180 deg so the cavity faces the camera;
+        // the seed must store the placer's raw yaw, not yaw+180, otherwise the rift faces away (Image 2, 7).
+        float yaw = placer == null ? 0f : placer.getYRot();
         String command = String.format(Locale.ROOT,
             "execute in %s positioned %d.5 %d.0 %d.5 run function entersift:rift/seed {style:%d,target:%d,yaw:%.1f}",
             server.dimension().identifier(), pos.getX(), pos.getY(), pos.getZ(), style, target, yaw);

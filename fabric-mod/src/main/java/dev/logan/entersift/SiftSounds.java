@@ -15,6 +15,8 @@ public final class SiftSounds {
 
     private static final Map<SiftKind, Voice> VOICES = new EnumMap<>(SiftKind.class);
 
+    public static final SoundEvent RIFT_HUM = register("rift.hum");
+    public static final SoundEvent RIFT_GROWTH = register("rift.growth");
     public static final SoundEvent MUSIC = register("music.sift");
     public static final SoundEvent AMBIENT_LOOP = register("ambient.sift.loop");
     public static final SoundEvent AMBIENT_MOOD = register("ambient.sift.mood");

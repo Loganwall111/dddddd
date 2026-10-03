@@ -95,3 +95,12 @@ com.mojang.renderpearl.api.vertex.DefaultVertexFormat
 com.mojang.renderpearl.api.vertex.VertexFormat
 net.minecraft.sounds.SoundEvent
 net.minecraft.sounds.SoundEvents
+net.minecraft.world.item.equipment.Equippable
+net.minecraft.world.item.equipment.Equippable$Builder
+net.minecraft.world.item.equipment.EquipmentAssets
+net.minecraft.world.item.equipment.EquipmentAsset
+net.minecraft.core.registries.Registries
+net.minecraft.client.resources.model.EquipmentClientInfo
+net.minecraft.client.resources.model.EquipmentClientInfo$Builder
+net.minecraft.client.resources.model.EquipmentClientInfo$Layer
+net.minecraft.client.resources.model.EquipmentAssetManager

@@ -1,8 +1,8 @@
-# Enter the Sift — Fabric mod project
+# Sift Overhaul — Enter the Sift
 
-The requested Minecraft mod is in **[`fabric-mod/`](fabric-mod/README.md)**. It targets **Minecraft Java 26.3 / Fabric / JDK 25** and includes source, original animated textures, dimension/worldgen data, gameplay functions, vanilla-Java rendering (no shader pack), tests and a GitHub Actions build workflow.
+The Minecraft mod project is in **[`fabric-mod/`](fabric-mod/README.md)**. **0.36.0-alpha** targets **Minecraft Java 26.3 / Fabric / JDK 25**. Rifts are a shader plane on that build: stepped silhouette, frosted destination, symmetrical outline, hollow border fragments. The Sift tunnel, tides and worldgen are unchanged.
 
-**Status: experimental, uncompiled source alpha.** Offline integrity checks and 20 data tests pass; Minecraft compilation and playtesting are blocked in this workspace by unavailable Java/dependency downloads. No installable JAR is being claimed. Read the [mod guide](fabric-mod/README.md) and [verification record](fabric-mod/docs/BUILD_STATUS.md) before building or testing.
+**Build status:** Python data/resource validation passes. GitHub Actions is the authoritative compiler and artifact build; see the [verification record](fabric-mod/docs/BUILD_STATUS.md) for the current result. In-game visuals still require a client playtest. Read the [mod guide](fabric-mod/README.md) before installing into a world.
 
 The **0.2 visual pass** follows the newly supplied screenshots: [comparison and remaining gaps](fabric-mod/docs/VISUAL_STATUS.md).
 
@@ -122,6 +122,39 @@ Generator run order: … → phase5 → `rift_scenes.py` → `phase6.py`.
 Generator run order: … → `phase6.py` → `phase8.py` → `sky_panorama.py` → `creatures.py` → `item_art.py` → `phase9.py`.
 
 ## 0.12.0-alpha: Sift sky works with shader packs, accurate trailer rifts
+
+### 0.25.0-alpha — Sift Overhaul
+- Sift time now uses its own 24,000-tick Flow / Thrive / Endure clock; Overworld time no longer drives Sift skies or rift night checks.
+- Rifts are gated by the local night clock (Endure inside the Sift) but the border fragments still draw faintly in the day. The opening is one quad. `rift.fsh` draws the stepped silhouette, frosted destination, wavy outline and birth sequence. Energy motes rise and flatten.
+- Ichor aquifers are dry; tiny 1–2-block rainbow puddles/springs are rare. Animated still/flow/overlay sheets are mirrored and smoothly blended.
+- The Boneyard keeps its world key but is named **Canopy**, with a prominent skull, tusks and large ribcages built from visible bone blocks. Crags are smaller and less frequent.
+- Added **Jelly Lands**: dense blue distance fog, a deep-blue sky, pink turf/grass and pale trees, with frequent Blub groups.
+- The Sift arrival plaza now has a cyan Agency Portal-style return rift, and Blub's generated texture is rebuilt from the current creature model spec.
+- Mod display name and artifact are **Sift Overhaul** / `sift-overhaul-0.25.0-alpha`.
+
+### 0.24.0
+Complete *Minecraft Dungeons II* / *Minecraft Live 2026* trailer-accuracy overhaul across Rifts, the Dungeons II Overworld shaderpack, the Ancient City Note-Block Portal, and The Sift dimension:
+- **Unified Stepped-Cross Rift Cavity & Wavy Sides (`RiftShape.java`, `RiftPortalRenderer.java`, `rift.fsh`).** The main rift is now a single unified stepped-cross window (`box.id() == 0`) with recessed perimeter walls and detached floating hollow square & L-shaped satellite boxes around the corners. Inner walls, outer rims, side curtains (`wavySideVeils`), and the destination viewport (`wavyCoords`) undulate with a real-time multi-frequency sine wave, and rifts open with an expanding crescent flash and concentric spatial ripple ring.
+- **Dungeons II Overworld Shaderpack & Voxel Clouds (`voxel_clouds.glsl`, `overworld.glsl`, `composite.fsh`, `SiftClouds.java`).** Rebuilt 3D stepped voxel cumulus clouds (sunlit ivory-peach tops, soft lavender-blue mid-tiers, and two-tone periwinkle-indigo undersides), cerulean-to-peach sky grading, periwinkle-indigo cliff shadows, warm golden-apricot sunlight, golden-lime foliage grading, and diagonal volumetric sunbeams across mid-ground terrain.
+- **Ancient City Cyan Tetris-Mosaic Portal & Rainbow Note Columns (`rift.fsh`, `AuraColumns.java`, `SiftSouls.java`, `phase24_textures.py`).** Layered 3D cyan/teal pixel-mosaic portal with a white stepped silhouette core, crenellated cyan-inlaid portal frame (`sonorous_deepslate`), center stone totem statue (`sculkling` / `soul_lantern_stone`), floating pixel musical note glyphs inside the 7-spectrum rainbow Note Block columns, and electric cyan-to-blue soul comet trails.
+- **Sift Sky, Iridescent Ichor, Terrain & Creatures (`SiftSky.java`, `creatures.py`, `phase24_textures.py`).** Glowing mint-green & pink diamond aurora panels in a vivid turquoise-teal sky dome; pastel iridescent pink/peach/cyan/mint swirling Ichor bordered by wavy mint-patterned stone tiles (`sinter` / `pale_crust`); salmon-terracotta striated cliffs with mint-turquoise grass tops; cerulean-blue stepped plateaus with pink/chartreuse foliage; and trailer-accurate `blub`, `sculkling`, and `singer` models and textures.
+
+### 0.23.0
+Master Architecture Override & trailer-accurate rift orientation, depth, and colour fixes.
+- **Front-facing recessed window orientation.** Rifts automatically orient their recessed hollow opening
+  toward the viewer (`cam.z < 0` flip), fixing the inside-out protruding centre box when punching a rift
+  with the gauntlet or placing a Rift Seed block.
+- **Shallow, crisp voxel step depths (`0.18–0.58` blocks).** Nested hollow rectangular boxes frame a wide-open
+  destination window with white neon rims instead of deep tunnel walls that obscure the view.
+- **High-contrast hazy destination viewport.** Multi-pass 3x3 box-blur matrix loop over the live destination
+  viewpoint (`yaw` & `pitch`) with balanced Vibrant Pink (Day) and Deep Amber (Night) emissive overlays.
+- **Non-clipped 3D voxel energy cubes.** `RiftEnergyCubeParticle` and `energyCubes` render with translucent
+  alpha-blending (`SKY_BLEND`) so Saturated Mint-Green, Electric Cyan, and Pale Pink cubes keep their vivid
+  colours against bright daytime skies while drifting strictly upward (`velocity.y += 0.04`) and flattening
+  horizontally at `age >= 0.75 * maxAge`.
+
+### 0.22.0
+Pure voxel mesh over spheres, secondary FBO viewport engine, and 60-tick R/G/B warp gate into the voxel-ring tunnel.
 
 ### 0.21.0
 Biome skies, rift awakening, voxel particles and the warp overlay.

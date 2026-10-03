@@ -17,8 +17,8 @@ import net.minecraft.world.level.storage.ValueOutput;
  * It is a hollow, collision-free, unpickable volume with no model of its own. All visuals come from
  * the client {@code RiftPortalRenderer}. The server only ticks its age, which is synced so every
  * client plays the same growth timeline:
- *   ticks 0-30   puddle ripple with erratic lightning (the structure is still invisible)
- *   ticks 31-60  incubation seed: one tiny pulsing box
+ *   ticks 0-30   small seed with erratic lightning
+ *   ticks 31-60  rotating bar and short expansion ring
  *   ticks 61-100 voxel cluster fracture, one ring of boxes every 10 ticks
  *   ticks 100+   stable: dissolving voxel energy cubes, floating hollow cubes, rim shimmer
  *
@@ -26,6 +26,10 @@ import net.minecraft.world.level.storage.ValueOutput;
  * Travel and lifetime stay in the data pack (marker tagged sift.rift), which owns these entities.
  */
 public class RiftPortalEntity extends Entity {
+    private final java.util.Map<java.util.UUID, net.minecraft.world.phys.Vec3> previous = new java.util.HashMap<>();
+    private int lifetime = -1;
+    private boolean returnExit;
+    private RiftShape shape;
     public static final int GROWN = 100;
     private static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
@@ -50,6 +54,40 @@ public class RiftPortalEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+        if (this.level() instanceof ServerLevel level) {
+            if (age() == 8 || age() == 33 || age() == 58 || age() == 83)
+                level.playSound(null, blockPosition(), SiftSounds.RIFT_GROWTH, net.minecraft.sounds.SoundSource.AMBIENT, 0.55f, 0.65f + age() * 0.006f);
+            if (lifetime > 0 && --lifetime == 0) { discard(); return; }
+            if (shape == null || shape.cols < 1 || shape.rows < 1) shape = RiftShape.build(riftType(), blockPosition().asLong() * 31 + riftType().id, riftWidth(), riftHeight());
+            java.util.Set<java.util.UUID> seen = new java.util.HashSet<>();
+            for (var player : level.players()) {
+                if (player.isSpectator() || player.distanceToSqr(this) > 256) continue;
+                seen.add(player.getUUID());
+                // 0.32: the block below runs datapack commands, and the server is reported to crash when a
+                // player enters a rift. An exception escaping the entity tick kills the server, so every
+                // command is contained: the rift stays open and the player is left standing.
+                try {
+                    // Inverse of the renderer's -yaw + 180 degree rotation.
+                    double angle = Math.toRadians(getYRot() - 180), c = Math.cos(angle), sn = Math.sin(angle);
+                    double dx = player.getX() - getX(), dz = player.getZ() - getZ();
+                    var local = new net.minecraft.world.phys.Vec3(c * dx + sn * dz, player.getY() + 0.9 - getY(), -sn * dx + c * dz);
+                    var old = previous.put(player.getUUID(), local);
+                    if (age() < GROWN || old == null || old.distanceToSqr(local) > 64) continue;
+                    if (RiftCrossing.crosses(shape, old.x, old.y, old.z, local.x, local.y, local.z)) {
+                        // Save the exact exit appearance per player, never in shared global storage.
+                        String guard = "execute if score @s sift.cooldown matches 0 run ";
+                        EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rstyle " + riftType().id);
+                        EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rwidth " + Math.round(riftWidth() * 100));
+                        EnterTheSift.runAs(player, guard + "scoreboard players set @s sift.rheight " + Math.round(riftHeight() * 100));
+                        EnterTheSift.runAs(player, guard + "particle minecraft:end_rod ~ ~0.9 ~ 0.25 0.65 0.25 0.025 32 force");
+                        EnterTheSift.runAs(player, guard + "function entersift:travel/begin {dest:" + (returnExit ? 5 : riftType().id) + "}");
+                    }
+                } catch (Throwable error) {
+                    EnterTheSift.LOGGER.error("[Sift] rift entry failed; the rift stays open and the player is unaffected", error);
+                }
+            }
+            previous.keySet().retainAll(seen);
+        }
         // Only the growth phase is synced; afterwards the value stays constant (no network traffic).
         if (this.level() instanceof ServerLevel && age() <= GROWN + 20) this.entityData.set(AGE, age() + 1);
     }
@@ -63,6 +101,8 @@ public class RiftPortalEntity extends Entity {
 
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
+        lifetime = input.getIntOr("Lifetime", -1);
+        returnExit = input.getBooleanOr("ReturnExit", false);
         this.entityData.set(TYPE, input.getIntOr("RiftType", RiftType.SIFT.id));
         this.entityData.set(WIDTH, Math.max(1.5f, Math.min(12f, input.getFloatOr("Width", 7.0f))));
         this.entityData.set(HEIGHT, Math.max(1.5f, Math.min(12f, input.getFloatOr("Height", 5.0f))));
@@ -71,6 +111,8 @@ public class RiftPortalEntity extends Entity {
 
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
+        output.putInt("Lifetime", lifetime);
+        output.putBoolean("ReturnExit", returnExit);
         output.putInt("RiftType", riftType().id);
         output.putFloat("Width", riftWidth());
         output.putFloat("Height", riftHeight());

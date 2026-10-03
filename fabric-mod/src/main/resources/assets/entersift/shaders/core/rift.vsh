@@ -1,11 +1,9 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
-// 0.20 Enter the Sift rift shader (clean slate).
-// Position arrives camera-relative and world-oriented (the entity pose is applied on the CPU), so it IS
-// the world-space view ray of the vertex. The fragment shader uses it to sample the destination by view
-// direction: the window moves only with the camera's yaw and pitch and is seamless across every quad.
-// Window vertices carry data in their colour: r, g = rift face position (0..1), b = view code (/16).
+// The rift canvas is one world-positioned quad. Position arrives camera-relative and world-oriented
+// (the entity pose is applied on the CPU), so it is the view ray the fragment shader samples.
+// A 0.004 tremor and a low-frequency bow are the only geometric motion; the silhouette is a shader.
 
 #include <minecraft:fog.glsl>
 #include <minecraft:projection.glsl>
@@ -20,9 +18,13 @@ layout(location = 2) out float sphericalVertexDistance;
 layout(location = 3) out float cylindricalVertexDistance;
 
 void main() {
-    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+    float tremor = 0.004 * sin(GameTime * 900.0 + Position.y * 5.0 + Position.x * 3.0);
+    float edge = length(Color.rg - vec2(0.5));
+    float bow = sin(Position.y * 1.9 + GameTime * 40.0) * 0.035 * edge;
+    vec3 pos = Position + vec3(bow, 0.0, tremor);
+    gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
     riftData = Color;
-    worldRay = Position;
-    sphericalVertexDistance = fog_spherical_distance(Position);
-    cylindricalVertexDistance = fog_cylindrical_distance(Position);
+    worldRay = pos;
+    sphericalVertexDistance = fog_spherical_distance(pos);
+    cylindricalVertexDistance = fog_cylindrical_distance(pos);
 }
