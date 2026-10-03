@@ -1070,9 +1070,13 @@ class DataContracts(unittest.TestCase):
             self.assertIn(token, sky)
         for token in ('backDistortion(', 'apertureField(', 'soulFaceBand(', 'vec3(0.02, 0.02, 0.04)',
                       'smoothstep(0.70, 0.88, faceMask)', 'interiorEnergy(', 'innerGlow(',
-                      'floatingLightSquares(', 'for (int i = 0; i < 16; i++)', 'riftGodRays(', 'riftBloom('):
+                      'floatingLightSquares(', 'for (int i = 0; i < 16; i++)', 'riftGodRays(', 'riftBloom(',
+                      'sdBox(', 'sdMainCross(', 'sdHollowOverlays(', 'auroraCurtainsBehind(',
+                      'vec2 rippleOffset = vec2(sin(uv.y * 14.0 + (gameTime * 0.05)), cos(uv.x * 10.0 - (gameTime * 0.03))) * 0.02;'):
             self.assertIn(token, fsh)
-        for token in ('enum LifecyclePhase', 'phaseForAge(', 'riftGodRayShafts('):
+        for token in ('enum LifecyclePhase', 'phaseForAge(', 'riftGodRayShafts(', 'shaderQuadCanvas(', 'emitDoubleQuad('):
             self.assertIn(token, rift)
+        part=(C/'RiftEnergyCubeParticle.java').read_text()
+        self.assertIn('velocity.y += 0.04f;', part)
         self.assertIn('float thrive = smoothstep(4800.0, 6200.0, tod)', comp)
 if __name__=='__main__': unittest.main(verbosity=2)

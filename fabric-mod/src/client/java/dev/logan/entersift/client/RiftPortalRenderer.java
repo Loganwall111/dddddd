@@ -116,6 +116,18 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         // Endure is the Sift's night-like tide; outside the Sift, use the local world clock's night range.
         s.night = s.inSift ? SiftTides.isEndure(clock) : clock >= 13_000L && clock < 23_000L;
         s.view = viewCode(s.type, s.inSift, s.seed);
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (level != null && !mc.isPaused() && SiftBudget.riftEffects && e.age() >= 60 && s.type != RiftType.PORTAL) {
+            if (level.getRandom().nextFloat() < 0.22f) {
+                double ang = Math.toRadians(-s.yaw + 180f);
+                double ox = (level.getRandom().nextDouble() - 0.5) * s.w * 0.85;
+                double oy = RiftShape.BASE + level.getRandom().nextDouble() * s.h * 0.75;
+                double oz = (level.getRandom().nextDouble() - 0.5) * 0.45;
+                double wx = s.ex + ox * Math.cos(ang) + oz * Math.sin(ang);
+                double wz = s.ez - ox * Math.sin(ang) + oz * Math.cos(ang);
+                RiftEnergyCubeParticle.spawn(wx, s.ey + oy, wz, s.type, level.getRandom().nextInt(3));
+            }
+        }
     }
 
     @Override
@@ -139,10 +151,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      */
     static int viewCode(RiftType type, boolean inSift, long seed) {
         float pick = RiftShape.hash(seed, 7, 233); // stable per rift, and the only source of the style
-        if (type == RiftType.SIFT) return pick < 0.55f ? 4 : 3;
-        if (type == RiftType.OVERWORLD) return pick < 0.45f ? 4 : pick < 0.80f ? 3 : 0;
-        if (type == RiftType.NETHER) return pick < 0.65f ? 1 : 3;
-        if (type == RiftType.END) return pick < 0.65f ? 2 : 4;
+        if (type == RiftType.SIFT) return pick < 0.50f ? 3 : pick < 0.80f ? 4 : 7;
+        if (type == RiftType.OVERWORLD) return pick < 0.50f ? 0 : pick < 0.82f ? 3 : 7;
+        if (type == RiftType.NETHER) return pick < 0.70f ? 1 : 3;
+        if (type == RiftType.END) return pick < 0.70f ? 2 : 4;
         return type.id;
     }
 
@@ -336,43 +348,92 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         pose.pushPose();
         try {
             pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw + 180f)));
-            // Seed first, then rotating bar, then a brief expansion ring and stepped opening.
-            if (age < CLUSTER_START) {
-                float a = age;
-                out.submitCustomGeometry(pose, glowT, (p, vc) -> {
-                    seedBox(p, vc, still, sh, look, a, cam);
-                    if (SiftBudget.riftEffects) seedBolts(p, vc, sh, s, cam, look, a);
-                    if (SiftBudget.riftEffects && SiftBudget.riftFlares) rotatingArcs(p, vc, sh, s, cam, a);
-                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) seedShell(p, vc, sh, s, a);
-                    if (a > 4f) ripple(p, vc, still, sh, look, (a - 4f) * 15f);
-                });
-            }
             if (age <= SHOCK_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> shockwave(p, vc, still, sh, look, s, cam, age));
-            if (age >= CLUSTER_START) {
+            if (gpu) {
                 float a = age;
-                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf, frost));
-                else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf, frost, look2));
-                out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look2, a, s));
-                out.submitCustomGeometry(pose, glowT, (p, vc) -> {
-                    boxFaces(p, vc, wv, sh, look2, cam, a, s);
-                    rims(p, vc, wv, sh, look2, cam, a, s);
-                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look2, a);
-                    if (SiftBudget.riftEffects) riftBolts(p, vc, wv, sh, s, cam, look, a);
-                    if (SiftBudget.riftEffects && SiftBudget.riftFlares) {
-                        glitchTeeth(p, vc, sh, s, a);
-                        clawRibbons(p, vc, sh, s, cam, a);
-                    }
-                    if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look2, s);
-                    if (SiftBudget.riftEffects) riftGodRayShafts(p, vc, sh, look2, s, a);
-                });
-                out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look2, a));
-                if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
-                    out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, cam, a));
-                if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look2, cam, s));
+                out.submitCustomGeometry(pose, winT, (p, vc) -> shaderQuadCanvas(p, vc, sh, a, code));
+                if (a >= GROWN && SiftBudget.riftEffects) {
+                    out.submitCustomGeometry(pose, glowT, (p, vc) -> riftGodRayShafts(p, vc, sh, look2, s, a));
+                }
+            } else {
+                // Seed first, then rotating bar, then a brief expansion ring and stepped opening.
+                if (age < CLUSTER_START) {
+                    float a = age;
+                    out.submitCustomGeometry(pose, glowT, (p, vc) -> {
+                        seedBox(p, vc, still, sh, look, a, cam);
+                        if (SiftBudget.riftEffects) seedBolts(p, vc, sh, s, cam, look, a);
+                        if (SiftBudget.riftEffects && SiftBudget.riftFlares) rotatingArcs(p, vc, sh, s, cam, a);
+                        if (SiftBudget.riftEffects && SiftBudget.riftBloom) seedShell(p, vc, sh, s, a);
+                        if (a > 4f) ripple(p, vc, still, sh, look, (a - 4f) * 15f);
+                    });
+                }
+                if (age >= CLUSTER_START) {
+                    float a = age;
+                    if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf, frost));
+                    else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf, frost, look2));
+                    out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look2, a, s));
+                    out.submitCustomGeometry(pose, glowT, (p, vc) -> {
+                        boxFaces(p, vc, wv, sh, look2, cam, a, s);
+                        rims(p, vc, wv, sh, look2, cam, a, s);
+                        if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look2, a);
+                        if (SiftBudget.riftEffects) riftBolts(p, vc, wv, sh, s, cam, look, a);
+                        if (SiftBudget.riftEffects && SiftBudget.riftFlares) {
+                            glitchTeeth(p, vc, sh, s, a);
+                            clawRibbons(p, vc, sh, s, cam, a);
+                        }
+                        if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look2, s);
+                        if (SiftBudget.riftEffects) riftGodRayShafts(p, vc, sh, look2, s, a);
+                    });
+                    out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look2, a));
+                    if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
+                        out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, cam, a));
+                    if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look2, cam, s));
+                }
             }
         } finally {
             pose.popPose();
         }
+    }
+
+    /**
+     * Pure GLSL Shader-Driven Rift Canvas:
+     * Emits the double-sided 2D SDF quad plane at z = +0.004f (packing u_Progress in [0, 1] into frostAmt)
+     * plus 10 receding volumetric Aurora/cloud extrusion slices behind the front plane (z = -0.05f .. -0.50f)
+     * once the stepped fracture phase begins (age >= 60).
+     */
+    private static void shaderQuadCanvas(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, float age, float code) {
+        float x0 = -sh.w * 0.68f, x1 = sh.w * 0.68f;
+        float y0 = RiftShape.BASE - sh.h * 0.14f, y1 = RiftShape.BASE + sh.h * 1.18f;
+        float uProgress = clamp(age / GROWN, 0f, 1f);
+        // Volumetric extrusion slices behind the front plane (drawn back-to-front so alpha blending layers cleanly)
+        if (age >= 60f) {
+            float openRamp = clamp((age - 60f) / 25f, 0f, 1f);
+            for (int layer = 10; layer >= 1; layer--) {
+                float z = -layer * 0.048f - 0.004f;
+                float sliceFade = 0.44f * (1f - layer / 11f) * openRamp;
+                float aSlice = clamp(sliceFade, 0f, 0.90f) * 0.5f;
+                emitDoubleQuad(p, vc, x0, y0, x1, y1, z, code, aSlice);
+            }
+        }
+        // Main front SDF plane at +0.004f depth offset: fade = 1.0, frostAmt = uProgress (0.0 .. 1.0)
+        float aFront = 0.5f + 0.5f * uProgress;
+        emitDoubleQuad(p, vc, x0, y0, x1, y1, 0.004f, code, aFront);
+    }
+
+    private static void emitDoubleQuad(PoseStack.Pose p, VertexConsumer vc,
+                                       float x0, float y0, float x1, float y1, float z, float code, float a) {
+        if (!SiftBudget.take(vc)) return;
+        // Front face (+Z winding)
+        vc.addVertex(p, x0, y0, z).setColor(0f, 0f, code, a);
+        vc.addVertex(p, x1, y0, z).setColor(1f, 0f, code, a);
+        vc.addVertex(p, x1, y1, z).setColor(1f, 1f, code, a);
+        vc.addVertex(p, x0, y1, z).setColor(0f, 1f, code, a);
+        if (!SiftBudget.take(vc)) return;
+        // Back face (-Z winding)
+        vc.addVertex(p, x1, y0, -z).setColor(1f, 0f, code, a);
+        vc.addVertex(p, x0, y0, -z).setColor(0f, 0f, code, a);
+        vc.addVertex(p, x0, y1, -z).setColor(0f, 1f, code, a);
+        vc.addVertex(p, x1, y1, -z).setColor(1f, 1f, code, a);
     }
 
     /** Encodes palette and tide; framebuffer capture belongs to RiftScene, not this method. */

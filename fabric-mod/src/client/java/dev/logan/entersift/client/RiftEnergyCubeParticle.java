@@ -86,10 +86,10 @@ public final class RiftEnergyCubeParticle extends Particle {
         this.lifetime = 24 + this.random.nextInt(16);
         this.maxAge = this.lifetime;
         this.alpha = 1.0f;
-        // Zero horizontal X/Z drift; begin falling down through the rift.
-        this.velocity.set(0.0f, -0.04f, 0.0f);
+        // Zero horizontal X/Z drift; drift strictly UPWARD on a positive Y-axis vector.
+        this.velocity.set(0.0f, 0.04f, 0.0f);
         this.xd = 0.0;
-        this.yd = -0.04;
+        this.yd = 0.04;
         this.zd = 0.0;
         this.color = paletteFor(type, colorIndex);
         this.setSize(this.baseScale, this.baseScale);
@@ -125,13 +125,13 @@ public final class RiftEnergyCubeParticle extends Particle {
             this.remove();
             return;
         }
-        // Force a downward negative-Y path; zero horizontal X/Z drift.
+        // Force an upward positive-Y path; zero horizontal X/Z drift (replaces velocity.y -= 0.04f).
         velocity.x = 0.0f;
         velocity.z = 0.0f;
-        velocity.y -= 0.04f;
+        velocity.y += 0.04f;
         this.xd = 0.0;
         this.zd = 0.0;
-        this.yd = Math.max(-0.28f, velocity.y);
+        this.yd = Math.min(0.14f, velocity.y);
         this.setPos(this.x, this.y + this.yd, this.z);
         applyDissolve(this.age, this.maxAge);
     }

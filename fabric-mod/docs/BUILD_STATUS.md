@@ -330,3 +330,26 @@ but unusable.
     including `/sift time set flow`, `/sift time set thrive`, `/sift time set lymph`, `/sift time query`,
     and `/sift time cycle on`.
 
+## Sift Overhaul 0.36.0-alpha (Total Shader-Driven SDF Rift Rebuild with 0–100 Tick Lifecycle & Warping)
+
+- `RiftPortalRenderer.java`: Active GPU path (`SiftBudget.riftShader`) now submits `shaderQuadCanvas`
+  (`emitDoubleQuad` at `z = +0.004f` plus 10 receding volumetric Aurora/cloud extrusion slices behind the
+  front plane at `z = -0.05f .. -0.50f`), eliminating 3D block/wireframe clutter while feeding normalized
+  UV `(0..1)` and `u_Progress` (`0..1` over Ticks `0..100`) into `rift.fsh`.
+- `rift.fsh`:
+  - **Part 1 (Ticks 0–100 Initialization Timeline via `u_Progress`)**: Phase 1 (Ticks 0–30) white-out flash,
+    expanding circular shockwave ripple, and procedural GLSL lightning (`shaderLightning`); Phase 2 (Ticks
+    31–60) tilted/rotating pulsing rectangular incubation seed with lightning arcs; Phase 3 (Ticks 61–100)
+    4-tier stepped SDF fracture assembly from center outward with white-out snap and vertical Aurora Borealis
+    curtains (`auroraCurtainsBehind`), terminating expanding circle calculations at Tick 100.
+  - **Part 2 (GLSL Signed Distance Field Voxel Canal Matrices)**: Exact 1:1 11-piece trailer silhouette
+    (`sdBox`, `sdMainCross`, `sdHollowOverlays`) with unified central stepped cross (no internal grid lines),
+    attached/detached hollow boxes (`L1`, `L2`, `R1`, `R2`, `R3`), upper-left Z-tetromino (`L3`), 4 floating
+    notch squares (`S1..S4`), parallax-recessed inner canal bevels, and razor-sharp white neon outlines.
+  - **Part 3 (Non-Euclidean Viewport Refraction & UV Rippling)**: 9-tap (3x3) multi-pass box-blurred
+    destination projection (`destination`) linked to camera view ray `worldRay`, blended with Vibrant
+    Coral/Pink & Deep Amber/Gold / Sift Cyan-Pink / Lime-Green overlays, floating pixel squares, and dynamic
+    sine-wave UV distortion (`vec2 rippleOffset = vec2(sin(uv.y * 14.0 + (gameTime * 0.05)), cos(uv.x * 10.0 - (gameTime * 0.03))) * 0.02;`).
+- `RiftEnergyCubeParticle.java`: 3D voxel energy blocks (`0.25..0.5` blocks) now drift strictly upward on
+  `+Y` (`velocity.y += 0.04f`, zero horizontal X/Z drift), cycle Saturated Mint-Green, Electric Cyan, and
+  Pale Pink, and flatten/dissolve horizontally at `age >= 0.75 * maxAge`.
