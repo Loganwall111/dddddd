@@ -323,9 +323,9 @@ vec4 compose() {
 
     // Many soft shafts, not a few lasers. Night accumulates more; day keeps a hint.
     float rays = 0.0;
-    float ang = atan(q.y, q.x);
+    float rayAng = atan(q.y, q.x);
     for (int i = 0; i < 10; i++) {
-        float ba = ang + float(i) * 0.628 + t * 0.03;
+        float ba = rayAng + float(i) * 0.628 + t * 0.03;
         float band = exp(-pow(sin(ba * 2.0 + float(i)), 2.0) * 14.0);
         rays += band * exp(-dist * 0.22);
     }
@@ -370,8 +370,8 @@ vec4 compose() {
     float ringsOut = 0.0;
     for (int i = 0; i < 3; i++) {
         float ph = mod(t * 0.22 + float(i) * 0.33, 1.0);
-        float radius = 1.6 + ph * 5.2;
-        ringsOut += (1.0 - smoothstep(0.012, 0.045, abs(dist - radius))) * (1.0 - smoothstep(0.55, 1.0, ph));
+        float ringR = 1.6 + ph * 5.2;
+        ringsOut += (1.0 - smoothstep(0.012, 0.045, abs(dist - ringR))) * (1.0 - smoothstep(0.55, 1.0, ph));
     }
     ringsOut *= (1.0 - interior) * 0.40 * appear;
     rgb += tint * ringsOut;

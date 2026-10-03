@@ -8,6 +8,7 @@ Usage: check_shaders.py [path/to/glslangValidator]   (skips compile if the tool 
 import re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
+FAILS = []
 ROOT = Path(__file__).resolve().parents[1] / "shaderpack/shaders"
 INC = re.compile(r'^\s*#include\s+"([^"]+)"\s*$')
 
@@ -120,7 +121,9 @@ def main():
             r = subprocess.run([tool, str(out)], capture_output=True, text=True)
             if r.returncode != 0:
                 errors += 1
-                print(f"FAIL {prog.relative_to(ROOT)}\n{r.stdout}{r.stderr}")
+                msg = f"FAIL {prog.relative_to(ROOT)}\n{r.stdout}{r.stderr}"
+                print(msg)
+                FAILS.append(msg)
             else:
                 print(f"ok   {prog.relative_to(ROOT)}")
     errors += check_core(tool)
@@ -135,7 +138,13 @@ def main():
     except Exception:
         pass
     if errors:
-        print(f"::error title=Shader compile FAILED::{errors} problem(s); see the log")
+        # The sandbox cannot download Actions logs. Put the compiler text in the annotation.
+        bits = []
+        for f in FAILS[:6]:
+            lines = [ln.strip() for ln in f.splitlines() if ln.strip()][:3]
+            bits.append(" / ".join(lines))
+        blob = " || ".join(bits).replace("%", "%25").replace("\r", "").replace("\n", " ")[:3000]
+        print(f"::error title=Shader compile FAILED::{errors} problem(s). {blob}")
     else:
         print(f"::notice title=Shaders compiled::{len(programs)} programs and the core shader variants "
               f"compiled clean with {version or tool}")
@@ -180,7 +189,9 @@ def check_core(tool) -> int:
                 r = subprocess.run([tool, str(out)], capture_output=True, text=True)
                 if r.returncode != 0:
                     errors += 1
-                    print(f"FAIL core/{prog.name} [{define or 'base'}]\n{r.stdout}{r.stderr}")
+                    msg = f"FAIL core/{prog.name} [{define or 'base'}]\n{r.stdout}{r.stderr}"
+                    print(msg)
+                    FAILS.append(msg)
                 else:
                     print(f"ok   core/{prog.name} [{define or 'base'}]")
     return errors
