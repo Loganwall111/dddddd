@@ -1047,4 +1047,32 @@ class DataContracts(unittest.TestCase):
         for path,reason in manifest['known_drift'].items():
             self.assertTrue((ROOT/path).exists(),path)
             self.assertGreater(len(reason),40,path)
+    def test_sift_time_state_sky_dome_and_glsl_10_layer_rift(self):
+        M=ROOT/'src/main/java/dev/logan/entersift'
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        state=(M/'SiftTimeState.java').read_text()
+        cmd=(M/'SiftTimeCommand.java').read_text()
+        main=(M/'EnterTheSift.java').read_text()
+        sky=(C/'SiftSky.java').read_text()
+        rift=(C/'RiftPortalRenderer.java').read_text()
+        fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        comp=(ROOT/'shaderpack/shaders/world_sift/composite.fsh').read_text()
+        for token in ('FLOW(', 'THRIVE(', 'ENDURE(', 'TRANSITION_SECONDS', 'currentParameters()', 'parametersForClock('):
+            self.assertIn(token, state)
+        for token in ('Commands.literal("sift")', '"flow"', '"thrive"', '"endure"', '"lymph"', '"lava_lamp"',
+                      'time of entersift:sift set '):
+            self.assertIn(token, cmd)
+        self.assertIn('SiftTimeCommand.register()', main)
+        for tex in ('sift_flow_sky.png', 'sift_thrive_sky.png'):
+            self.assertTrue((R/f'assets/entersift/textures/sky/{tex}').is_file(), tex)
+            self.assertIn(tex, sky)
+        for token in ('samplePanorama(', 'soulFaceMask(', 'soulFaceBands(', 'SOUL_FACE_DARK', 'smooth(0.70f, 0.88f, faceMask)'):
+            self.assertIn(token, sky)
+        for token in ('backDistortion(', 'apertureField(', 'soulFaceBand(', 'vec3(0.02, 0.02, 0.04)',
+                      'smoothstep(0.70, 0.88, faceMask)', 'interiorEnergy(', 'innerGlow(',
+                      'floatingLightSquares(', 'for (int i = 0; i < 16; i++)', 'riftGodRays(', 'riftBloom('):
+            self.assertIn(token, fsh)
+        for token in ('enum LifecyclePhase', 'phaseForAge(', 'riftGodRayShafts('):
+            self.assertIn(token, rift)
+        self.assertIn('float thrive = smoothstep(4800.0, 6200.0, tod)', comp)
 if __name__=='__main__': unittest.main(verbosity=2)

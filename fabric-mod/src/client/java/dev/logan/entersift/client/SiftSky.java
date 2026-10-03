@@ -3,20 +3,25 @@ package dev.logan.entersift.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.logan.entersift.SiftContent;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.minecraft.client.Minecraft;
+import dev.logan.entersift.SiftTimeState;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import javax.imageio.ImageIO;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 0.9 Sift sky: a procedural "lava lamp" of slowly drifting, merging colour blobs. There are no
- * textures, panoramas or shader packs; everything is computed in Java every frame.
+ * 0.9+ Sift sky: a procedural "lava lamp" of slowly drifting, merging colour blobs enhanced with
+ * panoramic sky dome overlays ({@code sift_flow_sky.png} / {@code sift_thrive_sky.png}), animated
+ * wavy dark "soul face" boundaries, and {@link SiftTimeState} parameter interpolation.
  *
  * How it is drawn (vanilla/Fabric only): Fabric 26.3 has no sky hook, so the sky is a finely
- * tessellated sphere submitted in COLLECT_SUBMITS with {@link SiftRenderTypes#SOLID}. That type
+ * tessellated sphere submitted in COLLECT_SUBMITS with {@link SiftRenderTypes#SKY}. That type
  * uses the core {@code position_color} shader, which has no fog term, and it depth-tests normally.
  * The sphere sits beyond the last rendered chunk and inside the far plane, so terrain always stays
  * in front and the blobs show wherever the sky is open. Colours are per vertex; the GPU blends
@@ -26,18 +31,12 @@ import net.minecraft.world.phys.Vec3;
  * (same keyframes, see STAGE_TICKS), so distant terrain melts into the sky without a seam.
  *
  * Cycle (the Sift's independent 24000-tick clock). Ground and ichor follow the same tide timeline:
- *   Flow     soft teal-blue horizon and mint-green overhead
- *   Thrive   brighter teal and pearl accents
- *   Endure   warm amber haze with muted crimson highlights
+ *   Flow     soft teal-blue horizon and mint-green overhead, subtle rainbow upper dome, wavy dark bands
+ *   Thrive   darker cyan/magenta high-contrast dome with accumulated soft volumetric god rays
+ *   Endure   warm amber haze with muted crimson highlights (lava-lamp / lymph state)
  * Jelly Lands layer their own dense blue fog and deep-blue sky over this cycle.
  * 0.13: there is NO sun in the Sift; the independent tide clock shapes the sky and ambient light.
  * Soft multi-coloured columns fall from the sky itself and coloured beams land on the ground.
- *
- * 0.12 layer stack (render types from {@link SiftRenderTypes}; no OIT, so terrain does not flicker):
- *   1. opaque gradient dome with a faint pastel lava-lamp shimmer
- *   2. soft trans-aurora curtains: long wavy vertical sheets, additive, base alpha 0.18, smoothstep
- *      falloff on every margin (no rectangles, no hard lines anywhere in the sky)
- *   3. world-space diagonal light beams, soft across their width, tinting the ground where they land
  */
 public final class SiftSky {
     private SiftSky() {}
@@ -45,6 +44,16 @@ public final class SiftSky {
     // Shared with tools/phase19.py and timeline/sift_cycle.json. Index = Flow, Thrive, Endure.
     static final int[] STAGE_TICKS = {0, 5000, 6000, 11000, 13000, 22500};
     static final int[] STAGE_AT = {0, 0, 1, 1, 2, 2};
+
+    private static final Identifier FLOW_SKY_TEX = SiftContent.id("textures/sky/sift_flow_sky.png");
+    private static final Identifier THRIVE_SKY_TEX = SiftContent.id("textures/sky/sift_thrive_sky.png");
+    private static final int PANO_W = 256, PANO_H = 128;
+    private static float[] flowPanoRgb;
+    private static float[] thrivePanoRgb;
+    private static boolean panoLoaded = false;
+
+    /** Charcoal / indigo-black color for Layer 4 wavy "soul face" sky bands: vec3(0.02, 0.02, 0.04). */
+    private static final float[] SOUL_FACE_DARK = {0.02f, 0.02f, 0.04f};
 
     /** Horizon / fog colour per tide; the Java sky and timeline keep the same keyframes. */
     static final float[][] HORIZON = {rgb(0x7FD3CF), rgb(0x8FC2C4), rgb(0xDB7840)};
@@ -97,8 +106,10 @@ public final class SiftSky {
             // 0.11 dimension guard: only ever draw inside the entersift namespace, and only in the Sift.
             Identifier dim = mc.level.dimension().identifier();
             if (!dim.toString().startsWith("entersift:") || !dim.equals(SiftContent.id("the_sift"))) return;
+            ensurePanoramasLoaded(mc);
             float partial = context.levelState().worldPartialTicks;
             float tick = SiftTides.ticks(mc.level, partial);
+            SiftTimeState.Parameters params = SiftTides.parameters(mc.level);
             float seconds = (float) ((System.nanoTime() / 1.0e9) % 7200.0);
             int chunks = mc.options.renderDistance().get();
             // Beyond the furthest chunk corner (~1.45 x render distance), inside the far plane (4 x).
@@ -118,11 +129,12 @@ public final class SiftSky {
             pose.pushPose(); // balanced: every push is popped even if a submit throws
             try {
                 var out = context.submitNodeCollector();
-                // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
+                // Layer 1: opaque lava-lamp dome + panoramic sky overlay + wavy dark "soul face" bands (writes depth, no OIT, no fog).
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds, sw));
-                // 0.24 layer 2 (alpha blended): curved mint/aqua/pink ribbon-tile panels + aurora swirls across all biomes.
+                // 0.24 layer 2 (alpha blended): curved mint/aqua/pink ribbon-tile panels + wavy dark bands + aurora swirls across all biomes.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
                     float layer = Math.max(0f, 1f - jellyAmount * 0.96f);
+                    soulFaceBands(p, vc, radius * 0.988f, seconds, params, layer);
                     softPanels(p, vc, radius * 0.985f, pal, seconds,
                         Math.max(0.68f, 1f - sw * 0.32f) * layer);
                     if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw * 0.85f * layer);
@@ -131,15 +143,131 @@ public final class SiftSky {
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
                     float layer = Math.max(0f, 1f - jellyAmount * 0.98f);
                     auroraCurtains(p, vc, radius * 0.98f, pal, seconds, layer);
-                    skyRays(p, vc, radius * 0.96f, pal, seconds, layer);
+                    skyRays(p, vc, radius * 0.96f, pal, seconds, layer * (0.75f + 0.45f * params.godRayIntensity()));
                 });
                 // World-space diagonal beams slice into other Sift biomes; the Jelly haze suppresses them.
                 if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW,
-                    (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange, Math.max(0f, 1f - jellyAmount * 0.98f)));
+                    (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange, Math.max(0f, 1f - jellyAmount * 0.98f) * (0.75f + 0.40f * params.godRayIntensity())));
             } finally {
                 pose.popPose();
             }
         });
+    }
+
+    private static void ensurePanoramasLoaded(Minecraft mc) {
+        if (panoLoaded) return;
+        panoLoaded = true;
+        flowPanoRgb = loadPanorama(mc, FLOW_SKY_TEX, false);
+        thrivePanoRgb = loadPanorama(mc, THRIVE_SKY_TEX, true);
+    }
+
+    private static float[] loadPanorama(Minecraft mc, Identifier id, boolean thrive) {
+        float[] data = new float[PANO_W * PANO_H * 3];
+        try {
+            var resOpt = mc.getResourceManager().getResource(id);
+            if (resOpt.isPresent()) {
+                try (InputStream in = resOpt.get().open()) {
+                    BufferedImage img = ImageIO.read(in);
+                    if (img != null) {
+                        int iw = img.getWidth(), ih = img.getHeight();
+                        for (int y = 0; y < PANO_H; y++) {
+                            int sy = Math.min(ih - 1, (y * ih) / PANO_H);
+                            for (int x = 0; x < PANO_W; x++) {
+                                int sx = Math.min(iw - 1, (x * iw) / PANO_W);
+                                int argb = img.getRGB(sx, sy);
+                                int idx = (y * PANO_W + x) * 3;
+                                data[idx]     = ((argb >> 16) & 0xFF) / 255f;
+                                data[idx + 1] = ((argb >> 8) & 0xFF) / 255f;
+                                data[idx + 2] = (argb & 0xFF) / 255f;
+                            }
+                        }
+                        return data;
+                    }
+                }
+            }
+        } catch (Throwable ignored) { }
+        for (int y = 0; y < PANO_H; y++) {
+            float v = y / (float) (PANO_H - 1);
+            for (int x = 0; x < PANO_W; x++) {
+                float u = x / (float) PANO_W;
+                float wave = 0.5f + 0.5f * (float) Math.sin(u * Math.PI * 4.0 + v * 3.2);
+                int idx = (y * PANO_W + x) * 3;
+                if (!thrive) {
+                    data[idx]     = 0.34f + 0.32f * wave * (1f - v * 0.4f);
+                    data[idx + 1] = 0.78f + 0.16f * wave;
+                    data[idx + 2] = 0.84f + 0.12f * (1f - wave);
+                } else {
+                    data[idx]     = 0.24f + 0.54f * wave;
+                    data[idx + 1] = 0.42f + 0.34f * (1f - wave);
+                    data[idx + 2] = 0.64f + 0.28f * wave;
+                }
+            }
+        }
+        return data;
+    }
+
+    private static float[] samplePanorama(float[] grid, float az, float y, float seconds) {
+        if (grid == null) return new float[]{0.5f, 0.8f, 0.82f};
+        float uRaw = (float) ((az / (2.0 * Math.PI)) + 0.5 + seconds * 0.002);
+        float u1 = uRaw - (float) Math.floor(uRaw);
+        float uSeamless = 1f - Math.abs(u1 * 2f - 1f);
+        float v = Math.max(0.02f, Math.min(0.98f, 1f - Math.max(0f, Math.min(1f, y))));
+        float fx = uSeamless * (PANO_W - 1), fy = v * (PANO_H - 1);
+        int x0 = (int) fx, y0 = (int) fy;
+        int x1 = Math.min(PANO_W - 1, x0 + 1), y1 = Math.min(PANO_H - 1, y0 + 1);
+        float tx = fx - x0, ty = fy - y0;
+        int i00 = (y0 * PANO_W + x0) * 3, i10 = (y0 * PANO_W + x1) * 3;
+        int i01 = (y1 * PANO_W + x0) * 3, i11 = (y1 * PANO_W + x1) * 3;
+        float[] out = new float[3];
+        for (int c = 0; c < 3; c++) {
+            float top = grid[i00 + c] + (grid[i10 + c] - grid[i00 + c]) * tx;
+            float bot = grid[i01 + c] + (grid[i11 + c] - grid[i01 + c]) * tx;
+            out[c] = top + (bot - top) * ty;
+        }
+        return out;
+    }
+
+    /**
+     * Computes the organic wavy "soul face" mask in [0, 1] using low-frequency sine/cosine
+     * waves and smooth 3D Perlin noise (never chaotic high-frequency noise).
+     */
+    public static float soulFaceMask(float az, float y, float t) {
+        float w1 = (float) Math.sin(az * 3.0f + Math.sin(y * 4.2f - t * 0.11f) * 1.35f + t * 0.07f);
+        float w2 = (float) Math.cos(az * 2.0f - y * 5.0f + Math.cos(az * 1.0f + t * 0.05f) * 1.15f);
+        float n = 0.5f + 0.5f * noise((float) Math.cos(az) * 1.8f + t * 0.04f, y * 3.2f, (float) Math.sin(az) * 1.8f - t * 0.03f);
+        float hollow = (float) Math.exp(-Math.pow((y - 0.42f - 0.08f * w1) / 0.16f, 2.0));
+        float ridge = 1f - Math.abs(w1 * 0.55f + w2 * 0.35f + (n - 0.5f) * 0.30f);
+        return Math.max(0f, Math.min(1f, ridge * (0.76f + 0.28f * hollow)));
+    }
+
+    /**
+     * Dedicated alpha-blended wavy dark "soul face" ribbon pass across the mid/upper dome.
+     */
+    private static void soulFaceBands(PoseStack.Pose p, VertexConsumer vc, float rad, float t, SiftTimeState.Parameters params, float layer) {
+        if (layer <= 0.01f) return;
+        int bands = 4, segs = 48;
+        float opacity = Math.max(0.08f, Math.min(0.48f, params.darkBandOpacity() * 0.32f * layer));
+        for (int b = 0; b < bands; b++) {
+            float baseElev = 0.26f + b * 0.14f;
+            float halfH = 0.050f + 0.014f * (b % 2);
+            for (int s = 0; s < segs; s++) {
+                float u0 = s / (float) segs, u1 = (s + 1) / (float) segs;
+                double a0 = u0 * Math.PI * 2.0, a1 = u1 * Math.PI * 2.0;
+                float w0 = 0.060f * (float) Math.sin(a0 * (2 + (b % 2)) + t * 0.07f + b * 1.4f)
+                         + 0.030f * (float) Math.cos(a0 * 3.0 - t * 0.05f + b);
+                float w1 = 0.060f * (float) Math.sin(a1 * (2 + (b % 2)) + t * 0.07f + b * 1.4f)
+                         + 0.030f * (float) Math.cos(a1 * 3.0 - t * 0.05f + b);
+                double el0 = baseElev + w0, el1 = baseElev + w1;
+                float m0 = smooth(0.70f, 0.88f, soulFaceMask((float) a0, (float) el0, t));
+                float m1 = smooth(0.70f, 0.88f, soulFaceMask((float) a1, (float) el1, t));
+                float al0 = opacity * (0.35f + 0.65f * m0), al1 = opacity * (0.35f + 0.65f * m1);
+                if (al0 + al1 < 0.004f) continue;
+                v(p, vc, dir(a0, el0 - halfH), rad, SOUL_FACE_DARK, al0 * 0.25f);
+                v(p, vc, dir(a1, el1 - halfH), rad, SOUL_FACE_DARK, al1 * 0.25f);
+                v(p, vc, dir(a1, el1 + halfH), rad, SOUL_FACE_DARK, al1);
+                v(p, vc, dir(a0, el0 + halfH), rad, SOUL_FACE_DARK, al0);
+            }
+        }
     }
 
     /** 0.17: which of the two Sift skies the camera's biome uses, eased over ~3 s. */
@@ -204,6 +332,11 @@ public final class SiftSky {
             lerp(ZENITH[a], ZENITH[b], f), blobs, endure, thrive);
     }
 
+    /** Public helper returning the current horizon colour for the given Sift tick. */
+    public static float[] horizonColor(long dayTime) {
+        return palette((float) Math.floorMod(dayTime, 24000L)).horizon();
+    }
+
     /** Blue-biome sky palette, eased over the same border blend as the biome fog. */
     private static Palette blendJelly(Palette base, float amount) {
         float f = Math.max(0f, Math.min(1f, amount));
@@ -239,7 +372,7 @@ public final class SiftSky {
     }
 
     /** Classic 3D Perlin noise, roughly in [-1, 1]. */
-    static float noise(float x, float y, float z) {
+    public static float noise(float x, float y, float z) {
         int X = (int) Math.floor(x) & 255, Y = (int) Math.floor(y) & 255, Z = (int) Math.floor(z) & 255;
         x -= (float) Math.floor(x); y -= (float) Math.floor(y); z -= (float) Math.floor(z);
         float u = fade(x), v = fade(y), w = fade(z);
@@ -250,6 +383,11 @@ public final class SiftSky {
         x1 = mix(grad(PERM[AA + 1], x, y, z - 1), grad(PERM[BA + 1], x - 1, y, z - 1), u);
         x2 = mix(grad(PERM[AB + 1], x, y - 1, z - 1), grad(PERM[BB + 1], x - 1, y - 1, z - 1), u);
         return mix(y1, mix(x1, x2, v), w);
+    }
+
+    /** 2D noise overload delegating to 3D Perlin noise. */
+    public static float noise(float x, float y) {
+        return 0.5f + 0.5f * noise(x, y, 0.5f);
     }
 
     private static float mix(float a, float b, float t) { return a + (b - a) * t; }
@@ -273,9 +411,26 @@ public final class SiftSky {
 
     private static float[] skyColour(float x, float y, float z, Palette pal, float t, float sw) {
         float up = Math.max(0f, y);
+        float az = (float) Math.atan2(z, x);
+        SiftTimeState.Parameters params = SiftTimeState.currentParameters();
         // 0.12: smooth three-stop gradient (horizon -> mid -> zenith), like the trailer frames.
         float[] c = lerp(pal.horizon(), pal.mid(), smooth(0.02f, 0.45f, up));
         c = lerp(c, pal.zenith(), smooth(0.4f, 0.95f, up));
+
+        // Panoramic sky dome overlay (sift_flow_sky.png / sift_thrive_sky.png), smoothly faded near horizon & zenith
+        if (up > 0.04f && jelly < 0.95f) {
+            float panoMask = smooth(0.04f, 0.28f, up) * (1f - 0.35f * smooth(0.80f, 0.98f, up)) * (1f - jelly);
+            float flowW = params.panoramaFlowWeight();
+            float thriveW = params.panoramaThriveWeight();
+            if (panoMask > 0.002f && (flowW > 0.001f || thriveW > 0.001f)) {
+                float[] flowTex = samplePanorama(flowPanoRgb, az, up, t);
+                float[] thriveTex = samplePanorama(thrivePanoRgb, az, up, t);
+                float totalW = Math.max(0.001f, flowW + thriveW);
+                float[] pano = lerp(flowTex, thriveTex, thriveW / totalW);
+                c = lerp(c, pano, 0.36f * panoMask * Math.min(1f, flowW + thriveW));
+            }
+        }
+
         // 0.17 swirl sky: rotate the sample around the vertical by a noise-driven angle, so the blobs
         // wind into slow pink / teal spirals; the panel sky keeps only a faint shimmer.
         float sx = x, sz = z;
@@ -294,11 +449,27 @@ public final class SiftSky {
             c = lerp(c, new float[]{0.96f, 1f, 0.97f}, pearl);
         }
         if (pal.endure() > 0.01f) { // muted vertical highlights during Endure
-            float az = (float) Math.atan2(z, x);
             float col = noise((float) Math.cos(az) * 3.2f + t * 0.01f, (float) Math.sin(az) * 3.2f, t * 0.02f)
                 + 0.35f * noise((float) Math.cos(az) * 7f, (float) Math.sin(az) * 7f + t * 0.015f, y * 1.5f);
             float edge = smooth(0.02f, 0.6f, col) * (1 - smooth(0.25f, 0.95f, up)) * smooth(-0.1f, 0.12f, y);
             c = lerp(c, ENDURE_PILLAR, edge * 0.45f * pal.endure());
+        }
+        // Subtle upper-dome rainbow dispersion (Flow state)
+        float rbMask = smooth(0.20f, 0.68f, up) * params.rainbowWeight() * (1f - jelly);
+        if (rbMask > 0.01f) {
+            float ph = az * 1.5f + up * 4.2f - t * 0.05f;
+            float[] rb = {
+                0.55f + 0.42f * (float) Math.sin(ph),
+                0.68f + 0.30f * (float) Math.sin(ph + 2.094f),
+                0.78f + 0.22f * (float) Math.sin(ph + 4.188f)
+            };
+            c = lerp(c, rb, 0.15f * rbMask);
+        }
+        // Layer 4: Wavy dark outer "soul face" boundaries in the upper dome (vec3(0.02, 0.02, 0.04))
+        if (up > 0.08f && jelly < 0.95f) {
+            float faceMask = soulFaceMask(az, up, t);
+            float bandEdge = smooth(0.70f, 0.88f, faceMask) * smooth(0.08f, 0.28f, up) * params.darkBandOpacity() * 0.52f * (1f - jelly);
+            c = lerp(c, SOUL_FACE_DARK, bandEdge);
         }
         // Biome-specific treatments stay subdued during Endure so the tide's amber character remains legible.
         float cycleK = 1f - 0.5f * pal.endure();

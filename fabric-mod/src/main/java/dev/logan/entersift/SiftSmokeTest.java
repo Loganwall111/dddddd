@@ -173,6 +173,19 @@ final class SiftSmokeTest {
         run(server, "execute in entersift:the_sift run time of entersift:sift set 13000");
         run(server, "execute in entersift:the_sift store result score #smoke_gate sift.clock run function entersift:rift/gate");
         run(server, "execute if score #smoke_gate sift.clock matches 0 run say SIFT-SMOKE FAIL rift gate blocked Endure");
+        // Verify /sift time command family and SiftTimeState transitions
+        run(server, "sift time set flow");
+        if (SiftTimeState.getState() != SiftTimeState.State.FLOW)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL /sift time set flow did not switch state to FLOW");
+        run(server, "sift time set thrive");
+        if (SiftTimeState.getState() != SiftTimeState.State.THRIVE)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL /sift time set thrive did not switch state to THRIVE");
+        run(server, "sift time set lymph");
+        if (SiftTimeState.getState() != SiftTimeState.State.ENDURE)
+            EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL /sift time set lymph did not switch state to ENDURE/LYMPH");
+        run(server, "sift time query");
+        run(server, "sift time cycle on");
+        EnterTheSift.LOGGER.info("SIFT-SMOKE /sift time commands verified (FLOW, THRIVE, ENDURE/LYMPH, query, cycle)");
         run(server, "execute in entersift:the_sift positioned 10 140 -20 run function entersift:rift/natural");
         run(server, "execute in minecraft:overworld positioned 0 100 0 run function entersift:rift/natural");
         run(server, "execute in entersift:the_sift run function entersift:world/tick");

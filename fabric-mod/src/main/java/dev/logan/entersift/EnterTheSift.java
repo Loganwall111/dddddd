@@ -214,6 +214,7 @@ public final class EnterTheSift implements ModInitializer {
         RiftBlockEntities.initialize();
         SiftSounds.initialize();
         SiftEntities.initialize();
+        SiftTimeCommand.register();
         SiftSmokeTest.register();
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { rituals.clear(); openingUntil.clear(); lastStrike.clear(); knownFrames.clear(); ticks=0; });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
