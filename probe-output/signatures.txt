@@ -7609,3 +7609,96 @@ public abstract class net.minecraft.world.level.Level implements net.minecraft.w
   public net.minecraft.world.attribute.EnvironmentAttributeReader environmentAttributes();
   public net.minecraft.world.level.chunk.ChunkAccess getChunk(int, int);
 }
+===== net.minecraft.network.chat.Component
+Compiled from "Component.java"
+public interface net.minecraft.network.chat.Component extends com.mojang.brigadier.Message,net.minecraft.network.chat.FormattedText {
+  public abstract net.minecraft.network.chat.Style getStyle();
+  public abstract net.minecraft.network.chat.ComponentContents getContents();
+  public default java.lang.String getString();
+  public default java.lang.String getString(int);
+  public abstract java.util.List<net.minecraft.network.chat.Component> getSiblings();
+  public default java.lang.String tryCollapseToString();
+  public default net.minecraft.network.chat.MutableComponent plainCopy();
+  public default net.minecraft.network.chat.MutableComponent copy();
+  public abstract net.minecraft.util.FormattedCharSequence getVisualOrderText();
+  public default <T> java.util.Optional<T> visit(net.minecraft.network.chat.FormattedText$StyledContentConsumer<T>, net.minecraft.network.chat.Style);
+  public default <T> java.util.Optional<T> visit(net.minecraft.network.chat.FormattedText$ContentConsumer<T>);
+  public default java.util.List<net.minecraft.network.chat.Component> toFlatList();
+  public default java.util.List<net.minecraft.network.chat.Component> toFlatList(net.minecraft.network.chat.Style);
+  public default boolean contains(net.minecraft.network.chat.Component);
+  public static net.minecraft.network.chat.Component nullToEmpty(java.lang.String);
+  public static net.minecraft.network.chat.MutableComponent literal(java.lang.String);
+  public static net.minecraft.network.chat.MutableComponent translatable(java.lang.String);
+  public static net.minecraft.network.chat.MutableComponent translatable(java.lang.String, java.lang.Object...);
+  public static net.minecraft.network.chat.MutableComponent translatableEscape(java.lang.String, java.lang.Object...);
+  public static net.minecraft.network.chat.MutableComponent translatableWithFallback(java.lang.String, java.lang.String);
+  public static net.minecraft.network.chat.MutableComponent translatableWithFallback(java.lang.String, java.lang.String, java.lang.Object...);
+  public static net.minecraft.network.chat.MutableComponent empty();
+  public static net.minecraft.network.chat.MutableComponent keybind(java.lang.String);
+  public static net.minecraft.network.chat.MutableComponent nbt(net.minecraft.util.CompilableString<net.minecraft.commands.arguments.NbtPathArgument$NbtPath>, boolean, boolean, java.util.Optional<net.minecraft.network.chat.Component>, net.minecraft.network.chat.contents.data.DataSource);
+  public static net.minecraft.network.chat.MutableComponent score(net.minecraft.util.CompilableString<net.minecraft.commands.arguments.selector.EntitySelector>, java.lang.String);
+  public static net.minecraft.network.chat.MutableComponent score(java.lang.String, java.lang.String);
+  public static net.minecraft.network.chat.MutableComponent selector(net.minecraft.util.CompilableString<net.minecraft.commands.arguments.selector.EntitySelector>, java.util.Optional<net.minecraft.network.chat.Component>);
+  public static net.minecraft.network.chat.MutableComponent object(net.minecraft.network.chat.contents.objects.ObjectInfo);
+  public static net.minecraft.network.chat.MutableComponent object(net.minecraft.network.chat.contents.objects.ObjectInfo, net.minecraft.network.chat.Component);
+  public static net.minecraft.network.chat.Component translationArg(java.util.Date);
+  public static net.minecraft.network.chat.Component translationArg(com.mojang.brigadier.Message);
+  public static net.minecraft.network.chat.Component translationArg(java.util.UUID);
+  public static net.minecraft.network.chat.Component translationArg(net.minecraft.resources.Identifier);
+  public static net.minecraft.network.chat.Component translationArg(net.minecraft.world.level.ChunkPos);
+  public static net.minecraft.network.chat.Component translationArg(java.net.URI);
+}
+===== net.minecraft.network.chat.MutableComponent
+Compiled from "MutableComponent.java"
+public final class net.minecraft.network.chat.MutableComponent implements net.minecraft.network.chat.Component {
+  public static net.minecraft.network.chat.MutableComponent create(net.minecraft.network.chat.ComponentContents);
+  public net.minecraft.network.chat.ComponentContents getContents();
+  public java.util.List<net.minecraft.network.chat.Component> getSiblings();
+  public net.minecraft.network.chat.MutableComponent setStyle(net.minecraft.network.chat.Style);
+  public net.minecraft.network.chat.Style getStyle();
+  public net.minecraft.network.chat.MutableComponent append(java.lang.String);
+  public net.minecraft.network.chat.MutableComponent append(net.minecraft.network.chat.Component);
+  public net.minecraft.network.chat.MutableComponent withStyle(java.util.function.UnaryOperator<net.minecraft.network.chat.Style>);
+  public net.minecraft.network.chat.MutableComponent withStyle(net.minecraft.network.chat.Style);
+  public net.minecraft.network.chat.MutableComponent withStyle(net.minecraft.ChatFormatting...);
+  public net.minecraft.network.chat.MutableComponent withStyle(net.minecraft.ChatFormatting);
+  public net.minecraft.network.chat.MutableComponent withColor(int);
+  public net.minecraft.network.chat.MutableComponent withColor(net.minecraft.network.chat.TextColor);
+  public net.minecraft.network.chat.MutableComponent withoutShadow();
+  public net.minecraft.util.FormattedCharSequence getVisualOrderText();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  public java.lang.String toString();
+}
+===== net.minecraft.ChatFormatting
+Compiled from "ChatFormatting.java"
+public final class net.minecraft.ChatFormatting extends java.lang.Enum<net.minecraft.ChatFormatting> {
+  public static final net.minecraft.ChatFormatting BLACK;
+  public static final net.minecraft.ChatFormatting DARK_BLUE;
+  public static final net.minecraft.ChatFormatting DARK_GREEN;
+  public static final net.minecraft.ChatFormatting DARK_AQUA;
+  public static final net.minecraft.ChatFormatting DARK_RED;
+  public static final net.minecraft.ChatFormatting DARK_PURPLE;
+  public static final net.minecraft.ChatFormatting GOLD;
+  public static final net.minecraft.ChatFormatting GRAY;
+  public static final net.minecraft.ChatFormatting DARK_GRAY;
+  public static final net.minecraft.ChatFormatting BLUE;
+  public static final net.minecraft.ChatFormatting GREEN;
+  public static final net.minecraft.ChatFormatting AQUA;
+  public static final net.minecraft.ChatFormatting RED;
+  public static final net.minecraft.ChatFormatting LIGHT_PURPLE;
+  public static final net.minecraft.ChatFormatting YELLOW;
+  public static final net.minecraft.ChatFormatting WHITE;
+  public static final net.minecraft.ChatFormatting OBFUSCATED;
+  public static final net.minecraft.ChatFormatting BOLD;
+  public static final net.minecraft.ChatFormatting STRIKETHROUGH;
+  public static final net.minecraft.ChatFormatting UNDERLINE;
+  public static final net.minecraft.ChatFormatting ITALIC;
+  public static final net.minecraft.ChatFormatting RESET;
+  public static final char PREFIX_CODE;
+  public static net.minecraft.ChatFormatting[] values();
+  public static net.minecraft.ChatFormatting valueOf(java.lang.String);
+  public java.lang.String toString();
+  public static java.lang.String stripFormatting(java.lang.String);
+  public static net.minecraft.ChatFormatting getByCode(char);
+}
