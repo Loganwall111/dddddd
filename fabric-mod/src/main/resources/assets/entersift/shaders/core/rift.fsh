@@ -29,6 +29,132 @@ const vec3 FROST[8] = vec3[8](
     vec3(0.90, 0.75, 0.76), vec3(0.86, 0.44, 0.40), vec3(0.52, 0.44, 0.58), vec3(0.88, 0.81, 0.83),
     vec3(0.40, 0.70, 0.78), vec3(0.92, 0.88, 0.66), vec3(0.97, 0.96, 0.96), vec3(0.52, 0.55, 0.60));
 
+// Deterministic 2D hash & smooth value noise for low-frequency organic band & square modulation
+float hash21(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float riftNoise2D(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(
+        mix(hash21(i + vec2(0.0, 0.0)), hash21(i + vec2(1.0, 0.0)), u.x),
+        mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+        u.y
+    );
+}
+
+// Layer 2: Back distortion & radial chromatic opening depth (never a flat black hole)
+#ifdef RIFT_REFRACT
+vec3 backDistortion(vec2 sampleUv, vec2 bend, float edgeFade, float phase, vec3 tint, vec3 frost) {
+    vec2 chromaStep = bend * 0.0018;
+    vec2 uvR = clamp(sampleUv + chromaStep, vec2(0.002), vec2(0.998));
+    vec2 uvG = clamp(sampleUv, vec2(0.002), vec2(0.998));
+    vec2 uvB = clamp(sampleUv - chromaStep, vec2(0.002), vec2(0.998));
+    vec3 refracted = vec3(
+        texture(Sampler1, uvR).r,
+        texture(Sampler1, uvG).g,
+        texture(Sampler1, uvB).b
+    );
+    float ripple = 0.5 + 0.5 * sin(edgeFade * 16.0 - phase * 2.094395);
+    vec3 depthTint = mix(vec3(0.14, 0.26, 0.44), mix(tint, frost, 0.5), 0.45 + 0.35 * ripple);
+    return mix(refracted, depthTint, 0.24 * (1.0 - edgeFade));
+}
+#endif
+
+// Layer 3: Giant Rift aperture silhouette field (vertically dominant, organic curved profile)
+float apertureField(vec2 uvCentered, float phase) {
+    float curveX = uvCentered.x + 0.06 * sin(uvCentered.y * 2.8 + phase * 0.8976) + 0.03 * cos(uvCentered.y * 5.2 - phase * 0.8976);
+    float curveY = uvCentered.y * 0.86 + 0.04 * cos(uvCentered.x * 3.1 + phase * 0.8976);
+    float radial = length(vec2(curveX * 1.08, curveY));
+    return clamp(1.0 - smoothstep(0.42, 1.12, radial), 0.0, 1.0);
+}
+
+// Layer 4: Wavy dark outer "soul face" bands (low-frequency sine/cosine + smooth noise)
+float soulFaceBand(vec2 uvCentered, vec3 dir, float phase) {
+    float w1 = sin(uvCentered.y * 4.2 + sin(uvCentered.x * 3.1 - phase * 0.8976) * 1.25 + phase * 0.8976);
+    float w2 = cos(uvCentered.x * 3.4 - uvCentered.y * 3.8 + cos(uvCentered.y * 2.2 + phase * 0.8976) * 1.10);
+    float n = riftNoise2D(uvCentered * 2.6 + dir.xy * 1.4 + vec2(0.0, phase * 0.35));
+    float ringZone = smoothstep(0.18, 0.52, length(uvCentered * vec2(1.0, 0.82)))
+                   * (1.0 - smoothstep(0.78, 1.08, length(uvCentered * vec2(1.0, 0.82))));
+    float waveCrest = 0.62 + 0.26 * (0.55 * w1 + 0.45 * w2) + 0.16 * (n - 0.5);
+    return clamp(waveCrest * (0.65 + 0.45 * ringZone), 0.0, 1.0);
+}
+
+// Layer 5: Colored interior energy (cyan / turquoise / pastel mint / pink / magenta / violet + style tint)
+vec3 interiorEnergy(vec2 uvCentered, vec3 dir, float phase, vec3 tint, vec3 frost) {
+    float flowA = 0.5 + 0.5 * sin(uvCentered.y * 3.6 + uvCentered.x * 2.2 - phase * 0.8976 + dir.x * 2.0);
+    float flowB = 0.5 + 0.5 * cos(uvCentered.x * 4.1 - uvCentered.y * 2.9 + phase * 0.8976 + dir.y * 2.4);
+    vec3 cyan = vec3(0.36, 0.92, 0.90);
+    vec3 mint = vec3(0.58, 0.96, 0.84);
+    vec3 pink = vec3(0.98, 0.46, 0.72);
+    vec3 magenta = vec3(0.84, 0.26, 0.68);
+    vec3 violet = vec3(0.52, 0.30, 0.88);
+    vec3 siftRibbon = mix(mix(cyan, mint, flowA), mix(pink, mix(magenta, violet, flowB), flowB), 0.42 * flowB);
+    return mix(siftRibbon, mix(tint, frost, 0.48), 0.58);
+}
+
+// Layer 6: Inner glow & concentrated vertical luminance core
+vec3 innerGlow(vec2 uvCentered, float edgeFade, float phase, vec3 tint, vec3 frost) {
+    float spineWave = 0.10 * sin(uvCentered.y * 3.2 - phase * 0.8976);
+    float coreSpine = exp(-abs(uvCentered.x - spineWave) * 3.2) * exp(-abs(uvCentered.y) * 1.35);
+    float rimLuminance = pow(clamp(1.0 - edgeFade, 0.0, 1.0), 2.1);
+    vec3 coreCol = mix(mix(tint, frost, 0.5), vec3(1.0, 0.99, 1.0), 0.68);
+    return coreCol * (0.34 * coreSpine + 0.28 * rimLuminance);
+}
+
+// Layer 7: Deterministic floating light squares in depth (16 major semi-translucent squares across 3 depth layers)
+vec3 floatingLightSquares(vec2 uvCentered, vec3 dir, float phase, vec3 tint, vec3 frost) {
+    vec3 accum = vec3(0.0);
+    for (int i = 0; i < 16; i++) {
+        float fi = float(i);
+        float depthLayer = mod(fi, 3.0);
+        float parallax = 0.04 + 0.045 * depthLayer;
+        float ax = (fract(fi * 0.6180339 + 0.13) * 2.0 - 1.0) * 0.68;
+        float ay = (fract(fi * 0.3819660 + 0.29) * 2.0 - 1.0) * 0.74;
+        float driftX = 0.045 * sin(phase * 0.8976 + fi * 1.73);
+        float driftY = 0.065 * cos(phase * 0.8976 + fi * 2.19);
+        vec2 center = vec2(ax + driftX, ay + driftY) - dir.xy * parallax;
+        vec2 halfSize = vec2(
+            0.065 + 0.045 * fract(fi * 0.4142135),
+            0.070 + 0.050 * fract(fi * 0.7320508)
+        ) * (1.0 - 0.14 * depthLayer);
+        vec2 d = abs(uvCentered - center) / max(halfSize, vec2(0.01));
+        float sqDist = max(d.x, d.y);
+        float pane = smoothstep(1.04, 0.86, sqDist);
+        float border = smoothstep(0.18, 0.0, abs(sqDist - 0.94));
+        float halo = exp(-sqDist * 2.3) * 0.32;
+        float pulse = 0.72 + 0.28 * sin(phase * 0.8976 + fi * 1.37);
+        float layerWeight = (depthLayer == 0.0) ? 0.32 : ((depthLayer == 1.0) ? 0.22 : 0.14);
+        vec3 sqColor = (mod(fi, 2.0) < 0.5)
+            ? mix(frost, vec3(1.0), 0.55)
+            : mix(tint, vec3(0.72, 0.98, 1.0), 0.45);
+        accum += sqColor * (pane * 0.50 + border * 0.82 + halo) * pulse * layerWeight;
+    }
+    return accum;
+}
+
+// Layer 8: Volumetric god-ray / light-shaft component streaming through the Rift aperture
+vec3 riftGodRays(vec2 uvCentered, vec3 dir, float phase, vec3 tint, vec3 frost) {
+    float diag = uvCentered.x * 0.78 + uvCentered.y * 0.62 + dir.x * 0.35;
+    float r1 = pow(0.5 + 0.5 * sin(diag * 7.5 - phase * 0.8976), 4.0);
+    float r2 = pow(0.5 + 0.5 * cos(diag * 11.0 + phase * 0.8976 + 1.1), 5.0);
+    float verticalFalloff = smoothstep(-0.85, 0.75, uvCentered.y);
+    vec3 shaftCol = mix(mix(tint, frost, 0.5), vec3(1.0, 0.92, 0.96), 0.42);
+    return shaftCol * (0.16 * r1 + 0.12 * r2) * (0.45 + 0.55 * verticalFalloff);
+}
+
+// Layer 9: Soft highlight bloom shoulder
+vec3 riftBloom(vec3 col, float edgeFade, float gloss) {
+    float luma = max(col.r, max(col.g, col.b));
+    float highlight = smoothstep(0.68, 1.15, luma);
+    vec3 bloomTint = mix(col, vec3(1.0), 0.35);
+    return col + bloomTint * (0.20 * highlight + 0.12 * (1.0 - edgeFade) + 0.06 * gloss);
+}
+
 // 0.36: the destination seen through the opening, as a function so the frost can BLUR it by sampling
 // neighbouring directions. Everything is driven by the view ray, so walking past the rift parallaxes.
 vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float strength, float t) {
@@ -82,6 +208,7 @@ void main() {
     float t = GameTime * 1200.0;
     int view = int(riftData.b * 32.0) % 8;
     vec2 uv = riftData.rg;
+    vec2 uvCentered = uv * 2.0 - 1.0;
     vec3 tint = TINT[view];
     vec3 frost = FROST[view];
     // The vertex packs alpha as fade/2 + frost/2, so both terms can be recovered exactly.
@@ -97,13 +224,10 @@ void main() {
     float edgeFade = exp(-3.0 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
     float crack = 1.0 - smoothstep(0.012, 0.045, abs(uv.x - 0.5 - 0.1 * sin(floor(uv.y * 24.0) + floor(t * 5.0))));
     // -------------------------------------------------------------------------------------------
-    // 0.34/0.36: WHAT IS BEYOND THE OPENING.
-    // 0.31 sampled the copied framebuffer here, so the middle of the rift showed the world the player
-    // was standing in - a literal window onto the Overworld, with no dimension behind it (reported in
-    // game). The opening now paints the dimension the rift leads to and puts a BLURRED, FROSTED GLASS
-    // over it, exactly as the user described: "imagine a window and then gloss it over with the blurred
-    // frosted look". The real scene is sampled ONLY in the thin outer rim, where the glass edge bends
-    // what surrounds the rift.
+    // 0.34/0.36: WHAT IS BEYOND THE OPENING + 10-LAYER GLSL RIFT STACK.
+    // The opening paints the dimension the rift leads to, layers the Sift aperture, wavy dark
+    // "soul face" bands, colored interior energy, inner glow, 16 deterministic floating light
+    // squares in depth, and volumetric god-ray shafts, then puts a BLURRED, FROSTED GLASS over it.
     // -------------------------------------------------------------------------------------------
     vec3 dir = normalize(worldRay + vec3(0.0, 0.0, 0.0001)); // camera -> this point, world axes
 
@@ -113,12 +237,34 @@ void main() {
     col = mix(col, destination(normalize(dir + vec3(0.0, blur, 0.0)), tint, frost, uv, crack, strength, t), 0.5);
     col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t), 0.35);
     col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t), 0.35);
+
+    // Layer 3 & Layer 5: Giant Rift aperture field + colored interior energy ribbons
+    float aperture = apertureField(uvCentered, phase);
+    vec3 energy = interiorEnergy(uvCentered, dir, phase, tint, frost);
+    col = mix(col, energy, (0.24 + 0.18 * aperture) * (1.0 - 0.45 * frostAmt));
+
+    // Layer 4: Wavy dark outer "soul face" bands (smoothstep(0.70, 0.88, faceMask) -> vec3(0.02, 0.02, 0.04))
+    float faceMask = soulFaceBand(uvCentered, dir, phase);
+    float bandStrength = 0.36 * (1.0 - 0.4 * frostAmt) * smoothstep(0.05, 0.45, edgeFade);
+    col = mix(col, vec3(0.02, 0.02, 0.04), smoothstep(0.70, 0.88, faceMask) * bandStrength);
+
+    // Layer 7: Deterministic floating light squares in depth (16 semi-translucent squares)
+    vec3 squares = floatingLightSquares(uvCentered, dir, phase, tint, frost);
+    col += squares * (0.52 + 0.28 * (1.0 - frostAmt));
+
+    // Layer 8 & Layer 6: Volumetric god-ray shafts + concentrated inner glow
+    col += riftGodRays(uvCentered, dir, phase, tint, frost);
+    col += innerGlow(uvCentered, edgeFade, phase, tint, frost);
+
     // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
     col = mix(col, frost, frostAmt * 0.62);
     col += vec3(0.05) * frostAmt;
     // A slow gloss band sweeps the glass, the way the reference frames catch the light.
     float gloss = smoothstep(0.72, 1.0, sin((uv.x * 1.25 + uv.y * 0.75) * 3.14159 + t * 0.25) * 0.5 + 0.5);
     col += vec3(0.14) * gloss * (0.35 + frostAmt);
+
+    // Layer 9: Soft highlight bloom shoulder
+    col = riftBloom(col, edgeFade, gloss);
 
     // The opening is opaque: nothing of the world behind the rift may show through it. The captured
     // scene is used only in the outer rim, where the glass edge bends the surroundings. Up close the
@@ -136,7 +282,9 @@ void main() {
     // Vanilla 26.3 uses reverse-Z: larger means closer. Iris uses the fallback pipeline.
     float warpedDepth = texture(Sampler0, sampleUv).r;
     if (warpedDepth > gl_FragCoord.z + 0.00001) sampleUv = screen;
+    vec3 backCol = backDistortion(sampleUv, bend, edgeFade, phase, tint, frost);
     col = mix(texture(Sampler1, sampleUv).rgb, col, destAmt);
+    col = mix(backCol, col, destAmt);
 #endif
     fragColor = vec4(col, a) * ColorModulator;
 #endif

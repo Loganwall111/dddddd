@@ -56,6 +56,28 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     static final float[] VIBRANT_PINK_DAY = rgb(0xFF6FA8);
     static final float[] DEEP_AMBER_NIGHT = rgb(0xDB7840);
 
+    /**
+     * 6-Phase Rift Opening & Closing Lifecycle:
+     *   Phase A (DORMANT)        -> pre-ignition
+     *   Phase B (DISTORTION)     -> seed bar, shockwave, radial back distortion, bolts
+     *   Phase C (WHITE_IGNITION) -> intense white flash & stepped aperture birth
+     *   Phase D (COLOR_REVEAL)   -> white flash dissolves into cyan/pink/magenta/style colours
+     *   Phase E (STABLE_OPEN)    -> full 10-layer idle Rift with wavy dark bands, floating squares, and god rays
+     *   Phase F (CLOSING)        -> inward contraction and clean fade before removal
+     */
+    public enum LifecyclePhase {
+        DORMANT, DISTORTION, WHITE_IGNITION, COLOR_REVEAL, STABLE_OPEN, CLOSING
+    }
+
+    public static LifecyclePhase phaseForAge(float age) {
+        if (age <= 0f) return LifecyclePhase.DORMANT;
+        if (age < RIFT_BIRTH - 6f) return LifecyclePhase.DISTORTION;
+        if (age <= RIFT_BIRTH + 1f) return LifecyclePhase.WHITE_IGNITION;
+        if (age < GROWN) return LifecyclePhase.COLOR_REVEAL;
+        if (age >= RiftPortalEntity.MAX_TICKS - 30f) return LifecyclePhase.CLOSING;
+        return LifecyclePhase.STABLE_OPEN;
+    }
+
     private static final Map<Long, RiftShape> SHAPES = new LinkedHashMap<>(32, 0.75f, true) {
         @Override protected boolean removeEldestEntry(Map.Entry<Long, RiftShape> eldest) { return size() > 48; }
     };
@@ -340,6 +362,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                         clawRibbons(p, vc, sh, s, cam, a);
                     }
                     if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look2, s);
+                    if (SiftBudget.riftEffects) riftGodRayShafts(p, vc, sh, look2, s, a);
                 });
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look2, a));
                 if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
@@ -1335,11 +1358,38 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         col(p, vc, wv, bx + sx, by + sy, bz + sz, c, edgeA(fz, alpha)); col(p, vc, wv, ax + sx, ay + sy, az + sz, c, edgeA(fz, alpha));
     }
 
+    /**
+     * Layer 8: Soft accumulated volumetric god-ray shafts streaming through the Rift aperture,
+     * scaled by {@link dev.logan.entersift.SiftTimeState.Parameters#godRayIntensity()} (strongest in THRIVE).
+     */
+    private static void riftGodRayShafts(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, Look look, State s, float age) {
+        float rayIntensity = dev.logan.entersift.SiftTimeState.currentParameters().godRayIntensity();
+        if (rayIntensity <= 0.05f) return;
+        float openRamp = clamp((age - CLUSTER_START) / (GROWN - CLUSTER_START), 0f, 1f);
+        float baseAlpha = 0.045f * rayIntensity * (0.4f + 0.6f * openRamp);
+        float[] rayCol = mix(look.halo(), look.core(), 0.45f);
+        int shafts = 5;
+        for (int i = 0; i < shafts; i++) {
+            float u = (i + 0.5f) / shafts - 0.5f;
+            float sx = u * sh.w * 0.58f;
+            float sy0 = sh.cy() + sh.h * 0.36f;
+            float sy1 = RiftShape.BASE + 0.08f;
+            float spread = 0.35f + 0.15f * (i % 2);
+            float pulse = 0.72f + 0.28f * (float) Math.sin(s.time * 0.9f + i * 1.4f);
+            float aTop = clamp(baseAlpha * pulse, 0f, 0.22f);
+            col(p, vc, Warp.STILL, sx - 0.18f, sy0, 0.06f, rayCol, aTop);
+            col(p, vc, Warp.STILL, sx + 0.18f, sy0, 0.06f, rayCol, aTop);
+            col(p, vc, Warp.STILL, sx + spread, sy1, 0.24f, rayCol, 0f);
+            col(p, vc, Warp.STILL, sx - spread, sy1, 0.24f, rayCol, 0f);
+        }
+    }
+
     // ------------------------------------------------------------------ small helpers
 
     private static float clamp(float v, float lo, float hi) { return Math.max(lo, Math.min(hi, v)); }
     private static float[] c(float r, float g, float b) { return new float[]{r, g, b}; }
     static float[] rgb(int c) { return new float[]{(c >> 16 & 255) / 255f, (c >> 8 & 255) / 255f, (c & 255) / 255f}; }
+    private static float mix(float a, float b, float t) { return a + (b - a) * t; }
     private static float[] mix(float[] a, float[] b, float t) {
         return new float[]{a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
     }

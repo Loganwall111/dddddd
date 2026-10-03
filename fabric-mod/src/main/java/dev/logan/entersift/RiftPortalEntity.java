@@ -31,6 +31,7 @@ public class RiftPortalEntity extends Entity {
     private boolean returnExit;
     private RiftShape shape;
     public static final int GROWN = 100;
+    public static final int MAX_TICKS = 6000;
     private static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.FLOAT);
