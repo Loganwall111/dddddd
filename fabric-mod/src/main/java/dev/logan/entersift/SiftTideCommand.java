@@ -40,8 +40,8 @@ public final class SiftTideCommand {
         });
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> tideNode(String name) {
-        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(name);
+    private static LiteralArgumentBuilder<CommandSourceStack> tideNode(String commandName) {
+        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(commandName);
         // Bare /sifttide (and /sift tide) prints the same summary as "info".
         root.executes(ctx -> { info(ctx.getSource()); return 1; });
         root.then(Commands.literal("info").executes(ctx -> { info(ctx.getSource()); return 1; }));
