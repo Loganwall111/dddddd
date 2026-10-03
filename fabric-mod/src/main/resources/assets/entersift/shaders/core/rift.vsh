@@ -6,6 +6,7 @@
 // A 0.004 tremor and a low-frequency bow are the only geometric motion; the silhouette is a shader.
 
 #include <minecraft:fog.glsl>
+#include <minecraft:globals.glsl>
 #include <minecraft:projection.glsl>
 #include <minecraft:dynamictransforms.glsl>
 
