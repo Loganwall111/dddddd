@@ -1046,6 +1046,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static float clamp(float v, float lo, float hi) { return Math.max(lo, Math.min(hi, v)); }
     private static float[] c(float r, float g, float b) { return new float[]{r, g, b}; }
     static float[] rgb(int c) { return new float[]{(c >> 16 & 255) / 255f, (c >> 8 & 255) / 255f, (c & 255) / 255f}; }
+    private static float mix(float a, float b, float t) { return a + (b - a) * t; }
     private static float[] mix(float[] a, float[] b, float t) {
         return new float[]{a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
     }

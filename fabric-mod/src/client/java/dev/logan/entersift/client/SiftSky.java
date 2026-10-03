@@ -160,7 +160,7 @@ public final class SiftSky {
 
             // Layer 5–9: Additive Giant Sky Rift interior energy, inner glow, floating light squares,
             // aurora curtains, volumetric god-ray light shafts (intense in THRIVE), and bloom
-            Vec3 cam = ctx.gameRenderer().getMainCamera().position();
+            Vec3 cam = ctx.levelState().cameraRenderState.pos;
             ctx.submitNodeCollector().submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
                 auroraCurtains(p, vc, timeSec, weights, params);
                 skyRiftApertureAndEnergy(p, vc, timeSec, params);
@@ -1019,6 +1019,26 @@ public final class SiftSky {
     static float[] sunDirection(float tick) {
         float a = (float) (tick / 24000.0 * 2.0 * Math.PI);
         return new float[]{(float) Math.cos(a), (float) Math.sin(a), 0f};
+    }
+
+    /** Smooth 3D value noise used by SiftClouds and procedural dome variation. */
+    static float noise(float x, float y, float z) {
+        int xi = (int) Math.floor(x), yi = (int) Math.floor(y), zi = (int) Math.floor(z);
+        float xf = x - xi, yf = y - yi, zf = z - zi;
+        float u = xf * xf * (3f - 2f * xf);
+        float v = yf * yf * (3f - 2f * yf);
+        float w = zf * zf * (3f - 2f * zf);
+        float c00 = mix(hash3(xi, yi, zi), hash3(xi + 1, yi, zi), u);
+        float c10 = mix(hash3(xi, yi + 1, zi), hash3(xi + 1, yi + 1, zi), u);
+        float c01 = mix(hash3(xi, yi, zi + 1), hash3(xi + 1, yi, zi + 1), u);
+        float c11 = mix(hash3(xi, yi + 1, zi + 1), hash3(xi + 1, yi + 1, zi + 1), u);
+        return mix(mix(c00, c10, v), mix(c01, c11, v), w);
+    }
+
+    private static float hash3(int x, int y, int z) {
+        int n = x * 374761393 + y * 668265263 + z * 1442695041;
+        n = (n ^ (n >> 13)) * 1274126177;
+        return ((n ^ (n >> 16)) & 0x7FFFFFFF) / (float) 0x7FFFFFFF;
     }
 
     private static void emitSphereQuad(
