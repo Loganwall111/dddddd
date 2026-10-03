@@ -8,16 +8,19 @@ package dev.logan.entersift;
  *    across the top, an aura round the rim, and floating light squares.
  *  - THRIVE: near night. Rose/magenta sky where thousands of god rays fan out from high above and cover
  *    the screen, with white light squares everywhere.
- *  - LAVA_LAMP: the biome-aware lava-lamp sky the mod shipped with: it follows the clock through the four
- *    stages (day, noon, evening, night), i.e. the old "Day and Night Cycle" behaviour, now opt-in.
+ *  - LAVA_LAMP: the biome-aware lava-lamp sky the mod shipped with, parked on its night stage (the old
+ *    "Day and Night Cycle" look, now opt-in).
  *
  * {@code ticks} is the canonical time of day the tide sets (the Overworld clock drives the Sift timeline),
- * so the data-driven fog/light colours match the tide's skybox instead of fighting it.
+ * so the data-driven fog/light colours match the tide's skybox instead of fighting it. Because the client
+ * derives the tide from the clock bands, each tide's canonical tick MUST sit inside its own band; if you
+ * move a tick here, move the band in SiftTideServer.tideOf and SiftTideState with it. tools/test_data.py
+ * checks exactly that.
  */
 public enum SiftTide {
     FLOW("flow", 0x7FD3CF, 1000),
     THRIVE("thrive", 0xC86A92, 13000),
-    LAVA_LAMP("lava_lamp", 0xDB7840, 6000);
+    LAVA_LAMP("lava_lamp", 0xDB7840, 18000);
 
     public final String tide;
     public final int colour;

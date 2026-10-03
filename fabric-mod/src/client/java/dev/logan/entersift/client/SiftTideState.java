@@ -6,24 +6,22 @@ import net.minecraft.client.Minecraft;
 /**
  * 0.22 client side of the Sift tides.
  *
- * The tide is a function of the SIFT CLOCK: the server command {@code /sifttide <tide>} parks the
- * Overworld clock (which drives the Sift timeline) on that tide's canonical tick and keeps it there while
- * a tide is locked, so the client can read the tide straight off the clock that vanilla already syncs.
- * No custom packets, no scoreboard polling — and the skybox can never desync from the fog and light
- * colours, because both come from the same clock.
+ * The tide IS a clock band, full stop. The server command {@code /sifttide <tide>} parks the Overworld
+ * clock (which drives the Sift timeline) on that tide's canonical tick and re-asserts it every 5 seconds
+ * while a tide is locked, so the client reads the tide straight off the clock vanilla already syncs: no
+ * custom packets, no scoreboard polling, and the skybox can never desync from the fog, light and water
+ * colours, which come from that same clock.
  *
  *   ticks     0 -  8500   FLOW        the wavy dome tide (day)
  *   ticks  8500 - 15500   THRIVE      the god-ray tide (evening, near night)
- *   ticks 15500 - 24000   LAVA_LAMP   the shipped lava-lamp night sky
+ *   ticks 15500 - 24000   LAVA_LAMP   the shipped lava-lamp sky, its night stage
  *
- * {@link #set} lets a server message (or a future sync) force a tide; with {@link #locked} set, the
- * forced tide wins over the clock until the server says otherwise.
+ * Those bands are the contract: SiftTide's canonical ticks are checked against them by tools/test_data.py
+ * and the server mirrors the same bands in SiftTideServer.tideOf, so both sides always answer alike.
  */
 public final class SiftTideState {
     private SiftTideState() {}
 
-    private static SiftTide forced;
-    private static boolean locked;
     private static SiftTide last = SiftTide.LAVA_LAMP;
 
     /** Ticks inside the 24000-tick day, or -1 when no level is loaded. */
@@ -35,21 +33,16 @@ public final class SiftTideState {
 
     /** The tide the Sift is showing right now. */
     public static SiftTide tide() {
-        if (locked && forced != null) return forced;
         float t = clockTick();
         if (t < 0f) return last;
-        if (t < 8500f) return SiftTide.FLOW;
-        if (t < 15500f) return SiftTide.THRIVE;
+        last = of(t);
+        return last;
+    }
+
+    /** The band lookup, kept in step with {@code SiftTideServer.tideOf(long)}. */
+    public static SiftTide of(float tick) {
+        if (tick < 8500f) return SiftTide.FLOW;
+        if (tick < 15500f) return SiftTide.THRIVE;
         return SiftTide.LAVA_LAMP;
     }
-
-    /** Forces (or releases) a tide. Called by {@code /sifttide} feedback and by the server sync. */
-    public static void set(SiftTide tide, boolean lock) {
-        forced = tide;
-        locked = lock;
-        if (tide != null) last = tide;
-    }
-
-    /** 0..1 progress of the tide's own animation, so effects keep moving even while the clock is parked. */
-    public static float anim(float seconds) { return seconds; }
 }

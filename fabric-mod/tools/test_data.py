@@ -485,7 +485,10 @@ class DataContracts(unittest.TestCase):
         for k in ('SiftTideState.tide()','domeArches(','godRays(','lightSquares(','RAY_COUNT = 3200','tidePalette('):
             self.assertIn(k,sky)
         for k in ('SiftTide.FLOW','SiftTide.THRIVE','SiftTide.LAVA_LAMP'): self.assertIn(k,sky)
-        self.assertIn('static void set(SiftTide tide, boolean lock)',(C/'SiftTideState.java').read_text())
+        # The client has no private tide state: the clock band IS the tide (SiftTideState.of mirrors tideOf).
+        st=(C/'SiftTideState.java').read_text()
+        self.assertIn('public static SiftTide of(float tick)',st)
+        self.assertNotIn('private static boolean locked',st); self.assertNotIn('forced',st)
         # The spec document is the single source of truth for the rift mesh.
         spec=(ROOT/'docs/RIFT_SPEC.md').read_text().lower()
         for k in ('concentric recessed plates','back fade','back distortion','floating light squares','white before full colour'.replace('white before full colour','fade in')):
@@ -591,6 +594,30 @@ class DataContracts(unittest.TestCase):
         self.assertTrue((sp/'world_sift/shadow.vsh').exists())
         self.assertIn('SIFT_SIFT_LIGHT',(sp/'shaders.properties').read_text())
         self.assertIn('MAX_H = 24f',(C/'SiftClouds.java').read_text())
+    def test_v022_every_tide_tick_sits_in_its_own_clock_band(self):
+        # The client derives the tide from the clock, so a canonical tick outside its own band would make
+        # /sifttide <tide> show a different sky than the server (and the fog) believes is selected.
+        main=ROOT/'src/main/java/dev/logan/entersift'
+        enum=(main/'SiftTide.java').read_text()
+        ticks={name:int(t) for name,t in re.findall(r'(FLOW|THRIVE|LAVA_LAMP)\("[a-z_]+", 0x[0-9A-Fa-f]+, (\d+)\)',enum)}
+        self.assertEqual(set(ticks),{'FLOW','THRIVE','LAVA_LAMP'},ticks)
+        server=(main/'SiftTideServer.java').read_text()
+        client=(ROOT/'src/client/java/dev/logan/entersift/client/SiftTideState.java').read_text()
+        # Same bands on both sides, and no other place re-derives them.
+        bands=re.findall(r'< (\d+)L?\) return SiftTide\.(FLOW|THRIVE)',server)
+        self.assertEqual(bands,[('8500','FLOW'),('15500','THRIVE')],bands)
+        self.assertIn('if (tick < 8500f) return SiftTide.FLOW;',client)
+        self.assertIn('if (tick < 15500f) return SiftTide.THRIVE;',client)
+        self.assertGreater(ticks['FLOW'],0); self.assertLess(ticks['FLOW'],8500)
+        self.assertGreaterEqual(ticks['THRIVE'],8500); self.assertLess(ticks['THRIVE'],15500)
+        self.assertGreaterEqual(ticks['LAVA_LAMP'],15500); self.assertLess(ticks['LAVA_LAMP'],24000)
+        # The lock must be able to park anywhere (that is how a tide is walked through its own stages).
+        self.assertIn('lockedTick',server); self.assertIn('long lockedTick()',server)
+        # And /sifttide has to be executed somewhere, not just compiled: the smoke test drives every branch.
+        smoke=(main/'SiftSmokeTest.java').read_text()
+        for sub in ('sifttide info','sifttide set ','sifttide time ','sifttide cycle on','sifttide cycle off','sift tide '):
+            self.assertIn('"'+sub,smoke,sub)
+        self.assertIn('checkTide(',smoke); self.assertIn('SIFT-SMOKE FAIL tide',smoke)
     def test_eight_fixture_notes_have_sonorous_support(self):
         self.assertEqual(fn('dev/arena').count('entersift:sonorous_deepslate'),8)
         for pitch in range(8):self.assertIn(f'noteblock[note={pitch}]'.replace('noteblock','note_block'),fn('dev/arena'))

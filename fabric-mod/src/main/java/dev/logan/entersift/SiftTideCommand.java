@@ -15,7 +15,7 @@ import net.minecraft.server.level.ServerLevel;
  *
  *   /sifttide flow            the wavy mint dome (day)
  *   /sifttide thrive          the rose sky with thousands of god rays (near night)
- *   /sifttide lava_lamp       the shipped lava-lamp sky (the old cycle)
+ *   /sifttide lava_lamp       the shipped lava-lamp sky, parked on its night stage
  *   /sifttide change <tide>   same as above (the spelling from the feature request)
  *   /sifttide cycle on|off    let the clock drive the sky again / lock the current tide
  *   /sifttide time <ticks|day|noon|evening|night|midnight>
@@ -92,9 +92,11 @@ public final class SiftTideCommand {
                             .withStyle(ChatFormatting.RED));
                         return 0;
                     }
-                    SiftTideServer.setTime(ctx.getSource().getLevel(), ticks);
+                    SiftTide now = SiftTideServer.setTime(ctx.getSource().getLevel(), ticks);
                     say(ctx.getSource(), Component.literal("Sift clock set to ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(Long.toString(ticks)).withStyle(ChatFormatting.AQUA)));
+                        .append(Component.literal(Long.toString(ticks)).withStyle(ChatFormatting.AQUA))
+                        .append(Component.literal("  tide: ").withStyle(ChatFormatting.GRAY))
+                        .append(Component.literal(now == null ? "?" : now.tide).withStyle(ChatFormatting.AQUA)));
                     return 1;
                 })));
         root.then(Commands.literal("flow").executes(ctx -> { quick(ctx.getSource(), SiftTide.FLOW); return 1; }));
@@ -113,7 +115,9 @@ public final class SiftTideCommand {
         say(src, Component.literal("Sift tide: ").withStyle(ChatFormatting.GRAY)
             .append(Component.literal(SiftTideServer.tide().tide).withStyle(ChatFormatting.AQUA))
             .append(Component.literal("  cycle: ").withStyle(ChatFormatting.GRAY))
-            .append(Component.literal(SiftTideServer.locked() ? "locked (off)" : "on").withStyle(ChatFormatting.WHITE)));
+            .append(Component.literal(SiftTideServer.locked() ? "locked (off)" : "on").withStyle(ChatFormatting.WHITE))
+            .append(Component.literal("  clock: ").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(Long.toString(SiftTideServer.lockedTick())).withStyle(ChatFormatting.WHITE)));
     }
 
     /** Command feedback through the vanilla API (no raw JSON, nothing can be mis-escaped). */

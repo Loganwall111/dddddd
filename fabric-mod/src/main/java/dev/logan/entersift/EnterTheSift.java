@@ -176,6 +176,8 @@ public final class EnterTheSift implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             ticks++;
             SiftTideServer.tick(server);
+            ServerLevel overworld = server.overworld();
+            if (overworld != null) SiftTideServer.syncIfDrifted(overworld);
             if (ticks%100==0) {
                 rituals.values().removeIf(s -> s.expired(ticks));
                 lastStrike.values().removeIf(t -> ticks-t>200);

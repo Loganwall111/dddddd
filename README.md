@@ -14,7 +14,8 @@ untouched. The GPU window shader paints the same milk (`colourK` colour phase + 
 `/sifttide change <tide>`, `/sifttide cycle on|off`, `/sifttide time <ticks|day|...>` and `/sifttide info`
 (`/sift tide ...` works too). FLOW is the wavy mint dome with arch bands, a glowing border and light
 squares; THRIVE is near night with thousands of god rays fanning over the screen; LAVA_LAMP is the shipped
-lava-lamp sky. The command parks and locks the clock that the Sift timeline reads, so fog, light and water
+lava-lamp night sky. The tide is a clock band, and the command parks and locks the clock that the Sift
+timeline reads, so fog, light and water
 colours can never disagree with the skybox. Skybox previews: `fabric-mod/art/sky/sift_tides.png`
 (`python3 tools/preview_tide.py`).
 
@@ -22,7 +23,7 @@ colours can never disagree with the skybox. Skybox previews: `fabric-mod/art/sky
 
 The requested Minecraft mod is in **[`fabric-mod/`](fabric-mod/README.md)**. It targets **Minecraft Java 26.3 / Fabric / JDK 25** and includes source, original animated textures, dimension/worldgen data, gameplay functions, vanilla-Java rendering (no shader pack), tests and a GitHub Actions build workflow.
 
-**Status: experimental, uncompiled source alpha.** Offline integrity checks and 20 data tests pass; Minecraft compilation and playtesting are blocked in this workspace by unavailable Java/dependency downloads. No installable JAR is being claimed. Read the [mod guide](fabric-mod/README.md) and [verification record](fabric-mod/docs/BUILD_STATUS.md) before building or testing.
+**Status: experimental, playable alpha — CI-built.** GitHub Actions compiles the mod against Minecraft 26.3 / Fabric / JDK 25, bundles and verifies the built-in shader pack, runs 52 offline contract tests and boots a real dedicated 26.3 server, where a smoke test loads the data pack, worldgen features, biomes, creatures, rifts, the ritual and the `/sifttide` command. That run is green; a downloadable JAR is attached to each build. What nobody has done yet is **play it** — sky, tides, rift visuals and audio are still unverified by eye. Read the [mod guide](fabric-mod/README.md) and [verification record](fabric-mod/docs/BUILD_STATUS.md) before installing.
 
 The **0.2 visual pass** follows the newly supplied screenshots: [comparison and remaining gaps](fabric-mod/docs/VISUAL_STATUS.md).
 

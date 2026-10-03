@@ -34,6 +34,11 @@ final class SiftSmokeTest {
             if (ticks == 110) buildRitual(server);
             if (ticks == 130) playRitual(server);
             if (ticks == 680) checkRitual(server);
+            // 0.22: the tide command is the newest surface and the only one that writes the world clock.
+            if (ticks == 600) tideCommands(server);
+            if (ticks == 620) checkTide(server, SiftTide.THRIVE, 13000L, "locked on thrive");
+            if (ticks == 640) tideCommandsTwo(server);
+            if (ticks == 660) checkTide(server, SiftTide.FLOW, 1000L, "cycle off after time 1000");
             if (ticks == 700) {
                 EnterTheSift.LOGGER.info("SIFT-SMOKE DONE");
                 server.halt(false);
@@ -152,6 +157,40 @@ final class SiftSmokeTest {
             portalBlocks, ritualMarker, level.getBlockState(new net.minecraft.core.BlockPos(RX - 5, RY, RZ + 7)));
         if (!portalMarker || !(portalAnchor || portalBlocks))
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL ritual 1,3,7,6,5,2,4,8 did not open the portal (marker={}, anchor={})", portalMarker, portalAnchor);
+    }
+
+    // ------------------------------------------------------------------ tides (0.22)
+    // Every branch of /sifttide and /sift tide goes through the real dispatcher (a syntax error in the
+    // tree would land in the log as an unknown/incomplete command and fail the smoke report), then the
+    // Overworld clock is read back to prove the tide actually parked it in its own band.
+    private static void tideCommands(MinecraftServer server) {
+        run(server, "sifttide info");
+        run(server, "sifttide set not_a_tide");   // must answer, not throw
+        run(server, "sifttide set night");        // alias -> thrive
+        run(server, "sifttide time 13000");
+        run(server, "sift tide change lava_lamp");
+        run(server, "sift tide time dusk");       // invalid time: answer, do not move the clock
+        run(server, "sift tide lava_lamp");
+        run(server, "sifttide thrive");
+    }
+
+    private static void tideCommandsTwo(MinecraftServer server) {
+        run(server, "sifttide cycle on");
+        run(server, "sifttide time 1000");
+        run(server, "sifttide cycle off");
+        run(server, "sifttide flow");
+    }
+
+    private static void checkTide(MinecraftServer server, SiftTide want, long wantTick, String label) {
+        long now = ((server.overworld().getOverworldClockTime() % 24000L) + 24000L) % 24000L;
+        long delta = Math.abs(now - wantTick);
+        boolean tideOk = SiftTideServer.tide() == want && SiftTideServer.locked();
+        boolean clockOk = delta <= 40L;
+        EnterTheSift.LOGGER.info("SIFT-SMOKE tide {}: tide={} (want {}), locked={}, clock={} (want ~{})",
+            label, SiftTideServer.tide(), want, SiftTideServer.locked(), now, wantTick);
+        if (!tideOk) EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL tide {}: server tide is {} (want {})", label, SiftTideServer.tide(), want);
+        if (!clockOk) EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL tide {}: clock reads {} but the tide parks it at {} (band {})",
+            label, now, wantTick, SiftTideServer.lockedTick());
     }
 
     private SiftSmokeTest() {}

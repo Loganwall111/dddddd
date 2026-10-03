@@ -3,7 +3,7 @@
 
 **Experimental Fabric mod source · Minecraft Java 26.3 · Java 25**
 
-> **Build status:** Source and assets authored; offline resource checks and 20 data-contract tests pass. A Minecraft JAR has **not** been compiled or playtested in this environment. Java is unavailable, and attempts to download Java, Minecraft/Fabric dependencies and shader-validation tools were blocked by network failures. Do not install this in an important world yet.
+> **Build status:** GitHub Actions now compiles the whole mod (server + client source sets) against Minecraft 26.3 and Fabric, bundles and checks the built-in shader pack, runs 52 offline contract tests, and boots a **real dedicated 26.3 server** in which a smoke test loads the data pack, every custom feature, every biome, every creature and the rift/ritual path — that run is green (workflow `Enter the Sift — build & validate`, run 37088920699 and later). What is still unverified is what CI cannot see: how it **looks and feels** in-game (sky, tides, rift visuals, audio) — nobody has sat down and played it yet. Treat it as a playable alpha, not a released mod.
 
 **New in 0.22 — rifts rewritten from scratch.** A rift is now an authored prop, not a random cluster. [`docs/RIFT_SPEC.md`](docs/RIFT_SPEC.md) is the exact description of what a rift is made of, and the renderer implements it literally:
 
@@ -20,14 +20,18 @@ Deleted for good: the ripple ring, the seed box, the tiered pop-in flashes, the 
 ```mcfunction
 /sifttide flow           # the wavy mint dome: arch bands across the top, a glowing wavy border, light squares
 /sifttide thrive         # near night: rose sky with thousands of god rays fanning over the screen
-/sifttide lava_lamp      # the shipped lava-lamp sky (the old cycle)
+/sifttide lava_lamp      # the shipped lava-lamp sky, parked on its night stage (the old cycle)
 /sifttide change <tide>  # the same, spelled the way the request did
 /sifttide cycle on|off   # let the clock drive the sky again | lock the tide you are in
 /sifttide time <ticks|day|noon|evening|night|midnight>
 /sifttide info
 ```
 
-`/sift tide ...` works too. Because the tide parks and locks the clock the Sift timeline reads, the fog, light colour and water colour always agree with the skybox. The three skyboxes are previewed in [`art/sky/sift_tides.png`](art/sky/sift_tides.png), regenerable with `python3 tools/preview_tide.py`. It is a preview image, not an in-game screenshot.
+`/sift tide ...` works too. The tide is a **clock band** (0–8500 flow, 8500–15500 thrive, 15500–24000
+lava_lamp): each tide parks the Overworld clock on a tick inside its own band and holds it there while the
+tide is locked, and the client reads the tide straight back off that synced clock. Fog, light colour, water
+colour and the skybox therefore always agree, and `/sifttide time <ticks>` walks a tide through its own
+stages (`info` shows the parked clock). The three skyboxes are previewed in [`art/sky/sift_tides.png`](art/sky/sift_tides.png), regenerable with `python3 tools/preview_tide.py`. It is a preview image, not an in-game screenshot.
 
 **Earlier:** screenshot-driven cyan threshold, warm stepped rifts with drifting shards, six-colour note rims, richer souls, rose saltstone, and a dimension-scoped ribbon sky with day/night variation. See the [screenshot comparison and remaining gaps](docs/VISUAL_STATUS.md). All are still runtime-unverified.
 
