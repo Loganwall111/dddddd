@@ -176,9 +176,17 @@ def main():
     r.cmd("time set midnight")
     time.sleep(3)
     shoot(r, "rift_night_front", f"tp {who} 0 -53.5 13 180 -6")
+    # alpha-transparency proof: same rift, camera above it so the FLAT GROUND shows through the window
+    r.cmd("time set noon")
+    time.sleep(2)
+    shoot(r, "rift_against_ground", f"tp {who} 0 -48.5 9 180 24")
+    # Sift dimension sky: the quilted pastel dome (MCD2 ref) - never photographed until now
+    r.cmd(f"execute in entersift:the_sift run tp {who} 0 120 0 180 -35")
+    time.sleep(9)                       # dimension chunks + sky blend settle
+    shoot(r, "sift_sky_quilt", None, settle=2)
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
-    if len(pngs) < 6:
+    if len(pngs) < 8:
         raise SystemExit("missing captures")
 
 
