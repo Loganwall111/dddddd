@@ -1,0 +1,49 @@
+===== grab(Minecraft,boolean) bytecode
+  public static void grab(net.minecraft.client.Minecraft, boolean);
+    Code:
+         0: iload_1
+         1: ifeq          25
+         4: getstatic     #13                 // Field net/minecraft/SharedConstants.DEBUG_PANORAMA_SCREENSHOT:Z
+         7: ifeq          25
+        10: aload_0
+        11: aload_0
+        12: aload_0
+        13: getfield      #19                 // Field net/minecraft/client/Minecraft.gameDirectory:Ljava/io/File;
+        16: invokevirtual #25                 // Method net/minecraft/client/Minecraft.grabPanoramixScreenshot:(Ljava/io/File;)Lnet/minecraft/network/chat/Component;
+        19: invokevirtual #29                 // Method net/minecraft/client/Minecraft.showDebugChat:(Lnet/minecraft/network/chat/Component;)V
+        22: goto          45
+        25: aload_0
+        26: getfield      #19                 // Field net/minecraft/client/Minecraft.gameDirectory:Ljava/io/File;
+        29: aload_0
+        30: getfield      #33                 // Field net/minecraft/client/Minecraft.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;
+        33: invokevirtual #37                 // Method net/minecraft/client/renderer/GameRenderer.mainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+        36: aload_0
+        37: invokedynamic #43,  0             // InvokeDynamic #0:accept:(Lnet/minecraft/client/Minecraft;)Ljava/util/function/Consumer;
+        42: invokestatic  #47                 // Method grab:(Ljava/io/File;Lcom/mojang/blaze3d/pipeline/RenderTarget;Ljava/util/function/Consumer;)V
+        45: return
+
+  public static void grab(java.io.File, java.lang.String, com.mojang.blaze3d.pipeline.RenderTarget, int, java.util.function.Consumer<net.minecraft.network.chat.Component>);
+===== Gui chat/toast accessors
+  private static final net.minecraft.network.chat.Component SOCIAL_INTERACTIONS_NOT_AVAILABLE;
+  public static final net.minecraft.network.chat.Component SAVING_LEVEL;
+  private net.minecraft.client.gui.screens.Overlay overlay;
+  private final net.minecraft.client.gui.components.toasts.ToastManager toastManager;
+  private final net.minecraft.client.multiplayer.chat.ChatListener chatListener;
+  private net.minecraft.client.gui.components.toasts.TutorialToast socialInteractionsToast;
+  public net.minecraft.client.gui.screens.Overlay overlay();
+  public void setOverlay(net.minecraft.client.gui.screens.Overlay);
+  public net.minecraft.client.gui.components.toasts.ToastManager toastManager();
+  public net.minecraft.client.multiplayer.chat.ChatListener chatListener();
+  public void addSocialInteractionsToast();
+  public void openChatScreen(net.minecraft.client.gui.components.ChatComponent$ChatMethod);
+  public void openChatAndAddText(net.minecraft.client.gui.components.ChatComponent$ChatMethod, java.lang.String);
+===== ChatComponent clear
+  private final java.util.List<net.minecraft.client.multiplayer.chat.GuiMessage> allMessages;
+  private final java.util.List<net.minecraft.client.multiplayer.chat.GuiMessage$Line> trimmedMessages;
+  private boolean newMessageSinceScroll;
+  public void clearMessages(boolean);
+  public void addPlayerMessage(net.minecraft.network.chat.Component, net.minecraft.network.chat.MessageSignature, net.minecraft.client.multiplayer.chat.GuiMessageTag);
+  private void addMessage(net.minecraft.network.chat.Component, net.minecraft.network.chat.MessageSignature, net.minecraft.client.multiplayer.chat.GuiMessageSource, net.minecraft.client.multiplayer.chat.GuiMessageTag);
+  public void deleteMessage(net.minecraft.network.chat.MessageSignature);
+  private net.minecraft.client.gui.components.ChatComponent$DelayedMessageDeletion deleteMessageOrDelay(net.minecraft.network.chat.MessageSignature);
+  private void refreshTrimmedMessages();
