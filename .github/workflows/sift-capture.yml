@@ -57,7 +57,7 @@ jobs:
           { echo "== client =="; tail -80 /tmp/client.log 2>/dev/null; echo "== server =="; tail -40 /tmp/server.log 2>/dev/null; echo "== xvfb =="; tail -10 /tmp/xvfb.log 2>/dev/null; } > docs/captures/last_failure.log
           git config user.name "sift-probe"
           git config user.email "sift-probe@users.noreply.github.com"
-          git add docs/captures/last_failure.log
+          git add -f docs/captures/last_failure.log
           git commit -m "Capture failure logs [skip ci]" || echo nothing
           git pull --rebase || true
           git push || echo nothing
