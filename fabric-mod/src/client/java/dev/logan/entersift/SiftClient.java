@@ -57,6 +57,7 @@ public final class SiftClient implements ClientModInitializer {
                 new Material(SiftContent.id("block/ichor_flow")),
                 new Material(SiftContent.id("block/ichor_overlay")), null));
         installOverworldShaderPack();
+        dev.logan.entersift.client.SiftVisualCapture.register(); // inert unless the headless visual CI env flag is set
     }
 
     private static final String PACK = "Dungeons-II-Overworld-0.15.zip"; // must match build.gradle archiveFileName (test_data enforces it)

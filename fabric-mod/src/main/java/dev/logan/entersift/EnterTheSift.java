@@ -170,6 +170,7 @@ public final class EnterTheSift implements ModInitializer {
         SiftSounds.initialize();
         SiftEntities.initialize();
         SiftSmokeTest.register();
+        SiftVisualTest.register();
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { rituals.clear(); openingUntil.clear(); lastStrike.clear(); knownFrames.clear(); ticks=0; });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             ticks++;

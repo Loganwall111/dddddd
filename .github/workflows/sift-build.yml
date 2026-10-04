@@ -88,4 +88,99 @@ jobs:
           printf 'online-mode=false\nlevel-seed=20260927\nspawn-protection=0\nsync-chunk-writes=false\n' > run/server.properties
           SIFT_SMOKE=1 timeout 1200 ./gradlew --no-daemon runServer --args=nogui 2>&1 | tee "$RUNNER_TEMP/server.log" || true
           python3 tools/smoke_report.py "$RUNNER_TEMP/server.log"
+      - name: Headless visual test (real Minecraft client framebuffer)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xvfb-run >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq xvfb libgl1-mesa-dri
+          fi
+          mkdir -p run/screenshots
+          rm -f run/screenshots/*.png "$RUNNER_TEMP/sift-visual-overworld.done" "$RUNNER_TEMP/sift-visual-night.done"
+          export SIFT_VISUAL_PHASE1_SIGNAL="$RUNNER_TEMP/sift-visual-overworld.done"
+          export SIFT_VISUAL_PHASE2_SIGNAL="$RUNNER_TEMP/sift-visual-night.done"
+          server_log="$RUNNER_TEMP/sift-visual-server.log"
+          client_log="$RUNNER_TEMP/sift-visual-client.log"
+          SIFT_VISUAL_TEST=1 ./gradlew --no-daemon runServer --args=nogui > "$server_log" 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill -TERM "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          ready=0
+          for _ in $(seq 1 180); do
+            if grep -q '\[SIFT-VISUAL\] FAIL' "$server_log" 2>/dev/null; then
+              tail -100 "$server_log"
+              exit 1
+            fi
+            if grep -q 'Done (' "$server_log" 2>/dev/null && grep -q '\[SIFT-VISUAL\] scene ready:' "$server_log" 2>/dev/null; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              tail -100 "$server_log"
+              echo 'Visual-test server exited before it was ready.'
+              exit 1
+            fi
+            sleep 1
+          done
+          if [[ "$ready" != 1 ]]; then
+            tail -120 "$server_log"
+            echo 'Timed out waiting for the deterministic Rift scene.'
+            exit 1
+          fi
+          set +e
+          SIFT_VISUAL_CAPTURE=1 LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe timeout 240s \
+            xvfb-run -a -s '-screen 0 1280x720x24 +extension GLX +render -noreset' \
+            ./gradlew --no-daemon runClient \
+              --args='--quickPlayMultiplayer 127.0.0.1:25565 --username SiftVisualTest --width 1280 --height 720' \
+              > "$client_log" 2>&1
+          client_status=$?
+          set -e
+          echo '--- visual client log (tail) ---'
+          tail -120 "$client_log"
+          echo '--- visual server log (tail) ---'
+          tail -80 "$server_log"
+          if [[ "$client_status" != 0 ]]; then
+            echo "Headless Minecraft client exited with status $client_status."
+            exit "$client_status"
+          fi
+          if grep -q '\[SIFT-VISUAL\] FAIL' "$client_log" "$server_log"; then
+            echo 'The in-game visual capture reported a failure.'
+            exit 1
+          fi
+          grep -q 'capturing rift-front' "$client_log"
+          grep -q 'capturing rift-close-up' "$client_log"
+          grep -q 'capturing rift-side' "$client_log"
+          grep -q 'capturing rift-night-cubes' "$client_log"
+          grep -q 'capturing sift-sky-and-rift' "$client_log"
+          python3 - <<'PY'
+          from pathlib import Path
+          folder = Path('run/screenshots')
+          images = sorted(folder.glob('*.png'), key=lambda p: p.stat().st_mtime_ns)
+          if len(images) < 5:
+              raise SystemExit(f'Expected five actual Minecraft framebuffer PNGs; found {len(images)} in {folder}')
+          names = ['rift-front.png', 'rift-close-up.png', 'rift-side.png', 'rift-night-cubes.png', 'sift-sky-and-rift.png']
+          for source, name in zip(images, names):
+              target = folder / name
+              if source != target:
+                  source.replace(target)
+          print('Captured and labelled Minecraft framebuffer images:')
+          for name in names:
+              image = folder / name
+              print(f'  {image}: {image.stat().st_size} bytes')
+              if image.stat().st_size < 4096:
+                  raise SystemExit(f'Screenshot is unexpectedly small: {image}')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Sift-headless-client-screenshots
+          path: |
+            fabric-mod/run/screenshots/*.png
+            ${{ runner.temp }}/sift-visual-server.log
+            ${{ runner.temp }}/sift-visual-client.log
+          if-no-files-found: warn
 
