@@ -92,10 +92,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if ! command -v xvfb-run >/dev/null; then
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq xvfb libgl1-mesa-dri
-          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-utils libgl1-mesa-dri libglx-mesa0 libvulkan1 mesa-vulkan-drivers
+          xvfb-run -a -s '-screen 0 1280x720x24 +extension GLX +render -noreset' \
+            env LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe glxinfo -B
+          lvp_icd=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -type f -print -quit)
+          if [[ -n "$lvp_icd" ]]; then export VK_ICD_FILENAMES="$lvp_icd"; fi
           mkdir -p run/screenshots
           rm -f run/screenshots/*.png "$RUNNER_TEMP/sift-visual-overworld.done" "$RUNNER_TEMP/sift-visual-night.done"
           export SIFT_VISUAL_PHASE1_SIGNAL="$RUNNER_TEMP/sift-visual-overworld.done"
