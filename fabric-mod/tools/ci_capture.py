@@ -87,21 +87,27 @@ def start_client(strategy):
     return p
 
 
-def wait_player(r, name="CaptureBot", timeout=420):
+def wait_player(r, timeout=420):
+    """Return the connected player's name (the dev-launch injector may rename the session)."""
+    import re
     t0 = time.time()
     while time.time() - t0 < timeout:
-        if name in r.cmd("list"):
-            print("[capture] client joined", flush=True)
-            return True
+        out = r.cmd("list")
+        m = re.search(r"There are (\d+) of a max \d+ players online:\s*(.+)", out)
+        if m and int(m.group(1)) > 0:
+            name = m.group(2).strip().split(",")[0].strip()
+            print("[capture] client joined as:", name, flush=True)
+            return name
         time.sleep(4)
-    return False
+    return None
 
 
 def boot_client(r):
     for strat in STRATEGIES:
         start_client(strat)
-        if wait_player(r, timeout=300):
-            return
+        name = wait_player(r, timeout=300)
+        if name:
+            return name
         subprocess.run(["pkill", "-f", "KnotClient"], capture_output=True)
         subprocess.run(["pkill", "-f", "GradleWrapperMain"], capture_output=True)
         time.sleep(5)
@@ -125,17 +131,17 @@ def shoot(r, name, tp, settle=4.0, timeout=180):
 
 def main():
     r = wait_rcon()
-    boot_client(r)
-    r.cmd("gamemode creative CaptureBot")
+    who = boot_client(r)
+    r.cmd(f"gamemode creative {who}")
     r.cmd("time set noon")
     r.cmd("summon entersift:rift_portal 0 -56 0")
     time.sleep(12)                      # 100-tick growth timeline + chunk settle
-    shoot(r, "rift_first_person", "tp CaptureBot 0 -58 12 180 -8")
-    shoot(r, "rift_side_angle", "tp CaptureBot 12 -57 0 90 -8")
-    shoot(r, "rift_close_up", "tp CaptureBot 0 -58 5 180 -12")
+    shoot(r, "rift_first_person", f"tp {who} 0 -58 12 180 -8")
+    shoot(r, "rift_side_angle", f"tp {who} 12 -57 0 90 -8")
+    shoot(r, "rift_close_up", f"tp {who} 0 -58 5 180 -12")
     r.cmd("time set midnight")
     time.sleep(3)
-    shoot(r, "rift_night_front", "tp CaptureBot 0 -58 12 180 -8")
+    shoot(r, "rift_night_front", f"tp {who} 0 -58 12 180 -8")
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
     if len(pngs) < 4:

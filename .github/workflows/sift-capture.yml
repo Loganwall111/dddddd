@@ -64,7 +64,7 @@ jobs:
         if: failure()
         run: |
           mkdir -p docs/captures
-          { echo "== gl diag =="; cat /tmp/gldiag.log 2>/dev/null; echo "== client =="; tail -100 /tmp/client.log 2>/dev/null; echo "== server =="; tail -30 /tmp/server.log 2>/dev/null; } > docs/captures/last_failure.log
+          { echo "== gl diag =="; cat /tmp/gldiag.log 2>/dev/null; echo "== client =="; tail -300 /tmp/client.log 2>/dev/null; echo "== server =="; tail -60 /tmp/server.log 2>/dev/null; } > docs/captures/last_failure.log
           git config user.name "sift-probe"
           git config user.email "sift-probe@users.noreply.github.com"
           git add -f docs/captures/last_failure.log
