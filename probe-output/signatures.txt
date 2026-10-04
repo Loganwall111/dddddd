@@ -2913,8 +2913,30 @@ public abstract class net.minecraft.client.gui.screens.Screen extends net.minecr
   public net.minecraft.client.gui.navigation.ScreenRectangle getRectangle();
   public net.minecraft.sounds.Music getBackgroundMusic();
 }
-===== net.minecraft.client.multiplayer.ServerAddress
-Error: class not found: net.minecraft.client.multiplayer.ServerAddress
+===== net.minecraft.client.multiplayer.resolver.ServerAddress
+Compiled from "ServerAddress.java"
+public final class net.minecraft.client.multiplayer.resolver.ServerAddress {
+  public net.minecraft.client.multiplayer.resolver.ServerAddress(java.lang.String, int);
+  public java.lang.String getHost();
+  public int getPort();
+  public static net.minecraft.client.multiplayer.resolver.ServerAddress parseString(java.lang.String);
+  public static boolean isValidAddress(java.lang.String);
+  public static int parsePort(java.lang.String);
+  public java.lang.String toString();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+}
+===== net.minecraft.client.multiplayer.TransferState
+Compiled from "TransferState.java"
+public final class net.minecraft.client.multiplayer.TransferState extends java.lang.Record {
+  public net.minecraft.client.multiplayer.TransferState(java.util.Map<net.minecraft.resources.Identifier, byte[]>, java.util.Map<java.util.UUID, net.minecraft.client.multiplayer.PlayerInfo>, boolean);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.Map<net.minecraft.resources.Identifier, byte[]> cookies();
+  public java.util.Map<java.util.UUID, net.minecraft.client.multiplayer.PlayerInfo> seenPlayers();
+  public boolean seenInsecureChatWarning();
+}
 ===== net.minecraft.client.multiplayer.ServerData
 Compiled from "ServerData.java"
 public class net.minecraft.client.multiplayer.ServerData {
