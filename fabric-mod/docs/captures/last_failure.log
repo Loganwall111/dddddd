@@ -1,168 +1,170 @@
+== gl diag ==
+== glxinfo ==
+name of display: :99
+display: :99  screen: 0
+direct rendering: Yes
+Extended renderer info (GLX_MESA_query_renderer):
+    Vendor: Mesa (0xffffffff)
+    Device: llvmpipe (LLVM 20.1.2, 256 bits) (0xffffffff)
+    Version: 25.2.8
+    Accelerated: no
+    Video memory: 15988MB
+    Unified memory: yes
+    Preferred profile: core (0x1)
+    Max core profile version: 4.5
+    Max compat profile version: 4.5
+    Max GLES1 profile version: 1.1
+== eglinfo ==
+GBM platform:
+eglinfo: eglInitialize failed
+
+Wayland platform:
+eglinfo: eglInitialize failed
+
+X11 platform:
+EGL API version: 1.5
+EGL vendor string: Mesa Project
+EGL version string: 1.5
+== vulkaninfo ==
+	apiVersion         = 1.4.318
+	deviceName         = llvmpipe (LLVM 20.1.2, 256 bits)
+asahi_icd.json
+gfxstream_vk_icd.json
+intel_hasvk_icd.json
+intel_icd.json
+lvp_icd.json
+nouveau_icd.json
+radeon_icd.json
+virtio_icd.json
 == client ==
-	- fabric-client-gametest-api-v1 6.0.7+4be74c3f5d
-	- fabric-command-api-v2 3.1.2+fcdff87f5d
-	- fabric-content-registries-v0 15.0.4+74ed1ea55d
-	- fabric-convention-tags-v2 4.10.3+6b5b47fd5d
-	- fabric-crash-report-info-v1 1.0.7+fcdff87f5d
-	- fabric-creative-tab-api-v1 5.0.21+fcdff87f5d
-	- fabric-data-attachment-api-v1 2.2.30+3434d6d95d
-	- fabric-data-generation-api-v1 27.2.4+427eab975d
-	- fabric-debug-api-v1 1.0.4+3434d6d95d
-	- fabric-dimensions-v1 5.1.19+47f74c985d
-	- fabric-entity-events-v1 6.0.4+3434d6d95d
-	- fabric-events-interaction-v0 5.3.6+3434d6d95d
-	- fabric-game-rule-api-v1 4.0.10+3434d6d95d
-	- fabric-gametest-api-v1 4.0.32+3434d6d95d
-	- fabric-item-api-v1 14.7.0+cf6bc2db5d
-	- fabric-key-mapping-api-v1 2.0.8+3434d6d95d
-	- fabric-lifecycle-events-v1 4.1.9+ffef5f675d
-	- fabric-loot-api-v3 4.0.8+4068fd645d
-	- fabric-menu-api-v1 2.0.27+ed66f0a35d
-	- fabric-message-api-v1 7.0.10+3434d6d95d
-	- fabric-model-loading-api-v1 8.0.35+fcdff87f5d
-	- fabric-networking-api-v1 6.3.8+fcdff87f5d
-	- fabric-object-builder-api-v1 24.1.9+3434d6d95d
-	- fabric-particles-v1 5.0.24+3434d6d95d
-	- fabric-permission-api-v1 1.0.8+fcdff87f5d
-	- fabric-recipe-api-v1 10.0.8+fcdff87f5d
-	- fabric-registry-sync-v0 8.0.1+fcdff87f5d
-	- fabric-renderer-api-v1 17.0.15+79385d0b5d
-	- fabric-renderer-indigo 9.1.23+b9d63e335d
-	- fabric-rendering-fluids-v1 6.0.6+3434d6d95d
-	- fabric-rendering-v1 27.0.14+901a437c5d
-	- fabric-resource-conditions-api-v1 6.1.5+3434d6d95d
-	- fabric-resource-loader-v0 3.3.26+4fc5413f5d
-	- fabric-resource-loader-v1 3.0.4+fcdff87f5d
-	- fabric-screen-api-v1 5.2.4+48607d035d
-	- fabric-serialization-api-v1 2.0.7+74ed1ea55d
-	- fabric-sound-api-v1 2.0.7+3434d6d95d
-	- fabric-tag-api-v1 2.1.10+fcdff87f5d
-	- fabric-transfer-api-v1 8.0.25+fcdff87f5d
-	- fabric-transitive-access-wideners-v1 8.1.16+52268a0e5d
-	- fabricloader 0.19.5
-	- java 25
-	- minecraft 26.3
-	- mixinextras 0.5.5
-[15:52:49] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
-[15:52:50] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
-[15:52:51] [Datafixer Bootstrap #0/INFO] (Minecraft) 307 Datafixer optimizations took 349 milliseconds
-[15:52:54] [Render thread/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
-[15:52:54] [Render thread/INFO] (Minecraft) Setting user: CaptureBot
-[15:52:55] [Render thread/INFO] (entersift) Enter the Sift: eight notes, one threshold.
-[15:52:55] [Render thread/INFO] (entersift) [Sift] render switches: overworld_clouds=true rift_effects=true transition_hud=true rift_shader=true aura_glow=true
-[15:52:55] [Render thread/INFO] (entersift) [Sift] capture mode active: /home/runner/work/dddddd/dddddd/fabric-mod/../capture-out
-[15:52:55] [Render thread/INFO] (entersift) [Sift] installed optional shader pack Dungeons-II-Overworld-0.15.zip (off by default)
-[15:52:55] [Render thread/INFO] (Indigo) [Indigo] Registering Indigo renderer!
-[15:52:55] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.4.3-snapshot
-[15:52:55] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App name: Minecraft
-[15:52:55] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App version: 26.3
-[15:52:55] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App ID: com.mojang.minecraft
-[15:52:55] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: SDL revision: SDL-3.4.14--128-NOTFOUND
-[15:52:55] [Render thread/ERROR] (Minecraft) Failed to create backend OpenGL
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/overseer/hurt2.ogg does not exist, cannot add it to event entersift:entity.overseer.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/overseer/death.ogg does not exist, cannot add it to event entersift:entity.overseer.death
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/ambient1.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/ambient2.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/hurt1.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/hurt2.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/death.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.death
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/ambient1.ogg does not exist, cannot add it to event entersift:entity.note_bird.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/ambient2.ogg does not exist, cannot add it to event entersift:entity.note_bird.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/hurt1.ogg does not exist, cannot add it to event entersift:entity.note_bird.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/hurt2.ogg does not exist, cannot add it to event entersift:entity.note_bird.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/death.ogg does not exist, cannot add it to event entersift:entity.note_bird.death
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/ambient1.ogg does not exist, cannot add it to event entersift:entity.singer.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/ambient2.ogg does not exist, cannot add it to event entersift:entity.singer.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/hurt1.ogg does not exist, cannot add it to event entersift:entity.singer.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/hurt2.ogg does not exist, cannot add it to event entersift:entity.singer.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/death.ogg does not exist, cannot add it to event entersift:entity.singer.death
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/ambient1.ogg does not exist, cannot add it to event entersift:entity.soul_bee.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/ambient2.ogg does not exist, cannot add it to event entersift:entity.soul_bee.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/hurt1.ogg does not exist, cannot add it to event entersift:entity.soul_bee.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/hurt2.ogg does not exist, cannot add it to event entersift:entity.soul_bee.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/death.ogg does not exist, cannot add it to event entersift:entity.soul_bee.death
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/ambient1.ogg does not exist, cannot add it to event entersift:entity.watchling.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/ambient2.ogg does not exist, cannot add it to event entersift:entity.watchling.ambient
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/hurt1.ogg does not exist, cannot add it to event entersift:entity.watchling.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/hurt2.ogg does not exist, cannot add it to event entersift:entity.watchling.hurt
+[16:13:10] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/death.ogg does not exist, cannot add it to event entersift:entity.watchling.death
+[16:13:10] [Worker-Main-3/INFO] (Minecraft) Found unifont_pua-17.0.01.hex, loading
+[16:13:10] [Worker-Main-1/INFO] (Minecraft) Found unifont_all_no_pua-17.0.01.hex, loading
+[16:13:10] [Worker-Main-1/INFO] (Minecraft) Found unifont_jp_patch-17.0.01.hex, loading
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+[16:13:13] [Render thread/ERROR] (Minecraft) Error starting SoundSystem. Turning off sounds & music
 
-com.mojang.renderpearl.api.device.BackendCreationException: Failed to create window for OpenGL context: Couldn't find matching GLX visual
-	at knot//com.mojang.renderpearl.backend.opengl.GlDevice.<init>(GlDevice.java:83)
-	at knot//com.mojang.renderpearl.backend.opengl.GlBackend.createDevice(GlBackend.java:68)
-	at knot//net.minecraft.client.Minecraft.<init>(Minecraft.java:533)
-	at knot//net.minecraft.client.main.Main.main(Main.java:278)
+java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:274)
+	at knot//com.mojang.blaze3d.audio.Library.init(Library.java:149)
+	at knot//net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:121)
+	at knot//net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:110)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:503)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1240)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:967)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
 	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
 	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
 	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
 	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86)
-[15:52:55] [Render thread/ERROR] (Minecraft) Failed to create backend Vulkan
+[16:13:13] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[16:13:13] [Render thread/INFO] (Minecraft) Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[16:13:13] [Render thread/INFO] (Minecraft) Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[16:13:13] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[16:13:13] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[16:13:13] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[16:13:13] [Render thread/INFO] (Minecraft) Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[16:13:14] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[16:13:14] [Render thread/INFO] (Minecraft) Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[16:13:14] [Render thread/INFO] (Minecraft) Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[16:13:14] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[16:13:14] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
 
-com.mojang.renderpearl.api.device.BackendCreationException: Vulkan is not supported: Installed Vulkan doesn't implement the VK_KHR_surface extension
-	at knot//com.mojang.renderpearl.backend.vulkan.VulkanBackend.loadLibrary(VulkanBackend.java:69)
-	at knot//net.minecraft.client.Minecraft.<init>(Minecraft.java:530)
-	at knot//net.minecraft.client.main.Main.main(Main.java:278)
-	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
-	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
-	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
-	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86)
+> Task :runClient FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1791130375050.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':runClient' (registered by plugin 'fabric-loom').
+> Process 'command 'xvfb-run'' finished with non-zero exit value 143 (this value may indicate that the process was terminated with the SIGTERM signal)
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 5m
+8 actionable tasks: 1 executed, 7 up-to-date
 == server ==
-	- fabric-transitive-access-wideners-v1 8.1.16+52268a0e5d
-	- fabricloader 0.19.5
-	- java 25
-	- minecraft 26.3
-	- mixinextras 0.5.5
-[15:52:21] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
-[15:52:21] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
-[15:52:26] [main/INFO] (entersift) Enter the Sift: eight notes, one threshold.
-[15:52:26] [main/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
-[15:52:27] [Worker-Main-1/INFO] (Minecraft) No existing world data, creating new world
-[15:52:27] [Worker-Main-1/ERROR] (Minecraft) No key layers in MapLike[{}]
-[15:52:27] [Worker-Main-1/INFO] (Minecraft) Loaded 1875 advancements
-[15:52:27] [main/INFO] (BiomeModificationImpl) Applied 44 biome modifications to 18 of 79 new biomes in 5.103 ms
-[15:52:27] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.3
-[15:52:27] [Server thread/INFO] (Minecraft) Loading properties
-[15:52:27] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
-[15:52:27] [Server thread/INFO] (Minecraft) Generating keypair
-[15:52:27] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
-[15:52:28] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
-[15:52:28] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
-[15:52:28] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
-[15:52:28] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
-[15:52:28] [Server thread/INFO] (Minecraft) Preparing level "world"
-[15:52:28] [Server thread/INFO] (Minecraft) Selecting global world spawn...
-[15:52:28] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
-[15:52:28] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
-[15:52:28] [Server thread/INFO] (Minecraft) Time elapsed: 336 ms
-[15:52:28] [Server thread/INFO] (Minecraft) Done (0.453s)! For help, type "help"
-[15:52:28] [Server thread/INFO] (Minecraft) Starting remote control listener
-[15:52:28] [Server thread/INFO] (Minecraft) Thread RCON Listener started
-[15:52:28] [Server thread/INFO] (Minecraft) RCON running on 0.0.0.0:25575
-[15:52:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
-[15:52:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:the_sift
-[15:52:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
-[15:52:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:rift_tunnel
-[15:52:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
-[15:52:30] [RCON Listener #1/INFO] (Minecraft) Thread RCON Client /127.0.0.1 started
-[15:52:31] [Server thread/WARN] (Minecraft) Can't keep up! Is the server overloaded? Running 2937ms or 58 ticks behind
-[15:53:31] [Server thread/INFO] (Minecraft) Server empty for 60 seconds, pausing
-[15:59:31] [RCON Client /127.0.0.1 #2/INFO] (Minecraft) Thread RCON Client /127.0.0.1 shutting down
-== xvfb/gl diag ==
-> Warning:          Could not resolve keysym XF86DualRangeRadar
-> Warning:          Could not resolve keysym XF86RadarOverlay
-> Warning:          Could not resolve keysym XF86TraditionalSonar
-> Warning:          Could not resolve keysym XF86ClearvuSonar
-> Warning:          Could not resolve keysym XF86SidevuSonar
-> Warning:          Could not resolve keysym XF86NavInfo
-Errors from xkbcomp are not fatal to the X server
-The XKEYBOARD keymap compiler (xkbcomp) reports:
-> Warning:          Could not resolve keysym XF86CameraAccessEnable
-> Warning:          Could not resolve keysym XF86CameraAccessDisable
-> Warning:          Could not resolve keysym XF86CameraAccessToggle
-> Warning:          Could not resolve keysym XF86NextElement
-> Warning:          Could not resolve keysym XF86PreviousElement
-> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
-> Warning:          Could not resolve keysym XF86MarkWaypoint
-> Warning:          Could not resolve keysym XF86Sos
-> Warning:          Could not resolve keysym XF86NavChart
-> Warning:          Could not resolve keysym XF86FishingChart
-> Warning:          Could not resolve keysym XF86SingleRangeRadar
-> Warning:          Could not resolve keysym XF86DualRangeRadar
-> Warning:          Could not resolve keysym XF86RadarOverlay
-> Warning:          Could not resolve keysym XF86TraditionalSonar
-> Warning:          Could not resolve keysym XF86ClearvuSonar
-> Warning:          Could not resolve keysym XF86SidevuSonar
-> Warning:          Could not resolve keysym XF86NavInfo
-Errors from xkbcomp are not fatal to the X server
-The XKEYBOARD keymap compiler (xkbcomp) reports:
-> Warning:          Could not resolve keysym XF86CameraAccessEnable
-> Warning:          Could not resolve keysym XF86CameraAccessDisable
-> Warning:          Could not resolve keysym XF86CameraAccessToggle
-> Warning:          Could not resolve keysym XF86NextElement
-> Warning:          Could not resolve keysym XF86PreviousElement
-> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
-> Warning:          Could not resolve keysym XF86MarkWaypoint
-> Warning:          Could not resolve keysym XF86Sos
-> Warning:          Could not resolve keysym XF86NavChart
-> Warning:          Could not resolve keysym XF86FishingChart
-> Warning:          Could not resolve keysym XF86SingleRangeRadar
-> Warning:          Could not resolve keysym XF86DualRangeRadar
-> Warning:          Could not resolve keysym XF86RadarOverlay
-> Warning:          Could not resolve keysym XF86TraditionalSonar
-> Warning:          Could not resolve keysym XF86ClearvuSonar
-> Warning:          Could not resolve keysym XF86SidevuSonar
-> Warning:          Could not resolve keysym XF86NavInfo
-Errors from xkbcomp are not fatal to the X server
+[16:07:42] [Worker-Main-2/ERROR] (Minecraft) No key layers in MapLike[{}]
+[16:07:43] [Worker-Main-3/INFO] (Minecraft) Loaded 1875 advancements
+[16:07:43] [main/INFO] (BiomeModificationImpl) Applied 44 biome modifications to 18 of 79 new biomes in 9.097 ms
+[16:07:43] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.3
+[16:07:43] [Server thread/INFO] (Minecraft) Loading properties
+[16:07:43] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[16:07:43] [Server thread/INFO] (Minecraft) Generating keypair
+[16:07:43] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[16:07:44] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[16:07:44] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[16:07:44] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[16:07:44] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[16:07:44] [Server thread/INFO] (Minecraft) Preparing level "world"
+[16:07:44] [Server thread/INFO] (Minecraft) Selecting global world spawn...
+[16:07:44] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[16:07:44] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[16:07:44] [Server thread/INFO] (Minecraft) Time elapsed: 504 ms
+[16:07:44] [Server thread/INFO] (Minecraft) Done (0.646s)! For help, type "help"
+[16:07:44] [Server thread/INFO] (Minecraft) Starting remote control listener
+[16:07:44] [Server thread/INFO] (Minecraft) Thread RCON Listener started
+[16:07:44] [Server thread/INFO] (Minecraft) RCON running on 0.0.0.0:25575
+[16:07:44] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[16:07:44] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[16:07:44] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:the_sift
+[16:07:44] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:rift_tunnel
+[16:07:44] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[16:07:46] [RCON Listener #1/INFO] (Minecraft) Thread RCON Client /127.0.0.1 started
+[16:07:50] [Server thread/WARN] (Minecraft) Can't keep up! Is the server overloaded? Running 5726ms or 114 ticks behind
+[16:08:50] [Server thread/INFO] (Minecraft) Server empty for 60 seconds, pausing
+[16:17:56] [RCON Client /127.0.0.1 #2/INFO] (Minecraft) Thread RCON Client /127.0.0.1 shutting down
