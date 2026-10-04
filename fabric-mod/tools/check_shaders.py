@@ -5,7 +5,7 @@ Expands `#include "/..."` the way Iris does (paths are relative to shaders/), ch
 #version is the first directive, then compiles each world_*/ and root program as GLSL 1.20.
 Usage: check_shaders.py [path/to/glslangValidator]   (skips compile if the tool is missing)
 """
-import re, shutil, subprocess, sys, tempfile
+import os, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "shaderpack/shaders"
@@ -58,6 +58,10 @@ def main():
     errors += check_core(tool)
     if not tool:
         print(f"structure ok for {len(programs)} programs (glslangValidator not found; compile skipped)")
+        # 0.22: a silent skip once let a bad core shader through. In CI a missing validator is a failure.
+        if os.environ.get("CI"):
+            print("FAIL: CI requires glslangValidator; refusing to skip compilation")
+            sys.exit(2)
     sys.exit(1 if errors else 0)
 
 

@@ -175,7 +175,7 @@ void main() {
     vec2 uv = riftData.rg;
     vec2 ripple = vec2(sin(uv.y * 14.0 + t * 1.0), cos(uv.x * 10.0 - t * 0.6)) * 0.02;
     vec2 wuv = uv + ripple;
-    vec3 dest = destination(view, normalize(dir + vec3(ripple * 2.0, 0.0)));
+    vec3 dest = destination(view, normalize(dir + vec3(ripple * 2.0, 0.0)), t);
     // Three drifting fbm sheets in the trailer palette (pale white / soft pink / pale peach / cream,
     // subtle cyan-teal highlights), slowly shifting, with small brightness fluctuations.
     float g1 = fbm(wuv * 3.1 + vec2(t * 0.05, -t * 0.03));

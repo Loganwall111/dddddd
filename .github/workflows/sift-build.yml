@@ -45,11 +45,14 @@ jobs:
           PY
       - run: python3 tools/validate.py
       - run: python3 tools/test_data.py
-      - name: Compile-check shaderpack (glslang)
+      - name: Compile-check shaderpack + core shaders (glslang, mandatory)
         run: |
-          curl -sSL -o /tmp/glslang.tgz https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-linux-x86_64-release.tar.gz
+          curl -fsSL -o /tmp/glslang.tgz https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-linux-x86_64-release.tar.gz
           mkdir -p /tmp/glslang && tar xzf /tmp/glslang.tgz -C /tmp/glslang
-          python3 tools/check_shaders.py "$(find /tmp/glslang -name glslangValidator -type f | head -1)"
+          GLS=$(find /tmp/glslang -name glslangValidator -type f | head -1)
+          test -x "$GLS" || { echo "::error title=glslang missing::glslangValidator not found after download - refusing to skip"; exit 1; }
+          echo "glslang active: $GLS"
+          CI=1 python3 tools/check_shaders.py "$GLS"
       - name: Compile mod and report diagnostics
         shell: bash
         run: |
