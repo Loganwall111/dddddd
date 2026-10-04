@@ -105,11 +105,13 @@ def wait_player(r, timeout=420):
 def boot_client(r):
     for strat in STRATEGIES:
         start_client(strat)
-        name = wait_player(r, timeout=300)
+        # Gradle warm-up + asset load + world join measured ~5.5 min on the runner;
+        # a 300s window beheaded the client right at "Setting user" once already.
+        name = wait_player(r, timeout=900)
         if name:
             return name
+        subprocess.run(["pkill", "-f", "xvfb-run"], capture_output=True)
         subprocess.run(["pkill", "-f", "KnotClient"], capture_output=True)
-        subprocess.run(["pkill", "-f", "GradleWrapperMain"], capture_output=True)
         time.sleep(5)
     raise SystemExit("capture client could not join under any display strategy (see /tmp/client.log)")
 
