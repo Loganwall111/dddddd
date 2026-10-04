@@ -1,3 +1,19 @@
+# The Sift Suite — Sift Forge + Sift Realms
+
+Two new products built entirely on this repository's **original Sift-dimension asset set** (textures, creatures, rifts, biomes and sounds under `fabric-mod/`), launched from one hub (`npm run dev`):
+
+| Project | What it is |
+|---|---|
+| **SIFT FORGE** | A dark, Unreal-class **asset & scene editor**: 100+ authored blocks, 12 animated voxel creatures, 6 rift portal styles with tear-open shader, VFX (soul drifts, note shafts, outline shards, ichor pools, aurora sky), 7 preset landmark scenes (Ritual Plaza, Coral Expanse, Boneyard Gate, Titan Crags, Rose Spires, Rift Tunnel, Singer Meadow), gizmos, undo/redo, snap, sky/fog/bloom controls and exports to **GLB / OBJ / scene JSON / PNG / Fabric-ready Minecraft pack zip** (1.21.4+ / 26.x). |
+| **SIFT REALMS** | A **playable third-person 3D adventure** across three realms (Singer Meadow → Rose Spires → Boneyard) with rift travel, wandering fauna, hostile sculk + Twisted Warden, a 12-note resonance quest that awakens the ritual portal, repo ambience/music, and full VFX + bloom. |
+| **LUMITAL** | The legacy living-reality prototype, preserved. |
+
+Controls — *Forge*: click an asset then click the ground to place; Select/Orbit tools; gizmo Translate/Rotate/Scale; `Ctrl+Z` undo, `Ctrl+D` duplicate, `Del` delete, `Esc` cancel. *Realms*: `WASD` move, `Space` jump, `Shift` sprint, drag = look, click = gauntlet strike, walk into a rift to change realm.
+
+Everything rendered is generated live in WebGL from the repo's PNG/sound assets; creature rigs and rift shaders are original implementations of this repo's own design docs.
+
+---
+
 # Enter the Sift — Fabric mod project
 
 The requested Minecraft mod is in **[`fabric-mod/`](fabric-mod/README.md)**. It targets **Minecraft Java 26.3 / Fabric / JDK 25** and includes source, original animated textures, dimension/worldgen data, gameplay functions, vanilla-Java rendering (no shader pack), tests and a GitHub Actions build workflow.

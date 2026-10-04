@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { Hub } from "./Hub";
+import { EditorApp } from "./editor/EditorApp";
+import { GameApp } from "./game2/GameApp";
 import { GameExperience } from "./components/GameExperience";
 import { MainMenu, defaultSettings, type AppSettings } from "./components/MainMenu";
 import { cinematicAudio } from "./audio/CinematicAudio";
@@ -87,7 +90,7 @@ function LoadingSequence({ save, creatureName }: { save: SaveState; creatureName
   );
 }
 
-export default function App() {
+export function LumitalApp() {
   const [phase, setPhase] = useState<"boot" | "menu" | "creation" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
   const [sandbox, setSandbox] = useState(false);
   const [seed, setSeed] = useState(() => readJson<SaveState>(SAVE_KEY)?.seed ?? generateSeed());
@@ -230,5 +233,19 @@ export default function App() {
         ) : null}
       </AnimatePresence>
     </div>
+  );
+}
+
+/* ── Top-level launcher: Sift Forge editor · Sift Realms game · Lumital ── */
+export default function App() {
+  const [mode, setMode] = useState<"hub" | "editor" | "game" | "lumital">("hub");
+  return mode === "editor" ? (
+    <EditorApp onExit={() => setMode("hub")} />
+  ) : mode === "game" ? (
+    <GameApp onExit={() => setMode("hub")} />
+  ) : mode === "lumital" ? (
+    <LumitalApp />
+  ) : (
+    <Hub onPick={setMode} />
   );
 }
