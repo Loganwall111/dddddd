@@ -342,16 +342,22 @@ vec4 compose() {
     rgb += tint * halo * 0.55;
     alpha = max(alpha, halo * 0.42 * fogFade());
     // Chunky neon rim. White stays on the contour; it does not wash the fill.
-    float lip = (1.0 - smoothstep(0.06, 0.30, abs(sdfW))) * appear;
-    rgb = mix(rgb, vec3(1.0), max(stroke, lip * 0.8));
+    float lip = (1.0 - smoothstep(0.06, 0.42, abs(sdfW))) * appear;
+    rgb = mix(rgb, vec3(1.0), max(stroke, lip * 0.55));
     alpha = max(alpha, max(stroke, lip * 0.8) * fogFade());
+    // Recessed side wall. It is paler than the lip and dissolves toward the back of the alcove.
+    float wall = smoothstep(-0.90, -0.18, sdf) * (1.0 - smoothstep(-0.18, 0.02, sdf)) * appear;
+    float backDissolve = smoothstep(-0.90, -0.05, sdf);
+    vec3 wallCol = mix(vec3(0.95, 0.88, 0.90), vec3(1.0, 0.68, 0.74), 0.30);
+    rgb = mix(rgb, wallCol, wall * backDissolve * (1.0 - lip) * 0.75);
+    alpha = max(alpha, wall * backDissolve * 0.42 * fogFade());
     // Kept as a hairline. A strong inner stroke was cutting the fill into shelves.
     rgb = mix(rgb, mix(vec3(1.0), tint, 0.35), inner * 0.22);
     alpha = max(alpha, inner * 0.22 * fogFade());
     // Cyan / magenta fringe beside the rim — the close-up distortion, not a second fill.
     float fringe = smoothstep(0.0, 0.08, abs(sdfW)) * (1.0 - smoothstep(0.08, 0.34, abs(sdfW))) * appear;
     vec3 fringeCol = mix(vec3(0.20, 0.90, 1.0), vec3(1.0, 0.32, 0.70), 0.5 + 0.5 * sin(cell.y * 0.7 + t));
-    rgb += fringeCol * fringe * 0.40 * (1.0 - stroke);
+    rgb += fringeCol * fringe * 0.40 * (1.0 - stroke) * backDissolve;
     alpha = max(alpha, fringe * 0.28 * fogFade());
     // Geometry owns the hollow frames. This is only the faint daytime hint.
     rgb += vec3(1.0) * frag * 0.35;

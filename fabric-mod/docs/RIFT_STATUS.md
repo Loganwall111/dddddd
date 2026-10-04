@@ -2,7 +2,7 @@
 
 The fill is no longer a white cap. It is the trailer blend: gold along the bottom, pink toward the upper right, coral by day, deep amber by night, alpha 0.65. White stays on the rim. The wave moves only the sides and the corners. Side walls extrude and fade to nothing at the back. Detached frames are hollow and faint in daylight. Energy cubes rise at night only.
 
-The Sift sky keeps its original dome. A second dome of travelling wavy arches, with soft squares on the arches, is drawn over it so the base sky still shows through.
+The Sift sky keeps its original dome. A second dome of travelling wavy arches, with large soft rectangles riding the arches, is drawn over it so the base sky still shows through. The recess wall of a rift dissolves toward the back; the cyan/magenta fringe goes with it.
 
 # Rift status: 0.36 shader plane
 

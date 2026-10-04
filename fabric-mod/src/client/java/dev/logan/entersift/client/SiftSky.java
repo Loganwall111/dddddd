@@ -364,8 +364,8 @@ public final class SiftSky {
                 float f = s / (float) segs;
                 double az = f * Math.PI * 2.0;
                 // The arch is the wave. Two sines travel in opposite directions so it never sits still.
-                float wave = (float) (0.050 * Math.sin(az * 3.0 + t * 0.38 + b * 0.85)
-                    + 0.024 * Math.sin(az * 6.0 - t * 0.21 + b * 1.4));
+                float wave = (float) (0.11 * Math.sin(az * 2.0 + t * 0.32 + b * 0.7)
+                    + 0.045 * Math.sin(az * 4.0 - t * 0.18 + b * 1.1));
                 double el = el0 + wave;
                 float[] d = dir(az, el);
                 float[] lo = dir(az, el - 0.022);
@@ -387,10 +387,10 @@ public final class SiftSky {
                     v(p, vc, bleed, r, col, 0f);
                     v(p, vc, prevBleed, r, col, 0f);
                 }
-                // Soft squares on the arch, larger toward the horizon, blurred at the edges.
-                if (s % 3 == 1) {
-                    float size = 0.046f + 0.030f * (1f - el0);
-                    archSquare(p, vc, r * 0.992f, az, el + 0.012, size, white, 0.46f * weight);
+                // Soft rectangles on the arch. Large enough to read as the panorama panes, not specks.
+                if (s % 8 == 3) {
+                    float size = 0.14f + 0.10f * (1f - el0);
+                    archSquare(p, vc, r * 0.992f, az, el + 0.02, size, white, 0.50f * weight);
                 }
                 prev = d;
                 prevLo = lo;
@@ -403,7 +403,7 @@ public final class SiftSky {
     /** A soft square on the dome. Corners are clear so it reads as a blurred block, not a hard quad. */
     private static void archSquare(PoseStack.Pose p, VertexConsumer vc, float r, double az, double el,
                                    float size, float[] c, float a) {
-        float hy = size * 0.72f;
+        float hy = size * 0.42f;
         float[] mid = dir(az, el);
         float[] n = dir(az, el + hy), s = dir(az, el - hy), e = dir(az + size, el), w = dir(az - size, el);
         float[] ne = dir(az + size, el + hy), nw = dir(az - size, el + hy);
