@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.resources.model.sprite.Material;
 import dev.logan.entersift.client.SiftCreatureRenderer;
 import dev.logan.entersift.client.SiftModelDefs;
+import dev.logan.entersift.client.SiftCapture;
 import dev.logan.entersift.client.SiftSky;
 import dev.logan.entersift.client.SiftRenderTypes;
 import dev.logan.entersift.client.RiftPortalRenderer;
