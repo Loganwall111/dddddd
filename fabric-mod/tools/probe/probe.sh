@@ -213,3 +213,10 @@ echo "===== grab(Minecraft,boolean) bytecode"; javap -c -p -cp "$CP" net.minecra
 echo "===== Gui chat/toast accessors"; javap -p -cp "$CP" net.minecraft.client.gui.Gui 2>&1 | grep -iE "chat|toast|overlay|tablist|boss" | head -20
 echo "===== ChatComponent clear"; javap -p -cp "$CP" net.minecraft.client.gui.components.ChatComponent 2>&1 | grep -iE "clear|remove|messages" | head -12
 } > $OUT/clean_capture.txt
+# 0.24b: exact HUD-hide toggle path in 26.3 (KeyMapping click(Key), Gui/Minecraft hide toggles).
+{
+echo "===== KeyMapping"; javap -p -cp "$CP" net.minecraft.client.KeyMapping 2>&1 | head -40
+echo "===== Gui hide"; javap -p -cp "$CP" net.minecraft.client.gui.Gui 2>&1 | grep -iE "hide|toggle" | head
+echo "===== Minecraft hide"; javap -p -cp "$CP" net.minecraft.client.Minecraft 2>&1 | grep -iE "hide|toggle" | head
+echo "===== Key class"; CJ=$(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly'); unzip -Z1 "$CJ" 2>/dev/null | grep -iE "input/Key|Key\.class|blaze3d/input" | head -10
+} > $OUT/clean_capture.txt
