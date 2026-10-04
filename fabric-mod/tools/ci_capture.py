@@ -88,11 +88,14 @@ def start_client(strategy):
     return p
 
 
-def wait_player(r, timeout=420):
+def wait_player(r, timeout=420, proc=None):
     """Return the connected player's name (the dev-launch injector may rename the session)."""
     import re
     t0 = time.time()
     while time.time() - t0 < timeout:
+        if proc is not None and proc.poll() is not None:
+            print("[capture] client gradle exited early (rc=%s)" % proc.returncode, flush=True)
+            return None
         out = r.cmd("list")
         m = re.search(r"There are (\d+) of a max \d+ players online:\s*(.+)", out)
         if m and int(m.group(1)) > 0:
@@ -105,10 +108,10 @@ def wait_player(r, timeout=420):
 
 def boot_client(r):
     for strat in STRATEGIES:
-        start_client(strat)
+        proc = start_client(strat)
         # Gradle warm-up + asset load + world join measured ~5.5 min on the runner;
         # a 300s window beheaded the client right at "Setting user" once already.
-        name = wait_player(r, timeout=900)
+        name = wait_player(r, timeout=900, proc=proc)
         if name:
             return name
         subprocess.run(["pkill", "-f", "xvfb-run"], capture_output=True)

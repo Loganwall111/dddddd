@@ -36,6 +36,7 @@ public final class SiftCapture {
     private static long lastCount;
     private static String serverAddr;   // ENTERSIFT_CAPTURE_SERVER, e.g. 127.0.0.1:25565
     private static boolean joinAttempted;
+    private static int bootTicks;
 
     public static void register() {
         String d = System.getenv("ENTERSIFT_CAPTURE_DIR");
@@ -49,12 +50,14 @@ public final class SiftCapture {
     private static void tick(Minecraft mc) {
         if (dir == null) return;
         // 26.3 ignores --server/--port and quickPlay silently stalls in the dev launcher,
-        // so join programmatically once the title screen is up (26.3 API: gui.screens.ConnectScreen).
+        // so join programmatically ~15s after boot (26.3 API: gui.screens.ConnectScreen;
+        // Minecraft has no public screen getter, so gate on ticks + level==null instead).
+        bootTicks++;
         if (!joinAttempted && serverAddr != null && !serverAddr.isBlank()
-                && mc.level == null && mc.screen instanceof TitleScreen) {
+                && mc.level == null && bootTicks > 300) {
             joinAttempted = true;
             org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] capture joining {}", serverAddr);
-            ConnectScreen.startConnecting(mc.screen, mc, ServerAddress.parseString(serverAddr),
+            ConnectScreen.startConnecting(new TitleScreen(), mc, ServerAddress.parseString(serverAddr),
                 new ServerData("Sift Capture", serverAddr, ServerData.Type.OTHER), false, null);
             return;
         }
