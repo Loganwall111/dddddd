@@ -67,7 +67,7 @@ public final class SiftCapture {
         // matching the reference frames. 26.3 has no public hideGui accessor, but the keybind toggles it.
         if (!hudToggled) {
             hudToggled = true;
-            mc.options.keyToggleGui.click();
+            net.minecraft.client.KeyMapping.click(mc.options.keyToggleGui.getDefaultKey());
         }
         try {
             if (pending != null) {
