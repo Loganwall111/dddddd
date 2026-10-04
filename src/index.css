@@ -883,3 +883,8 @@ html, body, #root { height: 100%; margin: 0; background: var(--sf-bg); }
 .game-start-core { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 20px; }
 .game-start-core p { color: var(--sf-text); letter-spacing: .3em; text-transform: uppercase; font-size: 12px; margin: 0; }
 .game-start-core small { color: var(--sf-dim); max-width: 460px; line-height: 1.6; }
+
+/* minimap */
+.game-map { position: absolute; top: 58px; right: 14px; border-radius: 50%; background: rgba(8,10,12,.6); box-shadow: 0 0 24px rgba(53,224,208,.15); }
+.forge-biomewrap { display: flex; align-items: center; gap: 6px; }
+.forge-biomewrap select { background: var(--sf-panel2); color: var(--sf-text); border: 1px solid var(--sf-line); border-radius: 8px; padding: 6px; font-size: 12px; }

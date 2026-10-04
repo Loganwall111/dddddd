@@ -110,12 +110,15 @@ const SKY_FRAG = /* glsl */ `
 precision highp float;
 varying vec3 vDir;
 uniform vec3 uTop; uniform vec3 uBottom;
+uniform vec3 uTopN; uniform vec3 uBottomN; uniform float uMix;
 uniform float uTime; uniform float uNight; uniform float uRibbons;
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
 void main() {
   vec3 d = normalize(vDir);
+  vec3 top = mix(uTop, uTopN, uMix);
+  vec3 bot = mix(uBottom, uBottomN, uMix);
   float h = clamp(d.y * 0.5 + 0.5, 0.0, 1.0);
-  vec3 col = mix(uBottom, uTop, pow(h, 1.25));
+  vec3 col = mix(bot, top, pow(h, 1.25));
   /* aurora ribbons */
   float ang = atan(d.z, d.x);
   for (int i = 0; i < 4; i++) {
@@ -137,17 +140,25 @@ void main() {
   gl_FragColor = vec4(col, 1.0);
 }`;
 
-export function SkyDome({ top = "#39a59e", bottom = "#9fe8dc", night = false, ribbons = 1 }: {
+export function SkyDome({ top = "#39a59e", bottom = "#9fe8dc", night = false, ribbons = 1, topB, bottomB, mix = 0, mixRef: extMix }: {
   top?: string; bottom?: string; night?: boolean; ribbons?: number;
+  topB?: string; bottomB?: string; mix?: number; mixRef?: React.MutableRefObject<number>;
 }) {
+  const mixRef = useRef(mix);
+  mixRef.current = extMix ? extMix.current : mix;
   const mat = useMemo(() => new THREE.ShaderMaterial({
     vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, side: THREE.BackSide, depthWrite: false,
     uniforms: {
       uTop: { value: new THREE.Color(top) }, uBottom: { value: new THREE.Color(bottom) },
+      uTopN: { value: new THREE.Color(topB || top) }, uBottomN: { value: new THREE.Color(bottomB || bottom) },
+      uMix: { value: mix },
       uTime: { value: 0 }, uNight: { value: night ? 1 : 0 }, uRibbons: { value: ribbons },
     },
-  }), [top, bottom, night, ribbons]);
-  useFrame(({ clock }) => { mat.uniforms.uTime.value = clock.elapsedTime; });
+  }), [top, bottom, night, ribbons, topB, bottomB]);
+  useFrame(({ clock }) => {
+    mat.uniforms.uTime.value = clock.elapsedTime;
+    mat.uniforms.uMix.value = mixRef.current;
+  });
   return (
     <mesh material={mat}>
       <sphereGeometry args={[300, 32, 24]} />

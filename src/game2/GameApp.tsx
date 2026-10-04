@@ -14,14 +14,24 @@ interface Realm {
   id: string; name: string;
   ground: string; hi: string; stone: string;
   skyTop: string; skyBottom: string; fog: string; night?: boolean;
+  topB: string; bottomB: string; fogB: string;   /* opposite sky phase */
   seed: number; height: number;
   hostile?: boolean;
 }
 const REALMS: Realm[] = [
-  { id: "meadow", name: "Singer Meadow", ground: "#4fb3aa", hi: "#6fd8cc", stone: "#3f8f88", skyTop: "#39a59e", skyBottom: "#9fe8dc", fog: "#5bbfb7", seed: 11, height: 2.2 },
-  { id: "spires", name: "Rose Spires", ground: "#d88a98", hi: "#f0b0ba", stone: "#a8606e", skyTop: "#c96253", skyBottom: "#ffc9b0", fog: "#d88a80", seed: 22, height: 3.4, night: true },
-  { id: "boneyard", name: "Boneyard", ground: "#37555c", hi: "#4a7078", stone: "#26414a", skyTop: "#101c26", skyBottom: "#25454d", fog: "#1a343c", seed: 33, height: 2.6, night: true, hostile: true },
+  { id: "meadow", name: "Singer Meadow", ground: "#4fb3aa", hi: "#6fd8cc", stone: "#3f8f88", skyTop: "#39a59e", skyBottom: "#9fe8dc", fog: "#5bbfb7", topB: "#c96253", bottomB: "#ffb0a0", fogB: "#c97a6a", seed: 11, height: 2.2 },
+  { id: "spires", name: "Rose Spires", ground: "#d88a98", hi: "#f0b0ba", stone: "#a8606e", skyTop: "#c96253", skyBottom: "#ffc9b0", fog: "#d88a80", topB: "#3a2030", bottomB: "#8a4a5a", fogB: "#5a3040", seed: 22, height: 3.4, night: true },
+  { id: "boneyard", name: "Boneyard", ground: "#37555c", hi: "#4a7078", stone: "#26414a", skyTop: "#101c26", skyBottom: "#25454d", fog: "#1a343c", topB: "#2e5a60", bottomB: "#4a8a90", fogB: "#2e5a60", seed: 33, height: 2.6, night: true, hostile: true },
+  { id: "coral", name: "Coral Expanse", ground: "#3f9a9a", hi: "#6fd8d0", stone: "#2a7a8a", skyTop: "#2a7a8a", skyBottom: "#7fe8dc", fog: "#3fa8a8", topB: "#0e2a3a", bottomB: "#2a5a6a", fogB: "#12303a", seed: 44, height: 1.8 },
+  { id: "tunnel", name: "Rift Tunnel", ground: "#16333b", hi: "#1e4650", stone: "#0a1e24", skyTop: "#0a1418", skyBottom: "#123036", fog: "#0d1d22", topB: "#1a4650", bottomB: "#2a6a72", fogB: "#123036", seed: 55, height: 1.2, night: true, hostile: true },
 ];
+
+export interface MapData {
+  px: number; pz: number; yaw: number; realm: number;
+  rifts: { x: number; z: number }[];
+  shards: { x: number; z: number; taken: boolean }[];
+  mobs: { x: number; z: number; hostile: boolean }[];
+}
 
 function smooth(x: number, z: number, seed: number) {
   const xi = Math.floor(x), zi = Math.floor(z);
@@ -197,6 +207,7 @@ export function GameApp({ onExit }: { onExit: () => void }) {
   const [hud, setHud] = useState({ hp: 100, shards: 0, realm: REALMS[0].name, msg: "", dead: false, won: false, muted: false, started: false });
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(true);
+  const mapData = useRef<MapData>({ px: 0, pz: 0, yaw: 0, realm: 0, rifts: [], shards: [], mobs: [] });
   const audioRef = useRef<{ amb?: HTMLAudioElement; mus?: HTMLAudioElement }>({});
 
   useEffect(() => {
@@ -219,8 +230,9 @@ export function GameApp({ onExit }: { onExit: () => void }) {
   return (
     <div className="game-root">
       <Canvas shadows dpr={[1, 1.5]} camera={{ fov: 60, position: [0, 6, 14] }}>
-        <GameWorld onHud={setHud} started={started} />
+        <GameWorld onHud={setHud} started={started} map={mapData} />
       </Canvas>
+      <Minimap data={mapData} />
 
       {/* HUD */}
       <div className="game-hud">
@@ -265,7 +277,7 @@ export function GameApp({ onExit }: { onExit: () => void }) {
   );
 }
 
-function GameWorld({ onHud, started }: { onHud: (f: (h: any) => any) => void; started: boolean }) {
+function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => void; started: boolean; map: React.MutableRefObject<MapData> }) {
   const realmIx = useRef(0);
   const realm = REALMS[realmIx.current];
   const player = useRef(new THREE.Group());
@@ -280,6 +292,8 @@ function GameWorld({ onHud, started }: { onHud: (f: (h: any) => any) => void; st
   const won = useRef(false);
   const swing = useRef(0);
   const flash = useRef(0);
+  const cycle = useRef(0);
+  const mixRef = useRef(0);
   const gl = useThree((s) => s.gl);
 
   /* mobs + shards per realm */
@@ -470,6 +484,17 @@ function GameWorld({ onHud, started }: { onHud: (f: (h: any) => any) => void; st
     /* death */
     if (hp.current <= 0 && !dead.current) { dead.current = true; }
 
+    /* day/night cycle — the Sift's inverted sky (mint day ↔ amber night) */
+    cycle.current += dt;
+    mixRef.current = 0.5 - 0.5 * Math.cos((cycle.current / 150) * Math.PI * 2);
+
+    /* minimap feed */
+    const md = map.current;
+    md.px = p.x; md.pz = p.z; md.yaw = look.current.yaw; md.realm = realmIx.current;
+    md.rifts = rifts.map((rf) => ({ x: rf.pos.x, z: rf.pos.z }));
+    md.shards = w.shards.map((s) => ({ x: s.pos.x, z: s.pos.z, taken: s.taken }));
+    md.mobs = w.mobs.filter((m) => !m.dead).map((m) => ({ x: m.pos.x, z: m.pos.z, hostile: m.hostile }));
+
     /* HUD sync ~5Hz */
     hudTimer.current += dt;
     if (hudTimer.current > 0.2) {
@@ -494,7 +519,8 @@ function GameWorld({ onHud, started }: { onHud: (f: (h: any) => any) => void; st
     <>
       <color attach="background" args={[r.fog]} />
       <fog attach="fog" args={[r.fog, 18, 110]} />
-      <SkyDome top={r.skyTop} bottom={r.skyBottom} night={!!r.night} ribbons={1} />
+      <Atmosphere realm={r} mixRef={mixRef} />
+      <SkyDome top={r.skyTop} bottom={r.skyBottom} topB={r.topB} bottomB={r.bottomB} night={!!r.night} ribbons={1} mixRef={mixRef} />
       <ambientLight intensity={r.night ? 0.4 : 0.75} />
       <directionalLight position={[20, 30, 12]} intensity={r.night ? 0.7 : 1.5} color={r.night ? "#ffd8b0" : "#fff2d8"} castShadow
         shadow-mapSize={[1024, 1024]} shadow-camera-left={-50} shadow-camera-right={50} shadow-camera-top={50} shadow-camera-bottom={-50} />
@@ -540,6 +566,78 @@ function GameWorld({ onHud, started }: { onHud: (f: (h: any) => any) => void; st
       </EffectComposer>
     </>
   );
+}
+
+/* per-frame fog + background blend across the realm's two sky phases */
+function Atmosphere({ realm, mixRef }: { realm: Realm; mixRef: React.MutableRefObject<number> }) {
+  const scene = useThree((s) => s.scene);
+  const cA = useMemo(() => new THREE.Color(realm.fog), [realm]);
+  const cB = useMemo(() => new THREE.Color(realm.fogB), [realm]);
+  const tmp = useMemo(() => new THREE.Color(), []);
+  useFrame(() => {
+    tmp.copy(cA).lerp(cB, mixRef.current);
+    if (scene.fog) (scene.fog as THREE.Fog).color.copy(tmp);
+    if (scene.background instanceof THREE.Color) scene.background.copy(tmp);
+  });
+  return null;
+}
+
+/* top-down minimap: north-up, player arrow rotates with heading */
+function Minimap({ data }: { data: React.MutableRefObject<MapData> }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const iv = window.setInterval(() => {
+      const cv = ref.current;
+      if (!cv) return;
+      const ctx = cv.getContext("2d")!;
+      const S = cv.width, C = S / 2, scale = 1.6, R = 60;
+      const d = data.current;
+      ctx.clearRect(0, 0, S, S);
+      ctx.save();
+      ctx.beginPath(); ctx.arc(C, C, C - 2, 0, Math.PI * 2); ctx.clip();
+      ctx.fillStyle = "rgba(8,12,14,0.82)"; ctx.fillRect(0, 0, S, S);
+      /* rings */
+      ctx.strokeStyle = "rgba(53,224,208,0.15)";
+      for (let rr = 20; rr < C; rr += 20) { ctx.beginPath(); ctx.arc(C, C, rr, 0, Math.PI * 2); ctx.stroke(); }
+      const px = (x: number) => C + (x - d.px) * scale;
+      const pz = (z: number) => C + (z - d.pz) * scale;
+      const inR = (x: number, z: number) => (x - C) ** 2 + (z - C) ** 2 < R * R;
+      /* shards */
+      d.shards.forEach((s) => {
+        if (s.taken) return;
+        const x = px(s.x), z = pz(s.z);
+        if (!inR(x, z)) return;
+        ctx.fillStyle = "#5af2ff";
+        ctx.save(); ctx.translate(x, z); ctx.rotate(Math.PI / 4); ctx.fillRect(-2.5, -2.5, 5, 5); ctx.restore();
+      });
+      /* rifts */
+      d.rifts.forEach((rf) => {
+        const x = px(rf.x), z = pz(rf.z);
+        if (!inR(x, z)) return;
+        ctx.strokeStyle = "#ff7fae"; ctx.lineWidth = 2;
+        ctx.strokeRect(x - 4, z - 4, 8, 8);
+      });
+      /* mobs */
+      d.mobs.forEach((m) => {
+        const x = px(m.x), z = pz(m.z);
+        if (!inR(x, z)) return;
+        ctx.fillStyle = m.hostile ? "#ff5a6a" : "#7fd4b0";
+        ctx.beginPath(); ctx.arc(x, z, 2.2, 0, Math.PI * 2); ctx.fill();
+      });
+      /* player arrow */
+      ctx.save();
+      ctx.translate(C, C); ctx.rotate(-d.yaw);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(4, 5); ctx.lineTo(0, 2.5); ctx.lineTo(-4, 5); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.restore();
+      /* rim + realm tick */
+      ctx.strokeStyle = "rgba(53,224,208,0.5)"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(C, C, C - 2, 0, Math.PI * 2); ctx.stroke();
+    }, 90);
+    return () => window.clearInterval(iv);
+  }, [data]);
+  return <canvas ref={ref} width={150} height={150} className="game-map" aria-label="minimap" />;
 }
 
 function ShardSpin() {

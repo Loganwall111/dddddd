@@ -5,7 +5,7 @@ import { OrbitControls, TransformControls, Grid } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import {
-  BLOCKS, BLOCK_CATEGORIES, MOBS, RIFT_STYLES, SKIES, VFX_DEFS,
+  BLOCKS, BLOCK_CATEGORIES, BIOMES, MOBS, RIFT_STYLES, SKIES, VFX_DEFS,
   blockById, mobById, nextUid, type Placed, type Vec3,
 } from "../sift/core";
 import { BlockMesh } from "../sift/Blocks";
@@ -21,7 +21,7 @@ interface EditorSettings {
 }
 const defaultSettings: EditorSettings = { skyId: "sift_day", fog: 0.012, bloom: 0.9, ribbons: 1, snap: true, showGrid: true, anims: true, quality: "high" };
 
-type Tool = "select" | "place" | "erase" | "orbit";
+type Tool = "select" | "place" | "erase" | "orbit" | "biome";
 
 export function EditorApp({ onExit }: { onExit: () => void }) {
   const [items, setItems] = useState<Placed[]>(() => SCENE_PRESETS[0].build());
@@ -35,6 +35,7 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
   const [exportOpen, setExportOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
+  const [activeBiome, setActiveBiome] = useState(BIOMES[0].id);
   const [stats, setStats] = useState({ fps: 0, tris: 0 });
   const undoStack = useRef<string[]>([]);
   const redoStack = useRef<string[]>([]);
@@ -132,12 +133,18 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
           <span className="forge-slogan">forge the rift — original rift-dimension toolkit</span>
         </div>
         <div className="forge-tools">
-          {(["select", "place", "erase", "orbit"] as Tool[]).map((t) => (
+          {(["select", "place", "erase", "biome", "orbit"] as Tool[]).map((t) => (
             <button key={t} className={`forge-btn ${tool === t ? "on" : ""}`}
               onClick={() => { setTool(t); if (t !== "place") setPlacing(null); }}>
-              {t === "select" ? "Select" : t === "place" ? "Place" : t === "erase" ? "Erase" : "Orbit"}
+              {t === "select" ? "Select" : t === "place" ? "Place" : t === "erase" ? "Erase" : t === "biome" ? "Biome" : "Orbit"}
             </button>
           ))}
+          {tool === "biome" && (
+            <select className="forge-biomeselect" value={activeBiome} onChange={(e) => setActiveBiome(e.target.value)}
+              style={{ background: "#151b21", color: "#d7e2e8", border: "1px solid #232c35", borderRadius: 8, padding: "6px 8px" }}>
+              {BIOMES.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          )}
           <span className="forge-sep" />
           <button className="forge-btn" onClick={undo} title="Ctrl+Z">↶</button>
           <button className="forge-btn" onClick={redo} title="Ctrl+Shift+Z">↷</button>
@@ -226,7 +233,7 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
               items={items} selected={selected} setSelected={setSelected}
               tool={tool} placing={placing} setPlacing={setPlacing}
               settings={settings} setItems={setItems} pushUndo={pushUndo}
-              gizmo={gizmo} preview={preview} onStats={setStats}
+              gizmo={gizmo} preview={preview} onStats={setStats} activeBiome={activeBiome}
             />
           </Canvas>
           {placing && <div className="forge-hint">Placing <b>{placing.id}</b> — click ground · Esc to stop</div>}
@@ -320,8 +327,9 @@ function Viewport(props: {
   settings: EditorSettings; setItems: React.Dispatch<React.SetStateAction<Placed[]>>;
   pushUndo: (p: Placed[]) => void; gizmo: "translate" | "rotate" | "scale";
   preview: boolean; onStats: (s: { fps: number; tris: number }) => void;
+  activeBiome: string;
 }) {
-  const { items, selected, setSelected, tool, placing, setPlacing, settings, setItems, pushUndo, gizmo, preview, onStats } = props;
+  const { items, selected, setSelected, tool, placing, setPlacing, settings, setItems, pushUndo, gizmo, preview, onStats, activeBiome } = props;
   const [hover, setHover] = useState<Vec3 | null>(null);
   const selRef = useRef<THREE.Group>(null);
   const sky = SKIES.find((s) => s.id === settings.skyId) || SKIES[0];
@@ -366,6 +374,34 @@ function Viewport(props: {
     setSelected(item.uid);
   };
 
+  const paintBiome = (pt: THREE.Vector3) => {
+    const sx = Math.round(pt.x), sz = Math.round(pt.z);
+    if (lastPaint.current && lastPaint.current.distanceTo(new THREE.Vector3(sx, 0, sz)) < 1) return;
+    lastPaint.current = new THREE.Vector3(sx, 0, sz);
+    if (!strokeUndo.current) { pushUndo(items); strokeUndo.current = true; }
+    const bio = BIOMES.find((b) => b.id === activeBiome) || BIOMES[0];
+    const add: Placed[] = [{
+      uid: nextUid(), kind: "block", id: bio.ground, pos: [sx, 0.5, sz],
+      rot: [0, 0, 0], scale: [1, 1, 1], animated: true,
+    }];
+    const roll = Math.random();
+    if (roll < 0.16 && bio.flora.length) {
+      add.push({
+        uid: nextUid(), kind: "block", id: bio.flora[Math.floor(Math.random() * bio.flora.length)],
+        pos: [sx, 1.5, sz], rot: [0, Math.random() * 3, 0], scale: [1, 1, 1], animated: true,
+      });
+    } else if (roll < 0.28 && bio.stone.length) {
+      add.push({
+        uid: nextUid(), kind: "block", id: bio.stone[Math.floor(Math.random() * bio.stone.length)],
+        pos: [sx + (Math.random() > 0.5 ? 1 : -1), 0.5, sz], rot: [0, 0, 0], scale: [1, 1, 1], animated: true,
+      });
+    }
+    setItems((prev) => {
+      const filtered = prev.filter((i) => !(i.kind === "block" && Math.abs(i.pos[0] - sx) < 0.5 && Math.abs(i.pos[2] - sz) < 0.5 && i.pos[1] < 0.75));
+      return [...filtered, ...add];
+    });
+  };
+
   const groundClick = (e: ThreeEvent<MouseEvent>) => {
     if (e.delta > 4) return;
     if (!placing && tool === "select") setSelected(null);
@@ -396,11 +432,16 @@ function Viewport(props: {
       {/* ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow
         onClick={groundClick}
-        onPointerDown={(e) => { if (placing) { painting.current = true; strokeUndo.current = false; lastPaint.current = null; placeAt(e.point); } }}
+        onPointerDown={(e) => {
+          if (placing || tool === "biome") {
+            painting.current = true; strokeUndo.current = false; lastPaint.current = null;
+            if (placing) placeAt(e.point); else paintBiome(e.point);
+          }
+        }}
         onPointerMove={(e) => {
-          if (placing) {
+          if (placing || tool === "biome") {
             setHover([snapV(e.point.x), 0, snapV(e.point.z)]);
-            if (painting.current) placeAt(e.point);
+            if (painting.current) { if (placing) placeAt(e.point); else paintBiome(e.point); }
           }
         }}
         onPointerLeave={() => { setHover(null); painting.current = false; }}>
