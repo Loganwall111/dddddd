@@ -452,6 +452,11 @@ class DataContracts(unittest.TestCase):
         self.assertIn('if (age > 90) return;',rift)
         self.assertIn('private static void rearHaze(',rift)
         self.assertIn('private static void quiltPatches(',skyv)
+        # 0.23 headless capture harness (CI visual playtest).
+        self.assertIn('Screenshot.grab(mc, false)',(C/'SiftCapture.java').read_text())
+        self.assertIn('ENTERSIFT_CAPTURE_DIR',(C/'SiftCapture.java').read_text())
+        self.assertTrue((ROOT.parent/'.github/workflows/sift-capture.yml').exists())
+        self.assertIn('summon entersift:rift_portal',(ROOT/'tools/ci_capture.py').read_text())
     def test_v021_biome_skies_awakening_voxels_warp_overlay(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); sky=(C/'SiftSky.java').read_text(); hud=(C/'SiftTransition.java').read_text()

@@ -1,0 +1,63 @@
+name: Enter the Sift — headless visual capture (Xvfb + llvmpipe)
+on:
+  push:
+    paths:
+      - 'fabric-mod/src/client/**'
+      - 'fabric-mod/src/main/resources/assets/entersift/shaders/**'
+      - 'fabric-mod/tools/ci_capture.py'
+      - '.github/workflows/sift-capture.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fabric-mod
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: '25' }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Virtual display + software GL
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri libgl1-mesa-glx || true
+          Xvfb :99 -screen 0 1280x720x24 > /tmp/xvfb.log 2>&1 &
+          sleep 3
+          xdpyinfo -display :99 | head -3 || true
+      - name: Boot server + capture client, run the capture sequence
+        run: |
+          export ENTERSIFT_CAPTURE_DIR=$PWD/../capture-out
+          export DISPLAY=:99 GALLIUM_DRIVER=llvmpipe LIBGL_ALWAYS_SOFTWARE=1
+          mkdir -p "$ENTERSIFT_CAPTURE_DIR" run docs/captures
+          echo 'eula=true' > run/eula.txt
+          printf 'online-mode=false\nlevel-type=minecraft:flat\nenable-rcon=true\nrcon.password=capture\nrcon.port=25575\nspawn-protection=0\nview-distance=6\nsimulation-distance=6\n' > run/server.properties
+          ./gradlew --no-daemon runServer --args=nogui > /tmp/server.log 2>&1 &
+          sleep 25
+          ./gradlew --no-daemon runClient --args="--server 127.0.0.1 --port 25565 --username CaptureBot" > /tmp/client.log 2>&1 &
+          python3 tools/ci_capture.py "$ENTERSIFT_CAPTURE_DIR" 25575
+          rc=$?
+          pkill -f GradleWrapperMain || true; pkill -f net.minecraft || true
+          cp "$ENTERSIFT_CAPTURE_DIR"/rift_first_person.png docs/captures/rift_first_person.png || rc=1
+          cp "$ENTERSIFT_CAPTURE_DIR"/rift_side_angle.png docs/captures/rift_side_angle.png || rc=1
+          cp "$ENTERSIFT_CAPTURE_DIR"/rift_close_up.png docs/captures/rift_close_up.png || rc=1
+          cp "$ENTERSIFT_CAPTURE_DIR"/rift_night_front.png docs/captures/rift_night_front.png || rc=1
+          exit $rc
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rift-captures
+          path: |
+            fabric-mod/docs/captures/*.png
+            /tmp/client.log
+            /tmp/server.log
+      - name: Commit captures back to the branch (so they land in the dev sandbox)
+        if: success()
+        run: |
+          git config user.name "sift-probe"
+          git config user.email "sift-probe@users.noreply.github.com"
+          git add docs/captures || true
+          git commit -m "Headless rift captures [skip ci]" || echo "nothing to commit"
+          git pull --rebase || true
+          git push || echo "nothing to push"
