@@ -8,7 +8,7 @@ Extended renderer info (GLX_MESA_query_renderer):
     Device: llvmpipe (LLVM 20.1.2, 256 bits) (0xffffffff)
     Version: 25.2.8
     Accelerated: no
-    Video memory: 15988MB
+    Video memory: 15989MB
     Unified memory: yes
     Preferred profile: core (0x1)
     Max core profile version: 4.5
@@ -37,27 +37,8 @@ nouveau_icd.json
 radeon_icd.json
 virtio_icd.json
 == client ==
-	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86)
-X connection to :100 broken (explicit kill or server shutdown).
 
-> Task :runClient FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1791137995489.json
-
-[Incubating] Problems report is available at: file:///home/runner/work/dddddd/dddddd/fabric-mod/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':runClient' (registered by plugin 'fabric-loom').
-> Process 'command 'xvfb-run'' finished with non-zero exit value 143 (this value may indicate that the process was terminated with the SIGTERM signal)
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 15m 2s
+BUILD FAILED in 15m 1s
 8 actionable tasks: 3 executed, 5 up-to-date
 
 ==== client attempt with {'SDL_VIDEODRIVER': 'offscreen'} ====
@@ -81,10 +62,10 @@ Fabric Loom: 1.18.2
 > Task :configureClientLaunch UP-TO-DATE
 
 > Task :runClient
-[18:35:04] [main/WARN] (FabricLoader/Knot) Class path entries reference missing files: /home/runner/work/dddddd/dddddd/fabric-mod/build/resources/client - the game may not load properly!
-[18:35:04] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.3 with Fabric Loader 0.19.5
-[18:35:04] [main/INFO] (FabricLoader/Mappings) Mappings not present!
-[18:35:05] [main/INFO] (FabricLoader) Loading 52 mods:
+[19:16:36] [main/WARN] (FabricLoader/Knot) Class path entries reference missing files: /home/runner/work/dddddd/dddddd/fabric-mod/build/resources/client - the game may not load properly!
+[19:16:36] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.3 with Fabric Loader 0.19.5
+[19:16:36] [main/INFO] (FabricLoader/Mappings) Mappings not present!
+[19:16:36] [main/INFO] (FabricLoader) Loading 52 mods:
 	- entersift 0.21.0-alpha
 	- fabric-advancement-api-v1 1.0.0+38c7a2d55d
 	- fabric-api 0.161.0+26.3
@@ -137,29 +118,29 @@ Fabric Loom: 1.18.2
 	- java 25
 	- minecraft 26.3
 	- mixinextras 0.5.5
-[18:35:05] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
-[18:35:06] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
-[18:35:08] [Datafixer Bootstrap #0/INFO] (Minecraft) 307 Datafixer optimizations took 604 milliseconds
-[18:35:12] [Render thread/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
-[18:35:12] [Render thread/INFO] (Minecraft) Setting user: CaptureBot
-[18:35:13] [Render thread/INFO] (entersift) Enter the Sift: eight notes, one threshold.
-[18:35:13] [Render thread/INFO] (Indigo) [Indigo] Registering Indigo renderer!
-[18:35:13] [Render thread/INFO] (entersift) [Sift] render switches: overworld_clouds=true rift_effects=true transition_hud=true rift_shader=true aura_glow=true
-[18:35:13] [Render thread/INFO] (entersift) [Sift] capture mode active: /home/runner/work/dddddd/dddddd/fabric-mod/../capture-out server: 127.0.0.1:25565
-[18:35:13] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.4.3-snapshot
-[18:35:13] [Render thread/WARN] (Minecraft) Detected unexpected shutdown during last game startup: resetting fullscreen mode
-[18:35:13] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App name: Minecraft
-[18:35:13] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App version: 26.3
-[18:35:13] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App ID: com.mojang.minecraft
-[18:35:13] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: SDL revision: SDL-3.4.14--128-NOTFOUND
-[18:35:13] [Render thread/WARN] (Minecraft) Detected unexpected shutdown during last game startup: forcing preferred graphics API to OpenGL
-[18:35:13] [Render thread/INFO] (Minecraft) Using graphics backend OpenGL, using drivers: 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4
-[18:35:13] [Render thread/INFO] (Minecraft) Using graphics device: llvmpipe (LLVM 20.1.2, 256 bits) (Mesa)
-[18:35:13] [Render thread/INFO] (Minecraft) Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
-[18:35:13] [Render thread/INFO] (Minecraft) Created window using SDL video driver: offscreen
-[18:35:13] [Render thread/WARN] (Minecraft) Failed to set window icon: That operation is not supported
-[18:35:14] [Download-2/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
-[18:35:14] [Render thread/ERROR] (Minecraft) Error while loading the narrator
+[19:16:36] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[19:16:37] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[19:16:38] [Datafixer Bootstrap #0/INFO] (Minecraft) 307 Datafixer optimizations took 382 milliseconds
+[19:16:42] [Render thread/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
+[19:16:42] [Render thread/INFO] (Minecraft) Setting user: CaptureBot
+[19:16:42] [Render thread/INFO] (entersift) Enter the Sift: eight notes, one threshold.
+[19:16:42] [Render thread/INFO] (entersift) [Sift] render switches: overworld_clouds=true rift_effects=true transition_hud=true rift_shader=true aura_glow=true
+[19:16:42] [Render thread/INFO] (entersift) [Sift] capture mode active: /home/runner/work/dddddd/dddddd/fabric-mod/../capture-out server: 127.0.0.1:25565
+[19:16:42] [Render thread/INFO] (Indigo) [Indigo] Registering Indigo renderer!
+[19:16:42] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.4.3-snapshot
+[19:16:42] [Render thread/WARN] (Minecraft) Detected unexpected shutdown during last game startup: resetting fullscreen mode
+[19:16:42] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App name: Minecraft
+[19:16:42] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App version: 26.3
+[19:16:42] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App ID: com.mojang.minecraft
+[19:16:42] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: SDL revision: SDL-3.4.14--128-NOTFOUND
+[19:16:42] [Render thread/WARN] (Minecraft) Detected unexpected shutdown during last game startup: forcing preferred graphics API to OpenGL
+[19:16:42] [Render thread/INFO] (Minecraft) Using graphics backend OpenGL, using drivers: 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4
+[19:16:42] [Render thread/INFO] (Minecraft) Using graphics device: llvmpipe (LLVM 20.1.2, 256 bits) (Mesa)
+[19:16:42] [Render thread/INFO] (Minecraft) Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[19:16:42] [Render thread/INFO] (Minecraft) Created window using SDL video driver: offscreen
+[19:16:42] [Render thread/WARN] (Minecraft) Failed to set window icon: That operation is not supported
+[19:16:43] [Download-1/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[19:16:43] [Render thread/ERROR] (Minecraft) Error while loading the narrator
 
 com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite
 	at knot//com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:82)
@@ -193,78 +174,78 @@ Native library (linux-x86-64/libflite.so) not found in resource path (/home/runn
 		at knot//com.sun.jna.Native.extractFromResourcePath(Native.java:1141)
 		at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:297)
 		... 12 more
-[18:35:14] [Render thread/INFO] (Minecraft) Reloading ResourceManager: vanilla, vanilla, entersift, fabric-advancement-api-v1, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-client-gametest-api-v1, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-gametest-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/ritual/song.ogg does not exist, cannot add it to event entersift:ritual.song
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/music/sift_1.ogg does not exist, cannot add it to event entersift:music.sift
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/music/sift_2.ogg does not exist, cannot add it to event entersift:music.sift
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/ambient/sift_loop.ogg does not exist, cannot add it to event entersift:ambient.sift.loop
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/ambient/sift_mood.ogg does not exist, cannot add it to event entersift:ambient.sift.mood
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/ambient/sift_add_1.ogg does not exist, cannot add it to event entersift:ambient.sift.additions
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/ambient/sift_add_2.ogg does not exist, cannot add it to event entersift:ambient.sift.additions
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/ambient/sift_add_3.ogg does not exist, cannot add it to event entersift:ambient.sift.additions
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/blub/ambient1.ogg does not exist, cannot add it to event entersift:entity.blub.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/blub/ambient2.ogg does not exist, cannot add it to event entersift:entity.blub.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/blub/hurt1.ogg does not exist, cannot add it to event entersift:entity.blub.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/blub/hurt2.ogg does not exist, cannot add it to event entersift:entity.blub.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/blub/death.ogg does not exist, cannot add it to event entersift:entity.blub.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculker/ambient1.ogg does not exist, cannot add it to event entersift:entity.sculker.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculker/ambient2.ogg does not exist, cannot add it to event entersift:entity.sculker.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculker/hurt1.ogg does not exist, cannot add it to event entersift:entity.sculker.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculker/hurt2.ogg does not exist, cannot add it to event entersift:entity.sculker.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculker/death.ogg does not exist, cannot add it to event entersift:entity.sculker.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculkling/ambient1.ogg does not exist, cannot add it to event entersift:entity.sculkling.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculkling/ambient2.ogg does not exist, cannot add it to event entersift:entity.sculkling.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculkling/hurt1.ogg does not exist, cannot add it to event entersift:entity.sculkling.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculkling/hurt2.ogg does not exist, cannot add it to event entersift:entity.sculkling.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/sculkling/death.ogg does not exist, cannot add it to event entersift:entity.sculkling.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/antlerling/ambient1.ogg does not exist, cannot add it to event entersift:entity.antlerling.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/antlerling/ambient2.ogg does not exist, cannot add it to event entersift:entity.antlerling.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/antlerling/hurt1.ogg does not exist, cannot add it to event entersift:entity.antlerling.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/antlerling/hurt2.ogg does not exist, cannot add it to event entersift:entity.antlerling.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/antlerling/death.ogg does not exist, cannot add it to event entersift:entity.antlerling.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/ambient1.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/ambient2.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/hurt1.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/hurt2.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/death.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/licker/ambient1.ogg does not exist, cannot add it to event entersift:entity.licker.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/licker/ambient2.ogg does not exist, cannot add it to event entersift:entity.licker.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/licker/hurt1.ogg does not exist, cannot add it to event entersift:entity.licker.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/licker/hurt2.ogg does not exist, cannot add it to event entersift:entity.licker.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/licker/death.ogg does not exist, cannot add it to event entersift:entity.licker.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/overseer/ambient1.ogg does not exist, cannot add it to event entersift:entity.overseer.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/overseer/ambient2.ogg does not exist, cannot add it to event entersift:entity.overseer.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/overseer/hurt1.ogg does not exist, cannot add it to event entersift:entity.overseer.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/overseer/hurt2.ogg does not exist, cannot add it to event entersift:entity.overseer.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/overseer/death.ogg does not exist, cannot add it to event entersift:entity.overseer.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/ambient1.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/ambient2.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/hurt1.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/hurt2.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/death.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/note_bird/ambient1.ogg does not exist, cannot add it to event entersift:entity.note_bird.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/note_bird/ambient2.ogg does not exist, cannot add it to event entersift:entity.note_bird.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/note_bird/hurt1.ogg does not exist, cannot add it to event entersift:entity.note_bird.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/note_bird/hurt2.ogg does not exist, cannot add it to event entersift:entity.note_bird.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/note_bird/death.ogg does not exist, cannot add it to event entersift:entity.note_bird.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/singer/ambient1.ogg does not exist, cannot add it to event entersift:entity.singer.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/singer/ambient2.ogg does not exist, cannot add it to event entersift:entity.singer.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/singer/hurt1.ogg does not exist, cannot add it to event entersift:entity.singer.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/singer/hurt2.ogg does not exist, cannot add it to event entersift:entity.singer.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/singer/death.ogg does not exist, cannot add it to event entersift:entity.singer.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/ambient1.ogg does not exist, cannot add it to event entersift:entity.soul_bee.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/ambient2.ogg does not exist, cannot add it to event entersift:entity.soul_bee.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/hurt1.ogg does not exist, cannot add it to event entersift:entity.soul_bee.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/hurt2.ogg does not exist, cannot add it to event entersift:entity.soul_bee.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/death.ogg does not exist, cannot add it to event entersift:entity.soul_bee.death
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/watchling/ambient1.ogg does not exist, cannot add it to event entersift:entity.watchling.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/watchling/ambient2.ogg does not exist, cannot add it to event entersift:entity.watchling.ambient
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/watchling/hurt1.ogg does not exist, cannot add it to event entersift:entity.watchling.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/watchling/hurt2.ogg does not exist, cannot add it to event entersift:entity.watchling.hurt
-[18:35:14] [Worker-Main-3/WARN] (Minecraft) File entersift:sounds/entity/watchling/death.ogg does not exist, cannot add it to event entersift:entity.watchling.death
-[18:35:15] [Worker-Main-3/INFO] (Minecraft) Found unifont_pua-17.0.01.hex, loading
-[18:35:15] [Worker-Main-1/INFO] (Minecraft) Found unifont_all_no_pua-17.0.01.hex, loading
-[18:35:15] [Worker-Main-1/INFO] (Minecraft) Found unifont_jp_patch-17.0.01.hex, loading
+[19:16:43] [Render thread/INFO] (Minecraft) Reloading ResourceManager: vanilla, vanilla, entersift, fabric-advancement-api-v1, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-client-gametest-api-v1, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-gametest-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/ritual/song.ogg does not exist, cannot add it to event entersift:ritual.song
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/music/sift_1.ogg does not exist, cannot add it to event entersift:music.sift
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/music/sift_2.ogg does not exist, cannot add it to event entersift:music.sift
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/ambient/sift_loop.ogg does not exist, cannot add it to event entersift:ambient.sift.loop
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/ambient/sift_mood.ogg does not exist, cannot add it to event entersift:ambient.sift.mood
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/ambient/sift_add_1.ogg does not exist, cannot add it to event entersift:ambient.sift.additions
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/ambient/sift_add_2.ogg does not exist, cannot add it to event entersift:ambient.sift.additions
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/ambient/sift_add_3.ogg does not exist, cannot add it to event entersift:ambient.sift.additions
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/blub/ambient1.ogg does not exist, cannot add it to event entersift:entity.blub.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/blub/ambient2.ogg does not exist, cannot add it to event entersift:entity.blub.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/blub/hurt1.ogg does not exist, cannot add it to event entersift:entity.blub.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/blub/hurt2.ogg does not exist, cannot add it to event entersift:entity.blub.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/blub/death.ogg does not exist, cannot add it to event entersift:entity.blub.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculker/ambient1.ogg does not exist, cannot add it to event entersift:entity.sculker.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculker/ambient2.ogg does not exist, cannot add it to event entersift:entity.sculker.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculker/hurt1.ogg does not exist, cannot add it to event entersift:entity.sculker.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculker/hurt2.ogg does not exist, cannot add it to event entersift:entity.sculker.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculker/death.ogg does not exist, cannot add it to event entersift:entity.sculker.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculkling/ambient1.ogg does not exist, cannot add it to event entersift:entity.sculkling.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculkling/ambient2.ogg does not exist, cannot add it to event entersift:entity.sculkling.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculkling/hurt1.ogg does not exist, cannot add it to event entersift:entity.sculkling.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculkling/hurt2.ogg does not exist, cannot add it to event entersift:entity.sculkling.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/sculkling/death.ogg does not exist, cannot add it to event entersift:entity.sculkling.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/antlerling/ambient1.ogg does not exist, cannot add it to event entersift:entity.antlerling.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/antlerling/ambient2.ogg does not exist, cannot add it to event entersift:entity.antlerling.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/antlerling/hurt1.ogg does not exist, cannot add it to event entersift:entity.antlerling.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/antlerling/hurt2.ogg does not exist, cannot add it to event entersift:entity.antlerling.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/antlerling/death.ogg does not exist, cannot add it to event entersift:entity.antlerling.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/ambient1.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/ambient2.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/hurt1.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/hurt2.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/drift_jelly/death.ogg does not exist, cannot add it to event entersift:entity.drift_jelly.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/licker/ambient1.ogg does not exist, cannot add it to event entersift:entity.licker.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/licker/ambient2.ogg does not exist, cannot add it to event entersift:entity.licker.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/licker/hurt1.ogg does not exist, cannot add it to event entersift:entity.licker.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/licker/hurt2.ogg does not exist, cannot add it to event entersift:entity.licker.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/licker/death.ogg does not exist, cannot add it to event entersift:entity.licker.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/overseer/ambient1.ogg does not exist, cannot add it to event entersift:entity.overseer.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/overseer/ambient2.ogg does not exist, cannot add it to event entersift:entity.overseer.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/overseer/hurt1.ogg does not exist, cannot add it to event entersift:entity.overseer.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/overseer/hurt2.ogg does not exist, cannot add it to event entersift:entity.overseer.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/overseer/death.ogg does not exist, cannot add it to event entersift:entity.overseer.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/ambient1.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/ambient2.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/hurt1.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/hurt2.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/twisted_warden/death.ogg does not exist, cannot add it to event entersift:entity.twisted_warden.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/ambient1.ogg does not exist, cannot add it to event entersift:entity.note_bird.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/ambient2.ogg does not exist, cannot add it to event entersift:entity.note_bird.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/hurt1.ogg does not exist, cannot add it to event entersift:entity.note_bird.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/hurt2.ogg does not exist, cannot add it to event entersift:entity.note_bird.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/note_bird/death.ogg does not exist, cannot add it to event entersift:entity.note_bird.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/ambient1.ogg does not exist, cannot add it to event entersift:entity.singer.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/ambient2.ogg does not exist, cannot add it to event entersift:entity.singer.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/hurt1.ogg does not exist, cannot add it to event entersift:entity.singer.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/hurt2.ogg does not exist, cannot add it to event entersift:entity.singer.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/singer/death.ogg does not exist, cannot add it to event entersift:entity.singer.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/ambient1.ogg does not exist, cannot add it to event entersift:entity.soul_bee.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/ambient2.ogg does not exist, cannot add it to event entersift:entity.soul_bee.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/hurt1.ogg does not exist, cannot add it to event entersift:entity.soul_bee.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/hurt2.ogg does not exist, cannot add it to event entersift:entity.soul_bee.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/soul_bee/death.ogg does not exist, cannot add it to event entersift:entity.soul_bee.death
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/ambient1.ogg does not exist, cannot add it to event entersift:entity.watchling.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/ambient2.ogg does not exist, cannot add it to event entersift:entity.watchling.ambient
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/hurt1.ogg does not exist, cannot add it to event entersift:entity.watchling.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/hurt2.ogg does not exist, cannot add it to event entersift:entity.watchling.hurt
+[19:16:43] [Worker-Main-2/WARN] (Minecraft) File entersift:sounds/entity/watchling/death.ogg does not exist, cannot add it to event entersift:entity.watchling.death
+[19:16:43] [Worker-Main-2/INFO] (Minecraft) Found unifont_pua-17.0.01.hex, loading
+[19:16:43] [Worker-Main-1/INFO] (Minecraft) Found unifont_all_no_pua-17.0.01.hex, loading
+[19:16:43] [Worker-Main-1/INFO] (Minecraft) Found unifont_jp_patch-17.0.01.hex, loading
 ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
 ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
 ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
@@ -281,7 +262,7 @@ ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
 ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
 ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
 ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
-[18:35:17] [Render thread/ERROR] (Minecraft) Error starting SoundSystem. Turning off sounds & music
+[19:16:45] [Render thread/ERROR] (Minecraft) Error starting SoundSystem. Turning off sounds & music
 
 java.lang.IllegalStateException: Failed to open OpenAL device
 	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:274)
@@ -305,23 +286,42 @@ java.lang.IllegalStateException: Failed to open OpenAL device
 	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
 	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
 	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86)
-[18:35:17] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
-[18:35:17] [Render thread/INFO] (Minecraft) Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
-[18:35:17] [Render thread/INFO] (Minecraft) Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
-[18:35:17] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
-[18:35:17] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
-[18:35:17] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
-[18:35:17] [Render thread/INFO] (Minecraft) Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
-[18:35:18] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
-[18:35:18] [Render thread/INFO] (Minecraft) Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
-[18:35:18] [Render thread/INFO] (Minecraft) Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
-[18:35:18] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
-[18:35:18] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
-[18:35:32] [Render thread/INFO] (entersift) [Sift] capture joining 127.0.0.1:25565
-[18:35:32] [Render thread/INFO] (Minecraft) Connecting to 127.0.0.1, 25565
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[19:16:45] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[19:16:59] [Render thread/INFO] (entersift) [Sift] capture joining 127.0.0.1:25565
+[19:16:59] [Render thread/INFO] (Minecraft) Connecting to 127.0.0.1, 25565
+[19:17:01] [Render thread/INFO] (Minecraft) [System] [CHAT] Enter the Sift • The city remembers eight notes. 1 → 3 → 7 → 6 → 5 → 2 → 4 → 8 on Sonorous Deepslate.
+[19:17:01] [Render thread/INFO] (Minecraft) Loaded 2 advancements
+[19:17:02] [Render thread/WARN] (Minecraft) Requested post effect does not exist: minecraft:end_of_frame
+[19:17:02] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.
+[19:17:02] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.
+[19:17:03] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Command Buffer, capacity limit of 2 reached during a single frame. New capacity will be 8.
+[19:17:03] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Instanced, capacity limit of 2 reached during a single frame. New capacity will be 8.
+[19:17:03] [Render thread/WARN] (Minecraft) Failed to enable relative mouse mode: That operation is not supported
+[19:17:03] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Command Buffer, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[19:17:03] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Instanced, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[19:17:04] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Command Buffer, capacity limit of 16 reached during a single frame. New capacity will be 32.
+[19:17:04] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Instanced, capacity limit of 16 reached during a single frame. New capacity will be 32.
+[19:17:04] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Command Buffer, capacity limit of 32 reached during a single frame. New capacity will be 64.
+[19:17:04] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Instanced, capacity limit of 32 reached during a single frame. New capacity will be 64.
+[19:17:04] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Command Buffer, capacity limit of 64 reached during a single frame. New capacity will be 128.
+[19:17:04] [Render thread/INFO] (Minecraft) Resizing Chunk Sections Instanced, capacity limit of 64 reached during a single frame. New capacity will be 128.
+[19:17:10] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[19:17:20] [Render thread/INFO] (Minecraft) [System] [CHAT] CaptureBot was slain by Zombie
+[19:17:21] [Render thread/INFO] (Minecraft) Loaded 41 advancements
 
 > Task :runClient FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1791138900239.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1791141393104.json
 
 FAILURE: Build failed with an exception.
 
@@ -338,8 +338,6 @@ Execution failed for task ':runClient' (registered by plugin 'fabric-loom').
 BUILD FAILED in 15m
 8 actionable tasks: 1 executed, 7 up-to-date
 == server ==
-	- fabric-lifecycle-events-v1 4.1.9+ffef5f675d
-	- fabric-loot-api-v3 4.0.8+4068fd645d
 	- fabric-menu-api-v1 2.0.27+ed66f0a35d
 	- fabric-message-api-v1 7.0.10+3434d6d95d
 	- fabric-networking-api-v1 6.3.8+fcdff87f5d
@@ -360,41 +358,43 @@ BUILD FAILED in 15m
 	- java 25
 	- minecraft 26.3
 	- mixinextras 0.5.5
-[18:19:35] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
-[18:19:35] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
-[18:19:43] [main/INFO] (entersift) Enter the Sift: eight notes, one threshold.
-[18:19:43] [main/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
-[18:19:44] [Worker-Main-2/INFO] (Minecraft) No existing world data, creating new world
-[18:19:44] [Worker-Main-2/ERROR] (Minecraft) No key layers in MapLike[{}]
-[18:19:45] [Worker-Main-3/INFO] (Minecraft) Loaded 1875 advancements
-[18:19:46] [main/INFO] (BiomeModificationImpl) Applied 44 biome modifications to 18 of 79 new biomes in 8.318 ms
-[18:19:46] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.3
-[18:19:46] [Server thread/INFO] (Minecraft) Loading properties
-[18:19:46] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
-[18:19:46] [Server thread/INFO] (Minecraft) Generating keypair
-[18:19:46] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
-[18:19:46] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
-[18:19:46] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
-[18:19:46] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
-[18:19:46] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
-[18:19:46] [Server thread/INFO] (Minecraft) Preparing level "world"
-[18:19:46] [Server thread/INFO] (Minecraft) Selecting global world spawn...
-[18:19:47] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
-[18:19:47] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
-[18:19:47] [Server thread/INFO] (Minecraft) Time elapsed: 469 ms
-[18:19:47] [Server thread/INFO] (Minecraft) Done (0.617s)! For help, type "help"
-[18:19:47] [Server thread/INFO] (Minecraft) Starting remote control listener
-[18:19:47] [Server thread/INFO] (Minecraft) Thread RCON Listener started
-[18:19:47] [Server thread/INFO] (Minecraft) RCON running on 0.0.0.0:25575
-[18:19:47] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
-[18:19:47] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:rift_tunnel
-[18:19:47] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
-[18:19:47] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:the_sift
-[18:19:47] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
-[18:19:49] [RCON Listener #1/INFO] (Minecraft) Thread RCON Client /127.0.0.1 started
-[18:19:51] [Server thread/WARN] (Minecraft) Can't keep up! Is the server overloaded? Running 4654ms or 93 ticks behind
-[18:20:51] [Server thread/INFO] (Minecraft) Server empty for 60 seconds, pausing
-[18:35:32] [Server thread/INFO] (Minecraft) Disconnecting CaptureBot (/127.0.0.1:36874): You are not white-listed on this server!
-[18:35:32] [Server thread/INFO] (Minecraft) CaptureBot (/127.0.0.1:36874) lost connection: You are not white-listed on this server!
-[18:35:32] [Server thread/WARN] (Minecraft) handleDisconnection() called twice
-[18:50:02] [RCON Client /127.0.0.1 #2/INFO] (Minecraft) Thread RCON Client /127.0.0.1 shutting down
+[19:01:14] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
+[19:01:15] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[19:01:19] [main/INFO] (entersift) Enter the Sift: eight notes, one threshold.
+[19:01:20] [main/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
+[19:01:21] [Worker-Main-3/INFO] (Minecraft) No existing world data, creating new world
+[19:01:21] [Worker-Main-3/ERROR] (Minecraft) No key layers in MapLike[{}]
+[19:01:21] [Worker-Main-1/INFO] (Minecraft) Loaded 1875 advancements
+[19:01:22] [main/INFO] (BiomeModificationImpl) Applied 44 biome modifications to 18 of 79 new biomes in 4.175 ms
+[19:01:22] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.3
+[19:01:22] [Server thread/INFO] (Minecraft) Loading properties
+[19:01:22] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[19:01:22] [Server thread/INFO] (Minecraft) Generating keypair
+[19:01:22] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[19:01:22] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[19:01:22] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[19:01:22] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[19:01:22] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[19:01:22] [Server thread/INFO] (Minecraft) Preparing level "world"
+[19:01:22] [Server thread/INFO] (Minecraft) Selecting global world spawn...
+[19:01:22] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[19:01:22] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[19:01:22] [Server thread/INFO] (Minecraft) Time elapsed: 316 ms
+[19:01:22] [Server thread/INFO] (Minecraft) Done (0.445s)! For help, type "help"
+[19:01:22] [Server thread/INFO] (Minecraft) Starting remote control listener
+[19:01:22] [Server thread/INFO] (Minecraft) Thread RCON Listener started
+[19:01:22] [Server thread/INFO] (Minecraft) RCON running on 0.0.0.0:25575
+[19:01:22] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[19:01:22] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[19:01:22] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:rift_tunnel
+[19:01:22] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[19:01:22] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:the_sift
+[19:01:24] [RCON Listener #1/INFO] (Minecraft) Thread RCON Client /127.0.0.1 started
+[19:01:25] [Server thread/WARN] (Minecraft) Can't keep up! Is the server overloaded? Running 2923ms or 58 ticks behind
+[19:17:01] [Server thread/INFO] (Minecraft) CaptureBot[/127.0.0.1:36530] logged in with entity id 31 at (-0.5, -60.0, -6.5)
+[19:17:01] [Server thread/INFO] (Minecraft) System chat: CaptureBot joined the game
+[19:17:15] [Server thread/INFO] (Minecraft) Player CaptureBot standing on air - force-sending blocks below
+[19:17:20] [Server thread/INFO] (Minecraft) System chat: CaptureBot was slain by Zombie
+[19:31:31] [Server thread/INFO] (Minecraft) CaptureBot lost connection: Disconnected
+[19:31:31] [Server thread/INFO] (Minecraft) System chat: CaptureBot left the game
+[19:31:36] [RCON Client /127.0.0.1 #2/INFO] (Minecraft) Thread RCON Client /127.0.0.1 shutting down
