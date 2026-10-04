@@ -30,8 +30,9 @@ jobs:
             echo "== glxinfo =="; DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe glxinfo -B 2>&1 | head -14
             echo "== eglinfo =="; DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1 eglinfo -B 2>&1 | head -10
             echo "== vulkaninfo =="; DISPLAY=:99 vulkaninfo --summary 2>&1 | grep -E "deviceName|apiVersion|ERROR" | head -6
-          } >> /tmp/xvfb.log 2>&1
-          cat /tmp/xvfb.log
+            ls /usr/share/vulkan/icd.d/ 2>&1
+          } > /tmp/gldiag.log 2>&1
+          cat /tmp/gldiag.log
       - name: Boot server + capture client, run the capture sequence
         run: |
           export ENTERSIFT_CAPTURE_DIR=$PWD/../capture-out
@@ -63,7 +64,7 @@ jobs:
         if: failure()
         run: |
           mkdir -p docs/captures
-          { echo "== client =="; tail -80 /tmp/client.log 2>/dev/null; echo "== server =="; tail -40 /tmp/server.log 2>/dev/null; echo "== xvfb/gl diag =="; tail -45 /tmp/xvfb.log 2>/dev/null; } > docs/captures/last_failure.log
+          { echo "== gl diag =="; cat /tmp/gldiag.log 2>/dev/null; echo "== client =="; tail -100 /tmp/client.log 2>/dev/null; echo "== server =="; tail -30 /tmp/server.log 2>/dev/null; } > docs/captures/last_failure.log
           git config user.name "sift-probe"
           git config user.email "sift-probe@users.noreply.github.com"
           git add -f docs/captures/last_failure.log

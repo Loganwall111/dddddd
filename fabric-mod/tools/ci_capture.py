@@ -10,12 +10,19 @@ Drives a real Minecraft 26.3 Fabric client+server pair running under Xvfb/llvmpi
 No gameplay code is touched; the camera is the vanilla player camera, so every png is
 exactly what a player would see. Usage: ci_capture.py [capture_dir] [rcon_port]
 """
-import os, socket, struct, sys, time
+import os, socket, struct, subprocess, sys, time
 from pathlib import Path
 
 CAP = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("ENTERSIFT_CAPTURE_DIR", "capture-out"))
 PORT = int(sys.argv[2] if len(sys.argv) > 2 else os.environ.get("RCON_PORT", "25575"))
 CAP.mkdir(parents=True, exist_ok=True)
+
+# 26.3's renderpearl needs a GLX/EGL visual or a Vulkan surface; on headless CI we try
+# X11+EGL first, then SDL's offscreen driver (EGL surfaceless) as fallback.
+STRATEGIES = [
+    {"SDL_VIDEODRIVER": "x11", "SDL_VIDEO_X11_FORCE_EGL": "1"},
+    {"SDL_VIDEODRIVER": "offscreen"},
+]
 
 
 class Rcon:
@@ -65,15 +72,40 @@ def wait_rcon(timeout=420):
     raise SystemExit("server rcon never came up")
 
 
+def start_client(strategy):
+    """Launch the capture client only once the server is up, so the two Gradle builds never
+    compile cold at the same time (that lock-fought the first capture attempt)."""
+    env = dict(os.environ)
+    env.update(strategy)
+    log = open("/tmp/client.log", "ab")
+    log.write(f"\n==== client attempt with {strategy} ====\n".encode())
+    p = subprocess.Popen(
+        ["./gradlew", "--no-daemon", "runClient",
+         "--args=--quickPlayMultiplayer 127.0.0.1:25565 --username CaptureBot"],
+        stdout=log, stderr=subprocess.STDOUT, env=env)
+    print(f"[capture] client gradle started: {strategy}", flush=True)
+    return p
+
+
 def wait_player(r, name="CaptureBot", timeout=420):
     t0 = time.time()
     while time.time() - t0 < timeout:
-        out = r.cmd("list")
-        if name in out:
-            print("[capture] client joined:", out.strip(), flush=True)
-            return
+        if name in r.cmd("list"):
+            print("[capture] client joined", flush=True)
+            return True
         time.sleep(4)
-    raise SystemExit("capture client never joined")
+    return False
+
+
+def boot_client(r):
+    for strat in STRATEGIES:
+        start_client(strat)
+        if wait_player(r, timeout=300):
+            return
+        subprocess.run(["pkill", "-f", "KnotClient"], capture_output=True)
+        subprocess.run(["pkill", "-f", "GradleWrapperMain"], capture_output=True)
+        time.sleep(5)
+    raise SystemExit("capture client could not join under any display strategy (see /tmp/client.log)")
 
 
 def shoot(r, name, tp, settle=4.0, timeout=180):
@@ -91,23 +123,9 @@ def shoot(r, name, tp, settle=4.0, timeout=180):
     print(f"[capture] got {name}.png", flush=True)
 
 
-def start_client():
-    """Launch the capture client only once the server is up, so the two Gradle builds never
-    compile cold at the same time (that lock-fought the first capture attempt)."""
-    import subprocess
-    log = open("/tmp/client.log", "wb")
-    p = subprocess.Popen(
-        ["./gradlew", "--no-daemon", "runClient",
-         "--args=--quickPlayMultiplayer 127.0.0.1:25565 --username CaptureBot"],
-        stdout=log, stderr=subprocess.STDOUT)
-    print("[capture] client gradle started", flush=True)
-    return p
-
-
 def main():
     r = wait_rcon()
-    client = start_client()
-    wait_player(r)
+    boot_client(r)
     r.cmd("gamemode creative CaptureBot")
     r.cmd("time set noon")
     r.cmd("summon entersift:rift_portal 0 -56 0")
