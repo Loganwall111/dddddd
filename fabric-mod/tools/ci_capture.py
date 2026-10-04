@@ -141,6 +141,9 @@ def main():
     who = boot_client(r)
     r.cmd(f"gamemode creative {who}")
     r.cmd(f"data merge entity {who} {{abilities:{{flying:1b}}}}")   # hold the exact tp height for framing
+    r.cmd("gamerule doWeatherCycle false")
+    r.cmd("weather clear")                       # one run rained mid-capture; refs are all clear-sky
+    time.sleep(20)                               # llvmpipe chunk bakes are slow - let terrain finish
     r.cmd("time set noon")
     r.cmd("summon entersift:rift_portal 0 -56 0")
     time.sleep(1.2)                     # catch the summon timeline mid-flight (expanding ring)
