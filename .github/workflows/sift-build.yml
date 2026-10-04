@@ -99,6 +99,8 @@ jobs:
           lvp_icd=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -type f -print -quit)
           if [[ -n "$lvp_icd" ]]; then export VK_ICD_FILENAMES="$lvp_icd"; fi
           mkdir -p run/screenshots
+          sed -i '/^pause-when-empty-seconds=/d' run/server.properties
+          printf '\npause-when-empty-seconds=0\n' >> run/server.properties
           rm -f run/screenshots/*.png "$RUNNER_TEMP/sift-visual-overworld.done" "$RUNNER_TEMP/sift-visual-night.done"
           export SIFT_VISUAL_PHASE1_SIGNAL="$RUNNER_TEMP/sift-visual-overworld.done"
           export SIFT_VISUAL_PHASE2_SIGNAL="$RUNNER_TEMP/sift-visual-night.done"
@@ -106,14 +108,19 @@ jobs:
           client_log="$RUNNER_TEMP/sift-visual-client.log"
           diagnostic_error() {
             python3 - "$server_log" "$client_log" <<'PYLOG'
-          import sys
+          import re, sys
           from pathlib import Path
           parts = []
           for raw in sys.argv[1:]:
               path = Path(raw)
-              if path.is_file():
-                  parts.append(f'--- {path.name} ---')
-                  parts.extend(path.read_text(errors='replace').splitlines()[-24:])
+              if not path.is_file():
+                  continue
+              lines = path.read_text(errors='replace').splitlines()
+              parts.append(f'--- {path.name}: relevant startup/capture lines ---')
+              matches = [line for line in lines if re.search(r'SIFT-VISUAL|Quick.?Play|connect|multiplayer|OpenGL|Vulkan|backend|ERROR|WARN|Server empty|pausing', line, re.I)]
+              parts.extend(matches[-24:])
+              parts.append(f'--- {path.name}: final lines ---')
+              parts.extend(lines[-10:])
           text = "\n".join(parts).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
           print('::error title=Headless visual test diagnostic tail::' + text)
           PYLOG

@@ -35,6 +35,7 @@ public final class SiftVisualCapture {
     private static int poseStage = -1;
     private static int settleTicks;
     private static int daySignalDelay = -1;
+    private static int waitingTicks;
     private static boolean daySignalWritten;
     private static boolean nightSignalWritten;
     private static long startedAt;
@@ -53,7 +54,11 @@ public final class SiftVisualCapture {
             fail(client, "timed out before all five Minecraft screenshots were captured");
             return;
         }
-        if (client.player == null || client.level == null) return;
+        if (client.player == null || client.level == null) {
+            if (++waitingTicks % 200 == 0) LOGGER.info("[SIFT-VISUAL] waiting for quick-play to connect to the test server");
+            return;
+        }
+        waitingTicks = 0;
         client.options.setCameraType(CameraType.FIRST_PERSON);
         Identifier dimension = client.level.dimension().identifier();
 
