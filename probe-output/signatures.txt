@@ -6200,3 +6200,370 @@ public class net.minecraft.sounds.SoundEvents {
   public static final net.minecraft.sounds.SoundEvent GLASS_BREAK;
   public static final net.minecraft.sounds.SoundEvent GLASS_FALL;
   public static final net.minecraft.sounds.SoundEvent GLASS_HIT;
+===== net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest
+Compiled from "FabricClientGameTest.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest {
+  public abstract void runTest(net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext);
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.TestInput
+Compiled from "TestInput.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.TestInput {
+  public abstract void holdKey(net.minecraft.client.KeyMapping);
+  public abstract void holdKey(java.util.function.Function<net.minecraft.client.Options, net.minecraft.client.KeyMapping>);
+  public abstract void holdKey(com.mojang.blaze3d.platform.InputConstants$Key);
+  public abstract void holdKey(int);
+  public abstract void holdMouse(int);
+  public abstract void holdControl();
+  public abstract void holdShift();
+  public abstract void holdAlt();
+  public abstract void releaseKey(net.minecraft.client.KeyMapping);
+  public abstract void releaseKey(java.util.function.Function<net.minecraft.client.Options, net.minecraft.client.KeyMapping>);
+  public abstract void releaseKey(com.mojang.blaze3d.platform.InputConstants$Key);
+  public abstract void releaseKey(int);
+  public abstract void releaseMouse(int);
+  public abstract void releaseControl();
+  public abstract void releaseShift();
+  public abstract void releaseAlt();
+  public abstract void pressKey(net.minecraft.client.KeyMapping);
+  public abstract void pressKey(java.util.function.Function<net.minecraft.client.Options, net.minecraft.client.KeyMapping>);
+  public abstract void pressKey(com.mojang.blaze3d.platform.InputConstants$Key);
+  public abstract void pressKey(int);
+  public abstract void pressMouse(int);
+  public abstract void holdKeyFor(net.minecraft.client.KeyMapping, int);
+  public abstract void holdKeyFor(java.util.function.Function<net.minecraft.client.Options, net.minecraft.client.KeyMapping>, int);
+  public abstract void holdKeyFor(com.mojang.blaze3d.platform.InputConstants$Key, int);
+  public abstract void holdKeyFor(int, int);
+  public abstract void holdMouseFor(int, int);
+  public abstract void lookAt(float, float);
+  public abstract void lookAt(net.minecraft.core.BlockPos);
+  public abstract void typeChar(int);
+  public abstract void typeChars(java.lang.String);
+  public abstract void scroll(double);
+  public abstract void scroll(double, double);
+  public abstract void setCursorPos(double, double);
+  public abstract void moveCursor(double, double);
+  public abstract void resizeWindow(int, int);
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext
+Compiled from "ClientGameTestContext.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext {
+  public static final int NO_TIMEOUT;
+  public static final int DEFAULT_TIMEOUT;
+  public abstract void waitTick();
+  public abstract void waitTicks(int);
+  public abstract int waitFor(java.util.function.Predicate<net.minecraft.client.Minecraft>);
+  public abstract int waitFor(java.util.function.Predicate<net.minecraft.client.Minecraft>, int);
+  public abstract int waitForScreen(java.lang.Class<? extends net.minecraft.client.gui.screens.Screen>);
+  public abstract void setScreen(java.util.function.Supplier<net.minecraft.client.gui.screens.Screen>);
+  public abstract void clickScreenButton(java.lang.String);
+  public abstract boolean tryClickScreenButton(java.lang.String);
+  public default java.nio.file.Path takeScreenshot(java.lang.String);
+  public abstract java.nio.file.Path takeScreenshot(net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions);
+  public default void assertScreenshotEquals(java.lang.String);
+  public abstract void assertScreenshotEquals(net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotComparisonOptions);
+  public default org.joml.Vector2i assertScreenshotContains(java.lang.String);
+  public abstract org.joml.Vector2i assertScreenshotContains(net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotComparisonOptions);
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.TestInput getInput();
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldBuilder worldBuilder();
+  public abstract void restoreDefaultGameOptions();
+  public abstract <E extends java.lang.Throwable> void runOnClient(org.apache.commons.lang3.function.FailableConsumer<net.minecraft.client.Minecraft, E>) throws E;
+  public abstract <T, E extends java.lang.Throwable> T computeOnClient(org.apache.commons.lang3.function.FailableFunction<net.minecraft.client.Minecraft, T, E>) throws E;
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext
+Compiled from "TestSingleplayerContext.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext extends java.lang.AutoCloseable {
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldSave getWorldSave();
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.context.TestServerConnection getConnection();
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext getServer();
+  public abstract void close();
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext
+Compiled from "TestServerContext.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext {
+  public abstract void runCommand(java.lang.String);
+  public abstract <E extends java.lang.Throwable> void runOnServer(org.apache.commons.lang3.function.FailableConsumer<net.minecraft.server.MinecraftServer, E>) throws E;
+  public abstract <T, E extends java.lang.Throwable> T computeOnServer(org.apache.commons.lang3.function.FailableFunction<net.minecraft.server.MinecraftServer, T, E>) throws E;
+  public abstract int waitFor(java.util.function.Predicate<net.minecraft.server.MinecraftServer>);
+  public abstract int waitFor(java.util.function.Predicate<net.minecraft.server.MinecraftServer>, int);
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.context.TestServerConnection
+Compiled from "TestServerConnection.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.context.TestServerConnection {
+  public static final int DEFAULT_CHUNK_LOAD_TIMEOUT;
+  public default int waitForChunksDownload();
+  public abstract int waitForChunksDownload(int);
+  public default int waitForChunksRender();
+  public default int waitForChunksRender(int);
+  public default int waitForChunksRender(boolean);
+  public abstract int waitForChunksRender(boolean, int);
+  public abstract void waitForClientboundPackets();
+  public abstract void waitForServerboundPackets();
+  public abstract void waitForClientboundEntityUpdates(net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<?>...);
+  public abstract net.minecraft.client.player.LocalPlayer getClientPlayer();
+  public abstract net.minecraft.server.level.ServerPlayer getServerPlayer();
+  public abstract net.minecraft.client.multiplayer.ClientLevel getClientLevel();
+  public abstract net.minecraft.server.level.ServerLevel getServerLevel();
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext
+Compiled from "TestDedicatedServerContext.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext extends net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext,java.lang.AutoCloseable {
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerConnection connect();
+  public abstract void close();
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerConnection
+Compiled from "TestDedicatedServerConnection.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerConnection extends net.fabricmc.fabric.api.client.gametest.v1.context.TestServerConnection,java.lang.AutoCloseable {
+  public abstract void close();
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldBuilder
+Compiled from "TestWorldBuilder.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldBuilder {
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldBuilder setUseConsistentSettings(boolean);
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldBuilder adjustSettings(java.util.function.Consumer<net.minecraft.client.gui.screens.worldselection.WorldCreationUiState>);
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext create();
+  public default net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext createServer();
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext createServer(java.util.Properties);
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldSave
+Compiled from "TestWorldSave.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldSave {
+  public abstract java.nio.file.Path getSaveDirectory();
+  public abstract net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext open();
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions
+Compiled from "TestScreenshotOptions.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions extends net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotCommonOptions<net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions> {
+  public static net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions of(java.lang.String);
+}
+===== net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotCommonOptions
+Compiled from "TestScreenshotCommonOptions.java"
+public interface net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotCommonOptions<SELF extends net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotCommonOptions<SELF>> {
+  public abstract SELF disableCounterPrefix();
+  public abstract SELF withDeltaTicks(float);
+  public abstract SELF withSize(int, int);
+  public abstract SELF withDestinationDir(java.nio.file.Path);
+}
+===== net.fabricmc.fabric.impl.client.gametest.FabricClientGameTestRunner
+Compiled from "FabricClientGameTestRunner.java"
+public class net.fabricmc.fabric.impl.client.gametest.FabricClientGameTestRunner {
+  public static net.fabricmc.loader.api.entrypoint.EntrypointContainer<net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest> currentlyRunningGameTest;
+  public net.fabricmc.fabric.impl.client.gametest.FabricClientGameTestRunner();
+  public static void start();
+}
+===== net.fabricmc.fabric.impl.client.gametest.TestSystemProperties
+Compiled from "TestSystemProperties.java"
+public final class net.fabricmc.fabric.impl.client.gametest.TestSystemProperties {
+  public static final boolean ENABLED;
+  public static final java.lang.String TEST_MOD_RESOURCES_PATH;
+  public static final boolean DISABLE_JOIN_ASYNC_STACK_TRACES;
+  public static final java.lang.String MOD_ID_FILTER_PROPERTY;
+}
+===== net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl
+Compiled from "ClientGameTestContextImpl.java"
+public final class net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl implements net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext {
+  public net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl();
+  public static void initGameOptions(net.minecraft.client.Options);
+  public void waitTick();
+  public void waitTicks(int);
+  public int waitFor(java.util.function.Predicate<net.minecraft.client.Minecraft>);
+  public int waitFor(java.util.function.Predicate<net.minecraft.client.Minecraft>, int);
+  public int waitForScreen(java.lang.Class<? extends net.minecraft.client.gui.screens.Screen>);
+  public void setScreen(java.util.function.Supplier<net.minecraft.client.gui.screens.Screen>);
+  public void clickScreenButton(java.lang.String);
+  public boolean tryClickScreenButton(java.lang.String);
+  public java.nio.file.Path takeScreenshot(net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions);
+  public void assertScreenshotEquals(net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotComparisonOptions);
+  public org.joml.Vector2i assertScreenshotContains(net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotComparisonOptions);
+  public net.fabricmc.fabric.impl.client.gametest.TestInputImpl getInput();
+  public net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldBuilder worldBuilder();
+  public void restoreDefaultGameOptions();
+  public <E extends java.lang.Throwable> void runOnClient(org.apache.commons.lang3.function.FailableConsumer<net.minecraft.client.Minecraft, E>) throws E;
+  public <T, E extends java.lang.Throwable> T computeOnClient(org.apache.commons.lang3.function.FailableFunction<net.minecraft.client.Minecraft, T, E>) throws E;
+  public net.fabricmc.fabric.api.client.gametest.v1.TestInput getInput();
+}
+===== net.minecraft.client.Screenshot
+Compiled from "Screenshot.java"
+public class net.minecraft.client.Screenshot {
+  public static final java.lang.String SCREENSHOT_DIR;
+  public net.minecraft.client.Screenshot();
+  public static void grab(java.io.File, com.mojang.blaze3d.pipeline.RenderTarget, java.util.function.Consumer<net.minecraft.network.chat.Component>);
+  public static void grab(net.minecraft.client.Minecraft, boolean);
+  public static void grab(java.io.File, java.lang.String, com.mojang.blaze3d.pipeline.RenderTarget, int, java.util.function.Consumer<net.minecraft.network.chat.Component>);
+  public static void takeScreenshot(com.mojang.blaze3d.pipeline.RenderTarget, java.util.function.Consumer<com.mojang.blaze3d.platform.NativeImage>);
+  public static void takeScreenshot(com.mojang.blaze3d.pipeline.RenderTarget, int, java.util.function.Consumer<com.mojang.blaze3d.platform.NativeImage>);
+}
+===== net.minecraft.client.Minecraft
+Compiled from "Minecraft.java"
+public class net.minecraft.client.Minecraft extends net.minecraft.util.thread.ReentrantBlockableEventLoop<java.lang.Runnable> implements com.mojang.blaze3d.platform.WindowEventHandler {
+  public static final net.minecraft.resources.Identifier DEFAULT_FONT;
+  public static final java.lang.String UPDATE_DRIVERS_ADVICE;
+  public final net.minecraft.client.renderer.extract.LevelExtractor levelExtractor;
+  public final net.minecraft.client.renderer.LevelRenderer levelRenderer;
+  public final net.minecraft.client.particle.ParticleEngine particleEngine;
+  public final net.minecraft.client.gui.Font font;
+  public final net.minecraft.client.gui.Font fontFilterFishy;
+  public final net.minecraft.client.renderer.GameRenderer gameRenderer;
+  public final net.minecraft.client.gui.Gui gui;
+  public final net.minecraft.client.Options options;
+  public final net.minecraft.client.gui.components.debug.DebugScreenEntryList debugEntries;
+  public final net.minecraft.client.MouseHandler mouseHandler;
+  public final net.minecraft.client.KeyboardHandler keyboardHandler;
+  public final java.io.File gameDirectory;
+  public net.minecraft.client.multiplayer.MultiPlayerGameMode gameMode;
+  public net.minecraft.client.multiplayer.ClientLevel level;
+  public net.minecraft.client.player.LocalPlayer player;
+  public net.minecraft.world.entity.Entity crosshairPickEntity;
+  public net.minecraft.world.phys.HitResult hitResult;
+  public int missTime;
+  public boolean multiDrawIndirect;
+  public boolean wireframe;
+  public boolean smartCull;
+  public net.minecraft.client.Minecraft(net.minecraft.client.main.GameConfig);
+  public boolean hasShiftDown();
+  public boolean hasControlDown();
+  public boolean hasAltDown();
+  public boolean isGameLoadFinished();
+  public void updateTitle();
+  public boolean isOfflineDeveloperMode();
+  public static net.minecraft.util.ModCheck checkModStatus();
+  public void clearResourcePacksOnError(java.lang.Throwable, net.minecraft.network.chat.Component, net.minecraft.client.GameLoadCookie);
+  public void triggerResourcePackRecovery(java.lang.Exception);
+  public void run();
+  public java.lang.String getLaunchedVersion();
+  public void delayCrash(net.minecraft.CrashReport);
+  public void emergencySaveAndCrash(net.minecraft.CrashReport);
+  public static void saveReport(java.io.File, net.minecraft.CrashReport);
+  public static int saveReport(java.io.File, net.minecraft.CrashReport, int);
+  public static void crash(net.minecraft.client.Minecraft, java.io.File, net.minecraft.CrashReport, int);
+  public static int saveReportAndShutdownSoundManager(net.minecraft.client.Minecraft, java.io.File, net.minecraft.CrashReport, int);
+  public boolean isEnforceUnicode();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> reloadResourcePacks();
+  public net.minecraft.world.level.storage.LevelStorageSource getLevelSource();
+  public void exitWorldAndClose();
+  public void close();
+  public void renderFrame(boolean);
+  public void framebufferSizeChanged();
+  public void resizeGui();
+  public void cursorEntered();
+  public void fullscreenStateChanged(boolean);
+  public int getFps();
+  public long getFrameTimeNs();
+  public void sendLowDiskSpaceWarning();
+  public boolean debugClientMetricsStart(java.util.function.Consumer<net.minecraft.network.chat.Component>);
+  public void stop();
+  public boolean isRunning();
+  public void pauseGame(boolean);
+  public net.minecraft.client.sounds.MusicManager getMusicManager();
+  public void tick();
+  public boolean isMultiplayerServer();
+  public net.minecraft.client.telemetry.ClientTelemetryManager getTelemetryManager();
+  public net.minecraft.util.profiling.metrics.profiling.MetricsRecorder getMetricsRecorder();
+  public double getGpuUtilization();
+  public net.minecraft.client.multiplayer.ProfileKeyPairManager getProfileKeyPairManager();
+  public net.minecraft.client.gui.screens.worldselection.WorldOpenFlows createWorldOpenFlows();
+  public void doWorldLoad(net.minecraft.world.level.storage.LevelStorageSource$LevelStorageAccess, net.minecraft.server.packs.repository.PackRepository, net.minecraft.server.WorldStem, java.util.Optional<net.minecraft.world.level.gamerules.GameRules>, boolean);
+  public void setLevel(net.minecraft.client.multiplayer.ClientLevel);
+  public void disconnectFromWorld(net.minecraft.network.chat.Component);
+  public void disconnectWithSavingScreen();
+  public void disconnectWithProgressScreen();
+  public void disconnectWithProgressScreen(boolean);
+  public void disconnect(net.minecraft.client.gui.screens.Screen, boolean);
+  public void disconnect(net.minecraft.client.gui.screens.Screen, boolean, boolean);
+  public void clearDownloadedResourcePacks();
+  public void clearClientLevel(net.minecraft.client.gui.screens.Screen);
+  public void setScreenAndShow(net.minecraft.client.gui.screens.Screen);
+  public boolean telemetryOptInExtra();
+  public boolean extraTelemetryAvailable();
+  public boolean allowsTelemetry();
+  public boolean allowsMultiplayer();
+  public boolean allowsRealms();
+  public boolean friendsEnabled();
+  public boolean handleGlobalKeyPress(com.mojang.blaze3d.platform.InputConstants$Key, boolean);
+  public boolean allowFriendRequests();
+  public boolean allowChatOnlyWithFriend();
+  public com.mojang.authlib.minecraft.BanDetails multiplayerBan();
+  public boolean isNameBanned();
+  public boolean isBlocked(java.util.UUID);
+  public boolean isFriendOnlyRestricted(java.util.UUID);
+  public net.minecraft.client.multiplayer.chat.ChatAbilities computeChatAbilities();
+  public final boolean isDemo();
+  public final boolean canSwitchGameMode();
+  public net.minecraft.client.multiplayer.ClientPacketListener getConnection();
+  public net.minecraft.CrashReport fillReport(net.minecraft.CrashReport);
+  public static void fillReport(net.minecraft.client.Minecraft, net.minecraft.client.resources.language.LanguageManager, java.lang.String, net.minecraft.client.Options, net.minecraft.CrashReport);
+  public static net.minecraft.client.Minecraft getInstance();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> delayTextureReload();
+  public void updateReportEnvironment(net.minecraft.client.multiplayer.chat.report.ReportEnvironment);
+  public net.minecraft.client.multiplayer.ServerData getCurrentServer();
+  public boolean isLocalServer();
+  public boolean hasSingleplayerServer();
+  public net.minecraft.client.server.IntegratedServer getSingleplayerServer();
+  public boolean isLocalPlayer(java.util.UUID);
+  public net.minecraft.client.User getUser();
+  public com.mojang.authlib.services.ProfileResult getProfileResult();
+  public com.mojang.authlib.GameProfile getGameProfile();
+  public java.net.Proxy getProxy();
+  public net.minecraft.client.renderer.texture.TextureManager getTextureManager();
+  public net.minecraft.client.renderer.ShaderManager getShaderManager();
+  public net.minecraft.server.packs.resources.ResourceManager getResourceManager();
+  public net.minecraft.server.packs.repository.PackRepository getResourcePackRepository();
+  public net.minecraft.server.packs.VanillaPackResources getVanillaPackResources();
+  public net.minecraft.client.resources.server.DownloadedPackSource getDownloadedPackSource();
+  public java.nio.file.Path getResourcePackDirectory();
+  public net.minecraft.client.resources.language.LanguageManager getLanguageManager();
+  public boolean isPaused();
+  public net.minecraft.client.renderer.GpuWarnlistManager getGpuWarnlistManager();
+  public net.minecraft.client.sounds.SoundManager getSoundManager();
+  public net.minecraft.sounds.Music getSituationalMusic();
+  public float getMusicVolume();
+  public net.minecraft.server.Services services();
+  public net.minecraft.client.resources.SkinManager getSkinManager();
+  public net.minecraft.world.entity.Entity getCameraEntity();
+  public void setCameraEntity(net.minecraft.world.entity.Entity);
+  public boolean shouldEntityAppearGlowing(net.minecraft.world.entity.Entity);
+  public java.lang.Thread getRunningThread();
+  public java.lang.Runnable wrapRunnable(java.lang.Runnable);
+  protected boolean shouldRun(java.lang.Runnable);
+  public net.minecraft.client.renderer.entity.EntityRenderDispatcher getEntityRenderDispatcher();
+  public net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher getBlockEntityRenderDispatcher();
+  public net.minecraft.client.renderer.MapRenderer getMapRenderer();
+  public com.mojang.datafixers.DataFixer getFixerUpper();
+  public net.minecraft.client.DeltaTracker getDeltaTracker();
+  public net.minecraft.client.color.block.BlockColors getBlockColors();
+  public boolean showOnlyReducedInfo();
+  public net.minecraft.client.tutorial.Tutorial getTutorial();
+  public boolean isWindowActive();
+  public net.minecraft.client.HotbarManager getHotbarManager();
+  public net.minecraft.client.resources.model.ModelManager getModelManager();
+  public net.minecraft.client.resources.model.sprite.AtlasManager getAtlasManager();
+  public net.minecraft.client.resources.palette.PalettedTextureManager getPalettedTextureManager();
+  public net.minecraft.client.resources.MapTextureManager getMapTextureManager();
+  public net.minecraft.network.chat.Component grabPanoramixScreenshot(java.io.File);
+  public net.minecraft.client.gui.screens.social.PlayerSocialManager getPlayerSocialManager();
+  public com.mojang.blaze3d.platform.Window getWindow();
+  public com.mojang.blaze3d.platform.TextInputManager textInputManager();
+  public void onTextInputFocusChange(net.minecraft.client.gui.components.events.GuiEventListener, boolean);
+  public com.mojang.renderpearl.api.device.GpuSurface windowSurface();
+  public com.mojang.blaze3d.platform.FramerateLimitTracker getFramerateLimitTracker();
+  public net.minecraft.client.gui.components.DebugScreenOverlay getDebugOverlay();
+  public void updateMaxMipLevel(int);
+  public net.minecraft.client.model.geom.EntityModelSet getEntityModels();
+  public boolean isTextFilteringEnabled();
+  public void prepareForMultiplayer();
+  public net.minecraft.client.InputType getLastInputType();
+  public void setLastInputType(net.minecraft.client.InputType);
+  public net.minecraft.client.GameNarrator getNarrator();
+  public net.minecraft.client.multiplayer.chat.report.ReportingContext getReportingContext();
+  public com.mojang.realmsclient.gui.RealmsDataFetcher realmsDataFetcher();
+  public net.minecraft.client.quickplay.QuickPlayLog quickPlayLog();
+  public net.minecraft.world.level.validation.DirectoryValidator directoryValidator();
+  public net.minecraft.client.renderer.PlayerSkinRenderCache playerSkinRenderCache();
+  public net.minecraft.client.renderer.item.ItemModelResolver getItemModelResolver();
+  public boolean canInterruptScreen();
+  public void invalidateSurfaceConfiguration();
+  public static java.lang.String getLauncherBrand();
+  public net.minecraft.network.PacketProcessor packetProcessor();
+  public net.minecraft.gizmos.Gizmos$TemporaryCollection collectPerTickGizmos();
+  public java.util.Collection<net.minecraft.gizmos.SimpleGizmoCollector$GizmoInstance> getPerTickGizmos();
+  public void showDebugChat(net.minecraft.network.chat.Component);
+}
