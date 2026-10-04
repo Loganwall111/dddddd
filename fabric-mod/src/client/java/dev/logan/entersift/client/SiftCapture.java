@@ -3,6 +3,10 @@ package dev.logan.entersift.client;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -30,17 +34,31 @@ public final class SiftCapture {
     private static String pending;      // name grabbed, waiting for the file to land
     private static int pendingTicks;
     private static long lastCount;
+    private static String serverAddr;   // ENTERSIFT_CAPTURE_SERVER, e.g. 127.0.0.1:25565
+    private static boolean joinAttempted;
 
     public static void register() {
         String d = System.getenv("ENTERSIFT_CAPTURE_DIR");
         if (d == null || d.isBlank()) return;
         dir = Path.of(d);
-        org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] capture mode active: {}", dir);
+        serverAddr = System.getenv("ENTERSIFT_CAPTURE_SERVER");
+        org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] capture mode active: {} server: {}", dir, serverAddr);
         ClientTickEvents.END_CLIENT_TICK.register(SiftCapture::tick);
     }
 
     private static void tick(Minecraft mc) {
-        if (dir == null || mc.level == null || mc.player == null) return;
+        if (dir == null) return;
+        // 26.3 ignores --server/--port and quickPlay silently stalls in the dev launcher,
+        // so join programmatically once the title screen is up (26.3 API: gui.screens.ConnectScreen).
+        if (!joinAttempted && serverAddr != null && !serverAddr.isBlank()
+                && mc.level == null && mc.screen instanceof TitleScreen) {
+            joinAttempted = true;
+            org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] capture joining {}", serverAddr);
+            ConnectScreen.startConnecting(mc.screen, mc, ServerAddress.parseString(serverAddr),
+                new ServerData("Sift Capture", serverAddr, ServerData.Type.OTHER), false, null);
+            return;
+        }
+        if (mc.level == null || mc.player == null) return;
         try {
             if (pending != null) {
                 // Wait for the vanilla screenshot file to appear and stop growing, then publish it.

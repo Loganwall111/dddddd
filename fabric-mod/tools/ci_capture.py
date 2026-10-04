@@ -77,6 +77,7 @@ def start_client(strategy):
     compile cold at the same time (that lock-fought the first capture attempt)."""
     env = dict(os.environ)
     env.update(strategy)
+    env["ENTERSIFT_CAPTURE_SERVER"] = "127.0.0.1:25565"  # SiftCapture joins programmatically on title screen
     log = open("/tmp/client.log", "ab")
     log.write(f"\n==== client attempt with {strategy} ====\n".encode())
     p = subprocess.Popen(
