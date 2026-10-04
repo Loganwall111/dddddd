@@ -1,0 +1,207 @@
+== orchestrator ==
+[capture] rcon up
+[capture] client gradle started: {'SDL_VIDEODRIVER': 'x11', 'SDL_VIDEO_X11_FORCE_EGL': '1'}
+[capture] list -> There are 0 of a max of 20 players online:
+[capture] list -> There are 0 of a max of 20 players online:
+[capture] client gradle exited early (rc=1)
+[capture] client gradle started: {'SDL_VIDEODRIVER': 'offscreen'}
+[capture] list -> There are 0 of a max of 20 players online:
+[capture] list -> There are 0 of a max of 20 players online:
+[capture] client gradle exited early (rc=1)
+capture client could not join under any display strategy (see /tmp/client.log)
+== gl diag ==
+== glxinfo ==
+name of display: :99
+display: :99  screen: 0
+direct rendering: Yes
+Extended renderer info (GLX_MESA_query_renderer):
+    Vendor: Mesa (0xffffffff)
+    Device: llvmpipe (LLVM 20.1.2, 256 bits) (0xffffffff)
+    Version: 25.2.8
+    Accelerated: no
+    Video memory: 15989MB
+    Unified memory: yes
+    Preferred profile: core (0x1)
+    Max core profile version: 4.5
+    Max compat profile version: 4.5
+    Max GLES1 profile version: 1.1
+== eglinfo ==
+GBM platform:
+eglinfo: eglInitialize failed
+
+Wayland platform:
+eglinfo: eglInitialize failed
+
+X11 platform:
+EGL API version: 1.5
+EGL vendor string: Mesa Project
+EGL version string: 1.5
+== vulkaninfo ==
+	apiVersion         = 1.4.318
+	deviceName         = llvmpipe (LLVM 20.1.2, 256 bits)
+asahi_icd.json
+gfxstream_vk_icd.json
+intel_hasvk_icd.json
+intel_icd.json
+lvp_icd.json
+nouveau_icd.json
+radeon_icd.json
+virtio_icd.json
+== client ==
+
+==== client attempt with {'SDL_VIDEODRIVER': 'x11', 'SDL_VIDEO_X11_FORCE_EGL': '1'} ====
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.18.2
+
+> Task :compileJava UP-TO-DATE
+> Task :bundleShaders UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+
+> Task :compileClientJava FAILED
+/home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/client/SiftCapture.java:70: error: method click in class KeyMapping cannot be applied to given types;
+            mc.options.keyToggleGui.click();
+                                   ^
+  required: Key
+  found:    no arguments
+  reason: actual and formal argument lists differ in length
+Note: /home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/SiftClient.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+1 error
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1791153206913.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/dddddd/dddddd/fabric-mod/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileClientJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  Note: /home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/SiftClient.java uses or overrides a deprecated API.
+  /home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/client/SiftCapture.java:70: error: method click in class KeyMapping cannot be applied to given types;
+              mc.options.keyToggleGui.click();
+                                     ^
+    required: Key
+    found:    no arguments
+    reason: actual and formal argument lists differ in length
+  Note: Recompile with -Xlint:deprecation for details.
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 7s
+4 actionable tasks: 1 executed, 3 up-to-date
+
+==== client attempt with {'SDL_VIDEODRIVER': 'offscreen'} ====
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.18.2
+
+> Task :compileJava UP-TO-DATE
+> Task :bundleShaders UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+
+> Task :compileClientJava FAILED
+/home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/client/SiftCapture.java:70: error: method click in class KeyMapping cannot be applied to given types;
+            mc.options.keyToggleGui.click();
+                                   ^
+  required: Key
+  found:    no arguments
+  reason: actual and formal argument lists differ in length
+Note: /home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/SiftClient.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+1 error
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1791153219892.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/dddddd/dddddd/fabric-mod/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileClientJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  Note: /home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/SiftClient.java uses or overrides a deprecated API.
+  /home/runner/work/dddddd/dddddd/fabric-mod/src/client/java/dev/logan/entersift/client/SiftCapture.java:70: error: method click in class KeyMapping cannot be applied to given types;
+              mc.options.keyToggleGui.click();
+                                     ^
+    required: Key
+    found:    no arguments
+    reason: actual and formal argument lists differ in length
+  Note: Recompile with -Xlint:deprecation for details.
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 5s
+4 actionable tasks: 1 executed, 3 up-to-date
+== server ==
+	- fabric-events-interaction-v0 5.3.6+3434d6d95d
+	- fabric-game-rule-api-v1 4.0.10+3434d6d95d
+	- fabric-gametest-api-v1 4.0.32+3434d6d95d
+	- fabric-item-api-v1 14.7.0+cf6bc2db5d
+	- fabric-lifecycle-events-v1 4.1.9+ffef5f675d
+	- fabric-loot-api-v3 4.0.8+4068fd645d
+	- fabric-menu-api-v1 2.0.27+ed66f0a35d
+	- fabric-message-api-v1 7.0.10+3434d6d95d
+	- fabric-networking-api-v1 6.3.8+fcdff87f5d
+	- fabric-object-builder-api-v1 24.1.9+3434d6d95d
+	- fabric-particles-v1 5.0.24+3434d6d95d
+	- fabric-permission-api-v1 1.0.8+fcdff87f5d
+	- fabric-recipe-api-v1 10.0.8+fcdff87f5d
+	- fabric-registry-sync-v0 8.0.1+fcdff87f5d
+	- fabric-rendering-fluids-v1 6.0.6+3434d6d95d
+	- fabric-resource-conditions-api-v1 6.1.5+3434d6d95d
+	- fabric-resource-loader-v0 3.3.26+4fc5413f5d
+	- fabric-resource-loader-v1 3.0.4+fcdff87f5d
+	- fabric-serialization-api-v1 2.0.7+74ed1ea55d
+	- fabric-tag-api-v1 2.1.10+fcdff87f5d
+	- fabric-transfer-api-v1 8.0.25+fcdff87f5d
+	- fabric-transitive-access-wideners-v1 8.1.16+52268a0e5d
+	- fabricloader 0.19.5
+	- java 25
+	- minecraft 26.3
+	- mixinextras 0.5.5
+[22:33:12] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
+[22:33:13] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[22:33:17] [main/INFO] (entersift) Enter the Sift: eight notes, one threshold.
+[22:33:18] [main/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
+[22:33:19] [Worker-Main-1/INFO] (Minecraft) No existing world data, creating new world
+[22:33:19] [Worker-Main-1/ERROR] (Minecraft) No key layers in MapLike[{}]
+[22:33:20] [Worker-Main-1/INFO] (Minecraft) Loaded 1875 advancements
+[22:33:20] [main/INFO] (BiomeModificationImpl) Applied 44 biome modifications to 18 of 79 new biomes in 9.715 ms
+[22:33:20] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.3
+[22:33:20] [Server thread/INFO] (Minecraft) Loading properties
+[22:33:20] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[22:33:20] [Server thread/INFO] (Minecraft) Generating keypair
+[22:33:20] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[22:33:20] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[22:33:20] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[22:33:20] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[22:33:20] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[22:33:20] [Server thread/INFO] (Minecraft) Preparing level "world"
+[22:33:20] [Server thread/INFO] (Minecraft) Selecting global world spawn...
+[22:33:21] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[22:33:21] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[22:33:21] [Server thread/INFO] (Minecraft) Time elapsed: 316 ms
+[22:33:21] [Server thread/INFO] (Minecraft) Done (0.427s)! For help, type "help"
+[22:33:21] [Server thread/INFO] (Minecraft) Starting remote control listener
+[22:33:21] [Server thread/INFO] (Minecraft) Thread RCON Listener started
+[22:33:21] [Server thread/INFO] (Minecraft) RCON running on 0.0.0.0:25575
+[22:33:21] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[22:33:21] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:rift_tunnel
+[22:33:21] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/entersift:the_sift
+[22:33:21] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[22:33:21] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[22:33:23] [RCON Listener #1/INFO] (Minecraft) Thread RCON Client /127.0.0.1 started
+[22:33:24] [Server thread/WARN] (Minecraft) Can't keep up! Is the server overloaded? Running 3490ms or 69 ticks behind
+[22:33:50] [RCON Client /127.0.0.1 #2/INFO] (Minecraft) Thread RCON Client /127.0.0.1 shutting down
