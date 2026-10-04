@@ -36,6 +36,7 @@ public final class SiftCapture {
     private static long lastCount;
     private static String serverAddr;   // ENTERSIFT_CAPTURE_SERVER, e.g. 127.0.0.1:25565
     private static boolean joinAttempted;
+    private static boolean hudToggled;
     private static int bootTicks;
 
     public static void register() {
@@ -62,6 +63,12 @@ public final class SiftCapture {
             return;
         }
         if (mc.level == null || mc.player == null) return;
+        // One synthetic F1 press: captures come out cinematic (no hotbar/chat/crosshair),
+        // matching the reference frames. 26.3 has no public hideGui accessor, but the keybind toggles it.
+        if (!hudToggled) {
+            hudToggled = true;
+            mc.options.keyToggleGui.click();
+        }
         try {
             if (pending != null) {
                 // Wait for the vanilla screenshot file to appear and stop growing, then publish it.
