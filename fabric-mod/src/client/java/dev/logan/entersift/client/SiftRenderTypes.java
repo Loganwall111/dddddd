@@ -20,22 +20,23 @@ import net.minecraft.client.renderer.rendertype.RenderType;
  * debug renderers. The huge sky dome in that pass is what made leaves and ichor flicker when the
  * camera moved. These types have no OIT pipelines and no sorting:
  *
- *   SKY:   the opaque lava-lamp dome (0.12: its own pipeline so Iris can treat it as sky).
- *   SOLID: opaque rift walls, writes depth (reverse-Z, so GEQUAL means "nearer or equal").
- *   GLOW:  additive (lightning blend), depth-tested but never writes depth.
+ *   SKY:       opaque Sift gradient dome (Iris can treat it as sky).
+ *   SKY_BLEND: translucent sky ribbons and accents; no depth write.
+ *   SOLID:     opaque rift side walls, writes depth (reverse-Z, so GEQUAL means "nearer or equal").
+ *   GLASS/RIFT: translucent filled membrane and fragment geometry, depth-tested without a depth write.
+ *   GLOW:      additive rim/sparks, depth-tested but never writes depth.
  *
  * 0.12 Iris compatibility: with a shader pack active Iris swaps every pipeline for a pack program
  * it knows about. Pipelines it does not know are drawn with the vanilla shader into the pack's
  * G-buffers ("Missing program ... could lead to weird rendering"), which is what broke the Sift sky
  * under the Dungeons II pack. {@link #registerWithIris()} assigns our pipelines through the public
- * Iris API (reflection, so Iris stays optional): SKY -> gbuffers_skybasic, SOLID/GLOW ->
+ * Iris API (reflection, so Iris stays optional): SKY/SKY_BLEND -> sky programs and SOLID/GLOW/GLASS ->
  * gbuffers_basic. Iris also flips the reverse-Z compare ops for us, so the depth states stay valid.
  *
  * 0.18.2: the GLSL rift pipelines (RIFT, RIFT_WALL, RIFT_GLOW, TUNNEL) are deliberately NOT
- * assigned. Probing Iris 1.11.6 showed that an unassigned pipeline only logs "missing program" once
- * and is then drawn with its OWN compiled shader, so the full 0.18 rift (lensing, destination views,
- * curtains) renders unchanged under a shader pack. The rift shaders also write colortex1/colortex2
- * masks so the pack composite does not re-shade them.
+ * assigned. An unassigned pipeline keeps its own compiled shader under a shader pack. The filled,
+ * translucent membrane, faceted shell and restrained rim therefore stay consistent across packs; the
+ * rift shaders also write colortex1/colortex2 masks so the pack composite does not re-shade them.
  */
 public final class SiftRenderTypes {
     private SiftRenderTypes() {}
@@ -74,9 +75,9 @@ public final class SiftRenderTypes {
             .build());
 
     /**
-     * 0.17 GPU rift interior: our own core shader (assets/entersift/shaders/core/rift.vsh/.fsh).
-     * Built on MATRICES_FOG_SNIPPET, which binds Globals (GameTime), Projection, DynamicTransforms
-     * and Fog. Vertex colour carries rift data (face u/v, type, fade), not a colour. Opaque, writes depth.
+     * GPU rift interior: our own core shader (assets/entersift/shaders/core/rift.vsh/.fsh).
+     * Vertex colour carries face UVs and style; the filled pastel material alpha-blends without writing
+     * depth, so terrain stays subtly visible through the animated membrane.
      */
     public static final RenderPipeline RIFT_PIPELINE = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
@@ -85,12 +86,12 @@ public final class SiftRenderTypes {
             .withFragmentShader(SiftContent.id("core/rift"))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .withCull(false)
             .build());
 
-    /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
+    /** 0.18 rift walls: opaque, depth-writing sides use the same shader's RIFT_WALL variant. */
     public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")
             .withColorTargetState(ColorTargetState.DEFAULT)
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
@@ -131,7 +132,7 @@ public final class SiftRenderTypes {
     public static final RenderType RIFT_GLOW = RenderType.create("entersift_rift_glow", RenderSetup.builder(RIFT_GLOW_PIPELINE).createRenderSetup());
     public static final RenderType TUNNEL = RenderType.create("entersift_tunnel", RenderSetup.builder(TUNNEL_PIPELINE).createRenderSetup());
 
-    /** 0.17 sky overlays (panels, swirl blobs): normal alpha blend so colours stay saturated instead of adding up to white. */
+    /** Translucent Sift sky ribbons and accents; normal alpha blend, no depth write. */
     public static final RenderPipeline SKY_BLEND_PIPELINE = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
             .withLocation(SiftContent.id("pipeline/sift_sky_blend"))
@@ -140,6 +141,16 @@ public final class SiftRenderTypes {
             .withCull(false)
             .build());
     public static final RenderType SKY_BLEND = RenderType.create("entersift_sky_blend", RenderSetup.builder(SKY_BLEND_PIPELINE).createRenderSetup());
+
+    /** CPU-coloured translucent geometry: rift interior fallback and filled fragments, depth-tested without a write. */
+    public static final RenderPipeline GLASS_PIPELINE = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(SiftContent.id("pipeline/rift_glass"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withCull(false)
+            .build());
+    public static final RenderType GLASS = RenderType.create("entersift_glass", RenderSetup.builder(GLASS_PIPELINE).createRenderSetup());
 
     public static final RenderType SKY = RenderType.create("entersift_sky", RenderSetup.builder(SKY_PIPELINE).createRenderSetup());
     public static final RenderType SOLID = RenderType.create("entersift_solid", RenderSetup.builder(SOLID_PIPELINE).createRenderSetup());
@@ -166,7 +177,7 @@ public final class SiftRenderTypes {
             Class<? extends Enum> program = (Class<? extends Enum>) Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
             Object iris = api.getMethod("getInstance").invoke(null);
             java.lang.reflect.Method assign = api.getMethod("assignPipeline", RenderPipeline.class, program);
-            Object[][] pairs = {{SKY_PIPELINE, "SKY_BASIC"}, {SOLID_PIPELINE, "BASIC"}, {GLOW_PIPELINE, "BASIC"}, {CLOUD_PIPELINE, "BASIC"}, {SKY_BLEND_PIPELINE, "SKY_BASIC"}};
+            Object[][] pairs = {{SKY_PIPELINE, "SKY_BASIC"}, {SOLID_PIPELINE, "BASIC"}, {GLOW_PIPELINE, "BASIC"}, {CLOUD_PIPELINE, "BASIC"}, {SKY_BLEND_PIPELINE, "SKY_BASIC"}, {GLASS_PIPELINE, "BASIC"}};
             for (Object[] pair : pairs) {
                 try {
                     assign.invoke(iris, pair[0], Enum.valueOf(program, (String) pair[1]));

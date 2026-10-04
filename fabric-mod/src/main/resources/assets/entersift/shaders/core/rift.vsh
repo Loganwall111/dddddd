@@ -1,11 +1,9 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
-// 0.20 Enter the Sift rift shader (clean slate).
-// Position arrives camera-relative and world-oriented (the entity pose is applied on the CPU), so it IS
-// the world-space view ray of the vertex. The fragment shader uses it to sample the destination by view
-// direction: the window moves only with the camera's yaw and pitch and is seamless across every quad.
-// Window vertices carry data in their colour: r, g = rift face position (0..1), b = view code (/16).
+// Rift core shader vertex stage. Position is transformed by the entity pose on the CPU and supplies
+// a gentle 3D modulation direction to the animated membrane. Vertex colour carries rift face UVs and
+// style/night bits; it does not represent a framebuffer copy or opaque destination view.
 
 #include <minecraft:fog.glsl>
 #include <minecraft:projection.glsl>

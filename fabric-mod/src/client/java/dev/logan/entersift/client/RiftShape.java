@@ -8,10 +8,10 @@ import java.util.List;
 /**
  * 0.20 clean-slate rift layout (pure data, no rendering).
  *
- * A rift is a voxel "puzzle cluster" like the Dungeons II trailer: a body of ~1-block cells on a grid,
- * split into rectangular hollow BOXES recessed to different depths, plus satellite boxes and L/Z
- * tetrominoes sticking out of the rim. Every cell remembers its recess depth and the growth tier at
- * which it snaps in (tiers run from the centre outward; all cells of one box share a tier).
+ * A rift is a stepped voxel cluster built from roughly one-block cells, split into rectangular regions
+ * with different recess depths. The cell map defines an irregular filled silhouette; joined side walls,
+ * a recessed lip and a translucent back membrane turn it into a shallow 3D tear. A few small, filled
+ * cuboids detach from the rim. Each cell also records the growth tier at which it appears.
  *
  * The mesh built from this layout is T-junction free (one canvas per cell, one wall per cell edge), so
  * the slow wave applied per vertex can never tear seams between neighbouring pieces.
@@ -75,17 +75,21 @@ final class RiftShape {
     private static boolean inBody(RiftType type, long seed, float u, float v, float xb, float yb, int i, int j, int cols, int rows, float xspan, float yspan) {
         switch (type) {
             case SIFT: {
-                // The trailer cross: tall centre column with a stepped cap, a squat heart, wide jagged arms.
-                float arm = 0.82f + 0.15f * hash(seed, j / 2, 7);
-                float lean = hash(seed, 3, 3) > 0.5f ? 1f : -1f;
-                boolean in = (Math.abs(u) < 0.36f && Math.abs(v) < 0.58f)
-                    || (Math.abs(u) < 0.19f && v > -0.96f && v < 0.98f)
-                    || (u * lean > -0.3f && u * lean < 0.1f && v > 0.5f && v < 0.8f)
-                    || (Math.abs(v) < 0.26f && Math.abs(u) < arm)
-                    || (Math.abs(u) > 0.5f && Math.abs(u) < arm - 0.12f && v > 0.2f && v < 0.4f);
-                if (hash(seed, 1, 1) > 0.35f) in |= u < -0.48f && u > -0.8f && v < -0.28f && v > -0.72f;
-                if (hash(seed, 2, 2) > 0.35f) in |= u > 0.5f && u < 0.82f && v > 0.28f && v < 0.58f;
-                return in;
+                // Cross-like tear with a slight lean, an uneven arm span and one broken upper shoulder.
+                // The stepped asymmetry follows the reference silhouette instead of a perfect plus sign.
+                float offset = (hash(seed, 10, 7) - 0.5f) * 0.14f;
+                float lean = 0.055f * (v + 0.25f) * (hash(seed, 11, 8) > 0.5f ? 1f : -1f);
+                float u0 = u - offset - lean;
+                float armY = (hash(seed, 12, 9) - 0.5f) * 0.10f;
+                float leftArm = 0.68f + 0.22f * hash(seed, 13, 10);
+                float rightArm = 0.48f + 0.22f * hash(seed, 14, 11);
+                boolean stem = Math.abs(u0) < 0.22f && v > -0.94f && v < 0.94f;
+                boolean bar = Math.abs(v - armY) < 0.25f && u0 > -leftArm && u0 < rightArm;
+                boolean upperShoulder = v > 0.30f && v < 0.54f && u0 > -0.54f && u0 < 0.12f;
+                boolean capStep = v > 0.56f && v < 0.88f && u0 > -0.20f && u0 < 0.40f;
+                boolean lowerFoot = v < -0.50f && v > -0.88f && u0 > -0.08f && u0 < 0.48f;
+                boolean tornTab = v > 0.18f && v < 0.42f && u0 < -0.48f && u0 > -0.70f;
+                return stem || bar || upperShoulder || capStep || lowerFoot || tornTab;
             }
             case NETHER: {
                 // Tall burning slab with a notched, box-lined top (Nether trailer frames).
@@ -179,7 +183,7 @@ final class RiftShape {
     // ------------------------------------------------------------------ satellites
 
     private void satellites(RiftType type, long seed) {
-        int count = switch (type) { case SIFT -> 8; case NETHER -> 9; case OVERWORLD -> 7; case END -> 9; default -> 4; };
+        int count = switch (type) { case SIFT -> 4; case NETHER -> 9; case OVERWORLD -> 7; case END -> 9; default -> 4; };
         for (int k = 0; k < count; k++) {
             // March from the centre along a random direction to the rim; the satellite straddles it.
             double a = hash(seed, k, 31) * Math.PI * 2;
@@ -193,9 +197,10 @@ final class RiftShape {
             px += (float) Math.cos(a) * 0.45f; py += (float) Math.sin(a) * 0.45f;
             float zf = 0.2f + 0.9f * hash(seed, k, 34), zb = zf - (0.6f + 0.5f * hash(seed, k, 35));
             float cyy = cy() + py;
-            int piece = type == RiftType.PORTAL ? 0 : k % 3;                     // 0 box, 1 L, 2 Z tetromino
+            int piece = type == RiftType.PORTAL || type == RiftType.SIFT ? 0 : k % 3; // keep Sift fragments as a few filled prisms
             if (piece == 0) {
-                float sw = 0.9f + 0.8f * hash(seed, k, 32), sh = 0.8f + 0.8f * hash(seed, k, 33);
+                float sw = type == RiftType.SIFT ? 0.48f + 0.38f * hash(seed, k, 32) : 0.9f + 0.8f * hash(seed, k, 32);
+                float sh = type == RiftType.SIFT ? 0.44f + 0.34f * hash(seed, k, 33) : 0.8f + 0.8f * hash(seed, k, 33);
                 sats.add(new float[]{px - sw / 2, cyy - sh / 2, px + sw / 2, cyy + sh / 2, zf, zb, k, 0});
             } else {
                 int[][] cells = piece == 1 ? new int[][]{{0, 0}, {0, 1}, {0, 2}, {1, 0}} : new int[][]{{0, 1}, {1, 1}, {1, 0}, {2, 0}};

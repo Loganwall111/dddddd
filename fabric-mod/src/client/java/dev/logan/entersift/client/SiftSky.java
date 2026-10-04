@@ -15,12 +15,11 @@ import net.minecraft.world.phys.Vec3;
  * 0.9 Sift sky: a procedural "lava lamp" of slowly drifting, merging colour blobs. There are no
  * textures, panoramas or shader packs; everything is computed in Java every frame.
  *
- * How it is drawn (vanilla/Fabric only): Fabric 26.3 has no sky hook, so the sky is a finely
- * tessellated sphere submitted in COLLECT_SUBMITS with {@link SiftRenderTypes#SOLID}. That type
- * uses the core {@code position_color} shader, which has no fog term, and it depth-tests normally.
- * The sphere sits beyond the last rendered chunk and inside the far plane, so terrain always stays
- * in front and the blobs show wherever the sky is open. Colours are per vertex; the GPU blends
- * them smoothly between vertices, which is what gives the soft lava-lamp edges.
+ * How it is drawn (vanilla/Fabric only): Fabric 26.3 has no sky hook, so the base sky is a finely
+ * tessellated sphere submitted in COLLECT_SUBMITS with {@link SiftRenderTypes#SOLID}. A second,
+ * translucent sphere carries the animated wavy arch ribbons. Both use core position-colour rendering,
+ * sit beyond the last rendered chunk and inside the far plane, and are depth-tested so terrain stays
+ * in front. The original gradient and lava-lamp colours remain visible beneath the arch overlay.
  *
  * Horizon: the lowest band fades to exactly the fog colour of timeline entersift:sift_cycle
  * (same keyframes, see STAGE_TICKS), so distant terrain melts into the sky without a seam.
@@ -34,11 +33,11 @@ import net.minecraft.world.phys.Vec3;
  * 0.13: there is NO sun in the Sift (the day/night cycle stays). Its light comes from soft
  * multi-coloured columns falling from the sky itself and coloured beams that land on the ground.
  *
- * 0.12 layer stack (render types from {@link SiftRenderTypes}; no OIT, so terrain does not flicker):
- *   1. opaque gradient dome with a faint pastel lava-lamp shimmer
- *   2. soft trans-aurora curtains: long wavy vertical sheets, additive, base alpha 0.18, smoothstep
- *      falloff on every margin (no rectangles, no hard lines anywhere in the sky)
- *   3. world-space diagonal light beams, soft across their width, tinting the ground where they land
+ * Layer stack (render types from {@link SiftRenderTypes}; no OIT, so terrain does not flicker):
+ *   1. opaque gradient dome with its existing pastel lava-lamp shimmer
+ *   2. animated, translucent wavy arch ribbons with soft shoulders and sparse blurred squares
+ *   3. restrained biome panels/swirl accents and low-strength aurora/rays behind the arches
+ *   4. world-space diagonal light beams, soft across their width, tinting the ground where they land
  */
 public final class SiftSky {
     private SiftSky() {}
@@ -118,17 +117,21 @@ public final class SiftSky {
             pose.pushPose(); // balanced: every push is popped even if a submit throws
             try {
                 var out = context.submitNodeCollector();
-                // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
+                // Base Sift dome remains the opaque background layer.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds, sw));
-                // 0.17 layer 2 (alpha blended, keeps colours saturated): panels or swirling blobs by biome.
+                // A second, nearer translucent dome adds travelling wavy arches without replacing the base sky.
+                out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) ->
+                    wavyArchDome(p, vc, radius * 0.972f, seconds, 1.0f));
+                // Keep the older biome panels and swirl texture as restrained background accents.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
-                    if (sw < 0.98f) softPanels(p, vc, radius * 0.985f, pal, seconds, 1f - sw);
-                    if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw);
+                    float accent = 0.18f;
+                    if (sw < 0.98f) softPanels(p, vc, radius * 0.985f, pal, seconds, (1f - sw) * accent);
+                    if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw * accent);
                 });
-                // Layer 3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
+                // Preserve a faint trace of the former aurora/ray treatment; the arch dome is now dominant.
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
-                    auroraCurtains(p, vc, radius * 0.98f, pal, seconds);
-                    skyRays(p, vc, radius * 0.96f, pal, seconds);
+                    auroraCurtains(p, vc, radius * 0.98f, pal, seconds, 0.16f);
+                    skyRays(p, vc, radius * 0.96f, pal, seconds, 0.12f);
                 });
                 // World-space diagonal beams slicing into the terrain, with a tint pool where each one lands.
                 if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange));
@@ -341,6 +344,75 @@ public final class SiftSky {
         return new float[]{(float) (Math.cos(el) * Math.cos(az)), (float) Math.sin(el), (float) (Math.cos(el) * Math.sin(az))};
     }
 
+    /** Pastel bands for the second dome; deliberately lower opacity than the sky gradient beneath it. */
+    private static final float[][] ARCH = {
+        rgb(0x71EBD6), rgb(0xA9E86B), rgb(0xF27DBD), rgb(0xEBCB68),
+        rgb(0x58CBE5), rgb(0xE873B6), rgb(0x84E3B8), rgb(0xD6F1E8)
+    };
+
+    private static void wavyArchDome(PoseStack.Pose p, VertexConsumer vc, float r, float t, float weight) {
+        if (weight < 0.02f) return;
+        final int bands = 8, segments = 64;
+        float[] softWhite = rgb(0xF1F8F4);
+        for (int band = 0; band < bands; band++) {
+            float baseElevation = 0.12f + band * 0.105f;
+            float[] color = ARCH[band % ARCH.length];
+            float[] previous = null, previousLow = null, previousHigh = null, previousBleed = null;
+            for (int segment = 0; segment <= segments; segment++) {
+                float f = segment / (float) segments;
+                double azimuth = f * Math.PI * 2.0;
+                float wave = (float) (0.050 * Math.sin(azimuth * 3.0 + t * 0.38 + band * 0.85)
+                    + 0.024 * Math.sin(azimuth * 6.0 - t * 0.21 + band * 1.4));
+                double elevation = baseElevation + wave;
+                float[] center = dir(azimuth, elevation);
+                float[] low = dir(azimuth, elevation - 0.022);
+                float[] high = dir(azimuth, elevation + 0.040);
+                float[] bleed = dir(azimuth, elevation + 0.085);
+                float alpha = 0.28f * weight;
+                if (previous != null) {
+                    // A broad ribbon with soft shoulders; its alpha blend leaves the original dome readable.
+                    v(p, vc, previousLow, r, color, alpha * 0.10f);
+                    v(p, vc, low, r, color, alpha * 0.10f);
+                    v(p, vc, center, r, color, alpha);
+                    v(p, vc, previous, r, color, alpha);
+                    v(p, vc, previous, r, color, alpha);
+                    v(p, vc, center, r, color, alpha);
+                    v(p, vc, high, r, color, alpha * 0.30f);
+                    v(p, vc, previousHigh, r, color, alpha * 0.30f);
+                    v(p, vc, previousHigh, r, color, alpha * 0.08f);
+                    v(p, vc, high, r, color, alpha * 0.08f);
+                    v(p, vc, bleed, r, color, 0f);
+                    v(p, vc, previousBleed, r, color, 0f);
+                }
+                // A handful of low-alpha soft squares gives scale without turning the dome into confetti.
+                if (segment % 9 == 4) {
+                    float size = 0.038f + 0.024f * (1f - baseElevation);
+                    archSquare(p, vc, r * 0.992f, azimuth, elevation + 0.012, size, softWhite, 0.27f * weight);
+                }
+                previous = center;
+                previousLow = low;
+                previousHigh = high;
+                previousBleed = bleed;
+            }
+        }
+    }
+
+    /** Soft-edged square floating on a sky band rather than a hard opaque billboard. */
+    private static void archSquare(PoseStack.Pose p, VertexConsumer vc, float r, double az, double el,
+                                   float size, float[] color, float alpha) {
+        float halfHeight = size * 0.72f;
+        float[] center = dir(az, el);
+        float[] north = dir(az, el + halfHeight), south = dir(az, el - halfHeight);
+        float[] east = dir(az + size, el), west = dir(az - size, el);
+        float[] northEast = dir(az + size, el + halfHeight), northWest = dir(az - size, el + halfHeight);
+        float[] southEast = dir(az + size, el - halfHeight), southWest = dir(az - size, el - halfHeight);
+        float edge = alpha * 0.20f;
+        v(p, vc, southWest, r, color, 0f); v(p, vc, south, r, color, edge); v(p, vc, center, r, color, alpha); v(p, vc, west, r, color, edge);
+        v(p, vc, south, r, color, edge); v(p, vc, southEast, r, color, 0f); v(p, vc, east, r, color, edge); v(p, vc, center, r, color, alpha);
+        v(p, vc, west, r, color, edge); v(p, vc, center, r, color, alpha); v(p, vc, north, r, color, edge); v(p, vc, northWest, r, color, 0f);
+        v(p, vc, center, r, color, alpha); v(p, vc, east, r, color, edge); v(p, vc, northEast, r, color, 0f); v(p, vc, north, r, color, edge);
+    }
+
     private static float[] bright(float[] c, float w) { return lerp(c, new float[]{1f, 1f, 1f}, w); }
 
     /** How strongly the aurora shows: a little fainter at noon, strongest in the evening and at night. */
@@ -358,7 +430,7 @@ public final class SiftSky {
      * shimmering folds along its length, and a colour that shifts from the bottom (mint or white-cyan)
      * to the top (pink or violet). There are no hard edges, and the gradient sky shows through.
      */
-    private static void auroraCurtains(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+    private static void auroraCurtains(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float weight) {
         float strength = auroraStrength(pal);
         float[][] row = new float[CURTAIN_ROWS + 1][];
         float[] rowA = new float[CURTAIN_ROWS + 1];
@@ -379,7 +451,7 @@ public final class SiftSky {
                 double el = e0 + 0.07 * Math.sin(f * 4.2 + k * 2.3 + t * 0.05) + 0.03 * Math.sin(f * 9.7 - t * 0.09);
                 float ends = smooth(0f, 0.22f, f) * smooth(1f, 0.78f, f);
                 float fold = 0.55f + 0.45f * (0.5f + 0.5f * noise(f * 9f + k * 7.1f, t * 0.06f, k * 3.3f));
-                float base = CURTAIN_ALPHA * strength * pulse * ends * fold;
+                float base = CURTAIN_ALPHA * strength * pulse * ends * fold * weight;
                 for (int j = 0; j <= CURTAIN_ROWS; j++) {
                     float v = j / (float) CURTAIN_ROWS;
                     // Soft bottom edge, long upward fade: smoothstep falloff on both vertical margins.
@@ -495,7 +567,7 @@ public final class SiftSky {
      * segment with the alpha on the centre line and zero at both edges, and the alpha fades out
      * near the zenith and toward the ground, so none of them has a hard edge.
      */
-    private static void skyRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+    private static void skyRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float weight) {
         float strength = 0.75f + 0.25f * (1 - pal.noon());
         int segs = 12;
         for (int k = 0; k < SKY_RAYS; k++) {
@@ -503,7 +575,7 @@ public final class SiftSky {
             double w = 0.045 + 0.075 * hash(k, 62, 0), lean = (hash(k, 63, 0) - 0.5) * 0.5;
             double top = 0.95 + 0.4 * hash(k, 64, 0);
             float[] c = lerp(RAYS[k % RAYS.length], pal.blobs()[k % 4], 0.15f);
-            float base = 0.16f * strength * (0.65f + 0.35f * (float) Math.sin(t * 0.13f + k * 2.7f));
+            float base = 0.16f * strength * weight * (0.65f + 0.35f * (float) Math.sin(t * 0.13f + k * 2.7f));
             for (int sg = 0; sg < segs; sg++) {
                 double f0 = sg / (double) segs, f1 = (sg + 1) / (double) segs;
                 double e0 = -0.02 + top * f0, e1 = -0.02 + top * f1;

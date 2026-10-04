@@ -74,6 +74,9 @@ class DataContracts(unittest.TestCase):
         sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
         # 0.11: private fog-free position_color types, no OIT (debugQuads made terrain flicker).
         self.assertIn('SiftRenderTypes.SKY',sky)                # 0.12: own pipeline, Iris maps it to skybasic
+        self.assertIn('SiftRenderTypes.SKY_BLEND',sky)
+        self.assertIn('wavyArchDome(',sky)                       # translucent animated arches over the base dome
+        self.assertIn('float alpha = 0.28f * weight;',sky)
         self.assertIn('SiftRenderTypes.GLOW',sky)
         self.assertNotIn('debugQuads',sky)
         self.assertIn('startsWith("entersift:")',sky)          # dimension guard
@@ -116,7 +119,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('sift.rift_visual',fn('rift/anchor'))
         client=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('submitCustomGeometry',client)
-        self.assertIn('SiftRenderTypes.RIFT_GLOW',client)  # 0.20: window + walls + additive rims
+        self.assertIn('SiftRenderTypes.RIFT_GLOW',client)  # controlled additive rim and opening sparks
         self.assertNotIn('lensHalo',client)
         self.assertFalse((ROOT/'src/client/java/dev/logan/entersift/client/RiftRenderer.java').exists())
         self.assertIn('tag=sift.rift_visual',fn('world/tick'))
@@ -274,12 +277,14 @@ class DataContracts(unittest.TestCase):
         self.assertIn('/program/gbuffers_color.vsh',(sp/'world_sift/gbuffers_skybasic.vsh').read_text())
         col=(sp/'program/gbuffers_color.fsh').read_text()
         self.assertIn('gl_FragData[0] = glcolor;',col)
-        self.assertNotIn('#if SIFT_SKY_GLOW',(sp/'world_sift/composite.fsh').read_text())  # float #if is invalid GLSL
+        self.assertNotIn('#if SIFT_SKY_GLOW',(sp/'world_sift/composite.fsh').read_text())
         self.assertIn('SIFT_SKY_GLOW',(sp/'shaders.properties').read_text())
-        # Rifts: dimension-dependent views, inset canvas, gradient rim, distance zoom + parallax.
+        # The window is a translucent animated membrane; walls and the CPU fallback remain filled geometry.
         rift=(c/'client/RiftPortalRenderer.java').read_text()
-        for k in ['the_sift','void band(','float[] cube(']:
-            self.assertIn(k,rift)
+        shader=(ROOT/'src/main/resources/assets/entersift/shaders/core/rift.fsh').read_text()
+        for k in ['the_sift','private static void band(','windowsFlat(','RiftFragments.submit(']: self.assertIn(k,rift)
+        for k in ['animatedMembrane(','float alpha = clamp(','RIFT_WALL','RIFT_GLOW'] : self.assertIn(k,shader)
+        self.assertIn('GLASS_PIPELINE',rt); self.assertIn('BlendFunction.TRANSLUCENT',rt)
     def test_v012_soft_aurora_curtains(self):
         sky=(ROOT/'src/client/java/dev/logan/entersift/client/SiftSky.java').read_text()
         for gone in ['shardRibbons','auroraStreaks','void panel(']: self.assertNotIn(gone,sky)   # no hard rectangles
@@ -398,63 +403,83 @@ class DataContracts(unittest.TestCase):
         pack=re.search(r'PACK = "([^"]+)"',code).group(1)
         self.assertIn(f"archiveFileName = '{pack}'",gradle)      # 0.14 shipped mismatched names: no pack installed
         r=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
-        self.assertIn('4 ritual portal (cyan mosaic)',r)
-        self.assertIn('vec3 viewPortal(',(R/'assets/entersift/shaders/core/rift.fsh').read_text())
+        fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        self.assertIn('4 ritual cyan',r)
+        self.assertIn('materialPalette(',fsh); self.assertIn('animatedMembrane(',fsh)
+        self.assertIn('float alpha = clamp(',fsh)
     def test_v019_stacked_box_rifts_crack_free_and_coral_interior(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
         # Stacked hollow boxes at different depths, with step walls and lip rims between them.
         shape=(C/'RiftShape.java').read_text()
         self.assertIn('boxes(',shape); self.assertIn('maxDepth',shape)
-        # 0.20: no per-vertex jitter and no pixelated lens view; the window is sampled by view direction.
-        self.assertNotIn('gameTime() * 0.4f',rift); self.assertNotIn('px(lens',fsh)
-    def test_v020_clean_slate_rifts(self):
+        # The back membrane is procedural and alpha-blended, not a pixelated lens or framebuffer copy.
+        self.assertIn('vec4 animatedMembrane(vec2 uv',fsh)
+        self.assertIn('clamp(riftData.rg, 0.0, 1.0)',fsh)
+        self.assertIn('float alpha = clamp(',fsh)
+        self.assertNotIn('Sampler0',fsh)
+    def test_current_filled_3d_rift_contract(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); shape=(C/'RiftShape.java').read_text()
+        fragments=(C/'RiftFragments.java').read_text(); particle=(C/'RiftEnergyCubeParticle.java').read_text()
         fsh=(S/'rift.fsh').read_text(); vsh=(S/'rift.vsh').read_text(); types=(C/'SiftRenderTypes.java').read_text()
-        # Everything from the old renderer is gone.
+        # Retain the existing gameplay/traversal contract; the rework stays on the client-rendering side.
         self.assertFalse((C/'SiftLens.java').exists()); self.assertNotIn('RIFT_LENS',types)
-        self.assertNotIn('SiftLens',(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
-        self.assertNotIn('riftLens',(C/'SiftBudget.java').read_text())
-        for t in ('rift_interiors.py','rift_scenes.py','preview_rifts.py'): self.assertFalse((ROOT/'tools'/t).exists())
-        self.assertFalse(list((D/'function/rift').glob('pose_*.mcfunction')))
         self.assertNotIn('#riftphase',fn('rift/tick'))
-        # 1. Direction-sampled window: sharp, un-warped, moves only with yaw and pitch.
-        self.assertIn('worldRay = Position;',vsh)
-        self.assertIn('vec3 dir = normalize(worldRay);',fsh)
-        self.assertIn('float clouds(vec3 dir',fsh); self.assertIn('float ridge(float yaw',fsh)
-        self.assertNotIn('Sampler0',fsh)
-        # 2. Lifecycle (0.21: 0-100): ripple hard-stopped, tiered snap.
-        self.assertIn('age < RIPPLE_END + 6 && age < GROWN',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
-        # 3. Wide soft additive night curtains replace laser poles.
-        self.assertIn('private static void curtains(',rift)
-        for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
-        self.assertIn('age >= GROWN && s.night',rift)
-        # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
-        self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
-        self.assertIn('no T-junctions',rift)
+        self.assertIn('matches 100..5990',fn('rift/tick'))
+        # Stepped, asymmetric filled body with real recessed depth, joined side walls and a front lip.
+        for token in ('case SIFT:', 'boolean upperShoulder', 'boolean capStep', 'boolean lowerFoot', 'boxes(', 'maxDepth'):
+            self.assertIn(token,shape)
+        for token in ('windowsFlat(', 'RiftFragments.submit(', 'private static void walls(', 'private static void frame(', 'COLLAR = 0.3f'):
+            self.assertIn(token,rift)
+        self.assertIn('worldRay = Position;',vsh); self.assertIn('vec3 dir = normalize(worldRay);',fsh)
+        self.assertIn('animatedMembrane(',fsh); self.assertIn('float alpha = clamp(',fsh)
+        self.assertIn('float fillAlpha = 0.66f;',rift)
+        self.assertIn('BlendFunction.TRANSLUCENT',types); self.assertIn('GLASS_PIPELINE',types)
+        fillPipeline=types.split('RIFT_PIPELINE =',1)[1].split('RIFT_WALL_PIPELINE',1)[0]
+        self.assertIn('BlendFunction.TRANSLUCENT',fillPipeline)
+        self.assertIn('CompareOp.GREATER_THAN_OR_EQUAL, false',fillPipeline)
+        self.assertIn('0.48, 0.68',fsh)  # translucent range is capped below an opaque white sheet
+        self.assertNotIn('Sampler0',fsh)  # no screen-copy or destination-pixel sampling
+        # Small filled fragments and a real, registered particle group; both night checks use world time.
+        self.assertIn('ParticleGroupRegistry.register(GROUP, Group::new);',particle)
+        self.assertIn('RiftFragments.isNightTime(level.getOverworldClockTime())',particle)
+        self.assertIn('if (!isNightTime(worldTick)) return;',fragments)
+        self.assertIn('Math.floorMod(worldTick + entity.getId(), 10L)',fragments)
+        self.assertIn('0.25f + this.random.nextFloat() * 0.25f',particle)
+        self.assertIn('six-face voxel',particle)
+        self.assertIn('SiftRenderTypes.GLASS',fragments); self.assertIn('SiftRenderTypes.GLASS',particle)
+        self.assertIn('RiftEnergyCubeParticle.register()', (ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
+        self.assertNotIn('private static void curtains(',rift)  # no old broad night curtain/white-sheet effects
     def test_v021_biome_skies_awakening_voxels_warp_overlay(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); sky=(C/'SiftSky.java').read_text(); hud=(C/'SiftTransition.java').read_text()
-        # Directive 1: dimension guard, balanced push/pop, biome states A (meadow) and B (red canyons) + denser fog.
+        # The animated arches sit on a translucent overlay while the original Sift dome remains the backdrop.
         self.assertIn('dim.equals(SiftContent.id("the_sift"))',sky)
         self.assertEqual(sky.count('pose.pushPose()'),sky.count('pose.popPose()'))
+        self.assertIn('wavyArchDome(',sky); self.assertIn('SiftRenderTypes.SKY_BLEND',sky)
+        self.assertIn('out.submitCustomGeometry(pose, SiftRenderTypes.SKY,',sky)
+        self.assertIn('float accent = 0.18f;',sky)
         self.assertIn('rgb(0x8FC2C4)',sky); self.assertIn('ELECTRIC_CYAN',sky); self.assertIn('BASIN_MAGENTA',sky)
         self.assertIn('"singer_meadow"',sky); self.assertIn('"rose_spires", "titan_crags"',sky)
         for b in ('rose_spires','titan_crags'):
             a=read(f'worldgen/biome/{b}.json')['attributes']
             self.assertLess(a['minecraft:visual/fog_end_distance'],200)
-        # Directive 2: 100-tick awakening, one tier every 10 ticks, large dissolving voxel cubes per rift type.
+        # Keep the 100-tick awakening and tiered body, but use the new filled facets and subtle fragments.
         self.assertIn('RIPPLE_END = 30, SEED_START = 31, CLUSTER_START = 61, GROWN = 100',rift)
         self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f',rift)
         self.assertIn('TIERS = 4',(C/'RiftShape.java').read_text())
         self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
-        self.assertIn('(0.25f + 0.25f * RiftShape.hash(g, k, 7)) / 2f',rift)        # 0.25-0.5 block cubes
-        self.assertIn('if (f >= 0.75f)',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
-        self.assertIn('rgb(0xC0142A), rgb(0xFF6A1A), rgb(0xE0B040)',rift)
+        self.assertIn('RiftFragments.submit(',rift)
+        self.assertIn('c(1f, 0.98f, 0.97f)',rift); self.assertIn('c(1f, 0.52f, 0.76f)',rift)
         self.assertIn('GROWN = 100',(ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
         self.assertIn('matches 100..5990',fn('rift/tick'))
-        # Directive 3: direction window kept, safe rim shimmer, recessed alcove frame, warp overlay then tunnel.
+        particle=(C/'RiftEnergyCubeParticle.java').read_text(); fragments=(C/'RiftFragments.java').read_text()
+        self.assertIn('RiftFragments.isNightTime(level.getOverworldClockTime())',particle)
+        self.assertIn('isNightTime(worldTick)',fragments)  # spawn gate is world-clock based, independent of the frozen rift age
+        self.assertNotIn('whiteFlash(',rift); self.assertNotIn('private static void curtains(',rift)
+        self.assertIn('BlendFunction.TRANSLUCENT',(C/'SiftRenderTypes.java').read_text())
+        # Recessed frame/rim, warp overlay and all traversal timing stay intact.
         self.assertIn('float[] jit',rift); self.assertIn('private static void frame(',rift); self.assertIn('COLLAR = 0.3f',rift)
         self.assertIn('travel/warp {dest:',fn('rift/transport'))
         self.assertIn('effect give @s entersift:rift_transit 4 0 true',fn('travel/warp'))
@@ -493,17 +518,18 @@ class DataContracts(unittest.TestCase):
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
         self.assertIn('mod_version=0.21',(ROOT/'gradle.properties').read_text())
-    def test_v0181_destination_viewports_jitter_and_evening_columns(self):
+    def test_rift_palette_and_night_code(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); fsh=(S/'rift.fsh').read_text()
-        for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
+        for token in ('materialPalette(','view == 1','view == 2','view == 3','view == 4','view == 5','animatedMembrane('):
+            self.assertIn(token,fsh)
         self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
-        self.assertIn('day >= 11500L && day <= 23300L',rift)                               # evening + night only
-        self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
-    def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
+        self.assertIn('day >= 11500L && day <= 23300L',rift)  # world-clock night bit for the membrane palette
+        self.assertIn('worldRay = Position;', (S/'rift.vsh').read_text())
+    def test_rift_shader_variants_and_tunnel_frostbloom(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); types=(C/'SiftRenderTypes.java').read_text()
-        # The whole rift goes through the rift GLSL program; real lensing samples a scene copy.
+        # The filled membrane, faceted walls and restrained rim use their dedicated GLSL variants.
         for k in ('RIFT_WALL','RIFT_GLOW'): self.assertIn(k,types); self.assertIn(k,(S/'rift.fsh').read_text())
         self.assertNotIn('RIFT_HALO',types); self.assertNotIn('LENS JITTER',rift)
         self.assertIn('random value 6..9',fn('rift/style')); self.assertIn('distance=..3.0',fn('rift/transport'))
@@ -531,7 +557,7 @@ class DataContracts(unittest.TestCase):
         for b in ('coral_expanse','tidepool_reef','singer_meadow','soul_valley'):
             self.assertIn(f'"{b}"',sky); self.assertTrue((D/f'worldgen/biome/{b}.json').exists(),b)
         self.assertIn('SKY_BLEND',(C/'SiftRenderTypes.java').read_text())
-        # GPU rift shader with lensing, night aura and aura columns instead of beacon beams.
+        # GPU rift shader assets and aura-column entity; no command-level beacon effects.
         S=R/'assets/entersift/shaders/core'
         self.assertTrue((S/'rift.vsh').exists()); self.assertIn('void main',(S/'rift.fsh').read_text())
         self.assertIn('RIFT',(C/'SiftRenderTypes.java').read_text())

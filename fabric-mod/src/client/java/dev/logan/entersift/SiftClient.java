@@ -47,7 +47,8 @@ public final class SiftClient implements ClientModInitializer {
         dev.logan.entersift.client.SiftTunnel.register(); // 0.18 warp-tunnel view inside the rift tunnel
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
         dev.logan.entersift.client.SiftSouls.register(); // 0.14 wandering souls with blue comet trails (Sift only)
-        // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
+        // Rifts stay gameplay-neutral entities; their animated visuals are client-side geometry and particles.
+        dev.logan.entersift.client.RiftEnergyCubeParticle.register();
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
         EntityRendererRegistry.register(SiftEntities.AURA_COLUMN, dev.logan.entersift.client.AuraColumnRenderer::new);
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,
