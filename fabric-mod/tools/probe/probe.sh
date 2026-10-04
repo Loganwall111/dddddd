@@ -207,3 +207,9 @@ for c in net.minecraft.client.gui.screens.ConnectScreen net.minecraft.client.mul
   echo "===== $c"; javap -protected -cp "$CP" "$c" 2>&1 | head -120; done
 echo "===== Minecraft join-related"; javap -protected -cp "$CP" net.minecraft.client.Minecraft 2>&1 | grep -iE "setScreen|joinServer|connect|createWorldOpenFlows|gui|levelSource" | head -20
 } > $OUT/join_api.txt
+# 0.24: clean captures - semantics of Screenshot.grab's boolean + 26.3 chat/toast clearing API.
+{
+echo "===== grab(Minecraft,boolean) bytecode"; javap -c -p -cp "$CP" net.minecraft.client.Screenshot 2>&1 | sed -n '/grab(net.minecraft.client.Minecraft, boolean)/,/^  [a-zA-Z].*(/p' | head -70
+echo "===== Gui chat/toast accessors"; javap -p -cp "$CP" net.minecraft.client.gui.Gui 2>&1 | grep -iE "chat|toast|overlay|tablist|boss" | head -20
+echo "===== ChatComponent clear"; javap -p -cp "$CP" net.minecraft.client.gui.components.ChatComponent 2>&1 | grep -iE "clear|remove|messages" | head -12
+} > $OUT/clean_capture.txt
