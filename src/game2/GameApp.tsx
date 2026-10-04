@@ -4,10 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
-import { hash2, mulberry, clamp, lerp } from "../sift/core";
+import { hash2, mulberry, clamp, lerp, type Placed } from "../sift/core";
+import { BlockMesh } from "../sift/Blocks";
 import { MobMesh } from "../sift/Mobs";
 import { Rift } from "../sift/Rift";
-import { SkyDome, ParticleDrift, LightShaft, IchorPool } from "../sift/VFX";
+import { SkyDome, ParticleDrift, LightShaft, IchorPool, VfxItem } from "../sift/VFX";
+import { SCENE_PRESETS } from "../sift/scenes";
 
 /* ── realms ── */
 interface Realm {
@@ -25,6 +27,15 @@ const REALMS: Realm[] = [
   { id: "coral", name: "Coral Expanse", ground: "#3f9a9a", hi: "#6fd8d0", stone: "#2a7a8a", skyTop: "#2a7a8a", skyBottom: "#7fe8dc", fog: "#3fa8a8", topB: "#0e2a3a", bottomB: "#2a5a6a", fogB: "#12303a", seed: 44, height: 1.8 },
   { id: "tunnel", name: "Rift Tunnel", ground: "#16333b", hi: "#1e4650", stone: "#0a1e24", skyTop: "#0a1418", skyBottom: "#123036", fog: "#0d1d22", topB: "#1a4650", bottomB: "#2a6a72", fogB: "#123036", seed: 55, height: 1.2, night: true, hostile: true },
 ];
+
+/* the sixth realm: whatever the Sift Forge editor saved (or the Ritual Plaza) */
+const FORGE_REALM: Realm = {
+  id: "forge", name: "Forge Scene", ground: "#141a20", hi: "#1c242c", stone: "#0d1218",
+  skyTop: "#0e1a22", skyBottom: "#1e3a44", fog: "#12242c",
+  topB: "#0a1218", bottomB: "#16303a", fogB: "#0d1d24", seed: 77, height: 0, night: true,
+};
+const ALL_REALMS: Realm[] = [...REALMS, FORGE_REALM];
+const FORGE_IX = ALL_REALMS.length - 1;
 
 export interface MapData {
   px: number; pz: number; yaw: number; realm: number;
@@ -209,6 +220,20 @@ export function GameApp({ onExit }: { onExit: () => void }) {
   const [muted, setMuted] = useState(true);
   const mapData = useRef<MapData>({ px: 0, pz: 0, yaw: 0, realm: 0, rifts: [], shards: [], mobs: [] });
   const [banner, setBanner] = useState<string | null>(null);
+  const [gs, setGs] = useState<GameSettings>({ dpr: 1.5, fogFar: 110, volume: 0.5, paused: false });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [loadRun, setLoadRun] = useState(false);
+  const [hasSave, setHasSave] = useState(() => !!localStorage.getItem(SAVE_KEY2));
+  useEffect(() => { setGs((g) => ({ ...g, paused: settingsOpen })); }, [settingsOpen]);
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.code === "Escape" && started) setSettingsOpen((o) => !o); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [started]);
+  useEffect(() => {
+    if (audioRef.current.amb) { audioRef.current.amb.volume = gs.volume * 0.5; }
+    if (audioRef.current.mus) { audioRef.current.mus.volume = gs.volume * 0.35; }
+  }, [gs.volume]);
   useEffect(() => {
     if (!hud.started) return;
     setBanner(hud.realm);
@@ -232,12 +257,17 @@ export function GameApp({ onExit }: { onExit: () => void }) {
     audioRef.current.mus?.play().catch(() => {});
   }, [started, muted]);
 
-  const start = () => { setStarted(true); setHud((h) => ({ ...h, started: true })); };
+  const start = (cont: boolean) => {
+    if (cont) setLoadRun(true);
+    else { localStorage.removeItem(SAVE_KEY2); setHasSave(false); }
+    setStarted(true);
+    setHud((h) => ({ ...h, started: true }));
+  };
 
   return (
     <div className="game-root">
-      <Canvas shadows dpr={[1, 1.5]} camera={{ fov: 60, position: [0, 6, 14] }}>
-        <GameWorld onHud={setHud} started={started} map={mapData} />
+      <Canvas shadows dpr={[1, gs.dpr]} camera={{ fov: 60, position: [0, 6, 14] }}>
+        <GameWorld onHud={setHud} started={started} map={mapData} gs={gs} load={loadRun} />
       </Canvas>
       <Minimap data={mapData} />
 
@@ -248,6 +278,7 @@ export function GameApp({ onExit }: { onExit: () => void }) {
           <div className="game-realm"><b>◈ SIFT REALMS</b><span>{hud.realm}</span></div>
           <div className="game-right">
             <button className="forge-btn" onClick={() => setMuted((m) => !m)}>{muted ? "🔇" : "🔊"}</button>
+            <button className="forge-btn" title="Settings (Esc)" onClick={() => setSettingsOpen(true)}>⚙</button>
             <div className="game-shards">◆ {hud.shards}/12 resonance</div>
           </div>
         </div>
@@ -264,6 +295,28 @@ export function GameApp({ onExit }: { onExit: () => void }) {
         </div>
         {hud.boss != null && (
           <div className="game-boss"><span>⚠ TWISTED WARDEN</span><div className="game-bossbar"><i style={{ width: `${hud.boss}%` }} /></div></div>
+        )}
+        {settingsOpen && (
+          <div className="game-settings">
+            <h3>SETTINGS</h3>
+            <label>resolution scale
+              <input type="range" min={0.75} max={2} step={0.25} value={gs.dpr}
+                onChange={(e) => setGs((g) => ({ ...g, dpr: parseFloat(e.target.value) }))} />
+            </label>
+            <label>view distance
+              <input type="range" min={60} max={160} step={5} value={gs.fogFar}
+                onChange={(e) => setGs((g) => ({ ...g, fogFar: parseFloat(e.target.value) }))} />
+            </label>
+            <label>volume
+              <input type="range" min={0} max={1} step={0.05} value={gs.volume}
+                onChange={(e) => setGs((g) => ({ ...g, volume: parseFloat(e.target.value) }))} />
+            </label>
+            <div className="row">
+              <button className="forge-btn accent" onClick={() => setSettingsOpen(false)}>RESUME</button>
+              <button className="forge-btn" onClick={onExit}>EXIT TO HUB</button>
+            </div>
+            <small>game pauses while open · Esc closes</small>
+          </div>
         )}
         {hud.craftOpen && (
           <div className="game-craft">
@@ -291,12 +344,15 @@ export function GameApp({ onExit }: { onExit: () => void }) {
       </div>
 
       {!started && (
-        <div className="game-start" onClick={start}>
+        <div className="game-start">
           <div className="game-start-core">
             <span className="forge-logo big">◈ SIFT REALMS</span>
             <p>a playable rift-dimension adventure</p>
-            <small>Five realms in a rift chain: Singer Meadow → Rose Spires → Boneyard → Coral Expanse → Rift Tunnel. Recover the 12 resonance notes. Mind the sculk.</small>
-            <button className="forge-btn accent big">ENTER THE RIFT</button>
+            <small>Six realms in a rift chain — the last one is your saved Forge scene. Recover the 12 resonance notes, craft from ichor, fell the Warden.</small>
+            <div className="game-start-row">
+              <button className="forge-btn accent big" onClick={() => start(false)}>NEW RUN</button>
+              {hasSave && <button className="forge-btn big" onClick={() => start(true)}>CONTINUE ▸</button>}
+            </div>
           </div>
         </div>
       )}
@@ -304,9 +360,12 @@ export function GameApp({ onExit }: { onExit: () => void }) {
   );
 }
 
-function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => void; started: boolean; map: React.MutableRefObject<MapData> }) {
+export interface GameSettings { dpr: number; fogFar: number; volume: number; paused: boolean; }
+const SAVE_KEY2 = "siftrealms.save.v1";
+
+function GameWorld({ onHud, started, map, gs, load }: { onHud: (f: (h: any) => any) => void; started: boolean; map: React.MutableRefObject<MapData>; gs: GameSettings; load: boolean }) {
   const realmIx = useRef(0);
-  const realm = REALMS[realmIx.current];
+  const realm = ALL_REALMS[realmIx.current];
   const player = useRef(new THREE.Group());
   const bodyRef = useRef<THREE.Group>(null);
   const camTarget = useRef(new THREE.Vector3());
@@ -331,10 +390,10 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
   const bossActive = useRef(false);
   const gl = useThree((s) => s.gl);
 
-  /* mobs + shards per realm */
+  /* world + shards + mobs per realm */
   const world = useMemo(() => {
     const mk = (ix: number) => {
-      const r = REALMS[ix];
+      const r = ALL_REALMS[ix];
       const rnd = mulberry(r.seed * 55);
       const mobs: MobState[] = [];
       const PICKS: string[][] = [
@@ -356,14 +415,44 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
       });
       return { mobs, shards };
     };
-    return REALMS.map((_, i) => mk(i));
+    return ALL_REALMS.map((_, i) => mk(i));
   }, []);
 
-  const rifts = useMemo(() => REALMS.map((r, i) => ({
+  const rifts = useMemo(() => ALL_REALMS.map((r, i) => ({
     pos: new THREE.Vector3(0, groundH(0, -30, r) + 2.2, -30),
     style: ["sift", "sift_night", "end"][i],
-    to: (i + 1) % REALMS.length,
+    to: (i + 1) % ALL_REALMS.length,
   })), []);
+
+  /* Forge custom realm items (editor save or Ritual Plaza fallback) */
+  const forgeItems = useMemo<Placed[]>(() => {
+    try {
+      const raw = localStorage.getItem("siftforge.scene.v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+        if (Array.isArray(parsed?.items) && parsed.items.length) return parsed.items;
+      }
+    } catch { /* ignore */ }
+    return SCENE_PRESETS[0].build();
+  }, []);
+
+  /* load a saved run */
+  useEffect(() => {
+    if (!load) return;
+    try {
+      const s = JSON.parse(localStorage.getItem(SAVE_KEY2) || "null");
+      if (!s) return;
+      hp.current = s.hp ?? 100;
+      ichor.current = s.ichor ?? 0;
+      potions.current = s.potions ?? 1;
+      charms.current = s.charms ?? 0;
+      realmIx.current = Math.min(s.realm ?? 0, ALL_REALMS.length - 1);
+      if (Array.isArray(s.pos)) player.current.position.set(s.pos[0], s.pos[1], s.pos[2]);
+      if (Array.isArray(s.shards)) world.forEach((w2, i) => w2.shards.forEach((sh, j) => { sh.taken = !!s.shards[i]?.[j]; }));
+    } catch { /* ignore */ }
+  }, [load, world]);
+  const lastSave = useRef(0);
 
   /* input */
   useEffect(() => {
@@ -408,9 +497,9 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
   let hudTimer = useRef(0);
 
   useFrame((st, dt) => {
-    if (!started) return;
+    if (!started || gs.paused) return;
     dt = Math.min(dt, 0.05);
-    const r = REALMS[realmIx.current];
+    const r = ALL_REALMS[realmIx.current];
     const p = player.current.position;
     const w = world[realmIx.current];
 
@@ -575,7 +664,7 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
           flash.current = 0.8;
           realmIx.current = rf.to;
           const dest = rifts[rf.to];
-          p.set(dest.pos.x, groundH(dest.pos.x, dest.pos.z + 6, REALMS[rf.to]) + 1, dest.pos.z + 6);
+          p.set(dest.pos.x, groundH(dest.pos.x, dest.pos.z + 6, ALL_REALMS[rf.to]) + 1, dest.pos.z + 6);
           vel.current.set(0, 0, 0);
         }
       }
@@ -604,7 +693,7 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
         ...h,
         hp: Math.max(0, Math.round(hp.current)),
         shards: total,
-        realm: REALMS[realmIx.current].name,
+        realm: ALL_REALMS[realmIx.current].name,
         dead: dead.current,
         won: won.current,
         ichor: ichor.current,
@@ -614,16 +703,25 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
         craftOpen: craftOpen.current,
         msg: flash.current > 0.4 ? "⟡ rift transit" : "",
       }));
+      const now = performance.now();
+      if (now - lastSave.current > 3000) {
+        lastSave.current = now;
+        localStorage.setItem(SAVE_KEY2, JSON.stringify({
+          hp: hp.current, ichor: ichor.current, potions: potions.current, charms: charms.current,
+          realm: realmIx.current, pos: [p.x, p.y, p.z],
+          shards: world.map((w2) => w2.shards.map((s2) => s2.taken)),
+        }));
+      }
     }
   });
 
-  const r = REALMS[realmIx.current];
+  const r = ALL_REALMS[realmIx.current];
   const w = world[realmIx.current];
 
   return (
     <>
       <color attach="background" args={[r.fog]} />
-      <fog attach="fog" args={[r.fog, 18, 110]} />
+      <fog attach="fog" args={[r.fog, 18, gs.fogFar]} />
       <Atmosphere realm={r} mixRef={mixRef} />
       <SkyDome top={r.skyTop} bottom={r.skyBottom} topB={r.topB} bottomB={r.bottomB} night={!!r.night} ribbons={1} mixRef={mixRef} />
       <ambientLight intensity={r.night ? 0.4 : 0.75} />
@@ -633,6 +731,7 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
       <Terrain realm={r} />
       <Props realm={r} />
       <GlowProps realm={r} />
+      {realmIx.current === FORGE_IX && <ForgeScene items={forgeItems} />}
       {r.id === "meadow" && <IchorPool radius={5} />}
 
       {rifts.map((rf, i) => i === realmIx.current && (
@@ -641,7 +740,7 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
         </group>
       ))}
       {/* exit rift back */}
-      {(() => { const back = rifts[(realmIx.current + REALMS.length - 1) % REALMS.length]; return null; })()}
+      {(() => { const back = rifts[(realmIx.current + ALL_REALMS.length - 1) % ALL_REALMS.length]; return null; })()}
 
       {w.shards.map((s, i) => !s.taken && (
         <group key={i} position={s.pos.toArray() as [number, number, number]}>
@@ -814,6 +913,22 @@ function Minimap({ data }: { data: React.MutableRefObject<MapData> }) {
     return () => window.clearInterval(iv);
   }, [data]);
   return <canvas ref={ref} width={150} height={150} className="game-map" aria-label="minimap" />;
+}
+
+/* renders a Sift Forge editor scene as the sixth realm */
+function ForgeScene({ items }: { items: Placed[] }) {
+  return (
+    <group>
+      {items.map((it) => (
+        <group key={it.uid} position={it.pos} rotation={it.rot} scale={it.kind === "rift" ? [1, 1, 1] : it.scale}>
+          {it.kind === "block" && <BlockMesh id={it.id} emissiveMul={it.emissive ?? 1} />}
+          {it.kind === "mob" && <MobMesh id={it.id} animated />}
+          {it.kind === "rift" && <Rift styleId={it.id} width={3 * it.scale[0]} height={3 * it.scale[1]} />}
+          {it.kind === "vfx" && <VfxItem id={it.id} color={it.variant} />}
+        </group>
+      ))}
+    </group>
+  );
 }
 
 function IchorDrop() {
