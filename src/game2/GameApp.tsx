@@ -74,6 +74,30 @@ function realmProps(r: Realm): { p: [number, number, number]; s: [number, number
       add(x, groundH(x, z, r) + h / 2, z, 0.7, h, 0.7, "#9fb8b4", 0, undefined);
     }
   }
+  if (r.id === "coral") {
+    for (let i = 0; i < 18; i++) {
+      const x = (rnd() - 0.5) * 90, z = (rnd() - 0.5) * 90;
+      const h = 2 + rnd() * 3;
+      add(x, groundH(x, z, r) + h / 2, z, 1, h, 1, "#2a7a8a");
+      add(x, groundH(x, z, r) + h + 0.6, z, 1.8, 1.2, 1.8, rnd() > 0.5 ? "#ff7a5a" : "#ffd05a", 0.7, "#ff9a7a");
+      if (rnd() > 0.5) add(x + 1.4, groundH(x, z, r) + 0.6, z, 0.9, 0.9, 0.9, "#ff8ab0", 0.4, "#ff8ab0");
+      if (rnd() > 0.6) add(x - 1.2, groundH(x, z, r) + 0.5, z + 0.8, 0.7, 0.7, 0.7, "#ffd05a", 0.4, "#ffd05a");
+    }
+    for (let i = 0; i < 10; i++) {
+      const x = (rnd() - 0.5) * 80, z = (rnd() - 0.5) * 80;
+      add(x, groundH(x, z, r) + 0.4, z, 2.4, 0.4, 2.4, "#7fe8dc", 0.5, "#35e0d0");
+    }
+  }
+  if (r.id === "tunnel") {
+    for (let z = -45; z <= 45; z += 6) {
+      const gl = groundH(-6, z, r), gr = groundH(6, z, r);
+      add(-6, gl + 2, z, 1.2, 5, 1.2, "#1e4650");
+      add(6, gr + 2, z, 1.2, 5, 1.2, "#1e4650");
+      add(0, Math.max(gl, gr) + 4.8, z, 14, 1.2, 1.2, "#16333b");
+      add(-5.2, gl + 1.2, z, 0.5, 0.5, 0.5, "#8ffce8", 1.8, "#8ffce8");
+      add(5.2, gr + 1.2, z, 0.5, 0.5, 0.5, "#8ffce8", 1.8, "#8ffce8");
+    }
+  }
   return out;
 }
 
@@ -154,7 +178,7 @@ function GlowProps({ realm }: { realm: Realm }) {
 }
 
 /* ── game logic ── */
-interface MobState { id: string; pos: THREE.Vector3; vel: THREE.Vector3; hp: number; t: number; hostile: boolean; dead: boolean }
+interface MobState { id: string; pos: THREE.Vector3; anchor: THREE.Vector3; vel: THREE.Vector3; hp: number; t: number; hostile: boolean; dead: boolean }
 interface Shard { pos: THREE.Vector3; taken: boolean; realm: string }
 
 function useGame(hud: (h: any) => void) {
@@ -232,7 +256,7 @@ export function GameApp({ onExit }: { onExit: () => void }) {
           <div className="game-start-core">
             <span className="forge-logo big">◈ SIFT REALMS</span>
             <p>a playable rift-dimension adventure</p>
-            <small>Singer Meadow → Rose Spires → the Boneyard. Recover the 12 resonance notes. Mind the sculk.</small>
+            <small>Five realms in a rift chain: Singer Meadow → Rose Spires → Boneyard → Coral Expanse → Rift Tunnel. Recover the 12 resonance notes. Mind the sculk.</small>
             <button className="forge-btn accent big">ENTER THE RIFT</button>
           </div>
         </div>
@@ -264,12 +288,17 @@ function GameWorld({ onHud, started }: { onHud: (f: (h: any) => any) => void; st
       const r = REALMS[ix];
       const rnd = mulberry(r.seed * 55);
       const mobs: MobState[] = [];
-      const pick = ix === 0 ? ["blub", "blub", "antlerling", "note_bird", "singer", "soul_bee", "blub", "note_bird"]
-        : ix === 1 ? ["licker", "blub", "note_bird", "overseer", "blub", "soul_bee"]
-          : ["sculker", "sculker", "sculkling", "sculkling", "twisted_warden", "watchling"];
-      pick.forEach((id) => {
+      const PICKS: string[][] = [
+        ["blub", "blub", "antlerling", "note_bird", "singer", "soul_bee", "blub", "note_bird"],
+        ["licker", "blub", "note_bird", "overseer", "blub", "soul_bee"],
+        ["sculker", "sculker", "sculkling", "sculkling", "twisted_warden", "watchling"],
+        ["drift_jelly", "blub", "soul_bee", "note_bird", "drift_jelly", "blub", "soul_bee"],
+        ["sculkling", "watchling", "sculker", "sculkling", "watchling", "sculker"],
+      ];
+      (PICKS[ix] || PICKS[0]).forEach((id) => {
         const x = (rnd() - 0.5) * 70, z = (rnd() - 0.5) * 70;
-        mobs.push({ id, pos: new THREE.Vector3(x, groundH(x, z, r), z), vel: new THREE.Vector3(), hp: id === "twisted_warden" ? 12 : 3, t: rnd() * 10, hostile: id === "sculker" || id === "twisted_warden" || id === "sculkling", dead: false });
+        const pos = new THREE.Vector3(x, groundH(x, z, r), z);
+        mobs.push({ id, pos, anchor: pos.clone(), vel: new THREE.Vector3(), hp: id === "twisted_warden" ? 12 : 3, t: rnd() * 10, hostile: id === "sculker" || id === "twisted_warden" || id === "sculkling", dead: false });
       });
       const shards: Shard[] = Array.from({ length: 4 }, (_, i) => {
         const a = (i / 4) * Math.PI * 2 + rnd();
@@ -381,6 +410,25 @@ function GameWorld({ onHud, started }: { onHud: (f: (h: any) => any) => void; st
         toP.normalize();
         m.pos.addScaledVector(toP, dt * (m.id === "twisted_warden" ? 2.6 : 3.6));
         if (dP < 1.6) { hp.current -= dt * 22; flash.current = 0.4; }
+      } else if ((m.id === "blub" || m.id === "antlerling") && dP < 7) {
+        /* skittish: bolt away from the player */
+        m.pos.addScaledVector(toP.clone().negate().normalize(), dt * 4.4);
+      } else if (m.id === "note_bird") {
+        /* swooping song circles */
+        m.pos.x = m.anchor.x + Math.cos(m.t * 0.9) * 5;
+        m.pos.z = m.anchor.z + Math.sin(m.t * 0.9) * 5;
+      } else if (m.id === "soul_bee") {
+        m.pos.x = m.anchor.x + Math.cos(m.t * 1.6) * 1.7;
+        m.pos.z = m.anchor.z + Math.sin(m.t * 1.6) * 1.7;
+      } else if (m.id === "watchling") {
+        /* sentinel drift: keeps a wary distance */
+        if (dP < 14 && dP > 4) m.pos.addScaledVector(toP.clone().normalize(), dt * 1.2);
+        else if (dP <= 4) m.pos.addScaledVector(toP.clone().negate().normalize(), dt * 1.4);
+      } else if (m.id === "overseer") {
+        /* slow stalking orbit */
+        const a = m.t * 0.25;
+        m.pos.x = m.anchor.x + Math.cos(a) * 6;
+        m.pos.z = m.anchor.z + Math.sin(a) * 6;
       } else {
         m.pos.x += Math.sin(m.t * 0.7 + m.hp) * dt * 1.4;
         m.pos.z += Math.cos(m.t * 0.5) * dt * 1.4;

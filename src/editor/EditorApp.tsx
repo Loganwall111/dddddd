@@ -146,6 +146,8 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
           <button className={`forge-btn ${settings.anims ? "on" : ""}`} onClick={() => setSettings((s) => ({ ...s, anims: !s.anims }))}>Anim</button>
           <span className="forge-sep" />
           <button className="forge-btn" onClick={() => setPreview((p) => !p)}>{preview ? "■ Stop" : "▶ Cinematic"}</button>
+          <button className="forge-btn" title="Save scene to browser" onClick={() => { localStorage.setItem("siftforge.scene.v1", JSON.stringify(items)); say("Scene saved"); }}>💾</button>
+          <button className="forge-btn" title="Load saved scene" onClick={() => { const s = localStorage.getItem("siftforge.scene.v1"); if (!s) { say("No saved scene yet"); return; } pushUndo(items); setItems(JSON.parse(s)); say("Saved scene loaded"); }}>📂</button>
           <button className="forge-btn" onClick={() => canvasRef.current && exportPNG(canvasRef.current)}>📷</button>
           <div className="forge-exportwrap">
             <button className="forge-btn accent" onClick={() => setExportOpen((o) => !o)}>⬇ Export</button>
@@ -337,21 +339,36 @@ function Viewport(props: {
   });
 
   const snapV = (v: number) => (settings.snap ? Math.round(v * 2) / 2 : v);
+  const painting = useRef(false);
+  const strokeUndo = useRef(false);
+  const lastPaint = useRef<THREE.Vector3 | null>(null);
 
-  const groundClick = (e: ThreeEvent<MouseEvent>) => {
-    if (e.delta > 4) return;
-    if (!placing) { if (tool === "select") setSelected(null); return; }
-    const p = e.point;
-    const y = placing.kind === "block" ? snapV(Math.max(0.5, Math.round(p.y) + 0.5))
+  useEffect(() => {
+    const up = () => { painting.current = false; strokeUndo.current = false; };
+    window.addEventListener("mouseup", up);
+    return () => window.removeEventListener("mouseup", up);
+  }, []);
+
+  const placeAt = (pt: THREE.Vector3) => {
+    if (!placing) return;
+    const sx = snapV(pt.x), sz = snapV(pt.z);
+    if (lastPaint.current && lastPaint.current.distanceTo(new THREE.Vector3(sx, 0, sz)) < 1) return;
+    const y = placing.kind === "block" ? snapV(Math.max(0.5, Math.round(pt.y) + 0.5))
       : placing.kind === "rift" ? 2.6 : 0;
     const item: Placed = {
       uid: nextUid(), kind: placing.kind, id: placing.id,
-      pos: [snapV(p.x), y, snapV(p.z)],
+      pos: [sx, y, sz],
       rot: [0, 0, 0], scale: [1, 1, 1], animated: true,
     };
-    pushUndo(items);
+    if (!strokeUndo.current) { pushUndo(items); strokeUndo.current = true; }
+    lastPaint.current = new THREE.Vector3(sx, 0, sz);
     setItems((prev) => [...prev, item]);
     setSelected(item.uid);
+  };
+
+  const groundClick = (e: ThreeEvent<MouseEvent>) => {
+    if (e.delta > 4) return;
+    if (!placing && tool === "select") setSelected(null);
   };
   const eraseClick = (uid: number, e: ThreeEvent<MouseEvent>) => {
     if (tool !== "erase") return false;
@@ -379,8 +396,14 @@ function Viewport(props: {
       {/* ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow
         onClick={groundClick}
-        onPointerMove={(e) => placing && setHover([snapV(e.point.x), 0, snapV(e.point.z)])}
-        onPointerLeave={() => setHover(null)}>
+        onPointerDown={(e) => { if (placing) { painting.current = true; strokeUndo.current = false; lastPaint.current = null; placeAt(e.point); } }}
+        onPointerMove={(e) => {
+          if (placing) {
+            setHover([snapV(e.point.x), 0, snapV(e.point.z)]);
+            if (painting.current) placeAt(e.point);
+          }
+        }}
+        onPointerLeave={() => { setHover(null); painting.current = false; }}>
         <planeGeometry args={[400, 400]} />
         <meshStandardMaterial color={"#0b0d10"} roughness={1} />
       </mesh>
@@ -428,7 +451,7 @@ function Viewport(props: {
           }} />
       )}
 
-      <OrbitControls makeDefault enabled={tool === "orbit" || tool === "select"}
+      <OrbitControls makeDefault enabled={!placing && (tool === "orbit" || tool === "select")}
         autoRotate={preview} autoRotateSpeed={1.2} maxPolarAngle={Math.PI / 2 - 0.03}
         minDistance={3} maxDistance={120} target={[0, 2, 0]} />
 

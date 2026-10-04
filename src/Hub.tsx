@@ -23,7 +23,7 @@ export function Hub({ onPick }: { onPick: (p: "editor" | "game" | "lumital") => 
           </div>
           <h2>SIFT REALMS</h2>
           <span className="hub-kind">PROJECT 02 · PLAYABLE 3D ADVENTURE</span>
-          <p>Third-person rift travel across three realms — Singer Meadow, Rose Spires, the Boneyard. Recover 12 resonance notes, dodge the sculk, awaken the ritual portal.</p>
+          <p>Third-person rift travel across five realms — Singer Meadow, Rose Spires, the Boneyard, Coral Expanse and the Rift Tunnel. Recover 12 resonance notes, dodge the sculk, awaken the ritual portal.</p>
           <em>PLAY →</em>
         </button>
         <button className="hub-card dim" onClick={() => onPick("lumital")}>
