@@ -184,7 +184,7 @@ def main():
     shoot(r, "rift_against_ground", f"tp {who} 0 -48.5 9 180 24")
     r.cmd(f"gamemode creative {who}")
     # Sift dimension sky: the quilted pastel dome (MCD2 ref) - never photographed until now
-    r.cmd(f"execute in entersift:the_sift run tp {who} 0 120 0 180 -35")
+    r.cmd(f"execute in entersift:the_sift run tp {who} 8 75 8 180 -50")   # surface-level like the MCD2 ref; y=120 sat inside the aura columns
     time.sleep(9)                       # dimension chunks + sky blend settle
     shoot(r, "sift_sky_quilt", None, settle=2)
     pngs = sorted(CAP.glob("*.png"))
