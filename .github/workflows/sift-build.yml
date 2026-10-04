@@ -116,11 +116,16 @@ jobs:
               if not path.is_file():
                   continue
               lines = path.read_text(errors='replace').splitlines()
-              parts.append(f'--- {path.name}: relevant startup/capture lines ---')
-              matches = [line for line in lines if re.search(r'SIFT-VISUAL|Quick.?Play|connect|multiplayer|OpenGL|Vulkan|backend|ERROR|WARN|Server empty|pausing', line, re.I)]
-              parts.extend(matches[-24:])
+              parts.append(f'--- {path.name}: relevant diagnostics ---')
+              if path.name.endswith('client.log'):
+                  pattern = r'SIFT-VISUAL|Quick.?Play|connect|multiplayer|OpenGL|Vulkan|backend|ERROR|WARN|Setting user'
+                  matches = [line for line in lines if re.search(pattern, line, re.I)]
+                  parts.extend(matches[-18:])
+              else:
+                  matches = [line for line in lines if re.search(r'SIFT-VISUAL.*(enabled|scene ready|staging|captured|moving|FAIL)', line, re.I)]
+                  parts.extend(matches[-8:])
               parts.append(f'--- {path.name}: final lines ---')
-              parts.extend(lines[-10:])
+              parts.extend(lines[-6:])
           text = "\n".join(parts).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
           print('::error title=Headless visual test diagnostic tail::' + text)
           PYLOG
