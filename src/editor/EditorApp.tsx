@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, TransformControls, Grid } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, DepthOfField } from "@react-three/postprocessing";
 import * as THREE from "three";
 import {
   BLOCKS, BLOCK_CATEGORIES, BIOMES, MOBS, RIFT_STYLES, SKIES, VFX_DEFS,
@@ -36,6 +36,9 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
   const [toast, setToast] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
   const [activeBiome, setActiveBiome] = useState(BIOMES[0].id);
+  const [shot, setShot] = useState(false);
+  const [dof, setDof] = useState(false);
+  const [bokeh, setBokeh] = useState(3);
   const [stats, setStats] = useState({ fps: 0, tris: 0 });
   const undoStack = useRef<string[]>([]);
   const redoStack = useRef<string[]>([]);
@@ -153,6 +156,7 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
           <button className={`forge-btn ${settings.anims ? "on" : ""}`} onClick={() => setSettings((s) => ({ ...s, anims: !s.anims }))}>Anim</button>
           <span className="forge-sep" />
           <button className="forge-btn" onClick={() => setPreview((p) => !p)}>{preview ? "■ Stop" : "▶ Cinematic"}</button>
+          <button className={`forge-btn ${shot ? "on" : ""}`} title="Screenshot mode: free-cam + depth of field" onClick={() => setShot((s) => !s)}>🎥 Shot</button>
           <button className="forge-btn" title="Save scene to browser" onClick={() => { localStorage.setItem("siftforge.scene.v1", JSON.stringify(items)); say("Scene saved"); }}>💾</button>
           <button className="forge-btn" title="Load saved scene" onClick={() => { const s = localStorage.getItem("siftforge.scene.v1"); if (!s) { say("No saved scene yet"); return; } pushUndo(items); setItems(JSON.parse(s)); say("Saved scene loaded"); }}>📂</button>
           <button className="forge-btn" onClick={() => canvasRef.current && exportPNG(canvasRef.current)}>📷</button>
@@ -171,7 +175,7 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
         </div>
       </header>
 
-      <div className="forge-body">
+      <div className={`forge-body ${shot ? "shot" : ""}`}>
         {/* ── library ── */}
         <aside className="forge-lib">
           <div className="forge-tabs">
@@ -234,9 +238,18 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
               tool={tool} placing={placing} setPlacing={setPlacing}
               settings={settings} setItems={setItems} pushUndo={pushUndo}
               gizmo={gizmo} preview={preview} onStats={setStats} activeBiome={activeBiome}
+              shot={shot} dof={dof} bokeh={bokeh}
             />
           </Canvas>
           {placing && <div className="forge-hint">Placing <b>{placing.id}</b> — click ground · Esc to stop</div>}
+          {shot && (
+            <div className="forge-shotbar">
+              <span>SHOT MODE — click viewport to lock pointer · WASD fly · Space/F up/down · Shift boost</span>
+              <label><input type="checkbox" checked={dof} onChange={(e) => setDof(e.target.checked)} /> depth of field</label>
+              {dof && <input type="range" min={0} max={8} step={0.1} value={bokeh} onChange={(e) => setBokeh(parseFloat(e.target.value))} />}
+              <button className="forge-btn" onClick={() => setShot(false)}>Exit</button>
+            </div>
+          )}
           {toast && <div className="forge-toast">{toast}</div>}
           <div className="forge-status">
             <span>{items.length} objects</span><span>{stats.fps} fps</span><span>{(stats.tris / 1000).toFixed(0)}k tris</span>
@@ -340,8 +353,9 @@ function Viewport(props: {
   pushUndo: (p: Placed[]) => void; gizmo: "translate" | "rotate" | "scale";
   preview: boolean; onStats: (s: { fps: number; tris: number }) => void;
   activeBiome: string;
+  shot: boolean; dof: boolean; bokeh: number;
 }) {
-  const { items, selected, setSelected, tool, placing, setPlacing, settings, setItems, pushUndo, gizmo, preview, onStats, activeBiome } = props;
+  const { items, selected, setSelected, tool, placing, setPlacing, settings, setItems, pushUndo, gizmo, preview, onStats, activeBiome, shot, dof, bokeh } = props;
   const [hover, setHover] = useState<Vec3 | null>(null);
   const selRef = useRef<THREE.Group>(null);
   const sky = SKIES.find((s) => s.id === settings.skyId) || SKIES[0];
@@ -504,16 +518,65 @@ function Viewport(props: {
           }} />
       )}
 
-      <OrbitControls makeDefault enabled={!placing && (tool === "orbit" || tool === "select")}
+      <FreeCam active={shot} />
+      <OrbitControls makeDefault enabled={!placing && !shot && (tool === "orbit" || tool === "select")}
         autoRotate={preview} autoRotateSpeed={1.2} maxPolarAngle={Math.PI / 2 - 0.03}
         minDistance={3} maxDistance={120} target={[0, 2, 0]} />
 
       {settings.bloom > 0 && (
         <EffectComposer>
           <Bloom intensity={settings.bloom} luminanceThreshold={0.55} mipmapBlur radius={0.75} />
+          {shot && dof && <DepthOfField focusDistance={0.02} focalLength={0.045} bokehScale={bokeh} />}
           <Vignette darkness={0.55} offset={0.25} />
         </EffectComposer>
       )}
     </>
   );
+}
+
+/* pointer-lock free camera for screenshot mode */
+function FreeCam({ active }: { active: boolean }) {
+  const { camera, gl } = useThree();
+  const keys = useRef<Record<string, boolean>>({});
+  const look = useRef({ yaw: 0, pitch: 0, locked: false });
+  useEffect(() => {
+    if (!active) return;
+    const e = new THREE.Euler().setFromQuaternion(camera.quaternion, "YXZ");
+    look.current.yaw = e.y; look.current.pitch = e.x;
+    const dn = (ev: KeyboardEvent) => { keys.current[ev.code] = true; };
+    const up = (ev: KeyboardEvent) => { keys.current[ev.code] = false; };
+    const click = () => { gl.domElement.requestPointerLock(); };
+    const plc = () => { look.current.locked = document.pointerLockElement === gl.domElement; };
+    const mm = (ev: MouseEvent) => {
+      if (!look.current.locked) return;
+      look.current.yaw -= ev.movementX * 0.0026;
+      look.current.pitch = Math.max(-1.45, Math.min(1.45, look.current.pitch - ev.movementY * 0.0026));
+    };
+    window.addEventListener("keydown", dn); window.addEventListener("keyup", up);
+    gl.domElement.addEventListener("click", click);
+    document.addEventListener("pointerlockchange", plc);
+    window.addEventListener("mousemove", mm);
+    return () => {
+      window.removeEventListener("keydown", dn); window.removeEventListener("keyup", up);
+      gl.domElement.removeEventListener("click", click);
+      document.removeEventListener("pointerlockchange", plc);
+      window.removeEventListener("mousemove", mm);
+      if (document.pointerLockElement) document.exitPointerLock();
+    };
+  }, [active, camera, gl]);
+  useFrame((_, dt) => {
+    if (!active) return;
+    const L = look.current;
+    camera.quaternion.setFromEuler(new THREE.Euler(L.pitch, L.yaw, 0, "YXZ"));
+    const spd = (keys.current["ShiftLeft"] ? 26 : 11) * dt;
+    const f = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const r = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+    if (keys.current["KeyW"]) camera.position.addScaledVector(f, spd);
+    if (keys.current["KeyS"]) camera.position.addScaledVector(f, -spd);
+    if (keys.current["KeyD"]) camera.position.addScaledVector(r, spd);
+    if (keys.current["KeyA"]) camera.position.addScaledVector(r, -spd);
+    if (keys.current["Space"]) camera.position.y += spd;
+    if (keys.current["KeyF"]) camera.position.y -= spd;
+  });
+  return null;
 }

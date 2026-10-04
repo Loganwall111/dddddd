@@ -188,7 +188,7 @@ function GlowProps({ realm }: { realm: Realm }) {
 }
 
 /* ── game logic ── */
-interface MobState { id: string; pos: THREE.Vector3; anchor: THREE.Vector3; vel: THREE.Vector3; hp: number; t: number; hostile: boolean; dead: boolean }
+interface MobState { id: string; pos: THREE.Vector3; anchor: THREE.Vector3; vel: THREE.Vector3; hp: number; t: number; hostile: boolean; dead: boolean; telegraph?: number; minionT?: number; waveT?: number }
 interface Shard { pos: THREE.Vector3; taken: boolean; realm: string }
 
 function useGame(hud: (h: any) => void) {
@@ -204,7 +204,7 @@ function useGame(hud: (h: any) => void) {
 }
 
 export function GameApp({ onExit }: { onExit: () => void }) {
-  const [hud, setHud] = useState({ hp: 100, shards: 0, realm: REALMS[0].name, msg: "", dead: false, won: false, muted: false, started: false });
+  const [hud, setHud] = useState({ hp: 100, shards: 0, realm: REALMS[0].name, msg: "", dead: false, won: false, muted: false, started: false, ichor: 0, potions: 1, charms: 0, boss: null as number | null, craftOpen: false });
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(true);
   const mapData = useRef<MapData>({ px: 0, pz: 0, yaw: 0, realm: 0, rifts: [], shards: [], mobs: [] });
@@ -253,8 +253,26 @@ export function GameApp({ onExit }: { onExit: () => void }) {
         </div>
         <div className="game-bottom">
           <div className="game-hp"><i style={{ width: `${hud.hp}%` }} /></div>
+          <div className="game-inv">
+            <span className="cy">◆ {hud.shards}/12</span>
+            <span className="pu">🜁 {hud.ichor} ichor</span>
+            <span>[Q] potion ×{hud.potions}</span>
+            <span>charm ×{hud.charms}</span>
+            <span className="dim">[C] craft</span>
+          </div>
           <div className="game-keys">WASD move · Space jump · Shift sprint · drag = look · click = gauntlet · walk into rifts to travel</div>
         </div>
+        {hud.boss != null && (
+          <div className="game-boss"><span>⚠ TWISTED WARDEN</span><div className="game-bossbar"><i style={{ width: `${hud.boss}%` }} /></div></div>
+        )}
+        {hud.craftOpen && (
+          <div className="game-craft">
+            <h3>RIFT CRAFTING</h3>
+            <div><b>[1]</b> Soul Potion — 3 ichor · heals 50 · use with <b>Q</b></div>
+            <div><b>[2]</b> Gauntlet Charm — 6 ichor · +strike power &amp; reach</div>
+            <small>ichor drips from felled sculk — the Warden sheds six.</small>
+          </div>
+        )}
         {hud.msg && <div className="game-msg">{hud.msg}</div>}
         {banner && <div key={banner} className="game-realm-banner"><span>⟡ entering</span><b>{banner}</b></div>}
         <CompassStrip data={mapData} />
@@ -303,6 +321,14 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
   const flash = useRef(0);
   const cycle = useRef(0);
   const mixRef = useRef(0);
+  const ichor = useRef(0);
+  const potions = useRef(1);
+  const charms = useRef(0);
+  const craftOpen = useRef(false);
+  const pickups = useRef<{ pos: THREE.Vector3 }[]>([]);
+  const rings = useRef<{ x: number; z: number; t: number }[]>([]);
+  const bossHp = useRef(12);
+  const bossActive = useRef(false);
   const gl = useThree((s) => s.gl);
 
   /* mobs + shards per realm */
@@ -341,7 +367,14 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
 
   /* input */
   useEffect(() => {
-    const dn = (e: KeyboardEvent) => { keys.current[e.code] = true; };
+    const dn = (e: KeyboardEvent) => {
+      keys.current[e.code] = true;
+      if (!started || dead.current) return;
+      if (e.code === "KeyC") craftOpen.current = !craftOpen.current;
+      if (e.code === "Digit1" && ichor.current >= 3) { ichor.current -= 3; potions.current++; }
+      if (e.code === "Digit2" && ichor.current >= 6) { ichor.current -= 6; charms.current++; }
+      if (e.code === "KeyQ" && potions.current > 0) { potions.current--; hp.current = Math.min(100, hp.current + 50); }
+    };
     const up = (e: KeyboardEvent) => { keys.current[e.code] = false; };
     const md = (e: MouseEvent) => {
       look.current.drag = true; look.current.lx = e.clientX; look.current.ly = e.clientY;
@@ -424,15 +457,56 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
     st.camera.lookAt(p.x, p.y + 1.6, p.z);
 
     /* mobs */
+    bossActive.current = false;
     w.mobs.forEach((m) => {
       if (m.dead) return;
       m.t += dt;
       const toP = new THREE.Vector3().subVectors(p, m.pos); toP.y = 0;
       const dP = toP.length();
-      if (m.hostile && dP < 16 && !dead.current) {
-        toP.normalize();
-        m.pos.addScaledVector(toP, dt * (m.id === "twisted_warden" ? 2.6 : 3.6));
-        if (dP < 1.6) { hp.current -= dt * 22; flash.current = 0.4; }
+      const isWarden = m.id === "twisted_warden";
+      if (m.hostile && dP < (isWarden ? 22 : 16) && !dead.current) {
+        const dir = toP.clone().normalize();
+        if (isWarden) {
+          /* ── boss fight: three phases ── */
+          const phase = m.hp > 8 ? 1 : m.hp > 4 ? 2 : 3;
+          const spd = [0, 2.6, 3.4, 4.3][phase];
+          bossActive.current = true;
+          bossHp.current = Math.max(0, m.hp);
+          if ((m.telegraph ?? 0) > 0) {
+            m.telegraph! -= dt;                       /* winding up the slam */
+            if (m.telegraph! <= 0) {
+              rings.current.push({ x: m.pos.x, z: m.pos.z, t: 0 });
+              if (dP < 4.5) { hp.current -= 25; flash.current = 0.5; vel.current.addScaledVector(dir.clone().negate(), 10); }
+              m.telegraph = -1.6;
+            }
+          } else if ((m.telegraph ?? 0) < 0) {
+            m.telegraph! += dt;                       /* recovery cooldown */
+          } else if (dP < 3.4) {
+            m.telegraph = 0.9;                        /* telegraph */
+          } else {
+            m.pos.addScaledVector(dir, dt * spd);
+          }
+          if (phase >= 2) {                           /* summon sculkling minions */
+            m.minionT = (m.minionT ?? 6) - dt;
+            if (m.minionT <= 0) {
+              m.minionT = 9;
+              const sp = m.pos.clone().add(new THREE.Vector3((Math.random() - 0.5) * 5, 0, (Math.random() - 0.5) * 5));
+              sp.y = groundH(sp.x, sp.z, r);
+              w.mobs.push({ id: "sculkling", pos: sp, anchor: sp.clone(), vel: new THREE.Vector3(), hp: 3, t: 0, hostile: true, dead: false });
+            }
+          }
+          if (phase === 3) {                          /* shockwave rings */
+            m.waveT = (m.waveT ?? 5) - dt;
+            if (m.waveT <= 0) {
+              m.waveT = 5;
+              rings.current.push({ x: m.pos.x, z: m.pos.z, t: 0 });
+              if (dP < 7) { hp.current -= 12; vel.current.addScaledVector(dir.clone().negate(), 8); }
+            }
+          }
+        } else {
+          m.pos.addScaledVector(dir, dt * 3.6);
+          if (dP < 1.6) { hp.current -= dt * 22; flash.current = 0.4; }
+        }
       } else if ((m.id === "blub" || m.id === "antlerling") && dP < 7) {
         /* skittish: bolt away from the player */
         m.pos.addScaledVector(toP.clone().negate().normalize(), dt * 4.4);
@@ -457,15 +531,32 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
         m.pos.z += Math.cos(m.t * 0.5) * dt * 1.4;
       }
       m.pos.y = groundH(m.pos.x, m.pos.z, r);
-      /* gauntlet strike */
-      if (swing.current > 0 && dP < 3.4) {
-        m.hp -= dt * 30;
+      /* gauntlet strike (charms add power + reach) */
+      const reach = 3.4 + charms.current * 0.6;
+      if (swing.current > 0 && dP < reach) {
+        m.hp -= dt * 30 * (1 + charms.current * 0.5);
         m.pos.addScaledVector(toP.normalize().negate(), dt * 8);
-        if (m.hp <= 0) { m.dead = true; }
+        if (m.hp <= 0) {
+          m.dead = true;
+          const n = m.id === "twisted_warden" ? 6 : 2;
+          for (let i = 0; i < n; i++) {
+            pickups.current.push({ pos: m.pos.clone().add(new THREE.Vector3((Math.random() - 0.5) * 2.4, 0.6, (Math.random() - 0.5) * 2.4)) });
+          }
+          if (m.id === "twisted_warden") rings.current.push({ x: m.pos.x, z: m.pos.z, t: 0 });
+        }
       }
     });
     swing.current = Math.max(0, swing.current - dt);
     flash.current = Math.max(0, flash.current - dt);
+
+    /* ichor pickup collection */
+    pickups.current = pickups.current.filter((pk) => {
+      if (pk.pos.distanceTo(p) < 1.5) { ichor.current++; return false; }
+      return true;
+    });
+    /* shockwave rings age out */
+    rings.current.forEach((rg) => (rg.t += dt));
+    rings.current = rings.current.filter((rg) => rg.t < 1.1);
 
     /* shards */
     w.shards.forEach((s) => {
@@ -516,6 +607,11 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
         realm: REALMS[realmIx.current].name,
         dead: dead.current,
         won: won.current,
+        ichor: ichor.current,
+        potions: potions.current,
+        charms: charms.current,
+        boss: bossActive.current ? Math.max(0, (bossHp.current / 12) * 100) : null,
+        craftOpen: craftOpen.current,
         msg: flash.current > 0.4 ? "⟡ rift transit" : "",
       }));
     }
@@ -552,6 +648,13 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
           <ShardSpin />
         </group>
       ))}
+
+      {pickups.current.map((pk, i) => (
+        <group key={"pk" + i} position={pk.pos.toArray() as [number, number, number]}>
+          <IchorDrop />
+        </group>
+      ))}
+      <ShockRings rings={rings} />
 
       {w.mobs.map((m, i) => !m.dead && (
         <group key={i} position={m.pos.toArray() as [number, number, number]}>
@@ -711,6 +814,54 @@ function Minimap({ data }: { data: React.MutableRefObject<MapData> }) {
     return () => window.clearInterval(iv);
   }, [data]);
   return <canvas ref={ref} width={150} height={150} className="game-map" aria-label="minimap" />;
+}
+
+function IchorDrop() {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      ref.current.rotation.y = clock.elapsedTime * 3;
+      ref.current.position.y = 0.6 + Math.sin(clock.elapsedTime * 3) * 0.15;
+    }
+  });
+  return (
+    <group ref={ref}>
+      <mesh>
+        <octahedronGeometry args={[0.28]} />
+        <meshStandardMaterial color="#c07ae0" emissive="#c07ae0" emissiveIntensity={1.6} />
+      </mesh>
+    </group>
+  );
+}
+
+/* pooled expanding shockwave rings */
+function ShockRings({ rings }: { rings: React.MutableRefObject<{ x: number; z: number; t: number }[]> }) {
+  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  useFrame(() => {
+    rings.current.slice(0, 6).forEach((r, i) => {
+      const m = refs.current[i];
+      if (!m) return;
+      m.visible = true;
+      m.position.set(r.x, 0.5, r.z);
+      const s = 1 + r.t * 9;
+      m.scale.set(s, s, 1);
+      (m.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.8 * (1 - r.t / 1.1));
+    });
+    for (let i = Math.min(6, rings.current.length); i < 6; i++) {
+      const m = refs.current[i];
+      if (m) m.visible = false;
+    }
+  });
+  return (
+    <group>
+      {Array.from({ length: 6 }, (_, i) => (
+        <mesh key={i} ref={(el) => { refs.current[i] = el; }} visible={false} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.9, 1.1, 40]} />
+          <meshBasicMaterial color="#43f1e4" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+    </group>
+  );
 }
 
 function ShardSpin() {
