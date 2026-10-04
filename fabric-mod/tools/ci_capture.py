@@ -91,8 +91,22 @@ def shoot(r, name, tp, settle=4.0, timeout=180):
     print(f"[capture] got {name}.png", flush=True)
 
 
+def start_client():
+    """Launch the capture client only once the server is up, so the two Gradle builds never
+    compile cold at the same time (that lock-fought the first capture attempt)."""
+    import subprocess
+    log = open("/tmp/client.log", "wb")
+    p = subprocess.Popen(
+        ["./gradlew", "--no-daemon", "runClient",
+         "--args=--server 127.0.0.1 --port 25565 --username CaptureBot"],
+        stdout=log, stderr=subprocess.STDOUT)
+    print("[capture] client gradle started", flush=True)
+    return p
+
+
 def main():
     r = wait_rcon()
+    client = start_client()
     wait_player(r)
     r.cmd("gamemode creative CaptureBot")
     r.cmd("time set noon")

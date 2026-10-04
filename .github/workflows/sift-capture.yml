@@ -34,8 +34,6 @@ jobs:
           echo 'eula=true' > run/eula.txt
           printf 'online-mode=false\nlevel-type=minecraft:flat\nenable-rcon=true\nrcon.password=capture\nrcon.port=25575\nspawn-protection=0\nview-distance=6\nsimulation-distance=6\n' > run/server.properties
           ./gradlew --no-daemon runServer --args=nogui > /tmp/server.log 2>&1 &
-          sleep 25
-          ./gradlew --no-daemon runClient --args="--server 127.0.0.1 --port 25565 --username CaptureBot" > /tmp/client.log 2>&1 &
           python3 tools/ci_capture.py "$ENTERSIFT_CAPTURE_DIR" 25575
           rc=$?
           pkill -f GradleWrapperMain || true; pkill -f net.minecraft || true
@@ -52,6 +50,17 @@ jobs:
             fabric-mod/docs/captures/*.png
             /tmp/client.log
             /tmp/server.log
+      - name: Publish failure logs into the branch (sandbox cannot download artifacts)
+        if: failure()
+        run: |
+          mkdir -p docs/captures
+          { echo "== client =="; tail -80 /tmp/client.log 2>/dev/null; echo "== server =="; tail -40 /tmp/server.log 2>/dev/null; echo "== xvfb =="; tail -10 /tmp/xvfb.log 2>/dev/null; } > docs/captures/last_failure.log
+          git config user.name "sift-probe"
+          git config user.email "sift-probe@users.noreply.github.com"
+          git add docs/captures/last_failure.log
+          git commit -m "Capture failure logs [skip ci]" || echo nothing
+          git pull --rebase || true
+          git push || echo nothing
       - name: Commit captures back to the branch (so they land in the dev sandbox)
         if: success()
         run: |
