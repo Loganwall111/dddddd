@@ -98,7 +98,7 @@ def start_client():
     log = open("/tmp/client.log", "wb")
     p = subprocess.Popen(
         ["./gradlew", "--no-daemon", "runClient",
-         "--args=--server 127.0.0.1 --port 25565 --username CaptureBot"],
+         "--args=--quickPlayMultiplayer 127.0.0.1:25565 --username CaptureBot"],
         stdout=log, stderr=subprocess.STDOUT)
     print("[capture] client gradle started", flush=True)
     return p

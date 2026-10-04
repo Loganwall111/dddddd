@@ -22,14 +22,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Virtual display + software GL
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri libgl1-mesa-glx || true
-          Xvfb :99 -screen 0 1280x720x24 > /tmp/xvfb.log 2>&1 &
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri libgl1-mesa-glx mesa-vulkan-drivers || true
+          Xvfb :99 -screen 0 1280x720x24 +extension GLX > /tmp/xvfb.log 2>&1 &
           sleep 3
           xdpyinfo -display :99 | head -3 || true
       - name: Boot server + capture client, run the capture sequence
         run: |
           export ENTERSIFT_CAPTURE_DIR=$PWD/../capture-out
           export DISPLAY=:99 GALLIUM_DRIVER=llvmpipe LIBGL_ALWAYS_SOFTWARE=1
+          # 26.3's renderpearl uses SDL3: GLX visual selection fails on Xvfb; EGL on X11 works with llvmpipe.
+          export SDL_VIDEO_X11_FORCE_EGL=1 SDL_VIDEODRIVER=x11
+          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           mkdir -p "$ENTERSIFT_CAPTURE_DIR" run docs/captures
           echo 'eula=true' > run/eula.txt
           printf 'online-mode=false\nlevel-type=minecraft:flat\nenable-rcon=true\nrcon.password=capture\nrcon.port=25575\nspawn-protection=0\nview-distance=6\nsimulation-distance=6\n' > run/server.properties
