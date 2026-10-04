@@ -104,6 +104,20 @@ jobs:
           export SIFT_VISUAL_PHASE2_SIGNAL="$RUNNER_TEMP/sift-visual-night.done"
           server_log="$RUNNER_TEMP/sift-visual-server.log"
           client_log="$RUNNER_TEMP/sift-visual-client.log"
+          diagnostic_error() {
+            python3 - "$server_log" "$client_log" <<'PYLOG'
+          import sys
+          from pathlib import Path
+          parts = []
+          for raw in sys.argv[1:]:
+              path = Path(raw)
+              if path.is_file():
+                  parts.append(f'--- {path.name} ---')
+                  parts.extend(path.read_text(errors='replace').splitlines()[-24:])
+          text = "\n".join(parts).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print('::error title=Headless visual test diagnostic tail::' + text)
+          PYLOG
+          }
           SIFT_VISUAL_TEST=1 ./gradlew --no-daemon runServer --args=nogui > "$server_log" 2>&1 &
           server_pid=$!
           cleanup() {
@@ -147,24 +161,21 @@ jobs:
           tail -80 "$server_log"
           if [[ "$client_status" != 0 ]]; then
             echo "Headless Minecraft client exited with status $client_status."
-            python3 - "$client_log" <<'PYLOG'
-          import sys
-          from pathlib import Path
-          lines = Path(sys.argv[1]).read_text(errors='replace').splitlines()[-45:]
-          text = "\n".join(lines).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-          print('::error title=Headless Minecraft client diagnostics::' + text)
-          PYLOG
+            diagnostic_error
             exit "$client_status"
           fi
           if grep -q '\[SIFT-VISUAL\] FAIL' "$client_log" "$server_log"; then
             echo 'The in-game visual capture reported a failure.'
+            diagnostic_error
             exit 1
           fi
-          grep -q 'capturing rift-front' "$client_log"
-          grep -q 'capturing rift-close-up' "$client_log"
-          grep -q 'capturing rift-side' "$client_log"
-          grep -q 'capturing rift-night-cubes' "$client_log"
-          grep -q 'capturing sift-sky-and-rift' "$client_log"
+          for capture in rift-front rift-close-up rift-side rift-night-cubes sift-sky-and-rift; do
+            if ! grep -q "capturing $capture" "$client_log"; then
+              echo "Missing expected Minecraft framebuffer capture: $capture"
+              diagnostic_error
+              exit 1
+            fi
+          done
           python3 - <<'PY'
           from pathlib import Path
           folder = Path('run/screenshots')
