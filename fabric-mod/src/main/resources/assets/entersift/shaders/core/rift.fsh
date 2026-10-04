@@ -47,6 +47,23 @@ float riftNoise2D(vec2 p) {
     );
 }
 
+// 0.40 refs 4-7: pale blocky Minecraft-style pixel clouds drifting over the destination field.
+float pixelClouds(vec3 dir, float t, float scale, float cover, float seed) {
+    float k = 1.0 / (max(dir.y, -0.08) + 0.22);
+    vec2 cell = floor(vec2(atan(dir.z, dir.x), dir.y * 3.0) * scale + vec2(t * 0.010, 0.0) + seed);
+    float n = hash21(cell) * 0.6 + hash21(floor(cell * 0.37) + 7.0) * 0.4;
+    return step(cover, n);
+}
+
+// 0.40 refs: sparse tiny white sparkle squares rising through the opening.
+float sparkles(vec3 dir, float t) {
+    vec2 g = vec2(atan(dir.z, dir.x) * 30.0, dir.y * 30.0 - t * 0.35);
+    vec2 cell = floor(g);
+    vec2 fr = fract(g) - 0.5;
+    float on = step(0.982, hash21(cell + floor(t * 0.5)));
+    return on * step(max(abs(fr.x), abs(fr.y)), 0.16);
+}
+
 // Layer 2: Back distortion & radial chromatic opening depth (never a flat black hole)
 #ifdef RIFT_REFRACT
 vec3 backDistortion(vec2 sampleUv, vec2 bend, float edgeFade, float phase, vec3 tint, vec3 frost) {
@@ -132,7 +149,8 @@ vec3 floatingLightSquares(vec2 uvCentered, vec3 dir, float phase, vec3 tint, vec
         vec3 sqColor = (mod(fi, 2.0) < 0.5)
             ? mix(frost, vec3(1.0), 0.55)
             : mix(tint, vec3(0.72, 0.98, 1.0), 0.45);
-        accum += sqColor * (pane * 0.50 + border * 0.82 + halo) * pulse * layerWeight;
+        // 0.40: the refs show HOLLOW outlined cubes, not filled panes: outline dominant, pane a whisper.
+        accum += sqColor * (pane * 0.06 + border * 0.90 + halo) * pulse * layerWeight;
     }
     return accum;
 }
@@ -181,6 +199,10 @@ vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float st
     // Sparks drifting up through the opening.
     float motes = sin(up * 26.0 - t * 2.2 + az * 5.0) * sin(up * 41.0 - t * 3.1 - az * 3.0 + 1.7);
     col += tint * pow(max(0.0, motes), 6.0) * 0.55;
+    // 0.40 refs 4-7: pale blocky pixel clouds and tiny white sparkle squares over the field.
+    col = mix(col, mix(vec3(1.0), frost, 0.25), pixelClouds(dir, t, 2.2, 0.60, 3.0) * 0.35);
+    col = mix(col, vec3(1.0), pixelClouds(dir, t * 1.35, 4.4, 0.70, 11.0) * 0.22);
+    col += vec3(1.0) * sparkles(dir, t) * 0.80;
     // The rift's own energy still breathes across the opening.
     col = mix(col, vec3(1.0, 0.48, 0.12), crack * 0.35);
     col += tint * (0.18 + 0.30 * strength) * exp(-1.6 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
@@ -266,12 +288,27 @@ void main() {
     // Layer 9: Soft highlight bloom shoulder
     col = riftBloom(col, edgeFade, gloss);
 
+    // 0.40 opening/closing lifecycle (master directive section 8), driven by the CPU fade:
+    // dormant shimmer -> expanding white arc (annulus frames) -> white ignition -> color reveal.
+    // Closing runs the same curve in reverse (color drains to white, then contracts).
+    float arcAmt   = smoothstep(0.16, 0.30, fade) * (1.0 - smoothstep(0.44, 0.60, fade));
+    float whiteOut = smoothstep(0.42, 0.66, fade);
+    float reveal   = smoothstep(0.66, 0.94, fade);
+    col = mix(col, vec3(1.0, 0.99, 0.98), whiteOut * (1.0 - reveal));
+    float ringR = mix(0.18, 1.45, smoothstep(0.16, 0.60, fade));
+    float thick = mix(0.34, 0.10, smoothstep(0.16, 0.60, fade));
+    float arc = smoothstep(thick, thick * 0.35, abs(length(uvCentered) - ringR));
+    col = mix(col, vec3(1.0), arc * arcAmt * 0.9);
+
     // The opening is opaque: nothing of the world behind the rift may show through it. The captured
     // scene is used only in the outer rim, where the glass edge bends the surroundings. Up close the
     // pane clears to 0.86 (still glass); at range the frost takes it towards 0.98.
     float destAmt = smoothstep(0.05, 0.45, edgeFade);
     float glass = mix(0.86, 0.98, frostAmt);
     float a = mix(0.45 * edgeFade, glass, destAmt) * fogFade() * fade;
+    a *= mix(0.10, 1.0, smoothstep(0.04, 0.30, fade));   // 0.40 dormant: barely visible shimmer
+    a = max(a, arc * arcAmt * 0.85 * fogFade());        // 0.40 the white arc shows early
+
 #ifdef RIFT_REFRACT
     vec2 size = vec2(textureSize(Sampler1, 0));
     vec2 texel = 1.0 / size;
