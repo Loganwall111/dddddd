@@ -193,3 +193,11 @@ for c in net.minecraft.world.level.chunk.ChunkGenerator net.minecraft.world.leve
 done
 echo "=== ItemPickupParticleGroup\$State bytecode"; javap -c -p -cp "$CP" 'net.minecraft.client.particle.ItemPickupParticleGroup$State' 2>&1 | head -140
 } > build/probe/snapshot_api.txt 2>&1
+# 0.23: locate 26.3's relocated multiplayer-connect classes (ConnectScreen moved out of client.multiplayer).
+{
+CJ=$(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly')
+echo "== jar: $CJ"
+unzip -Z1 "$CJ" 2>/dev/null | grep -iE 'connect|serveraddress|serverinfo|serverlist|multiplayer' | grep '\.class$' | grep -v '\$' | head -80
+echo "== client/multiplayer package =="
+unzip -Z1 "$CJ" 2>/dev/null | grep -E '^net/minecraft/client/multiplayer/[A-Z]' | grep '\.class$' | grep -v '\$' | head -80
+} > $OUT/join_api.txt
