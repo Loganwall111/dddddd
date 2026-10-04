@@ -163,7 +163,7 @@ jobs:
           SIFT_VISUAL_CAPTURE=1 LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe ALSOFT_DRIVERS=null timeout 240s \
             xvfb-run -a -s '-screen 0 1280x720x24 +extension GLX +render -noreset' \
             ./gradlew --no-daemon --project-cache-dir "$RUNNER_TEMP/sift-visual-client-project" runClient \
-              --args='--quickPlayMultiplayer 127.0.0.1:25565 --username SiftVisualTest --width 1280 --height 720' \
+              --args='--username SiftVisualTest --width 1280 --height 720' \
               > "$client_log" 2>&1
           client_status=$?
           set -e

@@ -46,7 +46,8 @@ net.minecraft.client.Minecraft
 net.minecraft.client.multiplayer.ClientLevel
 net.minecraft.client.gui.screens.ConnectScreen
 net.minecraft.client.gui.screens.Screen
-net.minecraft.client.multiplayer.ServerAddress
+net.minecraft.client.multiplayer.resolver.ServerAddress
+net.minecraft.client.multiplayer.TransferState
 net.minecraft.client.multiplayer.ServerData
 net.minecraft.client.multiplayer.ServerData$Type
 net.minecraft.client.Camera

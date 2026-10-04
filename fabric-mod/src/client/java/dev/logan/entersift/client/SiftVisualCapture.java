@@ -6,6 +6,9 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
@@ -36,6 +39,7 @@ public final class SiftVisualCapture {
     private static int settleTicks;
     private static int daySignalDelay = -1;
     private static int waitingTicks;
+    private static boolean connectionStarted;
     private static boolean daySignalWritten;
     private static boolean nightSignalWritten;
     private static long startedAt;
@@ -55,7 +59,19 @@ public final class SiftVisualCapture {
             return;
         }
         if (client.player == null || client.level == null) {
-            if (++waitingTicks % 200 == 0) LOGGER.info("[SIFT-VISUAL] waiting for quick-play to connect to the test server");
+            if (!connectionStarted) {
+                connectionStarted = true;
+                try {
+                    ServerAddress address = ServerAddress.parseString("127.0.0.1:25565");
+                    ServerData server = new ServerData("Sift visual capture", "127.0.0.1:25565", ServerData.Type.OTHER);
+                    ConnectScreen.startConnecting(null, client, address, server, false, null);
+                    LOGGER.info("[SIFT-VISUAL] requested direct connection to the test server");
+                } catch (Throwable error) {
+                    LOGGER.error("[SIFT-VISUAL] FAIL could not connect to the test server", error);
+                    client.stop();
+                }
+            }
+            if (++waitingTicks % 200 == 0) LOGGER.info("[SIFT-VISUAL] waiting for the test-server connection");
             return;
         }
         waitingTicks = 0;
