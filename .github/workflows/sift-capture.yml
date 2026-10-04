@@ -53,6 +53,7 @@ jobs:
           cp "$ENTERSIFT_CAPTURE_DIR"/rift_close_up.png docs/captures/rift_close_up.png || rc=1
           cp "$ENTERSIFT_CAPTURE_DIR"/rift_night_front.png docs/captures/rift_night_front.png || rc=1
           cp "$ENTERSIFT_CAPTURE_DIR"/rift_summon_ring.png docs/captures/rift_summon_ring.png || rc=1
+          cp "$ENTERSIFT_CAPTURE_DIR"/rift_summon_flash.png docs/captures/rift_summon_flash.png || rc=1
           exit $rc
       - uses: actions/upload-artifact@v4
         if: always()

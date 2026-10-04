@@ -121,6 +121,23 @@ def boot_client(r):
     raise SystemExit("capture client could not join under any display strategy (see /tmp/client.log)")
 
 
+def queue(name):
+    """Ask the client for a screenshot without waiting - the mailbox serializes requests,
+    so back-to-back reqs become grabs ~25 ticks apart (flash phase, then ring phase)."""
+    for stale in CAP.glob(name + ".*"):
+        stale.unlink()
+    (CAP / (name + ".req")).write_text("shoot\n")
+
+
+def await_done(name, timeout=180):
+    t0 = time.time()
+    while not (CAP / (name + ".done")).exists():
+        if time.time() - t0 > timeout:
+            raise SystemExit(f"client never delivered {name}")
+        time.sleep(1)
+    print(f"[capture] got {name}.png", flush=True)
+
+
 def shoot(r, name, tp, settle=4.0, timeout=180):
     if tp:
         r.cmd(tp)
@@ -145,10 +162,14 @@ def main():
     r.cmd("weather clear")                       # one run rained mid-capture; refs are all clear-sky
     time.sleep(20)                               # llvmpipe chunk bakes are slow - let terrain finish
     r.cmd("time set noon")
+    r.cmd(f"tp {who} 0 -53.5 13 180 -6")   # frame the summon spot BEFORE the timeline starts
+    time.sleep(0.5)
     r.cmd("summon entersift:rift_portal 0 -56 0")
-    time.sleep(1.2)                     # catch the summon timeline mid-flight (expanding ring)
-    shoot(r, "rift_summon_ring", f"tp {who} 0 -53.5 13 180 -6", settle=0.5)
-    time.sleep(10)                      # finish the 100-tick growth + chunk settle
+    queue("rift_summon_flash")             # grabbed ~tick 8: white flash + first lightning
+    queue("rift_summon_ring")              # serialized second grab ~tick 34: expanding ring arcs
+    await_done("rift_summon_flash")
+    await_done("rift_summon_ring")
+    time.sleep(8)                       # finish the 100-tick growth + chunk settle
     shoot(r, "rift_first_person", f"tp {who} 0 -53.5 13 180 -6")
     shoot(r, "rift_side_angle", f"tp {who} 12.5 -53 0 90 -5")
     shoot(r, "rift_close_up", f"tp {who} 0 -53 10 180 -8")
@@ -157,7 +178,7 @@ def main():
     shoot(r, "rift_night_front", f"tp {who} 0 -53.5 13 180 -6")
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
-    if len(pngs) < 5:
+    if len(pngs) < 6:
         raise SystemExit("missing captures")
 
 

@@ -457,6 +457,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('ENTERSIFT_CAPTURE_DIR',(C/'SiftCapture.java').read_text())
         self.assertTrue((ROOT.parent/'.github/workflows/sift-capture.yml').exists())
         self.assertIn('summon entersift:rift_portal',(ROOT/'tools/ci_capture.py').read_text())
+        self.assertIn('rift_summon_flash',(ROOT/'tools/ci_capture.py').read_text())
     def test_v021_biome_skies_awakening_voxels_warp_overlay(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); sky=(C/'SiftSky.java').read_text(); hud=(C/'SiftTransition.java').read_text()
