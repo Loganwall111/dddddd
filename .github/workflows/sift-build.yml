@@ -132,9 +132,9 @@ jobs:
             exit 1
           fi
           set +e
-          SIFT_VISUAL_CAPTURE=1 LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe timeout 240s \
+          SIFT_VISUAL_CAPTURE=1 LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe ALSOFT_DRIVERS=null timeout 240s \
             xvfb-run -a -s '-screen 0 1280x720x24 +extension GLX +render -noreset' \
-            ./gradlew --no-daemon runClient \
+            ./gradlew --no-daemon --project-cache-dir "$RUNNER_TEMP/sift-visual-client-project" runClient \
               --args='--quickPlayMultiplayer 127.0.0.1:25565 --username SiftVisualTest --width 1280 --height 720' \
               > "$client_log" 2>&1
           client_status=$?
@@ -145,6 +145,13 @@ jobs:
           tail -80 "$server_log"
           if [[ "$client_status" != 0 ]]; then
             echo "Headless Minecraft client exited with status $client_status."
+            python3 - "$client_log" <<'PYLOG'
+          import sys
+          from pathlib import Path
+          lines = Path(sys.argv[1]).read_text(errors='replace').splitlines()[-45:]
+          text = "\n".join(lines).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print('::error title=Headless Minecraft client diagnostics::' + text)
+          PYLOG
             exit "$client_status"
           fi
           if grep -q '\[SIFT-VISUAL\] FAIL' "$client_log" "$server_log"; then
