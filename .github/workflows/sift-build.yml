@@ -85,7 +85,7 @@ jobs:
         run: |
           mkdir -p run
           echo 'eula=true' > run/eula.txt
-          printf 'online-mode=false\nlevel-seed=20260927\nspawn-protection=0\nsync-chunk-writes=false\n' > run/server.properties
+          printf 'online-mode=false\nwhite-list=false\nlevel-seed=20260927\nspawn-protection=0\nsync-chunk-writes=false\n' > run/server.properties
           SIFT_SMOKE=1 timeout 1200 ./gradlew --no-daemon runServer --args=nogui 2>&1 | tee "$RUNNER_TEMP/server.log" || true
           python3 tools/smoke_report.py "$RUNNER_TEMP/server.log"
       - name: Headless visual test (real Minecraft client framebuffer)
@@ -99,8 +99,8 @@ jobs:
           lvp_icd=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -type f -print -quit)
           if [[ -n "$lvp_icd" ]]; then export VK_ICD_FILENAMES="$lvp_icd"; fi
           mkdir -p run/screenshots
-          sed -i '/^pause-when-empty-seconds=/d' run/server.properties
-          printf '\npause-when-empty-seconds=0\n' >> run/server.properties
+          sed -i '/^white-list=/d; /^pause-when-empty-seconds=/d' run/server.properties
+          printf '\nwhite-list=false\npause-when-empty-seconds=0\n' >> run/server.properties
           rm -f run/screenshots/*.png "$RUNNER_TEMP/sift-visual-overworld.done" "$RUNNER_TEMP/sift-visual-night.done"
           export SIFT_VISUAL_PHASE1_SIGNAL="$RUNNER_TEMP/sift-visual-overworld.done"
           export SIFT_VISUAL_PHASE2_SIGNAL="$RUNNER_TEMP/sift-visual-night.done"
