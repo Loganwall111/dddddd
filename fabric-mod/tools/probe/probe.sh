@@ -201,3 +201,9 @@ unzip -Z1 "$CJ" 2>/dev/null | grep -iE 'connect|serveraddress|serverinfo|serverl
 echo "== client/multiplayer package =="
 unzip -Z1 "$CJ" 2>/dev/null | grep -E '^net/minecraft/client/multiplayer/[A-Z]' | grep '\.class$' | grep -v '\$' | head -80
 } > $OUT/join_api.txt
+# 0.23b: exact signatures for programmatic server join from the capture client.
+{
+for c in net.minecraft.client.gui.screens.ConnectScreen net.minecraft.client.multiplayer.resolver.ServerAddress net.minecraft.client.multiplayer.ServerData net.minecraft.client.gui.screens.TitleScreen; do
+  echo "===== $c"; javap -protected -cp "$CP" "$c" 2>&1 | head -120; done
+echo "===== Minecraft join-related"; javap -protected -cp "$CP" net.minecraft.client.Minecraft 2>&1 | grep -iE "setScreen|joinServer|connect|createWorldOpenFlows|gui|levelSource" | head -20
+} > $OUT/join_api.txt
