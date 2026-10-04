@@ -97,11 +97,12 @@ def wait_player(r, timeout=420, proc=None):
             print("[capture] client gradle exited early (rc=%s)" % proc.returncode, flush=True)
             return None
         out = r.cmd("list")
-        m = re.search(r"There are (\d+) of a max \d+ players online:\s*(.+)", out)
-        if m and int(m.group(1)) > 0:
-            name = m.group(2).strip().split(",")[0].strip()
-            print("[capture] client joined as:", name, flush=True)
-            return name
+        print("[capture] list ->", out.strip(), flush=True)
+        # 26.3's exact list wording is unverified; grab whatever follows "online:".
+        m = re.search(r"online:\s*([A-Za-z0-9_]+)", out)
+        if m:
+            print("[capture] client joined as:", m.group(1), flush=True)
+            return m.group(1)
         time.sleep(4)
     return None
 

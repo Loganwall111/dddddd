@@ -44,8 +44,8 @@ jobs:
           echo 'eula=true' > run/eula.txt
           printf 'online-mode=false\nwhite-list=false\nenforce-whitelist=false\nlevel-type=minecraft:flat\nenable-rcon=true\nrcon.password=capture\nrcon.port=25575\nspawn-protection=0\nview-distance=6\nsimulation-distance=6\npause-when-empty-seconds=-1\n' > run/server.properties
           ./gradlew --no-daemon runServer --args=nogui > /tmp/server.log 2>&1 &
-          python3 tools/ci_capture.py "$ENTERSIFT_CAPTURE_DIR" 25575
-          rc=$?
+          python3 -u tools/ci_capture.py "$ENTERSIFT_CAPTURE_DIR" 25575 2>&1 | tee /tmp/capture.log
+          rc=${PIPESTATUS[0]}
           pkill -f GradleWrapperMain || true; pkill -f net.minecraft || true
           cp "$ENTERSIFT_CAPTURE_DIR"/rift_first_person.png docs/captures/rift_first_person.png || rc=1
           cp "$ENTERSIFT_CAPTURE_DIR"/rift_side_angle.png docs/captures/rift_side_angle.png || rc=1
@@ -64,7 +64,7 @@ jobs:
         if: failure()
         run: |
           mkdir -p docs/captures
-          { echo "== gl diag =="; cat /tmp/gldiag.log 2>/dev/null; echo "== client =="; tail -300 /tmp/client.log 2>/dev/null; echo "== server =="; tail -60 /tmp/server.log 2>/dev/null; } > docs/captures/last_failure.log
+          { echo "== orchestrator =="; tail -120 /tmp/capture.log 2>/dev/null; echo "== gl diag =="; cat /tmp/gldiag.log 2>/dev/null; echo "== client =="; tail -250 /tmp/client.log 2>/dev/null; echo "== server =="; tail -60 /tmp/server.log 2>/dev/null; } > docs/captures/last_failure.log
           git config user.name "sift-probe"
           git config user.email "sift-probe@users.noreply.github.com"
           git add -f docs/captures/last_failure.log
