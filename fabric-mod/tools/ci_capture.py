@@ -140,15 +140,16 @@ def main():
     r = wait_rcon()
     who = boot_client(r)
     r.cmd(f"gamemode creative {who}")
+    r.cmd(f"data merge entity {who} {{abilities:{{flying:1b}}}}")   # hold the exact tp height for framing
     r.cmd("time set noon")
     r.cmd("summon entersift:rift_portal 0 -56 0")
     time.sleep(12)                      # 100-tick growth timeline + chunk settle
-    shoot(r, "rift_first_person", f"tp {who} 0 -58 12 180 -8")
-    shoot(r, "rift_side_angle", f"tp {who} 12 -57 0 90 -8")
-    shoot(r, "rift_close_up", f"tp {who} 0 -58 5 180 -12")
+    shoot(r, "rift_first_person", f"tp {who} 0 -54 11 180 -4")
+    shoot(r, "rift_side_angle", f"tp {who} 11 -53.5 0 90 -4")
+    shoot(r, "rift_close_up", f"tp {who} 0 -53.5 6.5 180 -8")
     r.cmd("time set midnight")
     time.sleep(3)
-    shoot(r, "rift_night_front", f"tp {who} 0 -58 12 180 -8")
+    shoot(r, "rift_night_front", f"tp {who} 0 -54 11 180 -4")
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
     if len(pngs) < 4:

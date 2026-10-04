@@ -57,6 +57,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         long seed;
         double ex, ey, ez;
         boolean inSift, night;
+        float glowK;   // 0.23: additive glow damper - day sky washes neon out to white
         int view;
     }
 
@@ -78,6 +79,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
         long day = level == null ? 0L : level.getOverworldClockTime() % 24000L;
         s.night = day >= 11500L && day <= 23300L;        // evening through midnight only, never by day
+        s.glowK = s.night ? 1f : 0.55f;                  // day: tighter, dimmer halo so pastels survive the bright sky
         s.view = viewCode(s.type, s.inSift);
     }
 
@@ -286,7 +288,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static void seedGlow(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
         float k = seedScale(age);
         if (k <= 0f) return;
-        halo(p, vc, wv, 0f, sh.cy(), 0.2f, 1.1f * k, look.halo(), 0.35f * k);
+        halo(p, vc, wv, 0f, sh.cy(), 0.2f, 1.1f * k, look.halo(), 0.35f * k * s.glowK);
         int burst = (int) (age / 3f);
         int n = 2 + (int) (RiftShape.hash(s.seed, burst, 81) * 3f);
         for (int b = 0; b < n; b++) {
@@ -396,19 +398,19 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (flash > 0f) rect(p, vc, wv, x0, y0, x1, y1, -d + 0.02f, white, flash * 0.85f);
             float zl = wallTop(sh, i - 1, j, d, age), zr = wallTop(sh, i + 1, j, d, age);
             float zd = wallTop(sh, i, j - 1, d, age), zu = wallTop(sh, i, j + 1, d, age);
-            if (zl <= 0) rim(p, vc, wv, cam, x0, y0, x0, y1, lip(zl), -d, core, halo, zl < 0, flash, jit);
-            if (zr <= 0) rim(p, vc, wv, cam, x1, y0, x1, y1, lip(zr), -d, core, halo, zr < 0, flash, jit);
-            if (zd <= 0) rim(p, vc, wv, cam, x0, y0, x1, y0, lip(zd), -d, core, halo, zd < 0, flash, jit);
-            if (zu <= 0) rim(p, vc, wv, cam, x0, y1, x1, y1, lip(zu), -d, core, halo, zu < 0, flash, jit);
+            if (zl <= 0) rim(p, vc, wv, cam, x0, y0, x0, y1, lip(zl), -d, core, halo, zl < 0, flash, jit, s.glowK);
+            if (zr <= 0) rim(p, vc, wv, cam, x1, y0, x1, y1, lip(zr), -d, core, halo, zr < 0, flash, jit, s.glowK);
+            if (zd <= 0) rim(p, vc, wv, cam, x0, y0, x1, y0, lip(zd), -d, core, halo, zd < 0, flash, jit, s.glowK);
+            if (zu <= 0) rim(p, vc, wv, cam, x0, y1, x1, y1, lip(zu), -d, core, halo, zu < 0, flash, jit, s.glowK);
         }
         for (float[] q : sh.sats) {
             if (age < satAt(q)) continue;
             float flash = Math.max(0f, 1f - (age - satAt(q)) / 6f);
             int m = (int) q[7];
-            if ((m & 1) == 0) rim(p, vc, wv, cam, q[0], q[1], q[0], q[3], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 2) == 0) rim(p, vc, wv, cam, q[2], q[1], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 4) == 0) rim(p, vc, wv, cam, q[0], q[1], q[2], q[1], q[4], q[5], core, halo, false, flash, jit);
-            if ((m & 8) == 0) rim(p, vc, wv, cam, q[0], q[3], q[2], q[3], q[4], q[5], core, halo, false, flash, jit);
+            if ((m & 1) == 0) rim(p, vc, wv, cam, q[0], q[1], q[0], q[3], q[4], q[5], core, halo, false, flash, jit, s.glowK);
+            if ((m & 2) == 0) rim(p, vc, wv, cam, q[2], q[1], q[2], q[3], q[4], q[5], core, halo, false, flash, jit, s.glowK);
+            if ((m & 4) == 0) rim(p, vc, wv, cam, q[0], q[1], q[2], q[1], q[4], q[5], core, halo, false, flash, jit, s.glowK);
+            if ((m & 8) == 0) rim(p, vc, wv, cam, q[0], q[3], q[2], q[3], q[4], q[5], core, halo, false, flash, jit, s.glowK);
             float[][] corners = {{q[0], q[1], m & 5}, {q[2], q[1], m & 6}, {q[0], q[3], m & 9}, {q[2], q[3], m & 10}};
             for (float[] cr : corners)
                 if (cr[2] == 0) line(p, vc, wv, cam, new float[]{cr[0], cr[1], q[4]}, new float[]{cr[0], cr[1], q[5]}, 0.05f, core, 0.8f);
@@ -417,14 +419,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     /** Front neon rim at {@code zf} (full or lip) and a faint line where the wall meets the window at {@code zb}. */
     private static void rim(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam, float xa, float ya, float xb, float yb, float zf, float zb,
-                            float[] core, float[] halo, boolean lip, float flash, float[] jit) {
+                            float[] core, float[] halo, boolean lip, float flash, float[] jit, float gk) {
         float k = lip ? 0.75f : 1f, a = lip ? 0.85f : 1f;
         float[] fa = {xa, ya, zf + 0.006f}, fb = {xb, yb, zf + 0.006f};
-        band(p, vc, wv, cam, fa, fb, (0.105f + 0.05f * flash) * k, (0.36f + 0.12f * flash) * k, core, halo, a);
+        band(p, vc, wv, cam, fa, fb, (0.105f + 0.05f * flash) * k, (0.36f + 0.12f * flash) * k * gk, core, halo, a * gk);
         line(p, vc, wv, cam, fa, fb, 0.8f * k, halo, 0.02f);
         line(p, vc, wv, cam, new float[]{xa + jit[0], ya + jit[1], zf + 0.01f}, new float[]{xb + jit[0], yb + jit[1], zf + 0.01f}, 0.04f * k, core, 0.12f);
         line(p, vc, wv, cam, new float[]{xa - jit[1], ya + jit[0], zf + 0.012f}, new float[]{xb - jit[1], yb + jit[0], zf + 0.012f}, 0.04f * k, halo, 0.10f);
-        band(p, vc, wv, cam, new float[]{xa, ya, zb + 0.012f}, new float[]{xb, yb, zb + 0.012f}, 0.035f, 0.14f, core, halo, 0.35f);
+        band(p, vc, wv, cam, new float[]{xa, ya, zb + 0.012f}, new float[]{xb, yb, zb + 0.012f}, 0.035f, 0.14f, core, halo, 0.35f * gk);
     }
 
     // ------------------------------------------------------------------ 0.23 distorted rear field
