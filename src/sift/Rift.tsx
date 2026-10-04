@@ -76,9 +76,11 @@ void main() {
   gl_FragColor = vec4(col, alpha);
 }`;
 
-export function Rift({ styleId = "sift", width = 3, height = 3, animated = true, tear = 1 }: {
-  styleId?: string; width?: number; height?: number; animated?: boolean; tear?: number;
+export function Rift({ styleId = "sift", width = 3, height = 3, animated = true, tear = 1, tearOverride }: {
+  styleId?: string; width?: number; height?: number; animated?: boolean; tear?: number; tearOverride?: number;
 }) {
+  const tearOverrideRef = useRef<number | null>(tearOverride ?? null);
+  tearOverrideRef.current = tearOverride ?? null;
   const style = RIFT_STYLES.find((s) => s.id === styleId) || RIFT_STYLES[1];
   const group = useRef<THREE.Group>(null);
   const mat = useMemo(() => new THREE.ShaderMaterial({
@@ -131,10 +133,11 @@ export function Rift({ styleId = "sift", width = 3, height = 3, animated = true,
   }), [styleId]);
 
   useFrame(({ clock }, dt) => {
-    if (!animated) return;
     const t = clock.elapsedTime;
     mat.uniforms.uTime.value = t;
-    mat.uniforms.uTear.value = Math.min(1, mat.uniforms.uTear.value + dt * 0.45);
+    if (tearOverrideRef.current != null) mat.uniforms.uTear.value = tearOverrideRef.current;
+    else if (animated) mat.uniforms.uTear.value = Math.min(1, mat.uniforms.uTear.value + dt * 0.45);
+    if (!animated) return;
     if (group.current) {
       group.current.children.forEach((c, i) => {
         if ((c as any).isRiftCube) {

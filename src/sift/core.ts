@@ -218,6 +218,7 @@ export interface Placed {
   variant?: string;        // palette or extra flag
   emissive?: number;
   animated?: boolean;
+  tear?: number;           // rift tear timeline scrub (0 closed → 1 open)
 }
 export let UID = 1;
 export const nextUid = () => UID++;

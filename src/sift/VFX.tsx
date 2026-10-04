@@ -9,6 +9,8 @@ attribute float aSeed;
 uniform float uTime;
 uniform float uRise;
 uniform float uSway;
+uniform float uWind;
+uniform float uRadius;
 varying float vFade;
 void main() {
   vec3 p = position;
@@ -16,6 +18,9 @@ void main() {
   p.y = mod(p.y + uTime * uRise * (0.5 + fract(aSeed * 7.0) * 0.8), 8.0);
   p.x += sin(t * 1.7) * uSway;
   p.z += cos(t * 1.3) * uSway;
+  if (abs(uWind) > 0.001) {
+    p.x = mod(p.x + uTime * uWind + uRadius, uRadius * 2.0) - uRadius;
+  }
   vFade = smoothstep(0.0, 1.2, p.y) * (1.0 - smoothstep(5.5, 8.0, p.y));
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_PointSize = (34.0 / -mv.z) * (0.6 + fract(aSeed * 3.0) * 0.9);
@@ -25,18 +30,19 @@ void main() {
 const POINT_FRAG = /* glsl */ `
 precision highp float;
 uniform vec3 uColor;
+uniform float uOpacity;
 varying float vFade;
 void main() {
   vec2 c = gl_PointCoord - 0.5;
   float d = length(c);
   float a = smoothstep(0.5, 0.05, d) * vFade;
   float core = smoothstep(0.18, 0.0, d);
-  gl_FragColor = vec4(uColor * (0.7 + core * 1.6), a * 0.85);
+  gl_FragColor = vec4(uColor * (0.7 + core * 1.6), a * 0.85 * uOpacity);
   if (a < 0.01) discard;
 }`;
 
-export function ParticleDrift({ color = "#9fe8ff", count = 220, radius = 14, rise = 0.5, sway = 0.5, size = 1 }: {
-  color?: string; count?: number; radius?: number; rise?: number; sway?: number; size?: number;
+export function ParticleDrift({ color = "#9fe8ff", count = 220, radius = 14, rise = 0.5, sway = 0.5, size = 1, wind = 0, opacity = 1 }: {
+  color?: string; count?: number; radius?: number; rise?: number; sway?: number; size?: number; wind?: number; opacity?: number;
 }) {
   const mat = useMemo(() => new THREE.ShaderMaterial({
     vertexShader: POINT_VERT, fragmentShader: POINT_FRAG,
@@ -44,8 +50,10 @@ export function ParticleDrift({ color = "#9fe8ff", count = 220, radius = 14, ris
     uniforms: {
       uTime: { value: 0 }, uColor: { value: new THREE.Color(color) },
       uRise: { value: rise }, uSway: { value: sway },
+      uWind: { value: wind }, uRadius: { value: radius }, uOpacity: { value: opacity },
     },
-  }), [color, rise, sway]);
+  }), [color, rise, sway, wind, radius]);
+  mat.uniforms.uOpacity.value = opacity;
   const geo = useMemo(() => {
     const pos = new Float32Array(count * 3);
     const seed = new Float32Array(count);

@@ -208,6 +208,13 @@ export function GameApp({ onExit }: { onExit: () => void }) {
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(true);
   const mapData = useRef<MapData>({ px: 0, pz: 0, yaw: 0, realm: 0, rifts: [], shards: [], mobs: [] });
+  const [banner, setBanner] = useState<string | null>(null);
+  useEffect(() => {
+    if (!hud.started) return;
+    setBanner(hud.realm);
+    const t = window.setTimeout(() => setBanner(null), 2400);
+    return () => window.clearTimeout(t);
+  }, [hud.realm, hud.started]);
   const audioRef = useRef<{ amb?: HTMLAudioElement; mus?: HTMLAudioElement }>({});
 
   useEffect(() => {
@@ -249,6 +256,8 @@ export function GameApp({ onExit }: { onExit: () => void }) {
           <div className="game-keys">WASD move · Space jump · Shift sprint · drag = look · click = gauntlet · walk into rifts to travel</div>
         </div>
         {hud.msg && <div className="game-msg">{hud.msg}</div>}
+        {banner && <div key={banner} className="game-realm-banner"><span>⟡ entering</span><b>{banner}</b></div>}
+        <CompassStrip data={mapData} />
         {hud.won && (
           <div className="game-banner">
             <h2>THE SONG IS COMPLETE</h2>
@@ -557,7 +566,12 @@ function GameWorld({ onHud, started, map }: { onHud: (f: (h: any) => any) => voi
         </group>
       </group>
 
-      <ParticleDrift color={r.night ? "#9fe8ff" : "#b0ffe0"} count={160} radius={40} />
+      {/* weather per realm */}
+      {r.id === "boneyard" && <ParticleDrift color="#ff8a4a" count={380} radius={45} rise={0.15} sway={1.4} wind={6} opacity={0.3 + mixRef.current * 0.7} />}
+      {r.id === "meadow" && <ParticleDrift color="#b0ffe0" count={170} radius={45} rise={-0.25} sway={0.8} opacity={0.75} />}
+      {r.id === "spires" && <ParticleDrift color="#ff9ecb" count={220} radius={45} rise={-0.35} sway={1.1} wind={1.6} opacity={0.7} />}
+      {r.id === "coral" && <ParticleDrift color="#7fe8dc" count={180} radius={45} rise={0.4} sway={1.0} opacity={0.7} />}
+      {r.id === "tunnel" && <ParticleDrift color="#8ffce8" count={140} radius={30} rise={0.3} sway={0.6} opacity={0.8} />}
       {r.id === "boneyard" && <LightShaft color="#35e0d0" height={14} radius={0.8} />}
 
       <EffectComposer>
@@ -580,6 +594,65 @@ function Atmosphere({ realm, mixRef }: { realm: Realm; mixRef: React.MutableRefO
     if (scene.background instanceof THREE.Color) scene.background.copy(tmp);
   });
   return null;
+}
+
+/* horizontal bearing compass with shard/rift markers */
+function CompassStrip({ data }: { data: React.MutableRefObject<MapData> }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const iv = window.setInterval(() => {
+      const cv = ref.current;
+      if (!cv) return;
+      const ctx = cv.getContext("2d")!;
+      const W = cv.width, H = cv.height, C = W / 2;
+      const d = data.current;
+      const heading = -d.yaw;
+      const FOV = (70 * Math.PI) / 180;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "rgba(8,12,14,0.72)";
+      ctx.fillRect(0, 0, W, H);
+      /* ticks + cardinals */
+      ctx.strokeStyle = "rgba(215,226,232,0.35)";
+      ctx.fillStyle = "rgba(215,226,232,0.6)";
+      ctx.font = "9px system-ui";
+      ctx.textAlign = "center";
+      for (let deg = 0; deg < 360; deg += 15) {
+        const br = (deg * Math.PI) / 180;
+        let rel = br - heading;
+        while (rel > Math.PI) rel -= Math.PI * 2;
+        while (rel < -Math.PI) rel += Math.PI * 2;
+        if (Math.abs(rel) > FOV / 2) continue;
+        const x = C + (rel / (FOV / 2)) * (W / 2 - 8);
+        const cardinal = deg % 90 === 0;
+        ctx.beginPath(); ctx.moveTo(x, H - 4); ctx.lineTo(x, H - (cardinal ? 12 : 8)); ctx.stroke();
+        if (cardinal) ctx.fillText(["N", "E", "S", "W"][deg / 90], x, 11);
+      }
+      const mark = (br: number, draw: (x: number) => void) => {
+        let rel = br - heading;
+        while (rel > Math.PI) rel -= Math.PI * 2;
+        while (rel < -Math.PI) rel += Math.PI * 2;
+        if (Math.abs(rel) > FOV / 2) return;
+        draw(C + (rel / (FOV / 2)) * (W / 2 - 8));
+      };
+      d.shards.forEach((s) => {
+        if (s.taken) return;
+        const br = Math.atan2(s.x - d.px, -(s.z - d.pz));
+        mark(br, (x) => {
+          ctx.fillStyle = "#5af2ff";
+          ctx.save(); ctx.translate(x, H - 14); ctx.rotate(Math.PI / 4); ctx.fillRect(-3, -3, 6, 6); ctx.restore();
+        });
+      });
+      d.rifts.forEach((rf) => {
+        const br = Math.atan2(rf.x - d.px, -(rf.z - d.pz));
+        mark(br, (x) => { ctx.strokeStyle = "#ff7fae"; ctx.lineWidth = 1.5; ctx.strokeRect(x - 3.5, H - 18, 7, 7); });
+      });
+      /* caret */
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.moveTo(C, H - 2); ctx.lineTo(C - 4, H); ctx.lineTo(C + 4, H); ctx.closePath(); ctx.fill();
+    }, 90);
+    return () => window.clearInterval(iv);
+  }, [data]);
+  return <canvas ref={ref} width={340} height={30} className="game-compass" aria-label="compass" />;
 }
 
 /* top-down minimap: north-up, player arrow rotates with heading */

@@ -282,6 +282,18 @@ export function EditorApp({ onExit }: { onExit: () => void }) {
                     onChange={(e) => updateSelected({ emissive: parseFloat(e.target.value) })} />
                 </label>
               )}
+              {selected_item.kind === "rift" && (
+                <>
+                  <label className="forge-slider">tear timeline
+                    <input type="range" min={0} max={1} step={0.01}
+                      value={selected_item.tear ?? 1}
+                      onChange={(e) => updateSelected({ tear: parseFloat(e.target.value), animated: false })} />
+                  </label>
+                  <div className="forge-tearrow">
+                    <button onClick={() => updateSelected({ tear: undefined, animated: true })}>▶ replay tear</button>
+                  </div>
+                </>
+              )}
               <label className="forge-check">
                 <input type="checkbox" checked={selected_item.animated !== false}
                   onChange={(e) => updateSelected({ animated: e.target.checked })} /> animate
@@ -466,7 +478,7 @@ function Viewport(props: {
           }}>
           {it.kind === "block" && <BlockMesh id={it.id} emissiveMul={it.emissive ?? 1} animate={settings.anims && it.animated !== false} />}
           {it.kind === "mob" && <MobMesh id={it.id} animated={settings.anims && it.animated !== false} />}
-          {it.kind === "rift" && <Rift styleId={it.id} width={3 * it.scale[0]} height={3 * it.scale[1]} animated={settings.anims && it.animated !== false} />}
+          {it.kind === "rift" && <Rift styleId={it.id} width={3 * it.scale[0]} height={3 * it.scale[1]} animated={settings.anims && it.animated !== false} tearOverride={it.tear} />}
           {it.kind === "vfx" && <VfxItem id={it.id} color={it.variant} />}
         </group>
       ))}

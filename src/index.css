@@ -888,3 +888,17 @@ html, body, #root { height: 100%; margin: 0; background: var(--sf-bg); }
 .game-map { position: absolute; top: 58px; right: 14px; border-radius: 50%; background: rgba(8,10,12,.6); box-shadow: 0 0 24px rgba(53,224,208,.15); }
 .forge-biomewrap { display: flex; align-items: center; gap: 6px; }
 .forge-biomewrap select { background: var(--sf-panel2); color: var(--sf-text); border: 1px solid var(--sf-line); border-radius: 8px; padding: 6px; font-size: 12px; }
+
+/* compass strip + realm banner */
+.game-compass { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); border: 1px solid var(--sf-line); border-radius: 8px; }
+.game-realm-banner { position: absolute; top: 26%; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; animation: realmBanner 2.4s ease forwards; }
+.game-realm-banner span { color: var(--sf-dim); letter-spacing: .5em; font-size: 11px; text-transform: uppercase; }
+.game-realm-banner b { color: var(--sf-accent); letter-spacing: .4em; font-size: 30px; text-shadow: 0 0 28px rgba(53,224,208,.8); }
+@keyframes realmBanner {
+  0% { opacity: 0; transform: translateY(14px); }
+  12% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+.forge-tearrow { display: flex; gap: 6px; align-items: center; }
+.forge-tearrow button { background: var(--sf-panel2); color: var(--sf-accent); border: 1px solid var(--sf-accent); border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px; }
