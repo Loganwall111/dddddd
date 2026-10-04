@@ -277,7 +277,6 @@ e(Lnet/irisshaders/iris/pipeline/programs/ShaderKey;)Lcom/mojang/renderpearl/bac
 backendRenderPipeline
 <()Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline;
 6com/mojang/renderpearl/backend/opengl/GlRenderPipeline
-grep: write error: Broken pipe
 ----- strings ./net/irisshaders/iris/api/v0/IrisApi.class
 +net/irisshaders/iris/api/v0/IrisApiInternal
 %Lnet/irisshaders/iris/api/v0/IrisApi;

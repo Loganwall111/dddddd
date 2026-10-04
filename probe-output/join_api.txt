@@ -1,110 +1,94 @@
-== jar: /home/runner/work/dddddd/dddddd/fabric-mod/.gradle/loom-cache/minecraftMaven/net/minecraft/minecraft-clientOnly-7e9a32a5b8/26.3/minecraft-clientOnly-7e9a32a5b8-26.3.jar
-net/minecraft/client/multiplayer/chat/report/ReportType.class
-net/minecraft/client/multiplayer/chat/package-info.class
-net/minecraft/client/multiplayer/ClientChunkCache.class
-net/minecraft/client/multiplayer/LegacyServerPinger.class
-net/minecraft/client/multiplayer/prediction/PredictiveAction.class
-net/minecraft/client/multiplayer/ClientRecipeContainer.class
-net/minecraft/client/gui/screens/multiplayer/JoinMultiplayerScreen.class
-net/minecraft/client/gui/screens/multiplayer/ServerReconfigScreen.class
-net/minecraft/client/multiplayer/chat/report/ChatReportContextBuilder.class
-net/minecraft/client/multiplayer/resolver/ServerAddress.class
-net/minecraft/client/multiplayer/chat/report/package-info.class
-net/minecraft/client/multiplayer/PlayerInfo.class
-net/minecraft/client/multiplayer/chat/report/AbuseReportSender.class
-net/minecraft/realms/RealmsConnect.class
-net/minecraft/client/gui/screens/DisconnectedScreen.class
-net/minecraft/client/multiplayer/MultiPlayerGameMode.class
-net/minecraft/client/multiplayer/CommonListenerCookie.class
-net/minecraft/client/multiplayer/chat/report/ChatReport.class
-net/minecraft/client/gui/screens/ConnectScreen.class
-net/minecraft/client/gui/screens/multiplayer/ServerSelectionList.class
-com/mojang/realmsclient/util/task/ConnectTask.class
-net/minecraft/client/multiplayer/ClientExplosionTracker.class
-net/minecraft/client/multiplayer/ClientConfigurationPacketListenerImpl.class
-net/minecraft/client/multiplayer/ClientHandshakePacketListenerImpl.class
-net/minecraft/client/multiplayer/LevelLoadTracker.class
-net/minecraft/client/multiplayer/chat/report/ReportEnvironment.class
-net/minecraft/client/multiplayer/resolver/ServerRedirectHandler.class
-net/minecraft/client/multiplayer/chat/GuiMessageSource.class
-net/minecraft/client/gui/screens/multiplayer/CodeOfConductScreen.class
-net/minecraft/client/multiplayer/resolver/package-info.class
-net/minecraft/client/multiplayer/resolver/AddressCheck.class
-net/minecraft/client/multiplayer/prediction/package-info.class
-net/minecraft/client/multiplayer/ClientAdvancements.class
-net/minecraft/client/multiplayer/chat/report/NameReport.class
-net/minecraft/client/multiplayer/TransferState.class
-net/minecraft/client/gui/screens/multiplayer/WarningScreen.class
-net/minecraft/client/multiplayer/chat/report/ReportReason.class
-net/minecraft/client/multiplayer/ServerData.class
-net/minecraft/client/gui/screens/dialog/DialogConnectionAccess.class
-net/minecraft/client/multiplayer/ChunkBatchSizeCalculator.class
-net/minecraft/client/multiplayer/CacheSlot.class
-net/minecraft/client/multiplayer/ServerList.class
-net/minecraft/client/multiplayer/RegistryDataCollector.class
-net/minecraft/client/multiplayer/package-info.class
-com/mojang/realmsclient/dto/RealmsServerList.class
-net/minecraft/client/multiplayer/chat/LoggedChatEvent.class
-net/minecraft/client/gui/screens/multiplayer/RestrictionsScreen.class
-net/minecraft/client/multiplayer/resolver/ServerNameResolver.class
-net/minecraft/client/multiplayer/ClientDebugSubscriber.class
-net/minecraft/client/multiplayer/chat/report/SkinReport.class
-net/minecraft/client/multiplayer/KnownPacksManager.class
-net/minecraft/client/multiplayer/chat/GuiMessage.class
-net/minecraft/client/multiplayer/AccountProfileKeyPairManager.class
-net/minecraft/client/multiplayer/prediction/BlockStatePredictionHandler.class
-net/minecraft/client/multiplayer/resolver/ResolvedServerAddress.class
-net/minecraft/client/multiplayer/SessionSearchTrees.class
-net/minecraft/client/multiplayer/chat/report/Report.class
-net/minecraft/client/gui/screens/multiplayer/package-info.class
-net/minecraft/client/gui/screens/multiplayer/SafetyScreen.class
-net/minecraft/client/multiplayer/ClientLevel.class
-net/minecraft/client/multiplayer/resolver/ServerAddressResolver.class
-net/minecraft/client/multiplayer/ClientRegistryLayer.class
-net/minecraft/client/multiplayer/ClientPacketListener.class
-net/minecraft/client/multiplayer/ClientCommonPacketListenerImpl.class
-net/minecraft/client/multiplayer/chat/GuiMessageTag.class
-net/minecraft/client/multiplayer/chat/LoggedChatMessage.class
-net/minecraft/client/multiplayer/ClientSuggestionProvider.class
-net/minecraft/client/multiplayer/chat/ChatListener.class
-net/minecraft/client/multiplayer/chat/ChatRestriction.class
-net/minecraft/client/multiplayer/chat/ChatTrustLevel.class
-net/minecraft/client/multiplayer/ServerStatusPinger.class
-net/minecraft/client/multiplayer/ProfileKeyPairManager.class
-net/minecraft/client/multiplayer/chat/report/BanReason.class
-net/minecraft/client/multiplayer/PingDebugMonitor.class
-com/mojang/realmsclient/gui/screens/RealmsLongRunningMcoConnectTaskScreen.class
-com/mojang/realmsclient/gui/RealmsServerList.class
-net/minecraft/client/multiplayer/chat/ChatLog.class
-net/minecraft/client/multiplayer/chat/report/ReportingContext.class
-net/minecraft/client/multiplayer/chat/ChatAbilities.class
-== client/multiplayer package ==
-net/minecraft/client/multiplayer/ClientChunkCache.class
-net/minecraft/client/multiplayer/LegacyServerPinger.class
-net/minecraft/client/multiplayer/ClientRecipeContainer.class
-net/minecraft/client/multiplayer/PlayerInfo.class
-net/minecraft/client/multiplayer/MultiPlayerGameMode.class
-net/minecraft/client/multiplayer/CommonListenerCookie.class
-net/minecraft/client/multiplayer/ClientExplosionTracker.class
-net/minecraft/client/multiplayer/ClientConfigurationPacketListenerImpl.class
-net/minecraft/client/multiplayer/ClientHandshakePacketListenerImpl.class
-net/minecraft/client/multiplayer/LevelLoadTracker.class
-net/minecraft/client/multiplayer/ClientAdvancements.class
-net/minecraft/client/multiplayer/TransferState.class
-net/minecraft/client/multiplayer/ServerData.class
-net/minecraft/client/multiplayer/ChunkBatchSizeCalculator.class
-net/minecraft/client/multiplayer/CacheSlot.class
-net/minecraft/client/multiplayer/ServerList.class
-net/minecraft/client/multiplayer/RegistryDataCollector.class
-net/minecraft/client/multiplayer/ClientDebugSubscriber.class
-net/minecraft/client/multiplayer/KnownPacksManager.class
-net/minecraft/client/multiplayer/AccountProfileKeyPairManager.class
-net/minecraft/client/multiplayer/SessionSearchTrees.class
-net/minecraft/client/multiplayer/ClientLevel.class
-net/minecraft/client/multiplayer/ClientRegistryLayer.class
-net/minecraft/client/multiplayer/ClientPacketListener.class
-net/minecraft/client/multiplayer/ClientCommonPacketListenerImpl.class
-net/minecraft/client/multiplayer/ClientSuggestionProvider.class
-net/minecraft/client/multiplayer/ServerStatusPinger.class
-net/minecraft/client/multiplayer/ProfileKeyPairManager.class
-net/minecraft/client/multiplayer/PingDebugMonitor.class
+===== net.minecraft.client.gui.screens.ConnectScreen
+Compiled from "ConnectScreen.java"
+public class net.minecraft.client.gui.screens.ConnectScreen extends net.minecraft.client.gui.screens.Screen {
+  public static final net.minecraft.network.chat.Component ABORT_CONNECTION;
+  public static final net.minecraft.network.chat.Component UNKNOWN_HOST_MESSAGE;
+  public static void startConnecting(net.minecraft.client.gui.screens.Screen, net.minecraft.client.Minecraft, net.minecraft.client.multiplayer.resolver.ServerAddress, net.minecraft.client.multiplayer.ServerData, boolean, net.minecraft.client.multiplayer.TransferState);
+  public void tick();
+  public boolean shouldCloseOnEsc();
+  protected void init();
+  public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+}
+===== net.minecraft.client.multiplayer.resolver.ServerAddress
+Compiled from "ServerAddress.java"
+public final class net.minecraft.client.multiplayer.resolver.ServerAddress {
+  public net.minecraft.client.multiplayer.resolver.ServerAddress(java.lang.String, int);
+  public java.lang.String getHost();
+  public int getPort();
+  public static net.minecraft.client.multiplayer.resolver.ServerAddress parseString(java.lang.String);
+  public static boolean isValidAddress(java.lang.String);
+  public static int parsePort(java.lang.String);
+  public java.lang.String toString();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+}
+===== net.minecraft.client.multiplayer.ServerData
+Compiled from "ServerData.java"
+public class net.minecraft.client.multiplayer.ServerData {
+  public java.lang.String name;
+  public java.lang.String ip;
+  public net.minecraft.network.chat.Component status;
+  public net.minecraft.network.chat.Component motd;
+  public net.minecraft.network.protocol.status.ServerStatus$Players players;
+  public long ping;
+  public int protocol;
+  public net.minecraft.network.chat.Component version;
+  public java.util.List<net.minecraft.network.chat.Component> playerList;
+  public net.minecraft.client.multiplayer.ServerData(java.lang.String, java.lang.String, net.minecraft.client.multiplayer.ServerData$Type);
+  public net.minecraft.nbt.CompoundTag write();
+  public net.minecraft.client.multiplayer.ServerData$ServerPackStatus getResourcePackStatus();
+  public void setResourcePackStatus(net.minecraft.client.multiplayer.ServerData$ServerPackStatus);
+  public static net.minecraft.client.multiplayer.ServerData read(net.minecraft.nbt.CompoundTag);
+  public byte[] getIconBytes();
+  public void setIconBytes(byte[]);
+  public boolean isLan();
+  public boolean isRealm();
+  public net.minecraft.client.multiplayer.ServerData$Type type();
+  public boolean hasAcceptedCodeOfConduct(java.lang.String);
+  public void acceptCodeOfConduct(java.lang.String);
+  public void clearCodeOfConduct();
+  public void copyNameIconFrom(net.minecraft.client.multiplayer.ServerData);
+  public void copyFrom(net.minecraft.client.multiplayer.ServerData);
+  public net.minecraft.client.multiplayer.ServerData$State state();
+  public void setState(net.minecraft.client.multiplayer.ServerData$State);
+  public static byte[] validateIcon(byte[]);
+}
+===== net.minecraft.client.gui.screens.TitleScreen
+Compiled from "TitleScreen.java"
+public class net.minecraft.client.gui.screens.TitleScreen extends net.minecraft.client.gui.screens.Screen {
+  public net.minecraft.client.gui.screens.TitleScreen();
+  public net.minecraft.client.gui.screens.TitleScreen(boolean);
+  public net.minecraft.client.gui.screens.TitleScreen(boolean, net.minecraft.client.gui.components.LogoRenderer);
+  public void tick();
+  public static void registerTextures(net.minecraft.client.renderer.texture.TextureManager);
+  public boolean isPauseScreen();
+  public boolean shouldCloseOnEsc();
+  protected void init();
+  public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  public void extractBackground(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent, boolean);
+  public void removed();
+  public void added();
+  public boolean canInterruptWithAnotherScreen();
+}
+===== Minecraft join-related
+  public final net.minecraft.client.gui.Font font;
+  public final net.minecraft.client.gui.Font fontFilterFishy;
+  public final net.minecraft.client.gui.Gui gui;
+  public final net.minecraft.client.gui.components.debug.DebugScreenEntryList debugEntries;
+  public net.minecraft.world.level.storage.LevelStorageSource getLevelSource();
+  public void resizeGui();
+  public net.minecraft.client.gui.screens.worldselection.WorldOpenFlows createWorldOpenFlows();
+  public void disconnectFromWorld(net.minecraft.network.chat.Component);
+  public void disconnectWithSavingScreen();
+  public void disconnectWithProgressScreen();
+  public void disconnectWithProgressScreen(boolean);
+  public void disconnect(net.minecraft.client.gui.screens.Screen, boolean);
+  public void disconnect(net.minecraft.client.gui.screens.Screen, boolean, boolean);
+  public void clearClientLevel(net.minecraft.client.gui.screens.Screen);
+  public void setScreenAndShow(net.minecraft.client.gui.screens.Screen);
+  public net.minecraft.client.multiplayer.ClientPacketListener getConnection();
+  public net.minecraft.client.gui.screens.social.PlayerSocialManager getPlayerSocialManager();
+  public void onTextInputFocusChange(net.minecraft.client.gui.components.events.GuiEventListener, boolean);
+  public net.minecraft.client.gui.components.DebugScreenOverlay getDebugOverlay();
+  public com.mojang.realmsclient.gui.RealmsDataFetcher realmsDataFetcher();
