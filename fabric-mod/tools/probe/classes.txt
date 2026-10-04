@@ -112,3 +112,7 @@ net.fabricmc.fabric.impl.client.gametest.TestSystemProperties
 net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl
 -protected net.minecraft.client.Screenshot
 -protected net.minecraft.client.Minecraft
+net.minecraft.client.multiplayer.ConnectScreen
+net.minecraft.client.multiplayer.ServerAddress
+net.minecraft.client.multiplayer.ServerInfo
+net.minecraft.client.gui.screens.TitleScreen
