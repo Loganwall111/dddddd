@@ -95,3 +95,20 @@ com.mojang.renderpearl.api.vertex.DefaultVertexFormat
 com.mojang.renderpearl.api.vertex.VertexFormat
 net.minecraft.sounds.SoundEvent
 net.minecraft.sounds.SoundEvents
+net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest
+net.fabricmc.fabric.api.client.gametest.v1.TestInput
+net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext
+net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext
+net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext
+net.fabricmc.fabric.api.client.gametest.v1.context.TestServerConnection
+net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext
+net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerConnection
+net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldBuilder
+net.fabricmc.fabric.api.client.gametest.v1.world.TestWorldSave
+net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotOptions
+net.fabricmc.fabric.api.client.gametest.v1.screenshot.TestScreenshotCommonOptions
+net.fabricmc.fabric.impl.client.gametest.FabricClientGameTestRunner
+net.fabricmc.fabric.impl.client.gametest.TestSystemProperties
+net.fabricmc.fabric.impl.client.gametest.context.ClientGameTestContextImpl
+-protected net.minecraft.client.Screenshot
+-protected net.minecraft.client.Minecraft

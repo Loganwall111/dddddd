@@ -170,12 +170,11 @@ void main() {
     int view = code - (code / 8) * 8;
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
-    // 0.22 accuracy pass: the interior is a TRANSLUCENT PASTEL ENERGY FOG, not a sharp wallpaper window.
-    // Liquid-puddle ripple bend first (spec maths): the face UVs themselves wobble before every sample.
+    // 0.23: the window is PURE translucent pastel energy fog. The references show NO destination
+    // dimension through the rift - the world behind shows through the alpha instead (pipeline blend).
     vec2 uv = riftData.rg;
     vec2 ripple = vec2(sin(uv.y * 14.0 + t * 1.0), cos(uv.x * 10.0 - t * 0.6)) * 0.02;
     vec2 wuv = uv + ripple;
-    vec3 dest = destination(view, normalize(dir + vec3(ripple * 2.0, 0.0)), t);
     // Three drifting fbm sheets in the trailer palette (pale white / soft pink / pale peach / cream,
     // subtle cyan-teal highlights), slowly shifting, with small brightness fluctuations.
     float g1 = fbm(wuv * 3.1 + vec2(t * 0.05, -t * 0.03));
@@ -197,13 +196,12 @@ void main() {
     energy = mix(energy, vec3(1.0, 0.99, 0.96), core * 0.35);          // bright heart, never a blowout
     energy += vec3(0.55, 0.95, 0.90) * smoothstep(0.62, 0.90, g3) * 0.10;  // faint teal veins
     energy *= 0.92 + 0.08 * sin(t * 0.9 + g1 * 6.0);                   // slow brightness fluctuation
-    vec2 sg = wuv * 46.0 + vec2(t * 0.6, -t * 0.35);                   // white sparkles drifting inside
+    vec2 sg = wuv * 140.0 + vec2(t * 0.6, -t * 0.35);                  // white sparkles drifting inside
     float sp = hash21(floor(sg));
-    energy += vec3(1.0) * step(0.985, sp) * (0.5 + 0.5 * sin(t * 3.0 + sp * 80.0)) * 0.8;
-    // Translucent: the destination view stays as a faint influence under the fog, and the pipeline blend
-    // lets the real terrain behind the rift show through (alpha < 1).
-    vec3 col = mix(dest, energy, 0.78);
-    fragColor = apply_fog(vec4(min(col, vec3(1.0)), 0.82) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
+    energy += vec3(1.0) * step(0.988, sp) * (0.5 + 0.5 * sin(t * 3.0 + sp * 80.0)) * 0.5;
+    // 0.23: no destination mix; luminance tuned down (1.12 blew out to white in day captures).
+    vec3 col = min(energy, vec3(1.0));
+    fragColor = apply_fog(vec4(col, 0.85) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif
 }

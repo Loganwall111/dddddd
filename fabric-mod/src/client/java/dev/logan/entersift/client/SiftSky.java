@@ -124,8 +124,9 @@ public final class SiftSky {
                 // additive wavy bands on their own shell, so the original lava-lamp dome stays visible
                 // underneath it everywhere (the reference Sift sky is a layered sky, not one flat gradient).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> overlayDome(p, vc, radius * 0.995f, pal, seconds));
-                // 0.17 layer 2 (alpha blended, keeps colours saturated): panels or swirling blobs by biome.
+                // Layer 2 (alpha blended, keeps colours saturated): panels or swirling blobs by biome.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
+                    quiltPatches(p, vc, radius * 0.988f, pal, seconds);
                     if (sw < 0.98f) softPanels(p, vc, radius * 0.985f, pal, seconds, 1f - sw);
                     if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw);
                 });
@@ -403,6 +404,41 @@ public final class SiftSky {
                 if (prev == null) { prev = new float[CURTAIN_ROWS + 1][]; prevA = new float[CURTAIN_ROWS + 1]; }
                 System.arraycopy(row, 0, prev, 0, row.length);
                 System.arraycopy(rowA, 0, prevA, 0, rowA.length);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 0.23 quilted pastel sky
+
+    private static final int QAZ = 10, QEL = 5;
+    /** 0.23 MCD2 reference: the Sift sky is a QUILT of huge soft pastel rectangles (mint / pink / peach /
+     *  lilac / cream), not a smooth gradient. Tiles drift slowly and each fades with smoothstep toward
+     *  its borders so neighbouring patches blend like brushed candy (alpha blended over the dome). */
+    private static final float[][] QUILT = {rgb(0x9FF0D8), rgb(0xFFB8D0), rgb(0xFFDCA8), rgb(0xC8B8F0),
+        rgb(0xF8F4E8), rgb(0xA8E8E0), rgb(0xF0A8B8), rgb(0xD8F0A8)};
+
+    private static void quiltPatches(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float drift = t * 0.0045f;
+        for (int i = 0; i < QAZ; i++) for (int j = 0; j < QEL; j++) {
+            float h = hash(i, j, 171);
+            float[] col = lerp(QUILT[(int) (h * QUILT.length) % QUILT.length], pal.blobs()[(i + j) % 4], 0.25f);
+            float alpha = 0.16f + 0.20f * hash(i, j, 172);
+            alpha *= 0.75f + 0.25f * (float) Math.sin(t * 0.09f + h * 6.28f);
+            double az0 = (i / (float) QAZ + drift) * Math.PI * 2, az1 = ((i + 1) / (float) QAZ + drift) * Math.PI * 2;
+            double el0 = -0.05 + j / (float) QEL * 1.5, el1 = -0.05 + (j + 1) / (float) QEL * 1.5;
+            int g = 4;   // tessellate so the smoothstep border falloff is soft
+            float[][] d = new float[(g + 1) * (g + 1)][];
+            float[][] a = new float[g + 1][g + 1];
+            for (int gy = 0; gy <= g; gy++) for (int gx = 0; gx <= g; gx++) {
+                float sx = gx / (float) g * 2 - 1, sy = gy / (float) g * 2 - 1;
+                double az = az0 + (az1 - az0) * gx / g, el = el0 + (el1 - el0) * gy / g;
+                d[gy * (g + 1) + gx] = dir(az, el);
+                a[gy][gx] = alpha * smooth(1f, 0.45f, Math.abs(sx)) * smooth(1f, 0.45f, Math.abs(sy));
+            }
+            for (int gy = 0; gy < g; gy++) for (int gx = 0; gx < g; gx++) {
+                int a0 = gy * (g + 1) + gx, a1 = a0 + 1, a2 = a0 + g + 2, a3 = a0 + g + 1;
+                v(p, vc, d[a0], r, col, a[gy][gx]); v(p, vc, d[a1], r, col, a[gy][gx + 1]);
+                v(p, vc, d[a2], r, col, a[gy + 1][gx + 1]); v(p, vc, d[a3], r, col, a[gy + 1][gx]);
             }
         }
     }

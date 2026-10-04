@@ -106,7 +106,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         new Look(c(0.96f, 1f, 0.86f), c(0.75f, 0.95f, 0.60f), c(1f, 0.82f, 0.93f), c(0.82f, 0.44f, 0.68f)), // 2 end: lime rims, pink walls
         new Look(c(1f, 1f, 1f), c(1f, 0.55f, 0.80f), c(0.93f, 0.89f, 0.97f), c(0.70f, 0.60f, 0.80f)), // 3 sift: pink rim, pale-lilac alcove walls (ref close-ups)
         new Look(c(0.9f, 1f, 1f), c(0.35f, 0.95f, 1f), c(0.90f, 1f, 1f), c(0.45f, 0.80f, 0.90f)),        // 4 portal: cyan
-        new Look(c(1f, 0.97f, 0.55f), c(1f, 0.88f, 0.20f), c(1f, 0.96f, 0.75f), c(0.90f, 0.78f, 0.30f)),  // 5 gold
+        new Look(c(1f, 0.97f, 0.55f), c(1f, 0.82f, 0.35f), c(0.97f, 0.85f, 0.58f), c(0.80f, 0.66f, 0.28f)),  // 5 gold (0.23: was blowing out to white by day)
     };
 
     /** Night curtain colours: electric blue, pale cyan, deep magenta, purple. */
@@ -137,7 +137,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float edge = Math.min(1f, Math.abs(x) / halfW);
             float vert = Math.min(1f, Math.abs(y - cy) / halfH);
             float e = edge * edge;
-            return 0.015f + 0.105f * e * (0.55f + 0.45f * vert * vert);
+            return 0.05f + 0.26f * e * (0.45f + 0.55f * vert * vert);
         }
         float dx(float x, float y, float z) { return amp(x, y) * (float) Math.sin(t * 0.55f + y * 0.8f + z * 0.5f); }
         float dy(float x, float y, float z) { return amp(x, y) * 0.35f * (float) Math.sin(t * 0.42f + x * 0.9f); }
@@ -193,13 +193,16 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             }
             if (age >= CLUSTER_START) {
                 float a = age;
+                // 0.23: distorted rear field - a soft hazy dissolve blob BEHIND the whole cluster
+                // (the references show the back of every rift melting into a wavy smoke-haze).
+                if (SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> rearHaze(p, vc, wv, sh, look, s));
                 if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s));
                 else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s));
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look, a, s));
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> rims(p, vc, wv, sh, look, cam, a, s));
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, a));
-                // 0.22 spec: the prominent 3D energy cubes are evening/night only (clock 12000-24000).
-                if (SiftBudget.riftEffects && s.night) out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
+                // 0.23: the prominent 3D energy cubes drift at ALL times of day (references show them by day too).
+                if (SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
                 if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look, cam, s));
                 if (age >= GROWN && s.night && SiftBudget.auraGlow) out.submitCustomGeometry(pose, glowT, (p, vc) -> curtains(p, vc, sh, s, cam));
             }
@@ -224,14 +227,16 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         return dn < d - 1e-4f ? -dn : 1f;
     }
 
-    /** PHASE 1: flat translucent puddle ripple in the wall plane, 0 % -> 100 % over ticks 0-30, gone by 36. */
+    /** PHASE 1: flat translucent puddle ripple in the wall plane, 0 % -> 100 % over ticks 0-30.
+     *  0.23: the reference summon shows a HUGE bright ring (arcs spanning ~2.5x the rift) that lingers
+     *  to about tick 48, so the radius multiplier and the fade-out were both raised. */
     private static void ripple(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
         float f = Math.min(1f, age / RIPPLE_END), ease = 1 - (1 - f) * (1 - f);
-        float fade = age <= RIPPLE_END ? 1f : Math.max(0f, 1f - (age - RIPPLE_END) / 6f);
-        float radius = Math.max(sh.w, sh.h) * 0.62f;
+        float fade = age <= RIPPLE_END ? 1f : Math.max(0f, 1f - (age - RIPPLE_END) / 18f);
+        float radius = Math.max(sh.w, sh.h) * 1.35f;
         for (int rn = 0; rn < 3; rn++) {
             float rr = Math.max(0.001f, ease - rn * 0.22f) * radius;
-            float a = fade * (rn == 0 ? 0.5f : 0.28f) * (1 - f * 0.5f);
+            float a = fade * (rn == 0 ? 0.75f : 0.4f) * (1 - f * 0.35f);
             ring(p, vc, wv, 0f, sh.cy(), 0.02f, rr * 0.8f, rr, look.halo(), a);
             ring(p, vc, wv, 0f, sh.cy(), 0.02f, 0f, rr * 0.8f, look.halo(), a * 0.15f);
         }
@@ -255,9 +260,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (int[] f : faces) for (int idx : f) col(p, vc, wv, v[idx][0], v[idx][1], v[idx][2], hot, pulse);
     }
 
-    /** PHASE 1 spark: erratic lightning flashing over the ripple (re-aimed every 2 ticks, flickering on and off). */
+    /** PHASE 1 spark: erratic lightning flashing over the ripple (re-aimed every 2 ticks, flickering on and
+     *  off). 0.23: the village-reference frames keep jagged bolts playing over the rift until ~tick 90. */
     private static void spark(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
-        if (age > RIPPLE_END) return;
+        if (age > 90) return;
         int burst = (int) (age / 2f);
         if (RiftShape.hash(s.seed, burst, 85) < 0.3f) return;
         float r = Math.max(sh.w, sh.h) * 0.55f * Math.min(1f, age / RIPPLE_END + 0.2f);
@@ -414,11 +420,43 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                             float[] core, float[] halo, boolean lip, float flash, float[] jit) {
         float k = lip ? 0.75f : 1f, a = lip ? 0.85f : 1f;
         float[] fa = {xa, ya, zf + 0.006f}, fb = {xb, yb, zf + 0.006f};
-        band(p, vc, wv, cam, fa, fb, (0.105f + 0.05f * flash) * k, (0.46f + 0.15f * flash) * k, core, halo, a);
-        line(p, vc, wv, cam, fa, fb, 0.8f * k, halo, 0.04f);
-        line(p, vc, wv, cam, new float[]{xa + jit[0], ya + jit[1], zf + 0.01f}, new float[]{xb + jit[0], yb + jit[1], zf + 0.01f}, 0.04f * k, core, 0.22f);
-        line(p, vc, wv, cam, new float[]{xa - jit[1], ya + jit[0], zf + 0.012f}, new float[]{xb - jit[1], yb + jit[0], zf + 0.012f}, 0.04f * k, halo, 0.18f);
+        band(p, vc, wv, cam, fa, fb, (0.105f + 0.05f * flash) * k, (0.36f + 0.12f * flash) * k, core, halo, a);
+        line(p, vc, wv, cam, fa, fb, 0.8f * k, halo, 0.02f);
+        line(p, vc, wv, cam, new float[]{xa + jit[0], ya + jit[1], zf + 0.01f}, new float[]{xb + jit[0], yb + jit[1], zf + 0.01f}, 0.04f * k, core, 0.12f);
+        line(p, vc, wv, cam, new float[]{xa - jit[1], ya + jit[0], zf + 0.012f}, new float[]{xb - jit[1], yb + jit[0], zf + 0.012f}, 0.04f * k, halo, 0.10f);
         band(p, vc, wv, cam, new float[]{xa, ya, zb + 0.012f}, new float[]{xb, yb, zb + 0.012f}, 0.035f, 0.14f, core, halo, 0.35f);
+    }
+
+    // ------------------------------------------------------------------ 0.23 distorted rear field
+
+    /**
+     * The trailer's "dissolved back": a wavy, soft-edged haze sheet floating BEHIND the cluster
+     * (additive, no depth write). A 6x6 grid of quads whose per-vertex alpha comes from a drifting
+     * hash/sine field, so the rear of the rift melts into cosmic smoke instead of ending in a flat
+     * plane. Vertices undulate with the same warp, so it sways with the rift.
+     */
+    private static void rearHaze(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s) {
+        int n = 6;
+        float hw = sh.w * 0.85f, hh = sh.h * 0.8f, z = -sh.maxDepth - 0.9f;
+        float[] haze = mix(look.halo(), c(1f, 1f, 1f), 0.35f);
+        for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) {
+            float[][] vs = new float[4][2];
+            float[][] al = new float[4][1];
+            for (int q = 0; q < 4; q++) {
+                int qi = i + (q == 1 || q == 2 ? 1 : 0), qj = j + (q >= 2 ? 1 : 0);
+                float x = -hw + qi / (float) n * hw * 2, y = sh.cy() - hh + qj / (float) n * hh * 2;
+                float h1 = RiftShape.hash(s.seed, qi * 7 + qj * 13, 151), h2 = RiftShape.hash(s.seed, qi * 5 + qj * 11, 152);
+                float a = (0.16f + 0.20f * h1) * (0.55f + 0.45f * (float) Math.sin(s.time * 0.5f + h2 * 6.28f));
+                // soft round falloff toward the sheet margin
+                float mx = Math.abs(x) / hw, my = Math.abs(y - sh.cy()) / hh;
+                a *= Math.max(0f, 1f - mx * mx) * Math.max(0f, 1f - my * my);
+                vs[q] = new float[]{x, y};
+                al[q][0] = a;
+            }
+            if (al[0][0] + al[1][0] + al[2][0] + al[3][0] < 0.01f) continue;
+            col(p, vc, wv, vs[0][0], vs[0][1], z, haze, al[0][0]); col(p, vc, wv, vs[1][0], vs[1][1], z, haze, al[1][0]);
+            col(p, vc, wv, vs[2][0], vs[2][1], z, haze, al[2][0]); col(p, vc, wv, vs[3][0], vs[3][1], z, haze, al[3][0]);
+        }
     }
 
     // ------------------------------------------------------------------ stable details
