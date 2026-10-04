@@ -143,12 +143,12 @@ def main():
     r.cmd(f"data merge entity {who} {{abilities:{{flying:1b}}}}")   # hold the exact tp height for framing
     r.cmd("time set noon")
     r.cmd("summon entersift:rift_portal 0 -56 0")
-    time.sleep(2.5)                     # catch the summon timeline mid-flight (ring + lightning)
+    time.sleep(1.2)                     # catch the summon timeline mid-flight (expanding ring)
     shoot(r, "rift_summon_ring", f"tp {who} 0 -53.5 13 180 -6", settle=0.5)
     time.sleep(10)                      # finish the 100-tick growth + chunk settle
     shoot(r, "rift_first_person", f"tp {who} 0 -53.5 13 180 -6")
     shoot(r, "rift_side_angle", f"tp {who} 12.5 -53 0 90 -5")
-    shoot(r, "rift_close_up", f"tp {who} 0 -53.5 8 180 -6")
+    shoot(r, "rift_close_up", f"tp {who} 0 -53 10 180 -8")
     r.cmd("time set midnight")
     time.sleep(3)
     shoot(r, "rift_night_front", f"tp {who} 0 -53.5 13 180 -6")
