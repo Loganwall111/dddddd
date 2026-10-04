@@ -34,7 +34,7 @@ final class SiftVisualTest {
             siftTeleportSent = false;
         });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            if (!PLAYER.equals(handler.player.getGameProfile().getName())) return;
+            if (!PLAYER.equals(handler.player.getGameProfile().name())) return;
             LOGGER.info("[SIFT-VISUAL] staging {} in the Overworld", PLAYER);
             run(server, "gamemode spectator " + PLAYER);
             run(server, "tp " + PLAYER + " 0.5 140 10.5 180 -14");
@@ -87,7 +87,7 @@ final class SiftVisualTest {
 
     private static ServerPlayer findPlayer(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (PLAYER.equals(player.getGameProfile().getName())) return player;
+            if (PLAYER.equals(player.getGameProfile().name())) return player;
         }
         return null;
     }
