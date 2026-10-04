@@ -76,7 +76,9 @@ public final class SiftRenderTypes {
     /**
      * 0.17 GPU rift interior: our own core shader (assets/entersift/shaders/core/rift.vsh/.fsh).
      * Built on MATRICES_FOG_SNIPPET, which binds Globals (GameTime), Projection, DynamicTransforms
-     * and Fog. Vertex colour carries rift data (face u/v, type, fade), not a colour. Opaque, writes depth.
+     * and Fog. Vertex colour carries rift data (face u/v, type, fade), not a colour.
+     * 0.22: TRANSLUCENT blend (depth still written): the interior is a translucent energy fog and the
+     * terrain behind the rift must stay faintly visible through it, like the reference close-ups.
      */
     public static final RenderPipeline RIFT_PIPELINE = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
@@ -85,7 +87,7 @@ public final class SiftRenderTypes {
             .withFragmentShader(SiftContent.id("core/rift"))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
             .withCull(false)
             .build());

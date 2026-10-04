@@ -430,9 +430,19 @@ class DataContracts(unittest.TestCase):
         self.assertIn('private static void curtains(',rift)
         for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
         self.assertIn('age >= GROWN && s.night',rift)
-        # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
-        self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
+        # Slow crack-free wave; the geometry avoids T-junctions. 0.22: wavy SIDES + corners (the 0.20/0.21
+        # bottom-weighted amplitude was replaced by the accuracy pass).
+        self.assertIn('0.015f + 0.105f * e * (0.55f + 0.45f * vert * vert)',rift); self.assertIn('t * 0.42f',rift)
         self.assertIn('no T-junctions',rift)
+        # 0.22 accuracy pass: no white slab on top (top flange removed), translucent pastel interior,
+        # night-only strictly-upward energy cubes, wavy sky arches + overlay dome.
+        self.assertIn('NO top flange',rift)
+        self.assertIn('SiftBudget.riftEffects && s.night',rift)
+        self.assertIn('BlendFunction.TRANSLUCENT',(C/'SiftRenderTypes.java').read_text())
+        self.assertIn('vec2 ripple = vec2(sin(uv.y * 14.0',(ROOT/'src/main/resources/assets/entersift/shaders/core/rift.fsh').read_text())
+        skyv=(C/'SiftSky.java').read_text()
+        self.assertIn('private static void wavyArches(',skyv)
+        self.assertIn('private static void overlayDome(',skyv)
     def test_v021_biome_skies_awakening_voxels_warp_overlay(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         rift=(C/'RiftPortalRenderer.java').read_text(); sky=(C/'SiftSky.java').read_text(); hud=(C/'SiftTransition.java').read_text()

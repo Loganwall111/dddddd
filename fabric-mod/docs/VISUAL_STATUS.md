@@ -49,3 +49,23 @@ These controls do not suppress gameplay feedback, ritual particles or potion eff
 7. Check server and GPU performance with several players/rifts; particle quality reductions must remain usable.
 
 **No installable JAR or Minecraft screenshot has been produced.** The image `visual-assets.png` is a flat review of generated source textures, not a rendering of the mod in Minecraft.
+
+## 0.22 accuracy pass (night-rift screenshot + 115-frame animation extraction)
+
+Driven by the supplied MCD2 night-rift screenshot and the frame sequence in
+`eaoin_orange_rift_full_animation_screenshots.zip` (github.com/Loganwall111/Animation-needed-for).
+
+| Complaint | Fix in 0.22 |
+|---|---|
+| Weird white layer on top of the rift | Top flange of the recessed alcove frame removed in `frame()`; only the thin white rim + pink glow remain along the upper silhouette |
+| Rift wavy in the wrong places | `Warp` amplitude moved from height-based to SIDE-based, peaking at the four corners; top/bottom centre edges stay comparatively clean |
+| Interior looked like flat wallpaper | Window pipeline is now TRANSLUCENT (alpha 0.82, terrain shows through) and `rift.fsh` renders drifting pastel energy fog (pink / gold-peach / cream, teal veins, white sparkles, ripple UV bend) over a faint destination view |
+| Rim too thin | Rim band core 0.065 -> 0.105 blocks, halo 0.32 -> 0.46 |
+| Alcove walls wrong hue | Sift look uses pale-lilac recessed walls (reference close-ups) |
+| Energy cubes by day, drifting sideways | Cubes spawn only in the evening/night clock and drift strictly upward (zero X/Z drift) |
+| Sky arches not wavy, no overlay dome | New `wavyArches` (five undulating ribbon arches, animated) + `overlayDome` (animated wavy-band dome just inside the main dome; the original lava-lamp dome stays visible underneath) |
+
+Verification: `tools/preview_022.py` renders `docs/preview-0.22.png` (rift front view + 360-degree sky
+strip) from the same maths as the Java/GLSL; `docs/compare-0.22.png` places it beside the reference
+frame. `tools/test_data.py` pins the 0.22 formulas as contract tests. Gradle compilation runs in CI
+(`.github/workflows/sift-build.yml`) because this workspace has no Java/Maven network access.

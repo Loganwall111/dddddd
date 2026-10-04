@@ -170,15 +170,40 @@ void main() {
     int view = code - (code / 8) * 8;
     bool night = code >= 8;
     vec3 dir = normalize(worldRay);
-    vec3 col = destination(view, dir, t);
-    // Light pouring through the middle of the rift (face coordinates are global, so no seams either).
+    // 0.22 accuracy pass: the interior is a TRANSLUCENT PASTEL ENERGY FOG, not a sharp wallpaper window.
+    // Liquid-puddle ripple bend first (spec maths): the face UVs themselves wobble before every sample.
+    vec2 uv = riftData.rg;
+    vec2 ripple = vec2(sin(uv.y * 14.0 + t * 1.0), cos(uv.x * 10.0 - t * 0.6)) * 0.02;
+    vec2 wuv = uv + ripple;
+    vec3 dest = destination(view, normalize(dir + vec3(ripple * 2.0, 0.0)));
+    // Three drifting fbm sheets in the trailer palette (pale white / soft pink / pale peach / cream,
+    // subtle cyan-teal highlights), slowly shifting, with small brightness fluctuations.
+    float g1 = fbm(wuv * 3.1 + vec2(t * 0.05, -t * 0.03));
+    float g2 = fbm(wuv * 5.7 - vec2(t * 0.04, t * 0.06) + 11.0);
+    float g3 = fbm(wuv * 9.3 + vec2(-t * 0.02, t * 0.05) + 27.0);
+    vec3 palA, palB, palC;
+    if (view == 3 || view == 4) { palA = vec3(1.00, 0.72, 0.82); palB = vec3(1.00, 0.80, 0.52); palC = vec3(1.00, 0.95, 0.86); }
+    else if (view == 5)         { palA = vec3(1.00, 0.86, 0.55); palB = vec3(1.00, 0.92, 0.68); palC = vec3(1.00, 0.98, 0.88); }
+    else if (view == 1)         { palA = vec3(1.00, 0.50, 0.36); palB = vec3(1.00, 0.72, 0.44); palC = vec3(1.00, 0.90, 0.75); }
+    else if (view == 2)         { palA = vec3(0.72, 0.66, 1.00); palB = vec3(0.88, 0.76, 1.00); palC = vec3(1.00, 0.95, 1.00); }
+    else                        { palA = vec3(1.00, 0.72, 0.52); palB = vec3(1.00, 0.84, 0.62); palC = vec3(1.00, 0.96, 0.86); }
+    if (night) { palA = mix(palA, vec3(1.0, 0.62, 0.78), 0.5); palB = mix(palB, vec3(1.0, 0.76, 0.62), 0.4); }
+    // Tight noise windows keep distinct pink / gold-peach regions (wide windows averaged to mauve).
+    vec3 energy = mix(palA, palB, smoothstep(0.40, 0.68, g1));
+    energy = mix(energy, palC, smoothstep(0.50, 0.80, g2) * 0.45);   // cream only as highlights (0.8 washed out)
+    energy *= 1.12;                                                 // luminous, like the ref interior
     vec2 d = riftData.rg - 0.5;
-    float core = exp(-dot(d, d) * 10.0);
-    float coreK = view == 5 ? 0.95 : (view == 3 ? (night ? 0.8 : 0.3) : (view == 0 ? 0.4 : (view == 4 ? 0.35 : 0.2)));
-    col = mix(col, view == 3 ? vec3(1.0, 0.92, 0.96) : vec3(1.0, 0.98, 0.93), core * coreK);
-    // The Sift at night glows pink-white through the rift (trailer night frames).
-    if (view == 3 && night) col = mix(col, mix(vec3(1.0, 0.70, 0.82), vec3(1.0, 0.96, 0.98), riftData.g), 0.55);
-    fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
+    float core = exp(-dot(d, d) * 6.0);
+    energy = mix(energy, vec3(1.0, 0.99, 0.96), core * 0.35);          // bright heart, never a blowout
+    energy += vec3(0.55, 0.95, 0.90) * smoothstep(0.62, 0.90, g3) * 0.10;  // faint teal veins
+    energy *= 0.92 + 0.08 * sin(t * 0.9 + g1 * 6.0);                   // slow brightness fluctuation
+    vec2 sg = wuv * 46.0 + vec2(t * 0.6, -t * 0.35);                   // white sparkles drifting inside
+    float sp = hash21(floor(sg));
+    energy += vec3(1.0) * step(0.985, sp) * (0.5 + 0.5 * sin(t * 3.0 + sp * 80.0)) * 0.8;
+    // Translucent: the destination view stays as a faint influence under the fog, and the pipeline blend
+    // lets the real terrain behind the rift show through (alpha < 1).
+    vec3 col = mix(dest, energy, 0.78);
+    fragColor = apply_fog(vec4(min(col, vec3(1.0)), 0.82) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif
 }

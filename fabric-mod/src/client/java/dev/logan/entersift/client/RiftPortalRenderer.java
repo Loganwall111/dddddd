@@ -104,7 +104,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         new Look(c(1f, 0.98f, 0.95f), c(1f, 0.62f, 0.50f), c(1f, 0.97f, 0.93f), c(1f, 0.78f, 0.66f)),   // 0 overworld: peach
         new Look(c(1f, 0.96f, 0.85f), c(1f, 0.45f, 0.25f), c(1f, 0.92f, 0.85f), c(0.95f, 0.55f, 0.45f)), // 1 nether
         new Look(c(0.96f, 1f, 0.86f), c(0.75f, 0.95f, 0.60f), c(1f, 0.82f, 0.93f), c(0.82f, 0.44f, 0.68f)), // 2 end: lime rims, pink walls
-        new Look(c(1f, 1f, 1f), c(1f, 0.55f, 0.80f), c(1f, 0.98f, 0.97f), c(1f, 0.80f, 0.86f)),         // 3 sift: pink
+        new Look(c(1f, 1f, 1f), c(1f, 0.55f, 0.80f), c(0.93f, 0.89f, 0.97f), c(0.70f, 0.60f, 0.80f)), // 3 sift: pink rim, pale-lilac alcove walls (ref close-ups)
         new Look(c(0.9f, 1f, 1f), c(0.35f, 0.95f, 1f), c(0.90f, 1f, 1f), c(0.45f, 0.80f, 0.90f)),        // 4 portal: cyan
         new Look(c(1f, 0.97f, 0.55f), c(1f, 0.88f, 0.20f), c(1f, 0.96f, 0.75f), c(0.90f, 0.78f, 0.30f)),  // 5 gold
     };
@@ -116,21 +116,32 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
 
     /**
      * The rift's slow sway. A smooth function of position only, so every shared corner moves identically.
-     * Amplitude grows toward the bottom of the cluster ("the bottoms are wavy"); periods are 10-15 s.
+     * 0.22: amplitude lives on the SIDES and peaks at the four corners (reference frames); the top and
+     * bottom centre edges stay comparatively clean. Periods are 10-15 s.
      */
     static final class Warp {
-        static final Warp STILL = new Warp(0f, 0f, 1f, false);
-        final float t, base, h;
+        static final Warp STILL = new Warp(0f, 1f, 0f, 1f, false);
+        final float t, halfW, cy, halfH;
         final boolean on;
-        Warp(float t, float base, float h, boolean on) { this.t = t; this.base = base; this.h = h; this.on = on; }
-        float amp(float y) {
-            if (!on) return 0f;
-            float low = Math.max(0f, Math.min(1f, 1f - (y - base) / h));
-            return 0.035f + 0.11f * low * low;
+        Warp(float t, float halfW, float cy, float halfH, boolean on) {
+            this.t = t; this.halfW = Math.max(0.001f, halfW); this.cy = cy; this.halfH = Math.max(0.001f, halfH); this.on = on;
         }
-        float dx(float x, float y, float z) { return amp(y) * (float) Math.sin(t * 0.55f + y * 0.8f + z * 0.5f); }
-        float dy(float x, float y, float z) { return amp(y) * 0.35f * (float) Math.sin(t * 0.42f + x * 0.9f); }
-        float dz(float x, float y, float z) { return amp(y) * 0.8f * (float) Math.sin(t * 0.47f + x * 0.7f + y * 0.4f); }
+        /**
+         * 0.22 accuracy pass: the rift is wavy on the SIDES only, and waviest at the four corners (the
+         * reference frames show undulating left/right edges and curled corner tabs, while the top and
+         * bottom centre edges stay comparatively clean). Amplitude is a pure function of position, so
+         * shared corner vertices still move identically and the mesh can never crack.
+         */
+        float amp(float x, float y) {
+            if (!on) return 0f;
+            float edge = Math.min(1f, Math.abs(x) / halfW);
+            float vert = Math.min(1f, Math.abs(y - cy) / halfH);
+            float e = edge * edge;
+            return 0.015f + 0.105f * e * (0.55f + 0.45f * vert * vert);
+        }
+        float dx(float x, float y, float z) { return amp(x, y) * (float) Math.sin(t * 0.55f + y * 0.8f + z * 0.5f); }
+        float dy(float x, float y, float z) { return amp(x, y) * 0.35f * (float) Math.sin(t * 0.42f + x * 0.9f); }
+        float dz(float x, float y, float z) { return amp(x, y) * 0.8f * (float) Math.sin(t * 0.47f + x * 0.7f + y * 0.4f); }
     }
 
     /** Coloured vertex (walls, rims, glow). */
@@ -166,7 +177,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
         RenderType winT = gpu ? SiftRenderTypes.RIFT : SiftRenderTypes.SOLID;
         float age = s.age;
-        Warp wv = new Warp(s.time, RiftShape.BASE, sh.h, true);
+        Warp wv = new Warp(s.time, sh.w / 2f, sh.cy(), sh.h / 2f, true);
         Warp still = Warp.STILL;
         float code = (s.view + (s.night ? 8 : 0) + 0.5f) / 16f;
         pose.pushPose();
@@ -187,7 +198,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look, a, s));
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> rims(p, vc, wv, sh, look, cam, a, s));
                 out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look, a));
-                if (SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
+                // 0.22 spec: the prominent 3D energy cubes are evening/night only (clock 12000-24000).
+                if (SiftBudget.riftEffects && s.night) out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, a));
                 if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look, cam, s));
                 if (age >= GROWN && s.night && SiftBudget.auraGlow) out.submitCustomGeometry(pose, glowT, (p, vc) -> curtains(p, vc, sh, s, cam));
             }
@@ -402,7 +414,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                             float[] core, float[] halo, boolean lip, float flash, float[] jit) {
         float k = lip ? 0.75f : 1f, a = lip ? 0.85f : 1f;
         float[] fa = {xa, ya, zf + 0.006f}, fb = {xb, yb, zf + 0.006f};
-        band(p, vc, wv, cam, fa, fb, (0.065f + 0.05f * flash) * k, (0.32f + 0.15f * flash) * k, core, halo, a);
+        band(p, vc, wv, cam, fa, fb, (0.105f + 0.05f * flash) * k, (0.46f + 0.15f * flash) * k, core, halo, a);
         line(p, vc, wv, cam, fa, fb, 0.8f * k, halo, 0.04f);
         line(p, vc, wv, cam, new float[]{xa + jit[0], ya + jit[1], zf + 0.01f}, new float[]{xb + jit[0], yb + jit[1], zf + 0.01f}, 0.04f * k, core, 0.22f);
         line(p, vc, wv, cam, new float[]{xa - jit[1], ya + jit[0], zf + 0.012f}, new float[]{xb - jit[1], yb + jit[0], zf + 0.012f}, 0.04f * k, halo, 0.18f);
@@ -466,8 +478,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 wall(p, vc, wv, x1 + F, y0 - (D ? F : 0), x1 + F, y1 + (U ? F : 0), C, 0f, side, side, 0.82f); }
             if (D) { rect(p, vc, wv, x0, y0 - F, x1, y0, C, face, 1f);
                 wall(p, vc, wv, x0 - (L ? F : 0), y0 - F, x1 + (R ? F : 0), y0 - F, C, 0f, side, side, 0.7f); }
-            if (U) { rect(p, vc, wv, x0, y1, x1, y1 + F, C, face, 1f);
-                wall(p, vc, wv, x0 - (L ? F : 0), y1 + F, x1 + (R ? F : 0), y1 + F, C, 0f, side, side, 1f); }
+            // 0.22: NO top flange. The wide flat face along the upper silhouette read as a weird white slab
+            // sitting on top of the rift; the reference frames show only the thin white rim + glow up there.
+            // The corner tabs below belong to the left/right flanges and stay.
             if (L && D) rect(p, vc, wv, x0 - F, y0 - F, x0, y0, C, face, 1f);
             if (R && D) rect(p, vc, wv, x1, y0 - F, x1 + F, y0, C, face, 1f);
             if (L && U) rect(p, vc, wv, x0 - F, y1, x0, y1 + F, C, face, 1f);
@@ -504,9 +517,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (f >= 1f || f < 0f) continue;
             long g = s.seed + gen * 7919L;
             float secs = f * life;
-            float x = (RiftShape.hash(g, k, 1) - 0.5f) * sh.w * 0.85f + (RiftShape.hash(g, k, 4) - 0.5f) * 0.5f * secs;
+            // 0.22 spec: strictly upward Y drift, absolute zero horizontal X/Z drift.
+            float x = (RiftShape.hash(g, k, 1) - 0.5f) * sh.w * 0.85f;
             float y = sh.cy() + (RiftShape.hash(g, k, 2) - 0.5f) * sh.h * 0.8f + (0.15f + 0.35f * RiftShape.hash(g, k, 5)) * secs;
-            float z = -0.4f * RiftShape.hash(g, k, 3) + (0.45f + 0.7f * RiftShape.hash(g, k, 6)) * secs;
+            float z = -0.4f * RiftShape.hash(g, k, 3);
             float half = (0.25f + 0.25f * RiftShape.hash(g, k, 7)) / 2f;
             float hx = half, hy = half, a = 0.85f * Math.min(1f, f / 0.08f);
             if (f >= 0.75f) {

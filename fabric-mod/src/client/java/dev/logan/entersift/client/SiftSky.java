@@ -120,6 +120,10 @@ public final class SiftSky {
                 var out = context.submitNodeCollector();
                 // Layer 1: opaque lava-lamp dome (writes depth, no OIT, no fog).
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY, (p, vc) -> dome(p, vc, radius, pal, seconds, sw));
+                // 0.22: the NEW animated skybox as a giant overlay dome just INSIDE the main dome: faint
+                // additive wavy bands on their own shell, so the original lava-lamp dome stays visible
+                // underneath it everywhere (the reference Sift sky is a layered sky, not one flat gradient).
+                out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> overlayDome(p, vc, radius * 0.995f, pal, seconds));
                 // 0.17 layer 2 (alpha blended, keeps colours saturated): panels or swirling blobs by biome.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
                     if (sw < 0.98f) softPanels(p, vc, radius * 0.985f, pal, seconds, 1f - sw);
@@ -128,6 +132,7 @@ public final class SiftSky {
                 // Layer 3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
                     auroraCurtains(p, vc, radius * 0.98f, pal, seconds);
+                    wavyArches(p, vc, radius * 0.99f, pal, seconds);
                     skyRays(p, vc, radius * 0.96f, pal, seconds);
                 });
                 // World-space diagonal beams slicing into the terrain, with a tint pool where each one lands.
@@ -399,6 +404,79 @@ public final class SiftSky {
                 System.arraycopy(row, 0, prev, 0, row.length);
                 System.arraycopy(rowA, 0, prevA, 0, rowA.length);
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ 0.22 wavy sky layers
+
+    private static final int ARCHES = 5, ARCH_SEGS = 96;
+
+    /**
+     * 0.22 accuracy pass: the reference Sift sky is crossed by long WAVY ribbon arches - undulating,
+     * near-horizontal luminous lines - not only by vertical curtains. Each arch meanders all the way
+     * around the sky: its elevation centre is a sum of three travelling sine undulations (so the line
+     * itself is wavy and animates), and the alpha falls to zero with smoothstep across the band, so an
+     * arch is a soft glowing wavy line with no hard edge anywhere. Additive; the domes show through.
+     */
+    private static void wavyArches(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float strength = auroraStrength(pal);
+        for (int k = 0; k < ARCHES; k++) {
+            float base = 0.20f + 0.15f * k + 0.05f * hash(k, 141, 0);
+            float drift = t * (0.006f + 0.004f * (k % 3)) * (k % 2 == 0 ? 1f : -1f);
+            float[] col = lerp(AURORA[k % AURORA.length], pal.blobs()[k % 4], 0.3f);
+            float pulse = 0.75f + 0.25f * (float) Math.sin(t * 0.15f + k * 2.1f);
+            float half = 0.035f + 0.02f * hash(k, 142, 0);
+            float[][] prevD = null; float[] prevA = null;
+            for (int sgi = 0; sgi <= ARCH_SEGS; sgi++) {
+                float f = sgi / (float) ARCH_SEGS;
+                double az = f * Math.PI * 2 + drift;
+                // The wavy line itself: three undulations travelling at different speeds/directions.
+                double el = base
+                    + 0.055 * Math.sin(az * 3.0 + t * 0.10 + k * 1.7)
+                    + 0.030 * Math.sin(az * 6.0 - t * 0.061 + k)
+                    + 0.018 * Math.sin(az * 11.0 + t * 0.13 + k * 0.7);
+                float a = 0.16f * strength * pulse;
+                // Column of three directions: band edges fade to zero alpha, centre carries the glow.
+                float[][] dNow = {dir(az, el - half), dir(az, el), dir(az, el + half)};
+                float[] aNow = {0f, a, 0f};
+                if (prevD != null) for (int q = 0; q < 2; q++) {
+                    v(p, vc, prevD[q], r, col, prevA[q]); v(p, vc, prevD[q + 1], r, col, prevA[q + 1]);
+                    v(p, vc, dNow[q + 1], r, col, aNow[q + 1]); v(p, vc, dNow[q], r, col, aNow[q]);
+                }
+                prevD = dNow; prevA = aNow;
+            }
+        }
+    }
+
+    private static final int OAZ = 60, OEL = 22;
+
+    /**
+     * 0.22: the animated overlay dome ("a giant dome over the main skybox"). A slightly smaller shell
+     * carrying faint additive WAVY horizontal bands (elevation bands whose edges undulate with noise in
+     * azimuth and travel slowly upward). Peak alpha ~0.06, so the original lava-lamp dome underneath
+     * stays fully visible; together with {@link #wavyArches} this is the new animated Sift skybox layer.
+     */
+    private static void overlayDome(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
+        float[][] dirs = new float[(OAZ + 1) * (OEL + 1)][];
+        float[][] cols = new float[(OAZ + 1) * (OEL + 1)][];
+        float[] alphas = new float[(OAZ + 1) * (OEL + 1)];
+        for (int i = 0; i <= OAZ; i++) for (int j = 0; j <= OEL; j++) {
+            double az = i / (double) OAZ * Math.PI * 2;
+            float el = -0.05f + (j / (float) OEL) * 1.5f;
+            // Wavy band pattern: sine in elevation, edges displaced by azimuthal noise, drifting up.
+            float wob = noise((float) Math.cos(az) * 2.2f, (float) Math.sin(az) * 2.2f, t * 0.05f);
+            float b = (float) Math.sin(el * 9.0 + 1.7 * wob + t * 0.06);
+            float band = smooth(0.45f, 0.9f, b);
+            int idx = i * (OEL + 1) + j;
+            dirs[idx] = dir(az, el);
+            cols[idx] = lerp(pal.blobs()[0], pal.blobs()[2], band);
+            alphas[idx] = 0.06f * band * (0.6f + 0.4f * (float) Math.sin(t * 0.1 + az * 2.0));
+        }
+        for (int i = 0; i < OAZ; i++) for (int j = 0; j < OEL; j++) {
+            int a0 = i * (OEL + 1) + j, a1 = (i + 1) * (OEL + 1) + j, a2 = a1 + 1, a3 = a0 + 1;
+            if (alphas[a0] + alphas[a1] + alphas[a2] + alphas[a3] < 0.002f) continue;
+            v(p, vc, dirs[a0], r, cols[a0], alphas[a0]); v(p, vc, dirs[a1], r, cols[a1], alphas[a1]);
+            v(p, vc, dirs[a2], r, cols[a2], alphas[a2]); v(p, vc, dirs[a3], r, cols[a3], alphas[a3]);
         }
     }
 
