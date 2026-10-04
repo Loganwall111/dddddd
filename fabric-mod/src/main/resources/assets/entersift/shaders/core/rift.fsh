@@ -200,8 +200,11 @@ void main() {
     float sp = hash21(floor(sg));
     energy += vec3(1.0) * step(0.988, sp) * (0.5 + 0.5 * sin(t * 3.0 + sp * 80.0)) * 0.5;
     // 0.23: no destination mix; luminance tuned down (1.12 blew out to white in day captures).
+    float gk = clamp(riftData.a, 0.0, 1.0);   // daylight damper from the renderer (0.55 day / 1 night)
     vec3 col = min(energy, vec3(1.0));
-    fragColor = apply_fog(vec4(col, 0.85) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
+    col = mix(col, col * vec3(1.0, 0.80, 0.83), 1.0 - gk);   // deepen pink/peach under the bright day sky
+    col *= mix(1.0, 0.95, 1.0 - gk);
+    fragColor = apply_fog(vec4(col, mix(0.85, 0.80, 1.0 - gk)) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #endif
 }

@@ -144,12 +144,12 @@ def main():
     r.cmd("time set noon")
     r.cmd("summon entersift:rift_portal 0 -56 0")
     time.sleep(12)                      # 100-tick growth timeline + chunk settle
-    shoot(r, "rift_first_person", f"tp {who} 0 -54 11 180 -4")
-    shoot(r, "rift_side_angle", f"tp {who} 11 -53.5 0 90 -4")
+    shoot(r, "rift_first_person", f"tp {who} 0 -53.5 13 180 -6")
+    shoot(r, "rift_side_angle", f"tp {who} 12.5 -53 0 90 -5")
     shoot(r, "rift_close_up", f"tp {who} 0 -53.5 6.5 180 -8")
     r.cmd("time set midnight")
     time.sleep(3)
-    shoot(r, "rift_night_front", f"tp {who} 0 -54 11 180 -4")
+    shoot(r, "rift_night_front", f"tp {who} 0 -53.5 13 180 -6")
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
     if len(pngs) < 4:

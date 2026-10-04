@@ -155,13 +155,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /** Window vertex: colour carries (face u, face v, view code, 1). The shader samples by view direction. */
-    private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code) {
+    private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code, float gk) {
         if (!SiftBudget.take(vc)) return;
         float span = Math.max(sh.w, sh.h) * 1.15f;
         float u = clamp(0.5f + x / span, 0f, 1f), v = clamp(0.5f + (y - sh.cy()) / span, 0f, 1f);
         float wx = x + wv.dx(x, y, z), wy = y + wv.dy(x, y, z), wz = z + wv.dz(x, y, z);
         if (!Float.isFinite(wx + wy + wz)) { wx = 0f; wy = 0f; wz = 0f; }
-        vc.addVertex(p, wx, wy, wz).setColor(u, v, code, 1f);
+        vc.addVertex(p, wx, wy, wz).setColor(u, v, code, gk);
     }
 
     // ------------------------------------------------------------------ submit
@@ -305,19 +305,19 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
-            win(p, vc, wv, sh, x0, y0, z, code); win(p, vc, wv, sh, x1, y0, z, code);
-            win(p, vc, wv, sh, x1, y1, z, code); win(p, vc, wv, sh, x0, y1, z, code);
+            win(p, vc, wv, sh, x0, y0, z, code, s.glowK); win(p, vc, wv, sh, x1, y0, z, code, s.glowK);
+            win(p, vc, wv, sh, x1, y1, z, code, s.glowK); win(p, vc, wv, sh, x0, y1, z, code, s.glowK);
         }
         for (float[] b : sh.sats) {
             if (age < satAt(b)) continue;
-            win(p, vc, wv, sh, b[0], b[1], b[5], code); win(p, vc, wv, sh, b[2], b[1], b[5], code);
-            win(p, vc, wv, sh, b[2], b[3], b[5], code); win(p, vc, wv, sh, b[0], b[3], b[5], code);
+            win(p, vc, wv, sh, b[0], b[1], b[5], code, s.glowK); win(p, vc, wv, sh, b[2], b[1], b[5], code, s.glowK);
+            win(p, vc, wv, sh, b[2], b[3], b[5], code, s.glowK); win(p, vc, wv, sh, b[0], b[3], b[5], code, s.glowK);
         }
         if (age >= GROWN) for (int k = 0; k < 7; k++) {               // floating hollow cubes show the view too
             float[] c = cube(sh, s, k);
             float q = c[3], z = c[2] - q;
-            win(p, vc, wv, sh, c[0] - q, c[1] - q, z, code); win(p, vc, wv, sh, c[0] + q, c[1] - q, z, code);
-            win(p, vc, wv, sh, c[0] + q, c[1] + q, z, code); win(p, vc, wv, sh, c[0] - q, c[1] + q, z, code);
+            win(p, vc, wv, sh, c[0] - q, c[1] - q, z, code, s.glowK); win(p, vc, wv, sh, c[0] + q, c[1] - q, z, code, s.glowK);
+            win(p, vc, wv, sh, c[0] + q, c[1] + q, z, code, s.glowK); win(p, vc, wv, sh, c[0] - q, c[1] + q, z, code, s.glowK);
         }
     }
 
@@ -448,7 +448,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                 int qi = i + (q == 1 || q == 2 ? 1 : 0), qj = j + (q >= 2 ? 1 : 0);
                 float x = -hw + qi / (float) n * hw * 2, y = sh.cy() - hh + qj / (float) n * hh * 2;
                 float h1 = RiftShape.hash(s.seed, qi * 7 + qj * 13, 151), h2 = RiftShape.hash(s.seed, qi * 5 + qj * 11, 152);
-                float a = (0.16f + 0.20f * h1) * (0.55f + 0.45f * (float) Math.sin(s.time * 0.5f + h2 * 6.28f));
+                float a = (0.16f + 0.20f * h1) * (0.55f + 0.45f * (float) Math.sin(s.time * 0.5f + h2 * 6.28f)) * (0.5f + 0.5f * s.glowK);
                 // soft round falloff toward the sheet margin
                 float mx = Math.abs(x) / hw, my = Math.abs(y - sh.cy()) / hh;
                 a *= Math.max(0f, 1f - mx * mx) * Math.max(0f, 1f - my * my);
@@ -472,7 +472,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float[][] v = new float[8][];
             for (int n = 0; n < 8; n++) v[n] = new float[]{c[0] + ((n & 1) == 0 ? -q : q), c[1] + ((n & 2) == 0 ? -q : q), c[2] + ((n & 4) == 0 ? -q : q)};
             int[][] edges = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
-            for (int[] e : edges) line(p, vc, wv, cam, v[e[0]], v[e[1]], 0.045f, core, 0.95f);
+            for (int[] e : edges) line(p, vc, wv, cam, v[e[0]], v[e[1]], 0.045f, core, 0.95f * (0.5f + 0.5f * s.glowK));
         }
         // White pixel sparkles drifting slowly up through the opening (fade in and out over their life).
         for (int k = 0; k < 30; k++) {
