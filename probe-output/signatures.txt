@@ -6567,3 +6567,26 @@ public class net.minecraft.client.Minecraft extends net.minecraft.util.thread.Re
   public java.util.Collection<net.minecraft.gizmos.SimpleGizmoCollector$GizmoInstance> getPerTickGizmos();
   public void showDebugChat(net.minecraft.network.chat.Component);
 }
+===== net.minecraft.client.multiplayer.ConnectScreen
+Error: class not found: net.minecraft.client.multiplayer.ConnectScreen
+===== net.minecraft.client.multiplayer.ServerAddress
+Error: class not found: net.minecraft.client.multiplayer.ServerAddress
+===== net.minecraft.client.multiplayer.ServerInfo
+Error: class not found: net.minecraft.client.multiplayer.ServerInfo
+===== net.minecraft.client.gui.screens.TitleScreen
+Compiled from "TitleScreen.java"
+public class net.minecraft.client.gui.screens.TitleScreen extends net.minecraft.client.gui.screens.Screen {
+  public net.minecraft.client.gui.screens.TitleScreen();
+  public net.minecraft.client.gui.screens.TitleScreen(boolean);
+  public net.minecraft.client.gui.screens.TitleScreen(boolean, net.minecraft.client.gui.components.LogoRenderer);
+  public void tick();
+  public static void registerTextures(net.minecraft.client.renderer.texture.TextureManager);
+  public boolean isPauseScreen();
+  public boolean shouldCloseOnEsc();
+  public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  public void extractBackground(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+  public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent, boolean);
+  public void removed();
+  public void added();
+  public boolean canInterruptWithAnotherScreen();
+}
