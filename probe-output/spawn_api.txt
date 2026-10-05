@@ -1,0 +1,42 @@
+===== EntitySpawnReason
+Compiled from "EntitySpawnReason.java"
+public final class net.minecraft.world.entity.EntitySpawnReason extends java.lang.Enum<net.minecraft.world.entity.EntitySpawnReason> {
+  public static final net.minecraft.world.entity.EntitySpawnReason NATURAL;
+  public static final net.minecraft.world.entity.EntitySpawnReason CHUNK_GENERATION;
+  public static final net.minecraft.world.entity.EntitySpawnReason SPAWNER;
+  public static final net.minecraft.world.entity.EntitySpawnReason STRUCTURE;
+  public static final net.minecraft.world.entity.EntitySpawnReason BREEDING;
+  public static final net.minecraft.world.entity.EntitySpawnReason MOB_SUMMONED;
+  public static final net.minecraft.world.entity.EntitySpawnReason JOCKEY;
+  public static final net.minecraft.world.entity.EntitySpawnReason EVENT;
+  public static final net.minecraft.world.entity.EntitySpawnReason CONVERSION;
+  public static final net.minecraft.world.entity.EntitySpawnReason REINFORCEMENT;
+  public static final net.minecraft.world.entity.EntitySpawnReason TRIGGERED;
+  public static final net.minecraft.world.entity.EntitySpawnReason BUCKET;
+  public static final net.minecraft.world.entity.EntitySpawnReason SPAWN_ITEM_USE;
+  public static final net.minecraft.world.entity.EntitySpawnReason COMMAND;
+  public static final net.minecraft.world.entity.EntitySpawnReason DISPENSER;
+  public static final net.minecraft.world.entity.EntitySpawnReason PATROL;
+  public static final net.minecraft.world.entity.EntitySpawnReason TRIAL_SPAWNER;
+  public static final net.minecraft.world.entity.EntitySpawnReason LOAD;
+  public static final net.minecraft.world.entity.EntitySpawnReason DIMENSION_TRAVEL;
+  private static final net.minecraft.world.entity.EntitySpawnReason[] $VALUES;
+  public static net.minecraft.world.entity.EntitySpawnReason[] values();
+  public static net.minecraft.world.entity.EntitySpawnReason valueOf(java.lang.String);
+  private net.minecraft.world.entity.EntitySpawnReason();
+  public static boolean isSpawner(net.minecraft.world.entity.EntitySpawnReason);
+  public static boolean ignoresLightRequirements(net.minecraft.world.entity.EntitySpawnReason);
+  private static net.minecraft.world.entity.EntitySpawnReason[] $values();
+  static {};
+}
+===== EntityType create
+  private final float spawnDimensionsScale;
+  public T spawn(net.minecraft.server.level.ServerLevel, net.minecraft.world.item.ItemStack, net.minecraft.world.entity.LivingEntity, net.minecraft.core.BlockPos, net.minecraft.world.entity.EntitySpawnReason, boolean, boolean);
+  public static <T extends net.minecraft.world.entity.Entity> net.minecraft.world.entity.PostSpawnProcessor<T> createDefaultStackConfig(net.minecraft.world.level.Level, net.minecraft.world.item.ItemStack, net.minecraft.world.entity.LivingEntity);
+  public T spawn(net.minecraft.server.level.ServerLevel, net.minecraft.core.BlockPos, net.minecraft.world.entity.EntitySpawnReason);
+  public T spawn(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.PostSpawnProcessor<T>, net.minecraft.core.BlockPos, net.minecraft.world.entity.EntitySpawnReason, boolean, boolean);
+  public T create(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.PostSpawnProcessor<T>, net.minecraft.core.BlockPos, net.minecraft.world.entity.EntitySpawnReason, boolean, boolean);
+  public T create(net.minecraft.world.level.Level, net.minecraft.world.entity.EntitySpawnReason);
+  public T create(net.minecraft.world.level.Level, net.minecraft.world.entity.EntitySpawnRequest);
+  public static java.util.Optional<net.minecraft.world.entity.Entity> create(net.minecraft.world.level.storage.ValueInput, net.minecraft.world.level.Level, net.minecraft.world.entity.EntitySpawnRequest);
+  public static java.util.Optional<net.minecraft.world.entity.Entity> create(net.minecraft.world.entity.EntityType<?>, net.minecraft.world.level.storage.ValueInput, net.minecraft.world.level.Level, net.minecraft.world.entity.EntitySpawnReason);
