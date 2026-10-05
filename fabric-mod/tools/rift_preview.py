@@ -370,14 +370,14 @@ def _plane_preview():
 
     col = bg.copy()
     a = np.zeros_like(sdC)
-    aura = np.exp(-np.maximum(sdAll, 0.0) * 4.5) * 0.42 * reveal
-    auraCol = mix(tint, np.array([1.0, 1.0, 1.0]), 0.30)
+    aura = np.exp(-np.maximum(sdAll, 0.0) * 6.0) * 0.34 * reveal
+    auraCol = mix(tint, np.array([1.0, 1.0, 1.0]), 0.12)
     col = mix(col, auraCol, aura); a = aura
     aSide = sideIn * 0.48
     sideCol = mix(bg, tint, 0.45) * 0.85 + 0.10
     col = mix(col, sideCol, aSide * (1 - a)); a = a + aSide * (1 - a)
     aGlass = lobeIn * 0.55
-    glassCol = mix(bg, np.array([1.0, 1.0, 1.0]), 0.65)
+    glassCol = mix(bg, np.array([1.0, 1.0, 1.0]), 0.70)
     col = mix(col, glassCol, aGlass * (1 - a)); a = a + aGlass * (1 - a)
     aFloat = floatIn * 0.45
     col = mix(col, glassCol, aFloat * (1 - a)); a = a + aFloat * (1 - a)
