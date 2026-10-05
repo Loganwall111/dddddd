@@ -46,6 +46,7 @@ public final class SiftClient implements ClientModInitializer {
         dev.logan.entersift.client.RiftScene.register();
         dev.logan.entersift.client.RiftSounds.register();
         SiftSky.register();
+        dev.logan.entersift.client.SiftCapture.register(); // 0.23 headless CI capture robot (only active with ENTERSIFT_CAPTURE_DIR)
         dev.logan.entersift.client.SiftTunnel.register(); // 0.18 warp-tunnel view inside the rift tunnel
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
         dev.logan.entersift.client.SiftSouls.register(); // 0.14 wandering souls with blue comet trails (Sift only)
