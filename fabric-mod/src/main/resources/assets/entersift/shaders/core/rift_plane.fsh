@@ -192,7 +192,8 @@ void main() {
     // tinted mist hugging the cluster silhouette: zero inside, exponential falloff outside.
     // (exp(-max(len-r,0)*k) alone is 1 across the whole interior and reads as a quad-sized
     // rectangular wash - the aura must be driven by the silhouette distance instead.)
-    float aura = exp(-max(sdAll, 0.0) * 3.0) * smoothstep(-0.012, 0.012, sdAll) * reveal;
+    float aura = exp(-max(sdAll, 0.0) * 5.0) * (1.0 - smoothstep(0.45, 0.75, max(sdAll, 0.0)))
+               * smoothstep(-0.012, 0.012, sdAll) * reveal;
     float aA = aura * 0.65;                // dense saturated fog, like the refs' coloured mist
     col = mix(col, energy, aA);
     a = max(a, aA);
