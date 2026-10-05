@@ -350,7 +350,7 @@ def _plane_preview():
     wave = np.stack([np.sin(uv[..., 1] * 42.0 + t * 1.35) + 0.5 * np.sin(uv[..., 1] * 17.0 - t * 0.7),
                      np.cos(uv[..., 0] * 38.0 - t * 1.10) + 0.5 * np.cos(uv[..., 0] * 15.0 + t * 0.6)], -1)
     lensed = uv + wave * 0.006 * lensZone[..., None]
-    skyC = mix(np.array([0.45, 0.62, 0.90]), np.array([0.85, 0.88, 0.95]), lensed[..., 1])
+    skyC = mix(np.array([0.40, 0.58, 0.95]), np.array([0.72, 0.81, 0.98]), lensed[..., 1])
     ground = np.array([0.30, 0.42, 0.22])
     bg = np.where((lensed[..., 1] < 0.42)[..., None], ground, skyC)
 
@@ -370,9 +370,9 @@ def _plane_preview():
 
     col = bg.copy()
     a = np.zeros_like(sdC)
-    aura = np.exp(-np.maximum(np.linalg.norm(q * np.array([0.9, 1.0]), axis=-1) - 0.90, 0.0) * 3.5) * reveal
-    aA = aura * 0.45
-    col = mix(col, energy * 1.05, aA)
+    aura = np.exp(-np.maximum(np.linalg.norm(q * np.array([0.9, 1.0]), axis=-1) - 0.88, 0.0) * 4.0) * reveal
+    aA = aura * 0.80
+    col = mix(col, energy, aA)
     a = np.maximum(a, aA)
     aSide = sideIn * 0.48
     sideCol = mix(bg, tint, 0.45) * 0.85 + 0.10

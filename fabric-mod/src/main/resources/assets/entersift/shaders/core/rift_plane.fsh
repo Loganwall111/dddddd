@@ -186,9 +186,9 @@ void main() {
     // ---- layer stack (back to front): aura haze, extrusion sides, glass, energy, edges ----
     vec3 col = bg;
     float a = 0.0;
-    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.90, 0.0) * 3.5) * reveal;
-    float aA = aura * 0.45;                // dense saturated fog, like the refs' coloured mist
-    col = mix(col, energy * 1.05, aA);
+    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.88, 0.0) * 4.0) * reveal;
+    float aA = aura * 0.80;                // dense saturated fog, like the refs' coloured mist
+    col = mix(col, energy, aA);
     a = max(a, aA);
 
     float aSide = sideIn * 0.48;
