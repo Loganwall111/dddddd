@@ -13,7 +13,7 @@ class DataContracts(unittest.TestCase):
         budget=(C/'SiftBudget.java').read_text(); shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text()
         # The flat backdrop quad is gone: the cavity walls, their depth fade and the rims carry the back.
         self.assertNotIn('backsideVeil',rift)
-        self.assertIn('float mainDepth = 0.60f;',shape)
+        self.assertIn('float mainDepth = 1.10f;',shape)   # 0.37: chunky volume, not a thick sheet
         # Box faces are frosted and readable instead of nearly invisible (the "neon lines only" report).
         self.assertIn('riftData.a * 0.82',fsh)
         # 0.34: the opening is opaque over its interior (the scene copy is rim-only), so the world
@@ -182,7 +182,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('git push',workflow)
         self.assertIn('captures/run-${GITHUB_RUN_ID}',workflow)
         # The 0.37 angles: the oblique/low view proves the shell's thickness and the time-gated beam.
-        for shot in ('rift_oblique_low', 'rift_membrane_near', 'rift_summon_bolt', 'rift_morning_beam', 'rift_evening'):
+        for shot in ('rift_oblique_low', 'rift_membrane_near', 'rift_back_dissolve', 'rift_summon_bolt', 'rift_morning_beam', 'rift_evening'):
             self.assertIn(shot,orchestrator)
 
     def test_rift_loop_assets_registration_and_cleanup(self):

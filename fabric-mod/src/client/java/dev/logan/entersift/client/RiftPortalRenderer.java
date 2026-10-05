@@ -1405,18 +1405,24 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         if (k <= 0.01f) return;
         float top = sh.y(sh.rows);
         float pulse = 0.86f + 0.14f * (float) Math.sin(s.time * 1.7f);
-        float[] core = mix(look.core(), c(1f, 1f, 1f), 0.55f);
-        float[] halo = look.halo();
+        // 0.37: the reference shaft is warm light, not a grey pole — the core leans to the rift's own
+        // colour and the halo to its glow tone, so the column reads as emitted light from every angle.
+        float[] core = mix(mix(look.core(), c(1f, 1f, 1f), 0.42f), rgb(0xFFE9C4), 0.30f);
+        float[] halo = mix(look.halo(), look.core(), 0.45f);
         float height = sh.h * 1.9f + 2.0f;
-        float w = Math.max(0.55f, sh.w * 0.17f);
-        if (sh.maxDepth < 0.30f) w *= 0.75f;                       // the permanent PORTAL gets a tighter shaft
+        float w = Math.max(0.42f, sh.w * 0.13f);
+        if (sh.maxDepth < 0.60f) w *= 0.75f;                       // the permanent PORTAL gets a tighter shaft
+        // A wide, faint skirt where the light leaves the lip: that is what makes the column look like it
+        // is pouring out of the opening instead of being a stripe pasted above it.
+        band(p, vc, Warp.STILL, cam, new float[]{0f, top + 0.04f, 0.02f}, new float[]{0f, top + height * 0.34f, 0.02f},
+            w * 0.9f, w * 3.4f, core, halo, k * pulse * 0.11f);
         for (int seg = 0; seg < 3; seg++) {
             float y0 = top + 0.10f + height * (seg / 3f);
             float y1 = top + 0.10f + height * ((seg + 1) / 3f);
-            float a = k * pulse * (0.34f - seg * 0.095f);
+            float a = k * pulse * (0.40f - seg * 0.105f);
             if (a <= 0.01f) continue;
-            float coreW = w * (0.42f - seg * 0.10f);
-            float outerW = w * (1.0f + seg * 0.35f);
+            float coreW = w * (0.52f - seg * 0.12f);
+            float outerW = w * (1.15f + seg * 0.40f);
             band(p, vc, Warp.STILL, cam, new float[]{0f, y0, 0.02f}, new float[]{0f, y1, 0.02f},
                 coreW, outerW, core, halo, a);
         }
@@ -1459,15 +1465,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                          a[2] + (b[2] - a[2]) * f + (RiftShape.hash(seed, i, 63) - 0.5f) * jit};
             float[] tint = mix(tintA, tintB, f);                     // the mixed colour runs along the bolt
             float w = (0.030f + 0.020f * (1f - f)) * (shape == 2 ? 0.8f : 1f);
-            line(p, vc, wv, cam, prev, q, w, c(1f, 1f, 1f), alpha);              // hot white core
-            line(p, vc, wv, cam, prev, q, w * 6.0f, tint, alpha * 0.30f);        // coloured glow
+            line(p, vc, wv, cam, prev, q, w, c(1f, 1f, 1f), alpha * 0.78f);      // hot white core
+            line(p, vc, wv, cam, prev, q, w * 6.0f, tint, alpha * 0.55f);        // coloured glow
             if (shape == 1 && i % 4 == 2 && i + 2 < segs) {                      // branch off the trunk
                 float[] br = {q[0] + (RiftShape.hash(seed, i, 71) - 0.5f) * len * 0.6f,
                               q[1] + len * (0.12f + 0.18f * RiftShape.hash(seed, i, 72)),
                               q[2] + (RiftShape.hash(seed, i, 73) - 0.5f) * len * 0.3f};
                 float[] brTint = BOLT_TINTS[(int) (RiftShape.hash(seed, i, 74) * BOLT_TINTS.length) % BOLT_TINTS.length];
-                line(p, vc, wv, cam, q, br, w * 0.7f, c(1f, 1f, 1f), alpha * 0.85f);
-                line(p, vc, wv, cam, q, br, w * 4.2f, brTint, alpha * 0.24f);
+                line(p, vc, wv, cam, q, br, w * 0.7f, c(1f, 1f, 1f), alpha * 0.70f);
+                line(p, vc, wv, cam, q, br, w * 4.2f, brTint, alpha * 0.45f);
             }
             prev = q;
         }

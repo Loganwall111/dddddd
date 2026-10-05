@@ -153,12 +153,14 @@ public final class RiftShape {
      */
     public static float boxes(RiftType type, long seed, int cols, int rows, boolean[][] body, int[][] tier, float[][] depth) {
         if (type == RiftType.PORTAL) {
-            for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) depth[i][j] = 0.28f;
-            return 0.28f;
+            for (int i = 0; i < cols; i++) for (int j = 0; j < rows; j++) depth[i][j] = 0.50f;
+            return 0.50f;
         }
         int[][] box = new int[cols][rows];
         for (int[] col : box) Arrays.fill(col, -1);
-        float mainDepth = 0.60f; // 0.29: boxier depth so the sides read as real boxes
+        // 0.37: the reference photos show a genuinely chunky box — the oblique view's depth is roughly a
+        // third of the rift's width, not a thick sheet. 0.60 read as a slab; 1.10 reads as a volume.
+        float mainDepth = 1.10f;
         float max = mainDepth;
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {
@@ -166,11 +168,11 @@ public final class RiftShape {
                 // Outer left attached boxes get distinct shallow step depths; main cross is one seamless window.
                 if ((type == RiftType.SIFT || type == RiftType.OVERWORLD) && i <= 1 && j >= 2 && j <= 3) {
                     box[i][j] = 1;
-                    depth[i][j] = 0.32f;
+                    depth[i][j] = 0.62f;
                     tier[i][j] = 3;
                 } else if ((type == RiftType.SIFT || type == RiftType.OVERWORLD) && i <= 2 && j <= 1 && (i < 3)) {
                     box[i][j] = 2;
-                    depth[i][j] = 0.44f;
+                    depth[i][j] = 0.80f;
                     tier[i][j] = 2;
                 } else {
                     box[i][j] = 0;
@@ -178,7 +180,7 @@ public final class RiftShape {
                 }
             }
         }
-        return Math.max(max, 0.60f);
+        return Math.max(max, mainDepth);
     }
 
     /**

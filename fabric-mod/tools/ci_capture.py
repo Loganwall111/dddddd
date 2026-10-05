@@ -182,7 +182,11 @@ def main():
     # the glass and photograph the frost clearing to the scene behind the rift.
     r.cmd(f"gamemode spectator {who}")
     time.sleep(1)
-    shoot(r, "rift_membrane_near", f"tp {who} 0 -53.2 3.4 180 -4", settle=3)
+    # 0.37: framed on the glazed square (the rift's window cell sits ~1.75 blocks above its base at
+    # y=-56), far enough out that the whole opening fits the frame. This is the reveal shot.
+    shoot(r, "rift_membrane_near", f"tp {who} 0 -54.2 6.0 180 -1", settle=3)
+    # …and the same opening seen from BEHIND, where the dissolving back panes are the point.
+    shoot(r, "rift_back_dissolve", f"tp {who} 3.0 -53.0 -12.5 0 -6", settle=3)
     r.cmd(f"gamemode creative {who}")
     r.cmd(f"tp {who} 0 -53.5 13 180 -6")
     r.cmd("time set midnight")
@@ -211,7 +215,7 @@ def main():
     # 0.37: name every angle the review depends on. A count check alone let a run "pass" with a whole
     # angle missing (or a stale file from a previous run standing in for a fresh one).
     required = ["rift_summon_flash", "rift_summon_ring", "rift_summon_bolt", "rift_first_person",
-                "rift_side_angle", "rift_oblique_low", "rift_close_up", "rift_membrane_near",
+                "rift_side_angle", "rift_oblique_low", "rift_close_up", "rift_membrane_near", "rift_back_dissolve",
                 "rift_night_front", "rift_morning_beam", "rift_evening", "rift_against_ground",
                 "sift_sky_quilt"]
     missing = [n for n in required if not (CAP / (n + ".png")).exists()]
