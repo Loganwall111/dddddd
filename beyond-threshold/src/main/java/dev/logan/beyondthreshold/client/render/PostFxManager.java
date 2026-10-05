@@ -122,7 +122,8 @@ public final class PostFxManager {
 			set(prog, "BttIntensity", u -> u.set(intensity));
 			set(prog, "BttRes", u -> u.set(client.getWindow().getFramebufferWidth(),
 					client.getWindow().getFramebufferHeight()));
-			set(prog, "BttHoleCount", u -> u.set(count));
+			final int holeCount = count;
+			set(prog, "BttHoleCount", u -> u.set(holeCount));
 			for (int i = 0; i < 4; i++) {
 				final int o = i * 4;
 				set(prog, "BttHole" + i, u -> u.set(holes[o], holes[o + 1], holes[o + 2], holes[o + 3]));

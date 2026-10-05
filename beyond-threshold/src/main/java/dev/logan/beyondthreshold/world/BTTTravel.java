@@ -43,16 +43,16 @@ public final class BTTTravel {
 
 		// stash this dimension's inventory, procedurally
 		INVENTORIES.put(key + from.getRegistryKey().getValue().toString(),
-				player.getInventory().writeNBT(new NbtList()));
+				player.getInventory().writeNbt(new NbtList()));
 
-		BlockPos top = to.getTopPosition(Heightmap.Type.MOTION_BLOCKING, player.getBlockX(), player.getBlockZ());
+		BlockPos top = to.getTopPosition(Heightmap.Type.MOTION_BLOCKING, player.getBlockPos());
 		player.teleport(to, top.getX() + 0.5, top.getY() + 1.0, top.getZ() + 0.5, player.getYaw(), player.getPitch());
 		player.fallDistance = 0.0F;
 
 		player.getInventory().clear();
 		NbtList stored = INVENTORIES.remove(key + target.getValue().toString());
 		if (stored != null && !stored.isEmpty()) {
-			player.getInventory().readNBT(stored);
+			player.getInventory().readNbt(stored);
 		} else {
 			starterKit(to, player);
 		}
