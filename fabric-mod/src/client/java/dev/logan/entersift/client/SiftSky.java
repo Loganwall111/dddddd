@@ -126,9 +126,10 @@ public final class SiftSky {
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> overlayDome(p, vc, radius * 0.995f, pal, seconds));
                 // Layer 2 (alpha blended, keeps colours saturated): panels or swirling blobs by biome.
                 out.submitCustomGeometry(pose, SiftRenderTypes.SKY_BLEND, (p, vc) -> {
-                    quiltPatches(p, vc, radius * 0.988f, pal, seconds);
                     if (sw < 0.98f) softPanels(p, vc, radius * 0.985f, pal, seconds, 1f - sw);
                     if (sw > 0.02f) swirlBlobs(p, vc, radius * 0.985f, pal, seconds, sw);
+                    // 0.23.3: quilt LAST - the smooth blob layers were washing the rectangles out
+                    quiltPatches(p, vc, radius * 0.988f, pal, seconds);
                 });
                 // Layer 3 in the sky: soft aurora curtains and multi-coloured light columns (additive, no sun).
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
