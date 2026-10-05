@@ -154,6 +154,21 @@ class DataContracts(unittest.TestCase):
         self.assertIn('shaderQuadCanvas(',gpu_path)
         self.assertNotIn('boxFaces(',gpu_path)
 
+    def test_ci_capture_uses_a_real_client_and_artifact_only_output(self):
+        client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
+        hook=(ROOT/'src/client/java/dev/logan/entersift/client/SiftCapture.java').read_text()
+        workflow=(ROOT.parent/'.github/workflows/sift-capture.yml').read_text()
+        orchestrator=(ROOT/'tools/ci_capture.py').read_text()
+        self.assertIn('SiftCapture.register()',client)
+        self.assertIn('Screenshot.grab(mc, false)',hook)
+        self.assertIn('countPng(mc) <= lastCount',hook)  # don't report a stale frame as a fresh capture
+        self.assertIn('"runClient"',orchestrator)
+        self.assertIn('actions/setup-java@v5',workflow)
+        self.assertIn('java-version: \'25\'',workflow)
+        self.assertIn('actions/upload-artifact@v4',workflow)
+        self.assertIn('contents: read',workflow)
+        self.assertNotIn('git push',workflow)  # captures/logs are artifacts, never commits back to this branch
+
     def test_rift_loop_assets_registration_and_cleanup(self):
         import wave
         sounds=json.loads((R/'assets/entersift/sounds.json').read_text())

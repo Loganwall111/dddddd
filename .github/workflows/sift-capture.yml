@@ -1,0 +1,72 @@
+name: Enter the Sift — headless visual capture (Xvfb + llvmpipe)
+on:
+  push:
+    paths:
+      - 'fabric-mod/src/client/**'
+      - 'fabric-mod/src/main/resources/assets/entersift/shaders/**'
+      - 'fabric-mod/tools/ci_capture.py'
+      - '.github/workflows/sift-capture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sift-capture-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: fabric-mod
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Virtual display + software GL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 libegl1 libgles2 mesa-vulkan-drivers mesa-utils mesa-utils-extra vulkan-tools
+          Xvfb :99 -screen 0 1280x720x24 +extension GLX > /tmp/xvfb.log 2>&1 &
+          sleep 3
+          {
+            echo "== glxinfo =="; DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe glxinfo -B 2>&1 | head -14
+            echo "== eglinfo =="; DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1 eglinfo -B 2>&1 | head -10
+            echo "== vulkaninfo =="; DISPLAY=:99 vulkaninfo --summary 2>&1 | grep -E "deviceName|apiVersion|ERROR" | head -6
+            ls /usr/share/vulkan/icd.d/ 2>&1
+          } > /tmp/gldiag.log 2>&1
+          cat /tmp/gldiag.log
+      - name: Boot server + real client and capture Rift views
+        shell: bash
+        run: |
+          set -o pipefail
+          export ENTERSIFT_CAPTURE_DIR="$PWD/build/captures"
+          export DISPLAY=:99 GALLIUM_DRIVER=llvmpipe LIBGL_ALWAYS_SOFTWARE=1
+          # Minecraft 26.3 renderpearl works on this Xvfb runner through EGL/llvmpipe.
+          export SDL_VIDEO_X11_FORCE_EGL=1 SDL_VIDEODRIVER=x11
+          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          mkdir -p "$ENTERSIFT_CAPTURE_DIR" run
+          echo 'eula=true' > run/eula.txt
+          printf 'tutorialStep:none\nonboarded:true\n' > run/options.txt
+          printf 'online-mode=false\nwhite-list=false\nenforce-whitelist=false\nlevel-type=minecraft:flat\nenable-rcon=true\nrcon.password=capture\nrcon.port=25575\nspawn-protection=0\nview-distance=6\nsimulation-distance=6\npause-when-empty-seconds=-1\n' > run/server.properties
+          ./gradlew --no-daemon runServer --args=nogui > /tmp/server.log 2>&1 &
+          python3 -u tools/ci_capture.py "$ENTERSIFT_CAPTURE_DIR" 25575 2>&1 | tee /tmp/capture.log
+          rc=${PIPESTATUS[0]}
+          pkill -f GradleWrapperMain || true
+          pkill -f net.minecraft || true
+          exit "$rc"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sift-rift-captures-${{ github.run_id }}
+          path: |
+            fabric-mod/build/captures/*.png
+            /tmp/capture.log
+            /tmp/client.log
+            /tmp/server.log
+            /tmp/gldiag.log
+            /tmp/xvfb.log
+          if-no-files-found: warn
