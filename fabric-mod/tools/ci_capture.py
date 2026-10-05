@@ -208,12 +208,16 @@ def main():
     shoot(r, "sift_sky_quilt", None, settle=2)
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
-    if len(pngs) < 8:
-        raise SystemExit("missing captures")
+    # 0.37: name every angle the review depends on. A count check alone let a run "pass" with a whole
+    # angle missing (or a stale file from a previous run standing in for a fresh one).
+    required = ["rift_summon_flash", "rift_summon_ring", "rift_summon_bolt", "rift_first_person",
+                "rift_side_angle", "rift_oblique_low", "rift_close_up", "rift_membrane_near",
+                "rift_night_front", "rift_morning_beam", "rift_evening", "rift_against_ground",
+                "sift_sky_quilt"]
+    missing = [n for n in required if not (CAP / (n + ".png")).exists()]
+    if missing or len(pngs) < 8:
+        raise SystemExit(f"missing captures: {missing or len(pngs)}")
 
 
 if __name__ == "__main__":
     main()
-
-
-# 0.37 trigger probe (removed by the next commit)
