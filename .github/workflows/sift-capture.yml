@@ -56,8 +56,6 @@ jobs:
           cp "$ENTERSIFT_CAPTURE_DIR"/rift_summon_flash.png docs/captures/rift_summon_flash.png || rc=1
           cp "$ENTERSIFT_CAPTURE_DIR"/rift_against_ground.png docs/captures/rift_against_ground.png || rc=1
           cp "$ENTERSIFT_CAPTURE_DIR"/sift_sky_quilt.png docs/captures/sift_sky_quilt.png || rc=1
-          cp "$ENTERSIFT_CAPTURE_DIR"/sift_sky_quilt_b.png docs/captures/sift_sky_quilt_b.png || rc=1
-          cp "$ENTERSIFT_CAPTURE_DIR"/sift_sky_quilt_c.png docs/captures/sift_sky_quilt_c.png || rc=1
           exit $rc
       - uses: actions/upload-artifact@v4
         if: always()

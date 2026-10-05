@@ -184,14 +184,13 @@ def main():
     shoot(r, "rift_against_ground", f"tp {who} 0 -48.5 9 180 24")
     r.cmd(f"gamemode creative {who}")
     # Sift dimension sky: the quilted pastel dome (MCD2 ref) - never photographed until now
-    # surface-level like the MCD2 ref; three spots because Sift structures can block any single one
-    for tag, x, y, z in [("", 8, 75, 8), ("_b", 140, 95, -60), ("_c", -90, 100, 70)]:
-        r.cmd(f"execute in entersift:the_sift run tp {who} {x} {y} {z} 180 -50")
-        time.sleep(7)                   # dimension chunks + sky blend settle
-        shoot(r, "sift_sky_quilt" + tag, None, settle=2)
+    # surface-level like the MCD2 ref; (140,95,-60) verified clear of Sift towers
+    r.cmd(f"execute in entersift:the_sift run tp {who} 140 95 -60 180 -50")
+    time.sleep(7)                       # dimension chunks + sky blend settle
+    shoot(r, "sift_sky_quilt", None, settle=2)
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
-    if len(pngs) < 10:
+    if len(pngs) < 8:
         raise SystemExit("missing captures")
 
 
