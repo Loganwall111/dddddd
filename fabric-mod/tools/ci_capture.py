@@ -173,6 +173,8 @@ def main():
     shoot(r, "rift_first_person", f"tp {who} 0 -53.5 13 180 -6")
     shoot(r, "rift_side_angle", f"tp {who} 12.5 -53 0 90 -5")
     shoot(r, "rift_close_up", f"tp {who} 0 -53 10 180 -8")
+    time.sleep(6)                       # critters emerged at tick 140 and dropped to the ground
+    shoot(r, "rift_emergence", f"tp {who} 0 -53.5 13 180 2")
     r.cmd("time set midnight")
     time.sleep(3)
     shoot(r, "rift_night_front", f"tp {who} 0 -53.5 13 180 -6")
@@ -190,7 +192,7 @@ def main():
     shoot(r, "sift_sky_quilt", None, settle=2)
     pngs = sorted(CAP.glob("*.png"))
     print("[capture] done:", [p.name for p in pngs], flush=True)
-    if len(pngs) < 8:
+    if len(pngs) < 9:
         raise SystemExit("missing captures")
 
 

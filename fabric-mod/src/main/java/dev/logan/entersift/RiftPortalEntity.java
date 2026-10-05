@@ -6,6 +6,8 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
@@ -27,6 +29,8 @@ import net.minecraft.world.level.storage.ValueOutput;
  */
 public class RiftPortalEntity extends Entity {
     public static final int GROWN = 100;
+    /** 0.23.4: the village-ref beat - once the cluster is whole, critters step out of the tear. */
+    public static final int EMERGE = GROWN + 40;
     private static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.FLOAT);
@@ -51,7 +55,28 @@ public class RiftPortalEntity extends Entity {
     public void tick() {
         super.tick();
         // Only the growth phase is synced; afterwards the value stays constant (no network traffic).
-        if (this.level() instanceof ServerLevel && age() <= GROWN + 20) this.entityData.set(AGE, age() + 1);
+        if (this.level() instanceof ServerLevel sl) {
+            if (age() <= GROWN + 60) this.entityData.set(AGE, age() + 1);
+            if (age() == EMERGE) emerge(sl);
+        }
+    }
+
+    /** Three walker critters step out of the opening and drop to the ground (village summon refs). */
+    private void emerge(ServerLevel sl) {
+        float yawDeg = this.getYRot();
+        double yaw = Math.toRadians(yawDeg);
+        float dx = (float) Math.sin(yaw), dz = (float) Math.cos(yaw);
+        SiftKind[] kinds = {SiftKind.ANTLERLING, SiftKind.BLUB, SiftKind.SCULKLING};
+        for (int k = 0; k < kinds.length; k++) {
+            Mob mob = SiftEntities.type(kinds[k]).create(sl, EntitySpawnReason.EVENT);
+            if (mob == null) continue;
+            float side = (k - 1) * 0.9f;
+            double x = this.getX() + dx * (1.1 + 0.7 * k) + dz * side;
+            double z = this.getZ() + dz * (1.1 + 0.7 * k) - dx * side;
+            mob.moveTo(x, this.getY() - 1.0, z, yawDeg, 0f);
+            mob.setDeltaMovement(dx * 0.12, -0.04, dz * 0.12);
+            sl.addFreshEntity(mob);
+        }
     }
 
     @Override public boolean isNoGravity() { return true; }
