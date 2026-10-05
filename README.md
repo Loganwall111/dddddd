@@ -10,6 +10,23 @@ The existing browser project below is preserved; `npm run dev` starts Lumital, n
 
 ---
 
+## 0.40.0-alpha — reference-accurate Rift interior, sky dome overlay, verified offline
+
+The Rift WINDOW shader keeps the 0.36 frosted-gloss recipe and the pinned contracts, and now
+matches the newly supplied reference frames: saturated per-destination interior fields, sparse
+pale blocky pixel clouds and white sparkle squares, hollow white-outlined floating light cubes,
+low-frequency wavy dark bands hugging the rim, and the opening lifecycle from the reference
+sheet (dormant shimmer, expanding white arc, white ignition, color reveal; closing reverses it).
+Additive gains were rebalanced after offline previews showed the old stack washing the interior
+to white. The Flow sky dome panorama is an equirectangular overlay in the supplied Sift Sky PNG's
+colour language, sampled over the lava-lamp dome; `/sift time set flow|thrive|endure` selects the
+atmospheric state with smooth 2.4 s transitions, independent of the Overworld clock.
+
+`fabric-mod/tools/rift_preview.py` ports the WINDOW shader to numpy 1:1 and renders
+`build/rift_preview/*.png` (stable views + ignition contact sheet) so shader changes are
+visually checked against the references before they reach the GPU. CI (glslang + Gradle +
+real 26.3 server smoke) remains the compile/runtime authority.
+
 # Lumital — The Living Reality Engine
 
 A cinematic React + Three.js prototype for a cross-scale open world. Choose a procedural genome, seed a persistent reality, and explore from planetary terrain down through plant cells, digestive acid, sewer tides, and molecular space.

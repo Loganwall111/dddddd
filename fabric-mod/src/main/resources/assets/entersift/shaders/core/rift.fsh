@@ -23,7 +23,7 @@ uniform sampler2D Sampler1; // copied scene colour, linear, clamp-to-edge
 // the steep olive wall (The_Nether). TINT is the inner glow colour, FROST the frosted layer over the
 // opening; the frost tones come from the measured reference crops.
 const vec3 TINT[8] = vec3[8](
-    vec3(0.95, 0.85, 0.25), vec3(0.95, 0.25, 0.18), vec3(0.65, 0.38, 0.85), vec3(1.0, 0.58, 0.65),
+    vec3(0.97, 0.60, 0.40), vec3(0.95, 0.25, 0.18), vec3(0.65, 0.38, 0.85), vec3(1.0, 0.58, 0.65),
     vec3(0.20, 0.80, 0.95), vec3(0.95, 0.85, 0.25), vec3(1.0, 0.97, 0.96), vec3(1.0, 0.78, 0.52));
 const vec3 FROST[8] = vec3[8](
     vec3(0.90, 0.75, 0.76), vec3(0.86, 0.44, 0.40), vec3(0.52, 0.44, 0.58), vec3(0.88, 0.81, 0.83),
@@ -111,7 +111,7 @@ vec3 interiorEnergy(vec2 uvCentered, vec3 dir, float phase, vec3 tint, vec3 fros
     vec3 magenta = vec3(0.84, 0.26, 0.68);
     vec3 violet = vec3(0.52, 0.30, 0.88);
     vec3 siftRibbon = mix(mix(cyan, mint, flowA), mix(pink, mix(magenta, violet, flowB), flowB), 0.42 * flowB);
-    return mix(siftRibbon, mix(tint, frost, 0.48), 0.58);
+    return mix(siftRibbon, mix(tint, frost, 0.48), 0.78);
 }
 
 // Layer 6: Inner glow & concentrated vertical luminance core
@@ -120,7 +120,7 @@ vec3 innerGlow(vec2 uvCentered, float edgeFade, float phase, vec3 tint, vec3 fro
     float coreSpine = exp(-abs(uvCentered.x - spineWave) * 3.2) * exp(-abs(uvCentered.y) * 1.35);
     float rimLuminance = pow(clamp(1.0 - edgeFade, 0.0, 1.0), 2.1);
     vec3 coreCol = mix(mix(tint, frost, 0.5), vec3(1.0, 0.99, 1.0), 0.68);
-    return coreCol * (0.34 * coreSpine + 0.28 * rimLuminance);
+    return coreCol * (0.12 * coreSpine + 0.10 * rimLuminance);
 }
 
 // Layer 7: Deterministic floating light squares in depth (16 major semi-translucent squares across 3 depth layers)
@@ -143,7 +143,7 @@ vec3 floatingLightSquares(vec2 uvCentered, vec3 dir, float phase, vec3 tint, vec
         float sqDist = max(d.x, d.y);
         float pane = smoothstep(1.04, 0.86, sqDist);
         float border = smoothstep(0.18, 0.0, abs(sqDist - 0.94));
-        float halo = exp(-sqDist * 2.3) * 0.32;
+        float halo = exp(-sqDist * 2.3) * 0.16;
         float pulse = 0.72 + 0.28 * sin(phase * 0.8976 + fi * 1.37);
         float layerWeight = (depthLayer == 0.0) ? 0.32 : ((depthLayer == 1.0) ? 0.22 : 0.14);
         vec3 sqColor = (mod(fi, 2.0) < 0.5)
@@ -162,7 +162,7 @@ vec3 riftGodRays(vec2 uvCentered, vec3 dir, float phase, vec3 tint, vec3 frost) 
     float r2 = pow(0.5 + 0.5 * cos(diag * 11.0 + phase * 0.8976 + 1.1), 5.0);
     float verticalFalloff = smoothstep(-0.85, 0.75, uvCentered.y);
     vec3 shaftCol = mix(mix(tint, frost, 0.5), vec3(1.0, 0.92, 0.96), 0.42);
-    return shaftCol * (0.16 * r1 + 0.12 * r2) * (0.45 + 0.55 * verticalFalloff);
+    return shaftCol * (0.08 * r1 + 0.06 * r2) * (0.45 + 0.55 * verticalFalloff);
 }
 
 // Layer 9: Soft highlight bloom shoulder
@@ -170,7 +170,7 @@ vec3 riftBloom(vec3 col, float edgeFade, float gloss) {
     float luma = max(col.r, max(col.g, col.b));
     float highlight = smoothstep(0.68, 1.15, luma);
     vec3 bloomTint = mix(col, vec3(1.0), 0.35);
-    return col + bloomTint * (0.20 * highlight + 0.12 * (1.0 - edgeFade) + 0.06 * gloss);
+    return col + bloomTint * (0.12 * highlight + 0.06 * (1.0 - edgeFade) + 0.03 * gloss);
 }
 
 // 0.36: the destination seen through the opening, as a function so the frost can BLUR it by sampling
@@ -179,33 +179,33 @@ vec3 destination(vec3 dir, vec3 tint, vec3 frost, vec2 uv, float crack, float st
     float up = clamp(dir.y, -1.0, 1.0);
     float az = atan(dir.z, dir.x);
 
-    vec3 zenith  = mix(tint, frost, 0.35) * 0.42;
-    vec3 horizon = mix(tint, vec3(1.0), 0.28);
-    vec3 floorC  = mix(frost, vec3(0.05, 0.06, 0.09), 0.55);
+    vec3 zenith  = mix(tint, frost, 0.25) * 0.55;
+    vec3 horizon = mix(tint, vec3(1.0), 0.16);
+    vec3 floorC  = mix(tint, vec3(0.05, 0.06, 0.09), 0.30);
     vec3 ridgeFar  = mix(tint, frost, 0.45) * 0.30;
-    vec3 ridgeNear = mix(frost, vec3(0.03, 0.04, 0.06), 0.40);
+    vec3 ridgeNear = mix(tint, vec3(0.03, 0.04, 0.06), 0.62);
 
     vec3 col = mix(horizon, zenith, smoothstep(0.02, 0.62, up));
     col = mix(col, floorC, smoothstep(0.02, -0.22, up) * 0.85);
     // A far ridge line, then a nearer, darker one: the destination reads as a PLACE, not a picture.
     float farRidge  = 0.115 + 0.055 * sin(az * 2.3 + 0.8) + 0.030 * sin(az * 5.1 + 2.2);
     float nearRidge = 0.045 + 0.045 * sin(az * 3.1 - 1.1) + 0.022 * sin(az * 7.3 + 0.4);
-    col = mix(col, ridgeFar,  1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up));
-    col = mix(col, ridgeNear, 1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up));
+    col = mix(col, ridgeFar,  0.75 * (1.0 - smoothstep(farRidge  - 0.008, farRidge  + 0.008, up)));
+    col = mix(col, ridgeNear, 0.60 * (1.0 - smoothstep(nearRidge - 0.008, nearRidge + 0.008, up)));
     // A rift sun hanging over the ridge, with a wide glow.
     float sun = length(vec2((az - 0.55) * 0.85, up - 0.34));
-    col += tint * exp(-sun * 3.2) * 0.55;
+    col += tint * exp(-sun * 4.5) * 0.12;
     col = mix(col, vec3(1.0), 1.0 - smoothstep(0.020, 0.045, sun));
     // Sparks drifting up through the opening.
     float motes = sin(up * 26.0 - t * 2.2 + az * 5.0) * sin(up * 41.0 - t * 3.1 - az * 3.0 + 1.7);
-    col += tint * pow(max(0.0, motes), 6.0) * 0.55;
+    col += tint * pow(max(0.0, motes), 6.0) * 0.30;
     // 0.40 refs 4-7: pale blocky pixel clouds and tiny white sparkle squares over the field.
-    col = mix(col, mix(vec3(1.0), frost, 0.25), pixelClouds(dir, t, 2.2, 0.60, 3.0) * 0.35);
-    col = mix(col, vec3(1.0), pixelClouds(dir, t * 1.35, 4.4, 0.70, 11.0) * 0.22);
+    col = mix(col, mix(vec3(1.0), tint, 0.30), pixelClouds(dir, t, 2.2, 0.72, 3.0) * 0.30);
+    col = mix(col, vec3(1.0), pixelClouds(dir, t * 1.35, 4.4, 0.80, 11.0) * 0.14);
     col += vec3(1.0) * sparkles(dir, t) * 0.80;
     // The rift's own energy still breathes across the opening.
     col = mix(col, vec3(1.0, 0.48, 0.12), crack * 0.35);
-    col += tint * (0.18 + 0.30 * strength) * exp(-1.6 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
+    col += tint * (0.08 + 0.12 * strength) * exp(-1.6 * dot(uv * 2.0 - 1.0, uv * 2.0 - 1.0));
     return col;
 }
 
@@ -263,7 +263,7 @@ void main() {
     // Layer 3 & Layer 5: Giant Rift aperture field + colored interior energy ribbons
     float aperture = apertureField(uvCentered, phase);
     vec3 energy = interiorEnergy(uvCentered, dir, phase, tint, frost);
-    col = mix(col, energy, (0.24 + 0.18 * aperture) * (1.0 - 0.45 * frostAmt));
+    col = mix(col, energy, (0.16 + 0.12 * aperture) * (1.0 - 0.45 * frostAmt));
 
     // Layer 4: Wavy dark outer "soul face" bands (smoothstep(0.70, 0.88, faceMask) -> vec3(0.02, 0.02, 0.04))
     float faceMask = soulFaceBand(uvCentered, dir, phase);
@@ -272,15 +272,15 @@ void main() {
 
     // Layer 7: Deterministic floating light squares in depth (16 semi-translucent squares)
     vec3 squares = floatingLightSquares(uvCentered, dir, phase, tint, frost);
-    col += squares * (0.52 + 0.28 * (1.0 - frostAmt));
+    col += squares * (0.34 + 0.20 * (1.0 - frostAmt));
 
     // Layer 8 & Layer 6: Volumetric god-ray shafts + concentrated inner glow
     col += riftGodRays(uvCentered, dir, phase, tint, frost);
     col += innerGlow(uvCentered, edgeFade, phase, tint, frost);
 
     // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
-    col = mix(col, frost, frostAmt * 0.62);
-    col += vec3(0.05) * frostAmt;
+    col = mix(col, frost, frostAmt * 0.40);
+    col += vec3(0.02) * frostAmt;
     // A slow gloss band sweeps the glass, the way the reference frames catch the light.
     float gloss = smoothstep(0.72, 1.0, sin((uv.x * 1.25 + uv.y * 0.75) * 3.14159 + t * 0.25) * 0.5 + 0.5);
     col += vec3(0.14) * gloss * (0.35 + frostAmt);
