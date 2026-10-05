@@ -2,54 +2,70 @@ package dev.logan.beyondthreshold.world;
 
 import dev.logan.beyondthreshold.BTTGeneratedContent;
 import dev.logan.beyondthreshold.BeyondTheThreshold;
-import net.minecraft.registry.BuiltinRegistries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.biome.source.FixedBiomeSource;
 import net.minecraft.world.dimension.DimensionOptions;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.dimension.DimensionTypes;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
-import net.minecraft.world.gen.chunk.NoiseGeneratorSettings;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 
 /**
  * Procedural multiverse. Every dimension in {@link BTTGeneratedContent}
- * (produced by onepac.py) becomes a real registered dimension: vanilla
- * noise terrain + a fixed biome, then PaletteSwapper rebuilds the surface
- * from generated variant blocks and the client paints an alien sky/fog.
+ * (produced by onepac.py) becomes a real registered dimension when a
+ * server starts: vanilla noise terrain + a fixed biome, then
+ * PaletteSwapper rebuilds the surface from generated variant blocks and
+ * the client paints an alien sky.
  */
 public final class BTTDimensions {
 	public static final List<RegistryKey<World>> ALL = new ArrayList<>();
 
-	public static void register() {
+	static {
 		for (BTTGeneratedContent.GenDim d : BTTGeneratedContent.DIMENSIONS) {
-			Optional<RegistryEntry.Reference<Biome>> biome =
-					BuiltinRegistries.BIOME.getEntry(RegistryKey.of(RegistryKeys.BIOME, new Identifier(d.biome())));
-			Optional<RegistryEntry.Reference<NoiseGeneratorSettings>> noise =
-					BuiltinRegistries.NOISE_GENERATOR_SETTINGS.getEntry(NoiseGeneratorSettings.OVERWORLD);
-			Optional<RegistryEntry.Reference<net.minecraft.world.dimension.DimensionType>> type =
-					BuiltinRegistries.DIMENSION_TYPE.getEntry(DimensionTypes.OVERWORLD);
-			if (biome.isEmpty() || noise.isEmpty() || type.isEmpty()) {
-				BeyondTheThreshold.LOGGER.warn("[btt] skipping dimension {}: registry entry missing", d.id());
+			ALL.add(RegistryKey.of(RegistryKeys.WORLD,
+					new Identifier(BeyondTheThreshold.MOD_ID, d.id())));
+		}
+	}
+
+	public static void register(MinecraftServer server) {
+		var manager = server.getRegistryManager();
+		Registry<DimensionOptions> dims = manager.get(RegistryKeys.DIMENSION);
+		Registry<ChunkGeneratorSettings> settings = manager.get(RegistryKeys.CHUNK_GENERATOR_SETTINGS);
+		Registry<DimensionType> types = manager.get(RegistryKeys.DIMENSION_TYPE);
+		Registry<Biome> biomes = manager.get(RegistryKeys.BIOME);
+
+		RegistryEntry<ChunkGeneratorSettings> noise =
+				settings.getEntry(ChunkGeneratorSettings.OVERWORLD).orElseThrow();
+		RegistryEntry<DimensionType> type =
+				types.getEntry(DimensionTypes.OVERWORLD).orElseThrow();
+
+		int added = 0;
+		for (int i = 0; i < ALL.size(); i++) {
+			BTTGeneratedContent.GenDim d = BTTGeneratedContent.DIMENSIONS.get(i);
+			if (dims.containsId(ALL.get(i).getValue())) {
 				continue;
 			}
-			ChunkGenerator gen = new NoiseChunkGenerator(new FixedBiomeSource(biome.get()), noise.get());
-			DimensionOptions options = new DimensionOptions(type.get(), gen);
-			Identifier id = new Identifier(BeyondTheThreshold.MOD_ID, d.id());
-			Registry.register(BuiltinRegistries.DIMENSION, id, options);
-			ALL.add(RegistryKey.of(RegistryKeys.WORLD, id));
+			RegistryEntry<Biome> biome = biomes
+					.getEntry(RegistryKey.of(RegistryKeys.BIOME, new Identifier(d.biome())))
+					.orElseGet(() -> biomes.getEntry(Biomes.PLAINS).orElseThrow());
+			ChunkGenerator gen = new NoiseChunkGenerator(new FixedBiomeSource(biome), noise);
+			Registry.register(dims, ALL.get(i).getValue(), new DimensionOptions(type, gen));
+			added++;
 		}
-		BeyondTheThreshold.LOGGER.info("[btt] {} threshold dimensions woven into reality", ALL.size());
+		BeyondTheThreshold.LOGGER.info("[btt] {} threshold dimensions woven into reality", added);
 	}
 
 	public static int indexOf(RegistryKey<World> key) {

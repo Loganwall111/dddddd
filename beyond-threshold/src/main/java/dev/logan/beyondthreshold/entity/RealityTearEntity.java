@@ -7,7 +7,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerFactory;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Box;
@@ -19,7 +19,7 @@ import net.minecraft.world.World;
  * with a procedural inventory waiting on the other side.
  */
 public class RealityTearEntity extends Entity {
-	private static final TrackedData<Integer> DIM_INDEX = DataTracker.registerData(RealityTearEntity.class, TrackedDataHandlerFactory.INTEGER);
+	private static final TrackedData<Integer> DIM_INDEX = DataTracker.registerData(RealityTearEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
 	public RealityTearEntity(EntityType<?> type, World world) {
 		super(type, world);

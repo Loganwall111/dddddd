@@ -6,17 +6,15 @@ import dev.logan.beyondthreshold.config.BTTConfig;
 import dev.logan.beyondthreshold.entity.BlackHoleEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.gl.PostPass;
+import net.minecraft.client.gl.PostEffectPass;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
-import org.joml.Matrix4f;
 
-import java.io.IOException;
+import java.util.List;
 
 /**
  * Drives the vanilla post-processing pipeline with mod GLSL programs:
@@ -27,7 +25,6 @@ public final class PostFxManager {
 	private static String current = "";
 
 	public static void tick(MinecraftClient client) {
-		// state decay for uniform ramps happens in BTTClient
 	}
 
 	public static void onFrameStart(MinecraftClient client, float tickDelta) {
@@ -40,15 +37,15 @@ public final class PostFxManager {
 			current = want;
 			try {
 				if (want.isEmpty()) {
-					gr.postProcessor = null;
+					gr.disablePostProcessor();
 				} else {
-					gr.loadPostEffect(new Identifier(BeyondTheThreshold.MOD_ID, want));
+					gr.loadPostProcessor(new Identifier(BeyondTheThreshold.MOD_ID, want));
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				BeyondTheThreshold.LOGGER.error("[btt] failed to load post fx {}", want, e);
 			}
 		}
-		if (gr.postProcessor != null && !want.isEmpty()) {
+		if (gr.getPostProcessor() != null && !want.isEmpty()) {
 			applyUniforms(client, gr, tickDelta);
 		}
 	}
@@ -80,6 +77,7 @@ public final class PostFxManager {
 		return n;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static void applyUniforms(MinecraftClient client, GameRenderer gr, float tickDelta) {
 		float time = (client.world.getTime() % 24000) + tickDelta;
 		float intensity;
@@ -103,7 +101,7 @@ public final class PostFxManager {
 			if (e.squaredDistanceTo(client.player.getPos()) > 160 * 160) {
 				continue;
 			}
-			float[] s = project(client, e.getPos(), tickDelta);
+			float[] s = project(client, e.getPos());
 			if (s == null) {
 				continue;
 			}
@@ -117,7 +115,8 @@ public final class PostFxManager {
 			count++;
 		}
 
-		for (PostPass pass : gr.postProcessor.getPasses()) {
+		List<PostEffectPass> passes = gr.getPostProcessor().passes;
+		for (PostEffectPass pass : passes) {
 			ShaderProgram prog = pass.getProgram();
 			set(prog, "BttTime", u -> u.set(time * 0.05F));
 			set(prog, "BttIntensity", u -> u.set(intensity));
@@ -138,14 +137,14 @@ public final class PostFxManager {
 	}
 
 	private static void set(ShaderProgram prog, String name, UniformSetter setter) {
-		GlUniform u = prog.getUniformByName(name);
+		GlUniform u = prog.getUniform(name);
 		if (u != null) {
 			setter.apply(u);
 		}
 	}
 
 	/** World position -> post-shader UV (0..1, GL origin bottom-left). */
-	public static float[] project(MinecraftClient client, Vec3d pos, float tickDelta) {
+	public static float[] project(MinecraftClient client, Vec3d pos) {
 		Camera cam = client.gameRenderer.getCamera();
 		Vec3d rel = pos.subtract(cam.getPos());
 		double yaw = Math.toRadians(cam.getYaw());

@@ -4,9 +4,10 @@ import dev.logan.beyondthreshold.config.BTTConfig;
 import dev.logan.beyondthreshold.world.BTTDimensions;
 import dev.logan.beyondthreshold.world.PaletteSwapper;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerChunkEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +39,8 @@ public class BeyondTheThreshold implements ModInitializer {
 		BTTItems.register();
 		BTTEntities.register();
 		BTTGeneratedContent.register();
-		BTTDimensions.register();
 		BTTCommands.register();
+		ServerLifecycleEvents.SERVER_STARTING.register(BTTDimensions::register);
 
 		// OnePac palette swap: terrain of threshold dimensions is rebuilt
 		// from procedurally generated variant blocks when chunks load.

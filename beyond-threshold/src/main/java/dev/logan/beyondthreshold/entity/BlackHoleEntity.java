@@ -9,7 +9,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerFactory;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -25,8 +25,8 @@ import net.minecraft.world.World;
  * are flung through the singularity into a random threshold dimension.
  */
 public class BlackHoleEntity extends Entity {
-	private static final TrackedData<Float> RADIUS = DataTracker.registerData(BlackHoleEntity.class, TrackedDataHandlerFactory.FLOAT);
-	private static final TrackedData<Integer> PHASE = DataTracker.registerData(BlackHoleEntity.class, TrackedDataHandlerFactory.INTEGER);
+	private static final TrackedData<Float> RADIUS = DataTracker.registerData(BlackHoleEntity.class, TrackedDataHandlerRegistry.FLOAT);
+	private static final TrackedData<Integer> PHASE = DataTracker.registerData(BlackHoleEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
 	private int age = 0;
 	private int collapseTimer = -1;

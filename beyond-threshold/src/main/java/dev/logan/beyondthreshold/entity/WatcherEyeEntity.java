@@ -7,7 +7,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerFactory;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -23,7 +23,7 @@ import net.minecraft.world.World;
  * and the overworld reveals itself as the body of the colossus.
  */
 public class WatcherEyeEntity extends Entity {
-	private static final TrackedData<Integer> STAGE = DataTracker.registerData(WatcherEyeEntity.class, TrackedDataHandlerFactory.INTEGER);
+	private static final TrackedData<Integer> STAGE = DataTracker.registerData(WatcherEyeEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
 	private int grabTicks = 0;
 

@@ -81,7 +81,7 @@ public class BTTClient implements ClientModInitializer {
 		WorldRenderEvents.BEFORE_ENTITIES.register(context -> CosmicSkyRenderer.draw(context));
 		WorldRenderEvents.AFTER_ENTITIES.register(context -> EntityFxRenderer.draw(context));
 
-		HudRenderCallback.EVENT.register((matrices, tickDelta) -> HudOverlay.draw(matrices));
+		HudRenderCallback.EVENT.register((context, tickDelta) -> HudOverlay.draw(context));
 
 		EntityRendererRegistry.register(BTTEntities.BLACK_HOLE, NoopRenderer::new);
 		EntityRendererRegistry.register(BTTEntities.WATCHER_EYE, NoopRenderer::new);
