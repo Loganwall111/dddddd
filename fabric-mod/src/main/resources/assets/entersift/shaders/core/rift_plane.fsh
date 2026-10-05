@@ -77,18 +77,22 @@ vec3 shellField(vec2 q, int i, float t) {
     return vec3(border, core * (1.0 - border), 0.0);
 }
 
-// Pixel-snapped pastel vortex: soft pink / warm yellow / deep orange, slow shift.
+// Pixel-snapped pastel vortex: soft pink / warm yellow / deep orange, slow time shift.
+// References are near-white emissive at the core, so the palette is lifted and scattered
+// 1-voxel white sparks drift through it like the trailer frames.
 vec3 vortex(vec2 q, float t, vec3 tint) {
-    vec2 cell = floor(q * 10.0 + vec2(t * 0.10, -t * 0.07));
+    vec2 cell = floor(q * 12.0 + vec2(t * 0.10, -t * 0.07));
     float n1 = hash21(cell);
     float n2 = hash21(cell + 17.7);
     float shift = 0.5 + 0.5 * sin(t * 0.22 + n1 * 6.2831);
     vec3 pink   = vec3(1.00, 0.62, 0.72);
     vec3 yellow = vec3(1.00, 0.85, 0.45);
     vec3 orange = vec3(0.95, 0.45, 0.20);
-    vec3 c = n1 < 0.45 ? pink : (n1 < 0.75 ? yellow : orange);
-    c = mix(c, tint, 0.30);
-    return c * (0.72 + 0.28 * n2) * (0.80 + 0.20 * shift);
+    float pick = fract(n1 + t * 0.008);          // the palette itself drifts, slowly
+    vec3 c = pick < 0.40 ? pink : (pick < 0.72 ? yellow : orange);
+    c = mix(c, vec3(1.0), 0.18);                 // emissive lift, refs glow near white
+    c = mix(c, vec3(1.0), step(0.965, hash21(cell + 4.2)));   // white spark voxels
+    return c * (0.86 + 0.14 * n2) * (0.92 + 0.08 * shift);
 }
 
 float fogFade() {
@@ -115,7 +119,7 @@ void main() {
     // Dynamic edge detection: the exact boundary band of the cross, clean and solid white
     // (1 right at the boundary, 0 deep inside so the interior stays the vortex).
     float crossEdge = crossIn * smoothstep(-0.055, -0.020, cf.x);
-    float tierShade = 0.90 + 0.10 * fract(cf.y * 0.75);
+    float tierShade = 0.95 + 0.05 * fract(cf.y * 0.75);
 
     float shellB = 0.0;
     float shellCore = 0.0;
@@ -147,11 +151,11 @@ void main() {
     bg = texture(Sampler1, sampleUv).rgb;
 #endif
 
-    // ---- interior composition: warped world + pastel vortex + per-tier step + core glow ----
+    // ---- interior composition: pastel vortex dominant, warped world as a faint under-glass ----
     vec3 vort = vortex(q, t, tint);
-    vec3 col = mix(bg * 0.55, vort, 0.55);
+    vec3 col = mix(bg, vort, 0.80);
     col *= tierShade;
-    col += tint * 0.22 * exp(-1.8 * dot(q, q));
+    col += tint * 0.30 * exp(-1.6 * dot(q, q));
     col = mix(col, vec3(1.0), crossEdge);                       // glowing white outline
     col = mix(col, vec3(1.0), shellB * 0.92);                  // hollow shell borders read solid
     col = mix(col, vort * 0.35, shellCore * 0.30);             // shell centres stay translucent

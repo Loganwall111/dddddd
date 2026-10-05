@@ -312,7 +312,7 @@ def _plane_preview():
     crossIn = 1 - sstep(-0.012, 0.012, sd)
     crossEdge = crossIn * sstep(-0.055, -0.020, sd)
     tier = np.floor(q[..., 1] * 6 + 0.5) * 0.5 + np.floor(q[..., 0] * 6 + 0.5) * 0.25
-    tierShade = 0.90 + 0.10 * fract(tier * 0.75)
+    tierShade = 0.95 + 0.05 * fract(tier * 0.75)
 
     shellB = np.zeros(S * S, float).reshape(S, S)
     shellCore = np.zeros_like(shellB)
@@ -339,17 +339,19 @@ def _plane_preview():
     bg = np.where((lensed[..., 1] < 0.42)[..., None], ground, skyC)
 
     # pixel-snapped pastel vortex
-    cell = np.floor(q * 10.0 + np.array([t * 0.10, -t * 0.07]))
+    cell = np.floor(q * 12.0 + np.array([t * 0.10, -t * 0.07]))
     n1, n2 = hash21(cell), hash21(cell + 17.7)
     shift = 0.5 + 0.5 * np.sin(t * 0.22 + n1 * 6.2831)
     pink, yellow, orange = np.array([1.0, 0.62, 0.72]), np.array([1.0, 0.85, 0.45]), np.array([0.95, 0.45, 0.20])
-    vcol = np.where((n1 < 0.45)[..., None], pink, np.where((n1 < 0.75)[..., None], yellow, orange))
-    vcol = mix(vcol, tint, 0.30)
-    vcol = vcol * (0.72 + 0.28 * n2)[..., None] * (0.80 + 0.20 * shift)[..., None]
+    pick = fract(n1 + t * 0.008)
+    vcol = np.where((pick < 0.40)[..., None], pink, np.where((pick < 0.72)[..., None], yellow, orange))
+    vcol = mix(vcol, np.array([1.0, 1.0, 1.0]), 0.18)
+    vcol = mix(vcol, np.array([1.0, 1.0, 1.0]), (hash21(cell + 4.2) > 0.965).astype(float))
+    vcol = vcol * (0.86 + 0.14 * n2)[..., None] * (0.92 + 0.08 * shift)[..., None]
 
-    col = mix(bg * 0.55, vcol, 0.55)
+    col = mix(bg, vcol, 0.80)
     col = col * tierShade[..., None]
-    col = col + tint * 0.22 * np.exp(-1.8 * (q ** 2).sum(-1))[..., None]
+    col = col + tint * 0.30 * np.exp(-1.6 * (q ** 2).sum(-1))[..., None]
     col = mix(col, np.array([1.0, 1.0, 1.0]), crossEdge)
     col = mix(col, np.array([1.0, 1.0, 1.0]), shellB * 0.92)
     col = mix(col, vcol * 0.35, shellCore * 0.30)
