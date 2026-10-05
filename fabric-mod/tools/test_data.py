@@ -910,7 +910,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('static final float LIP = COLLAR, PROUD = COLLAR + 0.085f;',renderer)
         self.assertIn('float F = FLANGE, C = PROUD;',renderer)
         # Panes sit on the lip; the back pane of the same cell dissolves with depth.
-        self.assertIn('rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.82f * tf);   // frosted glass, not paint',renderer)
+        self.assertIn('rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.74f * tf);   // frosted glass, not paint',renderer)
         self.assertIn('winPaneSub(p, vc, wv, x0, y0, x1, y1, z, code, fade, frost);',renderer)   # one pane, no 3x3 grid
         self.assertIn('float ba = (0.20f + 0.80f * backFade(z)) * 0.85f * tf;',renderer)
         # Cells are painted deepest-first, so the translucent stack layers correctly.

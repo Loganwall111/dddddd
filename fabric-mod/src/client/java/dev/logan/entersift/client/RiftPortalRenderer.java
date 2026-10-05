@@ -787,10 +787,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         if (!SiftBudget.riftBoxFace) return;
         // The frosted layer carries the rift's own colour (green / lime / red / yellow / orange), and the
         // frosted tips are the cells furthest from the window, warmed towards the inner glow.
-        float[] face = look.frost();
-        float[] tip = mix(look.frost(), look.core(), 0.30f);
+        // 0.37 tone (from capture run 37379081026): the panes are frosted GLASS — grey-lavender, the way
+        // the reference photos look — and the warmth comes from the frame, the rim lines and the opening.
+        // Wearing the rift's own pink frost made the whole shell glow warm white and washed out the grid.
+        float[] glass = mix(look.frost(), c(0.66f, 0.66f, 0.70f), 0.55f);
+        float[] face = glass;
+        float[] tip = mix(glass, look.core(), 0.30f);
         float[] pane = mix(face, tip, clamp((age - RIFT_BIRTH) / 30f, 0f, 1f));
-        float[] back = mix(look.wallBack(), look.frost(), 0.35f);
+        float[] back = mix(look.wallBack(), glass, 0.35f);
         float[] edge = mix(look.core(), c(1f, 1f, 1f), 0.45f);
         // 0.37: every frosted cell is a REAL extruded slab. The front face sits on the lip plane and stays
         // crisp; the back face sits at the cell's recess depth and dissolves (backFade), so the structure
@@ -822,7 +826,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
             float[] col = tipCell ? pane : face;
             // Front face on the lip plane: crisp, full strength.
-            rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.82f * tf);   // frosted glass, not paint
+            rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.74f * tf);   // frosted glass, not paint
             // Back face at the recess depth: dissolves with depth (0.20 floor far back).
             float ba = (0.20f + 0.80f * backFade(z)) * 0.85f * tf;
             if (ba > 0.01f) rectSub(p, vc, wv, x0, y0, x1, y1, z, back, ba);
@@ -830,7 +834,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float ea = 0.55f * tf;
             // 0.33: every frosted slab is a PANE IN A FRAME — the references show white lines on both sides
             // of each beam, so a bright inset rectangle sits inside each panel's own silhouette.
-            float in = 0.13f, ie = 0.28f * tf;
+            float in = 0.13f, ie = 0.34f * tf;   // the lit inset grid carries the reference's white beams
             float zf = LIP + 0.012f;           // 0.37: the inset frame rides on the panel's front lip
             line(p, vc, wv, cam, new float[]{x0 + in, y0 + in, zf}, new float[]{x1 - in, y0 + in, zf}, 0.045f, edge, ie);
             line(p, vc, wv, cam, new float[]{x0 + in, y1 - in, zf}, new float[]{x1 - in, y1 - in, zf}, 0.045f, edge, ie);
