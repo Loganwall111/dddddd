@@ -220,3 +220,8 @@ echo "===== Gui hide"; javap -p -cp "$CP" net.minecraft.client.gui.Gui 2>&1 | gr
 echo "===== Minecraft hide"; javap -p -cp "$CP" net.minecraft.client.Minecraft 2>&1 | grep -iE "hide|toggle" | head
 echo "===== Key class"; CJ=$(echo "$CP" | tr ':' '\n' | grep -m1 'minecraft-clientOnly'); unzip -Z1 "$CJ" 2>/dev/null | grep -iE "input/Key|Key\.class|blaze3d/input" | head -10
 } > $OUT/clean_capture.txt
+# 0.24c: exact 26.3 mob-spawn API for rift emergence beat.
+{
+echo "===== EntitySpawnReason"; javap -p -cp "$CP" net.minecraft.world.entity.EntitySpawnReason 2>&1 | head -30
+echo "===== EntityType create"; javap -p -cp "$CP" net.minecraft.world.entity.EntityType 2>&1 | grep -E "create|spawn" | head -10
+} > $OUT/spawn_api.txt
