@@ -68,7 +68,13 @@ jobs:
           test -x "$TOOL" || { echo "::error title=glslang missing::no glslangValidator could be installed or extracted"; exit 1; }
           echo "using $TOOL"
           "$TOOL" --version | head -2 || true
-          python3 tools/check_shaders.py "$TOOL"
+          python3 tools/check_shaders.py "$TOOL" | tee shader-check.log; exit ${PIPESTATUS[0]}
+      - name: Upload shader check log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shader-check
+          path: shader-check.log
       - name: Compile mod and report diagnostics
         shell: bash
         run: |
