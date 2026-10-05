@@ -248,3 +248,40 @@ for k, f in enumerate(fades):
     sheet[r * S:(r + 1) * S, c * S:(c + 1) * S] = render(uv2, 0, 0.25, f, t, overworld_bg(uv2))
 Image.fromarray((sheet * 255).astype(np.uint8)).save(f"{OUT}/rift_ignition_sheet.png")
 print("previews written to", OUT)
+
+# ---- 0.40 sky dome previews (panorama + soul-face bands), flow vs thrive ----
+def _sky_preview(w_thrive, dark_op, name):
+    from PIL import Image as _I
+    _tex = lambda n: os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'main', 'resources', 'assets', 'entersift', 'textures', 'sky', n)
+    flow = np.asarray(_I.open(_tex('sift_flow_sky.png')).convert('RGB').resize((256, 128)), float) / 255
+    thr = np.asarray(_I.open(_tex('sift_thrive_sky.png')).convert('RGB').resize((256, 128)), float) / 255
+    Hh, Ww = 256, 512
+    gy, gx = np.mgrid[0:Hh, 0:Ww]
+    az = gx / Ww * 2 * np.pi
+    up = 1 - (gy + 0.5) / Hh
+    u1 = (az / (2 * np.pi) + 0.5) % 1.0
+    us = 1 - np.abs(u1 * 2 - 1)
+    vt = np.clip(1 - up, 0.02, 0.98)
+    def samp(img):
+        fx = us * 255; fy = vt * 127
+        x0 = fx.astype(int); y0 = fy.astype(int)
+        x1 = np.minimum(255, x0 + 1); y1 = np.minimum(127, y0 + 1)
+        tx = (fx - x0)[..., None]; ty = (fy - y0)[..., None]
+        top = img[y0, x0] * (1 - tx) + img[y0, x1] * tx
+        bot = img[y1, x0] * (1 - tx) + img[y1, x1] * tx
+        return top * (1 - ty) + bot * ty
+    col = samp(flow) * (1 - w_thrive) + samp(thr) * w_thrive
+    t = 12.0
+    w1 = np.sin(az * 3 + np.sin(up * 4.2 - t * 0.11) * 1.35 + t * 0.07)
+    w2 = np.cos(az * 2 - up * 5 + np.cos(az * 1 + t * 0.05) * 1.15)
+    n = 0.5 + 0.5 * noise2d(np.stack([np.cos(az) * 1.8 + t * 0.04 + np.sin(az) * 1.8 - t * 0.03, up * 3.2], -1))
+    hollow = np.exp(-((up - 0.42 - 0.08 * w1) / 0.16) ** 2)
+    ridge = 1 - np.abs(w1 * 0.55 + w2 * 0.35 + (n - 0.5) * 0.30)
+    mask = np.clip(ridge * (0.76 + 0.28 * hollow), 0, 1)
+    band = sstep(0.70, 0.88, mask) * sstep(0.08, 0.28, up) * dark_op * 0.52
+    col = col * (1 - band)[..., None] + np.array([0.02, 0.02, 0.04]) * band[..., None]
+    _I.fromarray((np.clip(col, 0, 1) * 255).astype(np.uint8)).save(f"{OUT}/{name}")
+
+_sky_preview(0.0, 0.78, "sky_flow.png")
+_sky_preview(1.0, 0.92, "sky_thrive.png")
+print("sky previews written")

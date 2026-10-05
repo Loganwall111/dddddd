@@ -143,7 +143,8 @@ public final class SiftSky {
                 out.submitCustomGeometry(pose, SiftRenderTypes.GLOW, (p, vc) -> {
                     float layer = Math.max(0f, 1f - jellyAmount * 0.98f);
                     auroraCurtains(p, vc, radius * 0.98f, pal, seconds, layer);
-                    skyRays(p, vc, radius * 0.96f, pal, seconds, layer * (0.75f + 0.45f * params.godRayIntensity()));
+                    skyRays(p, vc, radius * 0.96f, pal, seconds, layer * (0.75f + 0.45f * params.godRayIntensity()),
+                        (int) (SKY_RAYS * (0.6f + 0.9f * params.godRayIntensity()))); // 0.40: MANY soft rays in Thrive
                 });
                 // World-space diagonal beams slice into other Sift biomes; the Jelly haze suppresses them.
                 if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW,
@@ -685,10 +686,10 @@ public final class SiftSky {
      * segment with the alpha on the centre line and zero at both edges, and the alpha fades out
      * near the zenith and toward the ground, so none of them has a hard edge.
      */
-    private static void skyRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float layerWeight) {
+    private static void skyRays(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t, float layerWeight, int rays) {
         float strength = (0.75f + 0.25f * (1 - pal.thrive())) * layerWeight;
         int segs = 12;
-        for (int k = 0; k < SKY_RAYS; k++) {
+        for (int k = 0; k < rays; k++) {
             double az0 = hash(k, 61, 0) * Math.PI * 2 + t * 0.0025 * (k % 2 == 0 ? 1 : -1);
             double w = 0.045 + 0.075 * hash(k, 62, 0), lean = (hash(k, 63, 0) - 0.5) * 0.5;
             double top = 0.95 + 0.4 * hash(k, 64, 0);
