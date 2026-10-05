@@ -415,14 +415,14 @@ public final class SiftSky {
     /** 0.23 MCD2 reference: the Sift sky is a QUILT of huge soft pastel rectangles (mint / pink / peach /
      *  lilac / cream), not a smooth gradient. Tiles drift slowly and each fades with smoothstep toward
      *  its borders so neighbouring patches blend like brushed candy (alpha blended over the dome). */
-    private static final float[][] QUILT = {rgb(0x9FF0D8), rgb(0xFFB8D0), rgb(0xFFDCA8), rgb(0xC8B8F0),
-        rgb(0xF8F4E8), rgb(0xA8E8E0), rgb(0xF0A8B8), rgb(0xD8F0A8)};
+    private static final float[][] QUILT = {rgb(0xFFB8D0), rgb(0xFFDCA8), rgb(0xF0A8B8), rgb(0xF8F4E8),
+        rgb(0xC8B8F0), rgb(0xFFC8C0), rgb(0x9FF0D8), rgb(0xF0E0B8)};   // 0.23.4: warm-weighted like the MCD2 sample (5 warm / 2 cool-ish / 1 lilac)
 
     private static void quiltPatches(PoseStack.Pose p, VertexConsumer vc, float r, Palette pal, float t) {
         float drift = t * 0.0045f;
         for (int i = 0; i < QAZ; i++) for (int j = 0; j < QEL; j++) {
             float h = hash(i, j, 171);
-            float[] col = lerp(QUILT[(int) (h * QUILT.length) % QUILT.length], pal.blobs()[(i + j) % 4], 0.15f);
+            float[] col = lerp(QUILT[(int) (h * QUILT.length) % QUILT.length], pal.blobs()[(i + j) % 4], 0.10f);
             float alpha = 0.34f + 0.30f * hash(i, j, 172);
             alpha *= 0.85f + 0.15f * (float) Math.sin(t * 0.09f + h * 6.28f);
             double az0 = (i / (float) QAZ + drift) * Math.PI * 2, az1 = ((i + 1) / (float) QAZ + drift) * Math.PI * 2;
