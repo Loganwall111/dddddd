@@ -423,7 +423,7 @@ public final class SiftSky {
         for (int i = 0; i < QAZ; i++) for (int j = 0; j < QEL; j++) {
             float h = hash(i, j, 171);
             float[] col = lerp(QUILT[(int) (h * QUILT.length) % QUILT.length], pal.blobs()[(i + j) % 4], 0.10f);
-            float alpha = 0.34f + 0.30f * hash(i, j, 172);
+            float alpha = 0.62f + 0.25f * hash(i, j, 172);   // 0.23.4: near-opaque - in the MCD2 ref the quilt IS the sky; seams still whisper the old dome through
             alpha *= 0.85f + 0.15f * (float) Math.sin(t * 0.09f + h * 6.28f);
             double az0 = (i / (float) QAZ + drift) * Math.PI * 2, az1 = ((i + 1) / (float) QAZ + drift) * Math.PI * 2;
             double el0 = -0.05 + j / (float) QEL * 1.5, el1 = -0.05 + (j + 1) / (float) QEL * 1.5;
