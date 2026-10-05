@@ -287,76 +287,104 @@ _sky_preview(1.0, 0.92, "sky_thrive.png")
 print("sky previews written")
 
 # ---------------------------------------------------------------------------
-# 0.41 screen-space plane preview: mirrors core/rift_plane.fsh (official recipe round 1).
-# Stepped cross mask, hollow drifting shells, white edge detection, pastel vortex over a
-# synthetic "world behind" that the wave matrix lens-warps inside the shape.
+# 0.42 reference-accurate plane preview: mirrors core/rift_plane.fsh.
 def _plane_preview():
     from PIL import Image as _I
-    S = 420
+    S = 460
     gy, gx = np.mgrid[0:S, 0:S]
-    uv = np.stack([(gx + 0.5) / S, 1 - (gy + 0.5) / S], -1)   # v up like GL
+    uv = np.stack([(gx + 0.5) / S, 1 - (gy + 0.5) / S], -1)
     q = (uv * 2 - 1) * np.array([1.0, 1.12])
     t = 12.0
     tint = np.array([0.97, 0.60, 0.40])
     fade = 1.0
+    reveal = 1.0
 
     def sdBox(qq, c, h):
         d = np.abs(qq - c) - h
         return np.maximum(d[..., 0], d[..., 1])
 
-    sd = sdBox(q, np.array([0.0, 0.0]), np.array([0.16, 0.60]))
-    for c, h in (((0, 0), (0.60, 0.16)), ((0, 0), (0.30, 0.30)),
-                 ((0, 0.44), (0.10, 0.14)), ((0, -0.44), (0.10, 0.14)),
-                 ((0.44, 0), (0.14, 0.10)), ((-0.44, 0), (0.14, 0.10))):
-        sd = np.minimum(sd, sdBox(q, np.array(c, float), np.array(h)))
-    crossIn = 1 - sstep(-0.012, 0.012, sd)
-    crossEdge = crossIn * sstep(-0.055, -0.020, sd)
-    tier = np.floor(q[..., 1] * 6 + 0.5) * 0.5 + np.floor(q[..., 0] * 6 + 0.5) * 0.25
-    tierShade = 0.95 + 0.05 * fract(tier * 0.75)
+    def edgeLine(sd, w):
+        return 1 - sstep(w * 0.40, w, np.abs(sd))
 
-    shellB = np.zeros(S * S, float).reshape(S, S)
-    shellCore = np.zeros_like(shellB)
-    for i in range(6):
+    sdC = sdBox(q, [0, 0], [0.20, 0.58])
+    for c, h in (((0, 0), (0.58, 0.20)), ((0, 0), (0.32, 0.32)),
+                 ((0, 0.46), (0.12, 0.14)), ((0, -0.46), (0.12, 0.14)),
+                 ((0.46, 0), (0.14, 0.12)), ((-0.46, 0), (0.14, 0.12))):
+        sdC = np.minimum(sdC, sdBox(q, np.array(c, float), np.array(h)))
+    crossIn = 1 - sstep(-0.006, 0.006, sdC)
+    sdAll = sdC
+    edge = edgeLine(sdC, 0.024)
+    glow = np.exp(-np.abs(sdC) * 22.0)
+    lobeIn = np.zeros_like(sdC); sideIn = np.zeros_like(sdC)
+    LOBES = [(-0.68, 0.10, 0.24, 0.20), (0.72, 0.02, 0.22, 0.26),
+             (-0.42, -0.44, 0.20, 0.16), (0.46, 0.44, 0.18, 0.14),
+             (-0.60, 0.46, 0.14, 0.12), (0.64, -0.46, 0.16, 0.12)]
+    for cx, cyv, hx, hy in LOBES:
+        f = sdBox(q, np.array([cx, cyv]), np.array([hx, hy]))
+        b = sdBox(q - np.array([0.07, 0.06]), np.array([cx, cyv]), np.array([hx, hy]))
+        frontIn = 1 - sstep(-0.006, 0.006, f)
+        backIn = 1 - sstep(-0.006, 0.006, b)
+        lobeIn = np.maximum(lobeIn, frontIn)
+        sideIn = np.maximum(sideIn, backIn * (1 - frontIn))
+        edge = np.maximum(edge, edgeLine(f, 0.020))
+        edge = np.maximum(edge, edgeLine(b, 0.020) * (1 - frontIn))
+        glow = np.maximum(glow, np.exp(-np.abs(f) * 22.0))
+        sdAll = np.minimum(sdAll, f)
+    floatLine = np.zeros_like(sdC); floatIn = np.zeros_like(sdC)
+    for i in range(4):
         fi = float(i)
-        cx = (fract(fi * 0.6180339 + 0.21) * 2 - 1) * 0.86 + 0.012 * np.sin(t * 0.45 + fi * 1.71)
-        cyv = (fract(fi * 0.3819660 + 0.37) * 2 - 1) * 0.80 + 0.028 * np.sin(t * 0.31 + fi * 2.23)
-        hx = 0.055 + 0.05 * fract(fi * 0.4142135)
-        hy = 0.055 + 0.06 * fract(fi * 0.7320508)
-        sd2 = sdBox(q, np.array([cx, cyv]), np.array([hx, hy]))
-        border = sstep(-0.030, -0.012, sd2) * (1 - sstep(0.0, 0.012, sd2))
-        core = 1 - sstep(-0.030, -0.012, sd2)
-        shellB = np.minimum(shellB + border, 1.0)
-        shellCore = np.maximum(shellCore, core * (1 - border))
+        cx = (fract(fi * 0.6180339 + 0.21) * 2 - 1) * 0.88 + 0.012 * np.sin(t * 0.45 + fi * 1.71)
+        cyv = (fract(fi * 0.3819660 + 0.37) * 2 - 1) * 0.82 + 0.028 * np.sin(t * 0.31 + fi * 2.23)
+        hx = 0.075 + 0.05 * fract(fi * 0.4142135)
+        hy = 0.075 + 0.06 * fract(fi * 0.7320508)
+        sd = sdBox(q, np.array([cx, cyv]), np.array([hx, hy]))
+        floatLine = np.maximum(floatLine, edgeLine(sd, 0.020))
+        floatIn = np.maximum(floatIn, 1 - sstep(-0.006, 0.006, sd))
+    edge = np.maximum(edge, floatLine)
+    glow = np.maximum(glow, floatLine * 0.8)
 
-    # synthetic world behind the plane (stands in for the copied framebuffer Sampler1)
-    bg_uv = uv
+    # synthetic world behind the plane
+    outside = np.maximum(sdAll, 0.0)
+    auraZone = np.exp(-outside * 4.0)
+    lensZone = crossIn * 0.9 + lobeIn * 0.5 + auraZone * 1.2
     wave = np.stack([np.sin(uv[..., 1] * 42.0 + t * 1.35) + 0.5 * np.sin(uv[..., 1] * 17.0 - t * 0.7),
                      np.cos(uv[..., 0] * 38.0 - t * 1.10) + 0.5 * np.cos(uv[..., 0] * 15.0 + t * 0.6)], -1)
-    lensZone = crossIn * (1 - crossEdge) + shellCore * 0.6
-    lensed = uv + wave * 0.006 * lensZone[..., None]
+    lensed = uv + wave * 0.009 * lensZone[..., None]
     skyC = mix(np.array([0.45, 0.62, 0.90]), np.array([0.85, 0.88, 0.95]), lensed[..., 1])
     ground = np.array([0.30, 0.42, 0.22])
     bg = np.where((lensed[..., 1] < 0.42)[..., None], ground, skyC)
 
-    # pixel-snapped pastel vortex
-    cell = np.floor(q * 12.0 + np.array([t * 0.10, -t * 0.07]))
-    n1, n2 = hash21(cell), hash21(cell + 17.7)
-    shift = 0.5 + 0.5 * np.sin(t * 0.22 + n1 * 6.2831)
+    # soft emissive pastel cloud
+    eq = np.floor(q * 26.0) / 26.0
+    n1 = noise2d(np.stack([eq[..., 0] * 2.3 - t * 0.020, eq[..., 1] * 2.3 + t * 0.015], -1))
+    n2 = noise2d(np.stack([eq[..., 0] * 3.1 + 7.7 + t * 0.016, eq[..., 1] * 3.1 + 7.7 - t * 0.012], -1))
+    n1 = 0.65 * n1 + 0.35 * noise2d(np.stack([(eq[..., 0] * 2.3) * 2.13 + 4.7, (eq[..., 1] * 2.3) * 2.13 + 4.7], -1))
     pink, yellow, orange = np.array([1.0, 0.62, 0.72]), np.array([1.0, 0.85, 0.45]), np.array([0.95, 0.45, 0.20])
-    pick = fract(n1 + t * 0.008)
-    vcol = np.where((pick < 0.40)[..., None], pink, np.where((pick < 0.72)[..., None], yellow, orange))
-    vcol = mix(vcol, np.array([1.0, 1.0, 1.0]), 0.18)
-    vcol = mix(vcol, np.array([1.0, 1.0, 1.0]), (hash21(cell + 4.2) > 0.965).astype(float))
-    vcol = vcol * (0.86 + 0.14 * n2)[..., None] * (0.92 + 0.08 * shift)[..., None]
+    energy = mix(orange, yellow, sstep(0.32, 0.68, n1))
+    energy = mix(energy, pink, sstep(0.42, 0.78, n2))
+    energy = mix(energy, tint, 0.12)
+    hot = np.exp(-1.1 * (q ** 2).sum(-1))
+    energy = mix(energy, np.array([1.0, 1.0, 1.0]), 0.12 + 0.32 * hot)
+    energy = energy * (0.92 + 0.28 * n1)[..., None]
+    energy = mix(energy, np.array([1.0, 1.0, 1.0]), (hash21(np.floor(q * 22.0) + 3.3) > 0.94).astype(float))
 
-    col = mix(bg, vcol, 0.80)
-    col = col * tierShade[..., None]
-    col = col + tint * 0.30 * np.exp(-1.6 * (q ** 2).sum(-1))[..., None]
-    col = mix(col, np.array([1.0, 1.0, 1.0]), crossEdge)
-    col = mix(col, np.array([1.0, 1.0, 1.0]), shellB * 0.92)
-    col = mix(col, vcol * 0.35, shellCore * 0.30)
-
-    a = np.maximum(crossIn * 0.90, np.maximum(crossEdge, np.maximum(shellB * 0.90, shellCore * 0.14)))
+    col = bg.copy()
+    a = np.zeros_like(sdC)
+    aura = np.exp(-np.maximum(sdAll, 0.0) * 4.5) * 0.42 * reveal
+    auraCol = mix(tint, np.array([1.0, 1.0, 1.0]), 0.30)
+    col = mix(col, auraCol, aura); a = aura
+    aSide = sideIn * 0.48
+    sideCol = mix(bg, tint, 0.45) * 0.85 + 0.10
+    col = mix(col, sideCol, aSide * (1 - a)); a = a + aSide * (1 - a)
+    aGlass = lobeIn * 0.55
+    glassCol = mix(bg, np.array([1.0, 1.0, 1.0]), 0.65)
+    col = mix(col, glassCol, aGlass * (1 - a)); a = a + aGlass * (1 - a)
+    aFloat = floatIn * 0.45
+    col = mix(col, glassCol, aFloat * (1 - a)); a = a + aFloat * (1 - a)
+    aEn = crossIn * 0.93
+    col = mix(col, energy, aEn * (1 - a)); a = a + aEn * (1 - a)
+    col = mix(col, np.array([1.0, 1.0, 1.0]), edge); a = a + edge * (1 - a)
+    col = col + glow[..., None] * 0.22
     a *= mix(0.10, 1.0, sstep(0.04, 0.30, fade))
     out = col * a[..., None] + bg * (1 - a[..., None])
     _I.fromarray((np.clip(out, 0, 1) * 255).astype(np.uint8)).save(f"{OUT}/plane_preview.png")

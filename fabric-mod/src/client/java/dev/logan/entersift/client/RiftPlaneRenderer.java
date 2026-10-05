@@ -78,7 +78,7 @@ public class RiftPlaneRenderer extends EntityRenderer<RiftPortalEntity, RiftPlan
             k -> RiftShape.build(s.type, s.seed, s.w, s.h));
         // One quad, yaw-rotated so its face turns to the player (same convention as the old window).
         RenderType type = RiftScene.request() ? RiftRenderLayers.PLANE_LENS : RiftRenderLayers.PLANE;
-        float half = Math.max(sh.w, sh.h) * 0.58f;
+        float half = Math.max(sh.w, sh.h) * 0.72f;
         float cy = sh.cy();
         float code = (s.view + (s.night ? 8 : 0) + 0.5f) / 32f;
         float a = clamp(s.age / RiftPortalRenderer.GROWN, 0f, 1f) * 0.5f;

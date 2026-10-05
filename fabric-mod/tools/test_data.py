@@ -1089,14 +1089,17 @@ class DataContracts(unittest.TestCase):
         client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
         # 1) vertex stage passes clip space -> normalized 2D screen coordinates (recipe item 2)
         self.assertIn('screenPos = gl_Position.xy / max(gl_Position.w, 0.00001) * 0.5 + 0.5;', vsh)
-        # 2) stepped cross mask, hollow shells, edge detection, pastel vortex, lens warp, sine drift
-        for token in ('vec2 crossField(vec2 q)', 'sdBox(q, vec2(0.0), vec2(0.16, 0.60))',
-                      'vec3 shellField(vec2 q, int i, float t)', 'float border =',
-                      'float crossEdge = crossIn * smoothstep(-0.055, -0.020, cf.x);',
-                      'vec3 vortex(vec2 q, float t, vec3 tint)',
+        # 2) chunky cluster: fat stepped cross + glass lobes + floaters, thin neon edges,
+        #    emissive pastel cloud interior, lens warp, sine drift
+        for token in ('float crossField(vec2 q)', 'sdBox(q, vec2(0.0), vec2(0.20, 0.58))',
+                      'const vec4 LOBES[6] = vec4[6](',
+                      'vec2 shellField(vec2 q, int i, float t)',
+                      'return vec2(edgeLine(sd, 0.020), 1.0 - smoothstep(-0.006, 0.006, sd));',
+                      'float edge = edgeLine(sdC, 0.024);',
                       'vec3 pink   = vec3(1.00, 0.62, 0.72);',
                       'vec3 yellow = vec3(1.00, 0.85, 0.45);',
                       'vec3 orange = vec3(0.95, 0.45, 0.20);',
+                      'energy = mix(energy, vec3(1.0), 0.12 + 0.32 * hot);',
                       '#ifdef RIFT_PLANE_LENS',
                       'uniform sampler2D Sampler0;', 'uniform sampler2D Sampler1;',
                       'warpedDepth > gl_FragCoord.z + 0.00001',
