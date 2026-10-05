@@ -346,10 +346,10 @@ def _plane_preview():
     # synthetic world behind the plane
     outside = np.maximum(sdAll, 0.0)
     auraZone = np.exp(-outside * 4.0)
-    lensZone = crossIn * 0.9 + lobeIn * 0.5 + auraZone * 1.2
+    lensZone = crossIn * 0.9 + lobeIn * 0.5 + auraZone * 0.45
     wave = np.stack([np.sin(uv[..., 1] * 42.0 + t * 1.35) + 0.5 * np.sin(uv[..., 1] * 17.0 - t * 0.7),
                      np.cos(uv[..., 0] * 38.0 - t * 1.10) + 0.5 * np.cos(uv[..., 0] * 15.0 + t * 0.6)], -1)
-    lensed = uv + wave * 0.009 * lensZone[..., None]
+    lensed = uv + wave * 0.006 * lensZone[..., None]
     skyC = mix(np.array([0.45, 0.62, 0.90]), np.array([0.85, 0.88, 0.95]), lensed[..., 1])
     ground = np.array([0.30, 0.42, 0.22])
     bg = np.where((lensed[..., 1] < 0.42)[..., None], ground, skyC)

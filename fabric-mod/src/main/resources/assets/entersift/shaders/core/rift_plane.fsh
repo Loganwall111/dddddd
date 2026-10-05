@@ -156,11 +156,11 @@ void main() {
     vec2 texel = 1.0 / size;
     float outside = max(sdAll, 0.0);
     float auraZone = exp(-outside * 4.0);
-    float lensZone = crossIn * 0.9 + lobeIn * 0.5 + auraZone * 1.2;
+    float lensZone = crossIn * 0.9 + lobeIn * 0.5 + auraZone * 0.45;
     vec2 wave = vec2(
         sin(screenPos.y * 42.0 + t * 1.35) + 0.5 * sin(screenPos.y * 17.0 - t * 0.7),
         cos(screenPos.x * 38.0 - t * 1.10) + 0.5 * cos(screenPos.x * 15.0 + t * 0.6));
-    vec2 sampleUv = clamp(screenPos + wave * texel * 9.0 * lensZone, texel * 0.5, vec2(1.0) - texel * 0.5);
+    vec2 sampleUv = clamp(screenPos + wave * texel * 6.0 * lensZone, texel * 0.5, vec2(1.0) - texel * 0.5);
     // Reverse-Z depth guard: never drag an occluder into the portal.
     float warpedDepth = texture(Sampler0, sampleUv).r;
     if (warpedDepth > gl_FragCoord.z + 0.00001) sampleUv = screenPos;
