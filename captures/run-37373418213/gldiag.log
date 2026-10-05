@@ -1,0 +1,37 @@
+== glxinfo ==
+name of display: :99
+display: :99  screen: 0
+direct rendering: Yes
+Extended renderer info (GLX_MESA_query_renderer):
+    Vendor: Mesa (0xffffffff)
+    Device: llvmpipe (LLVM 20.1.2, 256 bits) (0xffffffff)
+    Version: 25.2.8
+    Accelerated: no
+    Video memory: 15989MB
+    Unified memory: yes
+    Preferred profile: core (0x1)
+    Max core profile version: 4.5
+    Max compat profile version: 4.5
+    Max GLES1 profile version: 1.1
+== eglinfo ==
+GBM platform:
+eglinfo: eglInitialize failed
+
+Wayland platform:
+eglinfo: eglInitialize failed
+
+X11 platform:
+EGL API version: 1.5
+EGL vendor string: Mesa Project
+EGL version string: 1.5
+== vulkaninfo ==
+	apiVersion         = 1.4.318
+	deviceName         = llvmpipe (LLVM 20.1.2, 256 bits)
+asahi_icd.json
+gfxstream_vk_icd.json
+intel_hasvk_icd.json
+intel_icd.json
+lvp_icd.json
+nouveau_icd.json
+radeon_icd.json
+virtio_icd.json
