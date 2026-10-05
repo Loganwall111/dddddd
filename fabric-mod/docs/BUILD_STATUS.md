@@ -353,3 +353,17 @@ but unusable.
 - `RiftEnergyCubeParticle.java`: 3D voxel energy blocks (`0.25..0.5` blocks) now drift strictly upward on
   `+Y` (`velocity.y += 0.04f`, zero horizontal X/Z drift), cycle Saturated Mint-Green, Electric Cyan, and
   Pale Pink, and flatten/dissolve horizontally at `age >= 0.75 * maxAge`.
+
+## Headless real-client capture (run 37349186470)
+
+- Added an opt-in mailbox screenshot hook (`SiftCapture`) and `.github/workflows/sift-capture.yml`. The
+  GitHub runner launches a real Minecraft 26.3 Fabric client and server with Temurin Java 25 and
+  Xvfb/llvmpipe; no Java or game client was installed in the local sandbox.
+- The capture run on `8a98e8d` succeeded in 18m12s. The script requires at least eight PNGs, and the
+  workflow uploaded artifact `sift-rift-captures-37349186470` (Artifact ID `11363160280`, 2,497,270
+  bytes). It also completed the separate build/GLSL/server-smoke workflow (run `37349186454`).
+- Captures and logs are kept as a GitHub Actions artifact, not committed to this branch. The sandbox's
+  `gh run download` / run-log download hit an `EOF` from GitHub's signed artifact-storage URL; therefore
+  this run is confirmed as a real successful capture, but its pixels have not yet been inspected here.
+  Download the artifact from [run 37349186470](https://github.com/Loganwall111/dddddd/actions/runs/37349186470)
+  to review the frames. This validates the mod in Minecraft, not the Dungeons II client.

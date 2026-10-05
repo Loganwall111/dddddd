@@ -15,6 +15,9 @@ Keep the project's established renderer architecture: the active GPU Rift is a 2
 
 The existing 0–100 opening lifecycle, SDF shape, refraction/depth guard, warm fBM energy field, and `RiftEnergyCubeParticle` remain intact. The legacy CPU fallback geometry is separate and unchanged; the shader path does not call its `boxFaces` renderer.
 
-## Validation still required
+## Validation status
 
-The new extrusion count is covered by an offline contract test; the next GitHub Actions run will compile the Java and GLSL changes. No Minecraft client render has been captured after this change. The client-only `/siftshot` command can save a frame after `/function entersift:dev/riftcheck`; a real client screenshot is needed before judging the depth tuning. The game installation/assets are not yet present in the sandbox.
+- The extrusion count is covered by an offline contract test. GitHub Actions run [37349186470](https://github.com/Loganwall111/dddddd/actions/runs/37349186470) completed successfully on commit `8a98e8d`; the matching Fabric build, shader checks, and 26.3 server smoke test also passed in [run 37349186454](https://github.com/Loganwall111/dddddd/actions/runs/37349186454).
+- The headless capture workflow launched a real Minecraft 26.3 Fabric dev client and server under Xvfb/llvmpipe. Its sequence requires at least eight PNG captures before returning success. The uploaded 2.50 MB artifact is [available from the run](https://github.com/Loganwall111/dddddd/actions/runs/37349186470/artifacts/11363160280); captures/logs are artifacts and are not committed to the source branch.
+- This is an actual Minecraft client render of the mod, **not** a Dungeons II client test. The sandbox's `gh run download` could not fetch the artifact because the signed GitHub storage download ended with `EOF`, so the pixels have not yet been visually inspected here. The artifact can be downloaded from the Actions page to finish that review.
+- `/siftshot` remains available after `/function entersift:dev/riftcheck` for a local client capture. The Dungeons II installation/assets are still not accessible in this sandbox, so comparison against a running Dungeons II build remains outstanding.
