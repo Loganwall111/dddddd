@@ -181,15 +181,15 @@ void main() {
     float hot = exp(-1.1 * dot(q, q));
     energy = mix(energy, vec3(1.0), 0.12 + 0.32 * hot);  // near-white hot core like the refs
     energy *= 0.92 + 0.28 * n1;
-    energy = mix(energy, vec3(1.0), step(0.94, hash21(floor(q * 22.0) + 3.3)));  // spark pixels
+    energy = mix(energy, vec3(1.0), step(0.96, hash21(floor(q * 22.0) + 3.3)));  // spark pixels
 
     // ---- layer stack (back to front): aura haze, extrusion sides, glass, energy, edges ----
     vec3 col = bg;
     float a = 0.0;
-    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.80, 0.0) * 3.0) * 0.55 * reveal;
-    vec3 auraCol = mix(energy, vec3(1.0), 0.30);
-    col += auraCol * aura * 0.65;          // additive mist: stays coloured over any sky
-    a = max(a, aura * 0.30);
+    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.90, 0.0) * 3.5) * reveal;
+    float aA = aura * 0.45;                // dense saturated fog, like the refs' coloured mist
+    col = mix(col, energy * 1.05, aA);
+    a = max(a, aA);
 
     float aSide = sideIn * 0.48;
     vec3 sideCol = mix(bg, tint, 0.45) * 0.85 + 0.10;
