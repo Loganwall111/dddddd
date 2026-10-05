@@ -186,8 +186,8 @@ void main() {
     // ---- layer stack (back to front): aura haze, extrusion sides, glass, energy, edges ----
     vec3 col = bg;
     float a = 0.0;
-    float aura = exp(-max(sdAll, 0.0) * 6.0) * 0.34 * reveal;
-    vec3 auraCol = mix(tint, vec3(1.0), 0.12);
+    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.80, 0.0) * 3.0) * 0.36 * reveal;
+    vec3 auraCol = mix(energy, vec3(1.0), 0.30);
     col = mix(col, auraCol, aura); a = aura;
 
     float aSide = sideIn * 0.48;

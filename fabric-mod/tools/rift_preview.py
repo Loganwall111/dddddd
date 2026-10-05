@@ -370,8 +370,8 @@ def _plane_preview():
 
     col = bg.copy()
     a = np.zeros_like(sdC)
-    aura = np.exp(-np.maximum(sdAll, 0.0) * 6.0) * 0.34 * reveal
-    auraCol = mix(tint, np.array([1.0, 1.0, 1.0]), 0.12)
+    aura = np.exp(-np.maximum(np.linalg.norm(q * np.array([0.9, 1.0]), axis=-1) - 0.80, 0.0) * 3.0) * 0.36 * reveal
+    auraCol = mix(energy, np.array([1.0, 1.0, 1.0]), 0.30)
     col = mix(col, auraCol, aura); a = aura
     aSide = sideIn * 0.48
     sideCol = mix(bg, tint, 0.45) * 0.85 + 0.10
