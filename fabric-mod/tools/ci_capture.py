@@ -162,9 +162,12 @@ def main():
     r.cmd("weather clear")                       # one run rained mid-capture; refs are all clear-sky
     time.sleep(20)                               # llvmpipe chunk bakes are slow - let terrain finish
     r.cmd("time set noon")
-    r.cmd(f"tp {who} 0 -53.5 13 180 -6")   # frame the summon spot BEFORE the timeline starts
+    r.cmd(f"tp {who} 0 -53.5 14 180 -6")   # frame the summon spot BEFORE the timeline starts
     time.sleep(0.5)
-    r.cmd("summon entersift:rift_portal 0 -56 0")
+    # 0.37: RiftType 0 (OVERWORLD) at z=+1 resolves to view style 0, the warm coral/gold rift of the
+    # reference photos (RiftShape.hash(seed,7,233)=0.31 -> style 0). Every camera below is offset +1 in z
+    # so it stays centred on the rift.
+    r.cmd("summon entersift:rift_portal 0 -56 1 {RiftType:0}")
     queue("rift_summon_flash")             # grabbed ~tick 8: white flash + first lightning
     queue("rift_summon_ring")              # serialized second grab ~tick 34: expanding ring arcs
     queue("rift_summon_bolt")              # third grab: the mixed-colour bolt variants
@@ -172,39 +175,39 @@ def main():
     await_done("rift_summon_ring")
     await_done("rift_summon_bolt")
     time.sleep(8)                       # finish the 100-tick growth + chunk settle
-    shoot(r, "rift_first_person", f"tp {who} 0 -53.5 13 180 -6")
-    shoot(r, "rift_side_angle", f"tp {who} 12.5 -53 0 90 -5")
+    shoot(r, "rift_first_person", f"tp {who} 0 -53.5 14 180 -6")
+    shoot(r, "rift_side_angle", f"tp {who} 12.5 -53 1 90 -5")
     # 0.37: low three-quarter view — this is the angle that proves the shell is real geometry
     # (front panel lip, top faces of the steps and the recessed reveal all visible at once).
-    shoot(r, "rift_oblique_low", f"tp {who} 8.0 -54.6 8.0 135 -16")
-    shoot(r, "rift_close_up", f"tp {who} 0 -53 10 180 -8")
+    shoot(r, "rift_oblique_low", f"tp {who} 8.0 -54.6 9.0 135 -16")
+    shoot(r, "rift_close_up", f"tp {who} 0 -53 11 180 -8")
     # 0.37 membrane reveal: spectators cannot trigger the crossing, so the camera can sit right at
     # the glass and photograph the frost clearing to the scene behind the rift.
     r.cmd(f"gamemode spectator {who}")
     time.sleep(1)
     # 0.37: framed on the glazed square (the rift's window cell sits ~1.75 blocks above its base at
     # y=-56), far enough out that the whole opening fits the frame. This is the reveal shot.
-    shoot(r, "rift_membrane_near", f"tp {who} 0 -54.2 6.0 180 -1", settle=3)
+    shoot(r, "rift_membrane_near", f"tp {who} 0 -54.2 7.0 180 -1", settle=3)
     # …and the same opening seen from BEHIND, where the dissolving back panes are the point.
-    shoot(r, "rift_back_dissolve", f"tp {who} 3.0 -53.0 -12.5 0 -6", settle=3)
+    shoot(r, "rift_back_dissolve", f"tp {who} 3.0 -53.0 -11.5 0 -6", settle=3)
     r.cmd(f"gamemode creative {who}")
-    r.cmd(f"tp {who} 0 -53.5 13 180 -6")
+    r.cmd(f"tp {who} 0 -53.5 14 180 -6")
     r.cmd("time set midnight")
     time.sleep(3)
-    shoot(r, "rift_night_front", f"tp {who} 0 -53.5 13 180 -6")
+    shoot(r, "rift_night_front", f"tp {who} 0 -53.5 14 180 -6")
     # 0.37 beam gate: ON through the night and the morning, OFF in the evening (as the references show).
     r.cmd("time set 23400")             # early morning
     time.sleep(2)
-    shoot(r, "rift_morning_beam", f"tp {who} 0 -53.5 13 180 -6")
+    shoot(r, "rift_morning_beam", f"tp {who} 0 -53.5 14 180 -6")
     r.cmd("time set 11800")             # dusk / evening: no column
     time.sleep(2)
-    shoot(r, "rift_evening", f"tp {who} 0 -53.5 13 180 -6")
+    shoot(r, "rift_evening", f"tp {who} 0 -53.5 14 180 -6")
     # alpha-transparency proof: same rift, camera above it so the FLAT GROUND shows through the window.
     # abilities.flying never stuck, so borrow spectator's guaranteed flight for this one angle.
     r.cmd("time set noon")
     r.cmd(f"gamemode spectator {who}")
     time.sleep(2)
-    shoot(r, "rift_against_ground", f"tp {who} 0 -48.5 9 180 24")
+    shoot(r, "rift_against_ground", f"tp {who} 0 -48.5 10 180 24")
     r.cmd(f"gamemode creative {who}")
     # Sift dimension sky: the quilted pastel dome (MCD2 ref) - never photographed until now
     r.cmd(f"execute in entersift:the_sift run tp {who} 0 120 0 180 -35")

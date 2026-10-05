@@ -318,6 +318,22 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         win(p, vc, wv, sh, x, y, z, code, fade, 0f);
     }
 
+    /** One pane across a rect, with the uv mapped over that rect (the opening's own 0..1 face uv). */
+    private static void winPaneSub(PoseStack.Pose p, VertexConsumer vc, Warp wv,
+                                   float x0, float y0, float x1, float y1, float z, float code, float fade, float frost) {
+        for (int sx = 0; sx < SUB; sx++) for (int sy = 0; sy < SUB; sy++) {
+            float xa = x0 + (x1 - x0) * (sx / (float) SUB), xb = x0 + (x1 - x0) * ((sx + 1) / (float) SUB);
+            float ya = y0 + (y1 - y0) * (sy / (float) SUB), yb = y0 + (y1 - y0) * ((sy + 1) / (float) SUB);
+            for (float[] q : new float[][]{{xa, ya}, {xb, ya}, {xb, yb}, {xa, yb}}) {
+                if (!SiftBudget.take(vc)) return;
+                float wx = q[0] + wv.dx(q[0], q[1], z), wy = q[1] + wv.dy(q[0], q[1], z), wz = z + wv.dz(q[0], q[1], z);
+                if (!Float.isFinite(wx + wy + wz)) { wx = 0f; wy = 0f; wz = 0f; }
+                float u = clamp((q[0] - x0) / (x1 - x0), 0f, 1f), v = clamp((q[1] - y0) / (y1 - y0), 0f, 1f);
+                vc.addVertex(p, wx, wy, wz).setColor(u, v, code, clamp(fade, 0f, 1f) * 0.5f + clamp(frost, 0f, 1f) * 0.5f);
+            }
+        }
+    }
+
     private static void win(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float x, float y, float z, float code, float fade, float frostTint) {
         if (!SiftBudget.take(vc)) return;
         float span = Math.max(sh.w, sh.h) * 1.15f;
@@ -718,12 +734,29 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s, float fade, float frost) {
-        // 0.37: with the stepped-box look the opening is only the glazed cells; every other cell is
+        // 0.37: with the stepped-box look the opening is only the glazed square; every other cell is
         // solid frosted slab geometry (boxFaces), on the GPU path as well as the fallback.
         boolean boxFace = SiftBudget.riftBoxFace;
+        if (boxFace) {
+            // ONE pane across the whole glazed square. Drawing it cell by cell put a visible 3x3 grid of
+            // glass tiles in the opening; the reference photos show a single frosted sheet.
+            int i0 = sh.cols, i1 = -1, j0 = sh.rows, j1 = -1;
+            for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
+                if (!sh.windowCell(i, j)) continue;
+                i0 = Math.min(i0, i); i1 = Math.max(i1, i);
+                j0 = Math.min(j0, j); j1 = Math.max(j1, j);
+            }
+            if (i1 >= i0 && j1 >= j0) {
+                float x0 = sh.x(i0), x1 = sh.x(i1 + 1), y0 = sh.y(j0), y1 = sh.y(j1 + 1);
+                // The membrane's own uv spans the opening (its cavity shading is keyed off the pane edge),
+                // and it sits at the deepest recess of the cells it covers, flush with the reveal walls.
+                float z = -sh.d(i0, j0);
+                winPaneSub(p, vc, wv, x0, y0, x1, y1, z, code, fade, frost);
+            }
+            return; // satellites and cubes are frosted boxes too, drawn by boxFaces
+        }
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
-            if (boxFace && !sh.windowCell(i, j)) continue; // the stepped box is frosted; boxFaces draws it
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1), z = -sh.d(i, j);
             // The glazed square keeps a frosted sheet over it that clears (never fully) as the camera closes in.
             winQuadSub(p, vc, wv, sh, x0, y0, x1, y1, z, code, fade, frost);
@@ -789,7 +822,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
             float[] col = tipCell ? pane : face;
             // Front face on the lip plane: crisp, full strength.
-            rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.94f * tf);
+            rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.82f * tf);   // frosted glass, not paint
             // Back face at the recess depth: dissolves with depth (0.20 floor far back).
             float ba = (0.20f + 0.80f * backFade(z)) * 0.85f * tf;
             if (ba > 0.01f) rectSub(p, vc, wv, x0, y0, x1, y1, z, back, ba);
@@ -1110,7 +1143,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static void frame(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
         // 0.37: the frame is real geometry on the GPU path too, and it stands PROUD of the glass,
         // so the outer frames read as three-dimensional rails from every angle.
-        float[] face = look.wallFront(), side = mix(look.wallFront(), look.wallBack(), 0.35f);
+        // The references' frame is white/cream against the coloured shell, so the flange leans white
+        // rather than wearing the wall's own peach.
+        float[] face = mix(look.wallFront(), c(1f, 1f, 1f), 0.28f);
+        float[] side = mix(face, look.wallBack(), 0.35f);
         float F = FLANGE, C = PROUD;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
