@@ -144,6 +144,16 @@ class DataContracts(unittest.TestCase):
         self.assertIn('client.gameRenderer.mainRenderTarget()',capture)
         self.assertIn('getGameDir().toFile()',capture)
 
+    def test_dungeons_reference_uses_deeper_shader_extrusion_without_gpu_block_meshes(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        renderer=(C/'RiftPortalRenderer.java').read_text()
+        self.assertIn('for (int layer = 14; layer >= 1; layer--)',renderer)
+        self.assertIn('float z = -layer * 0.06f - 0.004f;',renderer)
+        self.assertIn('float sliceFade = 0.32f * (1f - layer / 15f) * openRamp;',renderer)
+        gpu_path=renderer.split('if (gpu) {',1)[1].split('} else {',1)[0]
+        self.assertIn('shaderQuadCanvas(',gpu_path)
+        self.assertNotIn('boxFaces(',gpu_path)
+
     def test_rift_loop_assets_registration_and_cleanup(self):
         import wave
         sounds=json.loads((R/'assets/entersift/sounds.json').read_text())

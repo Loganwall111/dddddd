@@ -62,7 +62,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
      *   Phase B (DISTORTION)     -> seed bar, shockwave, radial back distortion, bolts
      *   Phase C (WHITE_IGNITION) -> intense white flash & stepped aperture birth
      *   Phase D (COLOR_REVEAL)   -> white flash dissolves into cyan/pink/magenta/style colours
-     *   Phase E (STABLE_OPEN)    -> full 10-layer idle Rift with wavy dark bands, floating squares, and god rays
+     *   Phase E (STABLE_OPEN)    -> full shader-extruded idle Rift with wavy dark bands, floating squares, and god rays
      *   Phase F (CLOSING)        -> inward contraction and clean fade before removal
      */
     public enum LifecyclePhase {
@@ -398,8 +398,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     /**
      * Pure GLSL Shader-Driven Rift Canvas:
      * Emits the double-sided 2D SDF quad plane at z = +0.004f (packing u_Progress in [0, 1] into frostAmt)
-     * plus 10 receding volumetric Aurora/cloud extrusion slices behind the front plane (z = -0.05f .. -0.50f)
-     * once the stepped fracture phase begins (age >= 60).
+     * plus 14 receding volumetric Aurora/cloud extrusion slices around the front plane (z = -0.064f .. -0.844f)
+     * once the stepped fracture phase begins (age >= 60). The thicker shader-only slab echoes the reference's
+     * visibly extruded cuboid frame without restoring per-block Rift meshes.
      */
     private static void shaderQuadCanvas(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, float age, float code) {
         float x0 = -sh.w * 0.68f, x1 = sh.w * 0.68f;
@@ -408,9 +409,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         // Volumetric extrusion slices behind the front plane (drawn back-to-front so alpha blending layers cleanly)
         if (age >= 60f) {
             float openRamp = clamp((age - 60f) / 25f, 0f, 1f);
-            for (int layer = 10; layer >= 1; layer--) {
-                float z = -layer * 0.048f - 0.004f;
-                float sliceFade = 0.44f * (1f - layer / 11f) * openRamp;
+            for (int layer = 14; layer >= 1; layer--) {
+                float z = -layer * 0.06f - 0.004f;
+                float sliceFade = 0.32f * (1f - layer / 15f) * openRamp;
                 float aSlice = clamp(sliceFade, 0f, 0.90f) * 0.5f;
                 emitDoubleQuad(p, vc, x0, y0, x1, y1, z, code, aSlice);
             }
