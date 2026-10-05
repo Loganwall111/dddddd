@@ -15,6 +15,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
 
 /**
@@ -81,6 +82,7 @@ public class WatcherEyeEntity extends Entity {
 		}
 
 		int stage = getStage();
+		ServerWorld sw = (ServerWorld) getWorld();
 		if (stage == 0) {
 			// loom over the player, then descend
 			double wantY = target.getY() + 16.0;
@@ -108,14 +110,14 @@ public class WatcherEyeEntity extends Entity {
 			target.setVelocity(v);
 			target.velocityDirty = true;
 			target.fallDistance = 0.0F;
-			getWorld().spawnParticles(ParticleTypes.REVERSE_PORTAL, target.getX(), target.getY() + 1, target.getZ(), 40, 1.2, 2.0, 1.2, 0.1);
+			sw.spawnParticles(ParticleTypes.REVERSE_PORTAL, target.getX(), target.getY() + 1, target.getZ(), 40, 1.2, 2.0, 1.2, 0.1);
 			if (grabTicks > 140) {
 				// reality reassembles: the threshold is open now
 				target.getCommandTags().add(BeyondTheThreshold.TAG_THRESHOLD);
 				BTTNet.sendThreshold(target, true);
 				BTTNet.sendEyeSequence(target, 2);
 				getWorld().playSound(null, target.getBlockPos(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 4.0F, 0.7F);
-				getWorld().spawnParticles(ParticleTypes.PORTAL, target.getX(), target.getY() + 1, target.getZ(), 200, 2, 2, 2, 0.4);
+				sw.spawnParticles(ParticleTypes.PORTAL, target.getX(), target.getY() + 1, target.getZ(), 200, 2, 2, 2, 0.4);
 				discard();
 			}
 		}

@@ -92,6 +92,7 @@ public class BTTClient implements ClientModInitializer {
 		if (client.player == null || client.world == null) {
 			return;
 		}
+		BTTClientState.shrunk = client.player.getCommandTags().contains("btt_shrunk");
 		BTTClientState.flash *= 0.92F;
 		BTTClientState.shake *= 0.94F;
 		if (BTTClientState.travelFlash > 0) {

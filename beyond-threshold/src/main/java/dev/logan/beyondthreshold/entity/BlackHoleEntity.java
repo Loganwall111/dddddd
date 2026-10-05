@@ -17,6 +17,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
 
 /**
@@ -85,12 +86,13 @@ public class BlackHoleEntity extends Entity {
 
 		double r = getRadius();
 		Vec3d c = getPos();
+		ServerWorld sw = (ServerWorld) getWorld();
 
 		// accretion swirl particles
 		if (age % 3 == 0) {
 			double a = random.nextDouble() * Math.PI * 2;
 			double rr = r * (1.2 + random.nextDouble() * 2.0);
-			getWorld().spawnParticles(ParticleTypes.REVERSE_PORTAL,
+			sw.spawnParticles(ParticleTypes.REVERSE_PORTAL,
 					c.x + Math.cos(a) * rr, c.y + random.nextDouble() * 2 - 1, c.z + Math.sin(a) * rr,
 					6, 0.4, 0.4, 0.4, 0.02);
 		}
@@ -124,7 +126,6 @@ public class BlackHoleEntity extends Entity {
 				p.fallDistance = 0.0F;
 				// spaghettification: stretch the victim towards the horizon
 				float s = (float) Math.max(0.25, d / (r * 1.4));
-				p.setScale(s);
 				if (age % 20 == 0) {
 					p.damage(p.getDamageSources().magic(), 2.0F);
 				}
@@ -138,7 +139,6 @@ public class BlackHoleEntity extends Entity {
 					}
 				}
 			} else {
-				p.setScale(1.0F);
 			}
 			p.setVelocity(v);
 			p.velocityDirty = true;
@@ -156,6 +156,7 @@ public class BlackHoleEntity extends Entity {
 	/** Nuke physics: flash, fireball, shockwave ring, crater. */
 	private void collapseNow() {
 		Vec3d c = getPos();
+		ServerWorld sw = (ServerWorld) getWorld();
 		float power = BTTConfig.get().collapsePower;
 		for (PlayerEntity bttPe : getWorld().getPlayers()) { if (!(bttPe instanceof ServerPlayerEntity p)) continue;
 			if (p.getPos().distanceTo(c) < 160) {
@@ -174,8 +175,8 @@ public class BlackHoleEntity extends Entity {
 						power * 0.35F, false, World.ExplosionSourceType.TNT);
 			});
 		}
-		getWorld().spawnParticles(ParticleTypes.FLASH, c.x, c.y, c.z, 1, 0, 0, 0, 0);
-		getWorld().spawnParticles(ParticleTypes.EXPLOSION, c.x, c.y, c.z, 24, 4, 4, 4, 0.2);
+		sw.spawnParticles(ParticleTypes.FLASH, c.x, c.y, c.z, 1, 0, 0, 0, 0);
+		sw.spawnParticles(ParticleTypes.EXPLOSION, c.x, c.y, c.z, 24, 4, 4, 4, 0.2);
 		discard();
 	}
 

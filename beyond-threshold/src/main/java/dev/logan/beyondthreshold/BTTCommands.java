@@ -1,6 +1,5 @@
 package dev.logan.beyondthreshold;
 
-import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.logan.beyondthreshold.entity.BlackHoleEntity;
 import dev.logan.beyondthreshold.entity.RealityTearEntity;
@@ -62,16 +61,15 @@ public final class BTTCommands {
 									BTTNet.sendMandela(ctx.getSource().getPlayerOrThrow(), mode);
 									return SINGLE_SUCCESS;
 								})))
-						.then(literal("shrink")
-								.then(argument("scale", FloatArgumentType.floatArg(0.05F, 1.0F)).executes(ctx -> {
-									ServerPlayerEntity p = ctx.getSource().getPlayerOrThrow();
-									p.setScale(FloatArgumentType.getFloat(ctx, "scale"));
-									p.sendMessage(Text.translatable("message.beyondthreshold.shrunk"), true);
-									return SINGLE_SUCCESS;
-								})))
+						.then(literal("shrink").executes(ctx -> {
+							ServerPlayerEntity p = ctx.getSource().getPlayerOrThrow();
+							p.getCommandTags().add("btt_shrunk");
+							p.sendMessage(Text.translatable("message.beyondthreshold.shrunk"), true);
+							return SINGLE_SUCCESS;
+						}))
 						.then(literal("grow").executes(ctx -> {
 							ServerPlayerEntity p = ctx.getSource().getPlayerOrThrow();
-							p.setScale(1.0F);
+							p.getCommandTags().remove("btt_shrunk");
 							return SINGLE_SUCCESS;
 						}))
 						.then(literal("return").executes(ctx -> {

@@ -11,6 +11,7 @@ public final class BTTClientState {
 	public static int sequenceTick = 0;
 	public static float flash = 0.0F;
 	public static float shake = 0.0F;
+	public static boolean shrunk = false;
 	public static int travelDim = -1;
 	public static long travelSeed = 0;
 	public static int travelFlash = 0;
