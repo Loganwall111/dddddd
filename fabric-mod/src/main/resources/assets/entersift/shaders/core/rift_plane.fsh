@@ -186,9 +186,10 @@ void main() {
     // ---- layer stack (back to front): aura haze, extrusion sides, glass, energy, edges ----
     vec3 col = bg;
     float a = 0.0;
-    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.80, 0.0) * 3.0) * 0.36 * reveal;
+    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.80, 0.0) * 3.0) * 0.55 * reveal;
     vec3 auraCol = mix(energy, vec3(1.0), 0.30);
-    col = mix(col, auraCol, aura); a = aura;
+    col += auraCol * aura * 0.65;          // additive mist: stays coloured over any sky
+    a = max(a, aura * 0.30);
 
     float aSide = sideIn * 0.48;
     vec3 sideCol = mix(bg, tint, 0.45) * 0.85 + 0.10;
