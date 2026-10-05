@@ -14,7 +14,9 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 packLight;
 layout(location = 2) out vec4 packNormal;
 
-#if defined(RIFT_REFRACT) || defined(RIFT_MEMBRANE) || defined(RIFT_MEMBRANE_REFRACT)
+// 0.37: declared ONLY for the pipelines that bind SAMPLER0_SAMPLER1 (a declared sampler that the
+// pipeline's bind group layout does not provide fails pipeline creation at the first draw).
+#if defined(RIFT_REFRACT) || defined(RIFT_MEMBRANE_REFRACT)
 uniform sampler2D Sampler0; // copied scene depth, nearest, reverse-Z
 uniform sampler2D Sampler1; // copied scene colour, linear, clamp-to-edge
 #endif

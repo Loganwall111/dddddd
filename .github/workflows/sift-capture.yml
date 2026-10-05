@@ -60,6 +60,19 @@ jobs:
           pkill -f GradleWrapperMain || true
           pkill -f net.minecraft || true
           exit "$rc"
+      # 0.37: the run log cannot be downloaded from the sandbox that reviews these runs (the log blob
+      # host is firewalled), and annotations ARE readable through the API, so a failed capture explains
+      # itself here instead of dead-ending.
+      - name: Report the capture failure as annotations
+        if: failure()
+        shell: bash
+        run: |
+          for f in /tmp/capture.log /tmp/client.log; do
+            [ -f "$f" ] || continue
+            body=$(tail -c 2500 "$f" | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | tr '\n' '\036' | sed -e 's/\036/%0A/g')
+            echo "::error title=$(basename "$f") tail::$body"
+          done
+          echo "::error title=capture dir::$([ -d fabric-mod/build/captures ] && ls fabric-mod/build/captures | tr '\n' ' ' || echo missing)"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -94,6 +107,8 @@ jobs:
           [ ${#logs[@]} -gt 0 ] && cp "${logs[@]}" "$dest/" || true
           git config user.name "sift-capture"
           git config user.email "actions@users.noreply.github.com"
-          git add "$dest"
+          # -f because *.log is gitignored repo-wide: the first run that failed published nothing, so
+          # the crash log never reached the reviewer. Pixels and logs both have to land.
+          git add -f "$dest"
           git commit -m "captures: headless rift run ${GITHUB_RUN_ID} [skip ci]" || { echo "nothing to commit"; exit 0; }
           git push origin "HEAD:${GITHUB_REF_NAME}"

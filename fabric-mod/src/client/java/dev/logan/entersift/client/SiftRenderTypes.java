@@ -105,6 +105,10 @@ public final class SiftRenderTypes {
      * 0.37 the membrane: the rift's opening surface, emitted as real recessed geometry.
      * RIFT_MEMBRANE paints the frosted destination, RIFT_MEMBRANE_REFRACT additionally
      * reveals the scene that is really behind the rift as the camera closes in.
+     *
+     * Only the _REFRACT variant binds SAMPLER0_SAMPLER1, and rift.fsh declares Sampler0/Sampler1 under
+     * exactly that define set: a shader that declares a sampler the pipeline layout does not provide
+     * fails pipeline creation the first time the rift is drawn. Keep the two in step.
      */
     public static final RenderPipeline RIFT_MEMBRANE_PIPELINE = RenderPipelines.register(riftVariant("rift_membrane", "RIFT_MEMBRANE")
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
