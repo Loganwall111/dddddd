@@ -423,7 +423,7 @@ public final class SiftSky {
         for (int i = 0; i < QAZ; i++) for (int j = 0; j < QEL; j++) {
             float h = hash(i, j, 171);
             float[] col = lerp(QUILT[(int) (h * QUILT.length) % QUILT.length], pal.blobs()[(i + j) % 4], 0.15f);
-            float alpha = 0.22f + 0.24f * hash(i, j, 172);
+            float alpha = 0.34f + 0.30f * hash(i, j, 172);
             alpha *= 0.85f + 0.15f * (float) Math.sin(t * 0.09f + h * 6.28f);
             double az0 = (i / (float) QAZ + drift) * Math.PI * 2, az1 = ((i + 1) / (float) QAZ + drift) * Math.PI * 2;
             double el0 = -0.05 + j / (float) QEL * 1.5, el1 = -0.05 + (j + 1) / (float) QEL * 1.5;
@@ -472,7 +472,7 @@ public final class SiftSky {
                     + 0.055 * Math.sin(az * 3.0 + t * 0.10 + k * 1.7)
                     + 0.030 * Math.sin(az * 6.0 - t * 0.061 + k)
                     + 0.018 * Math.sin(az * 11.0 + t * 0.13 + k * 0.7);
-                float a = 0.16f * strength * pulse;
+                float a = 0.09f * strength * pulse;   // 0.23.3: arches subtler - MCD2 quilt reads first
                 // Column of three directions: band edges fade to zero alpha, centre carries the glow.
                 float[][] dNow = {dir(az, el - half), dir(az, el), dir(az, el + half)};
                 float[] aNow = {0f, a, 0f};
