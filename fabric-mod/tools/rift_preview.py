@@ -285,3 +285,79 @@ def _sky_preview(w_thrive, dark_op, name):
 _sky_preview(0.0, 0.78, "sky_flow.png")
 _sky_preview(1.0, 0.92, "sky_thrive.png")
 print("sky previews written")
+
+# ---------------------------------------------------------------------------
+# 0.41 screen-space plane preview: mirrors core/rift_plane.fsh (official recipe round 1).
+# Stepped cross mask, hollow drifting shells, white edge detection, pastel vortex over a
+# synthetic "world behind" that the wave matrix lens-warps inside the shape.
+def _plane_preview():
+    from PIL import Image as _I
+    S = 420
+    gy, gx = np.mgrid[0:S, 0:S]
+    uv = np.stack([(gx + 0.5) / S, 1 - (gy + 0.5) / S], -1)   # v up like GL
+    q = (uv * 2 - 1) * np.array([1.0, 1.12])
+    t = 12.0
+    tint = np.array([0.97, 0.60, 0.40])
+    fade = 1.0
+
+    def sdBox(qq, c, h):
+        d = np.abs(qq - c) - h
+        return np.maximum(d[..., 0], d[..., 1])
+
+    sd = sdBox(q, np.array([0.0, 0.0]), np.array([0.16, 0.60]))
+    for c, h in (((0, 0), (0.60, 0.16)), ((0, 0), (0.30, 0.30)),
+                 ((0, 0.44), (0.10, 0.14)), ((0, -0.44), (0.10, 0.14)),
+                 ((0.44, 0), (0.14, 0.10)), ((-0.44, 0), (0.14, 0.10))):
+        sd = np.minimum(sd, sdBox(q, np.array(c, float), np.array(h)))
+    crossIn = 1 - sstep(-0.012, 0.012, sd)
+    crossEdge = crossIn * sstep(-0.055, -0.020, sd)
+    tier = np.floor(q[..., 1] * 6 + 0.5) * 0.5 + np.floor(q[..., 0] * 6 + 0.5) * 0.25
+    tierShade = 0.90 + 0.10 * fract(tier * 0.75)
+
+    shellB = np.zeros(S * S, float).reshape(S, S)
+    shellCore = np.zeros_like(shellB)
+    for i in range(6):
+        fi = float(i)
+        cx = (fract(fi * 0.6180339 + 0.21) * 2 - 1) * 0.86 + 0.012 * np.sin(t * 0.45 + fi * 1.71)
+        cyv = (fract(fi * 0.3819660 + 0.37) * 2 - 1) * 0.80 + 0.028 * np.sin(t * 0.31 + fi * 2.23)
+        hx = 0.055 + 0.05 * fract(fi * 0.4142135)
+        hy = 0.055 + 0.06 * fract(fi * 0.7320508)
+        sd2 = sdBox(q, np.array([cx, cyv]), np.array([hx, hy]))
+        border = sstep(-0.030, -0.012, sd2) * (1 - sstep(0.0, 0.012, sd2))
+        core = 1 - sstep(-0.030, -0.012, sd2)
+        shellB = np.minimum(shellB + border, 1.0)
+        shellCore = np.maximum(shellCore, core * (1 - border))
+
+    # synthetic world behind the plane (stands in for the copied framebuffer Sampler1)
+    bg_uv = uv
+    wave = np.stack([np.sin(uv[..., 1] * 42.0 + t * 1.35) + 0.5 * np.sin(uv[..., 1] * 17.0 - t * 0.7),
+                     np.cos(uv[..., 0] * 38.0 - t * 1.10) + 0.5 * np.cos(uv[..., 0] * 15.0 + t * 0.6)], -1)
+    lensZone = crossIn * (1 - crossEdge) + shellCore * 0.6
+    lensed = uv + wave * 0.006 * lensZone[..., None]
+    skyC = mix(np.array([0.45, 0.62, 0.90]), np.array([0.85, 0.88, 0.95]), lensed[..., 1])
+    ground = np.array([0.30, 0.42, 0.22])
+    bg = np.where((lensed[..., 1] < 0.42)[..., None], ground, skyC)
+
+    # pixel-snapped pastel vortex
+    cell = np.floor(q * 10.0 + np.array([t * 0.10, -t * 0.07]))
+    n1, n2 = hash21(cell), hash21(cell + 17.7)
+    shift = 0.5 + 0.5 * np.sin(t * 0.22 + n1 * 6.2831)
+    pink, yellow, orange = np.array([1.0, 0.62, 0.72]), np.array([1.0, 0.85, 0.45]), np.array([0.95, 0.45, 0.20])
+    vcol = np.where((n1 < 0.45)[..., None], pink, np.where((n1 < 0.75)[..., None], yellow, orange))
+    vcol = mix(vcol, tint, 0.30)
+    vcol = vcol * (0.72 + 0.28 * n2)[..., None] * (0.80 + 0.20 * shift)[..., None]
+
+    col = mix(bg * 0.55, vcol, 0.55)
+    col = col * tierShade[..., None]
+    col = col + tint * 0.22 * np.exp(-1.8 * (q ** 2).sum(-1))[..., None]
+    col = mix(col, np.array([1.0, 1.0, 1.0]), crossEdge)
+    col = mix(col, np.array([1.0, 1.0, 1.0]), shellB * 0.92)
+    col = mix(col, vcol * 0.35, shellCore * 0.30)
+
+    a = np.maximum(crossIn * 0.90, np.maximum(crossEdge, np.maximum(shellB * 0.90, shellCore * 0.14)))
+    a *= mix(0.10, 1.0, sstep(0.04, 0.30, fade))
+    out = col * a[..., None] + bg * (1 - a[..., None])
+    _I.fromarray((np.clip(out, 0, 1) * 255).astype(np.uint8)).save(f"{OUT}/plane_preview.png")
+
+_plane_preview()
+print("plane preview written")

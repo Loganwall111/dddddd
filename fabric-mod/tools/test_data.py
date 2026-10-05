@@ -1075,4 +1075,40 @@ class DataContracts(unittest.TestCase):
         for token in ('enum LifecyclePhase', 'phaseForAge(', 'riftGodRayShafts('):
             self.assertIn(token, rift)
         self.assertIn('float thrive = smoothstep(4800.0, 6200.0, tod)', comp)
+    def test_v041_screen_space_rift_plane(self):
+        # Official recipe (round 1): NO clustered 3D block geometry for rifts. One flat quad per
+        # rift; a single-pass fragment shader draws the stepped tiered cross, the hollow drifting
+        # debris shells (solid voxel borders, translucent centres), the glowing white edge outline,
+        # the wave-matrix lensing of the world framebuffer behind the plane, and the pixel-snapped
+        # pink/warm-yellow/deep-orange vortex.
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        vsh=(R/'assets/entersift/shaders/core/rift_plane.vsh').read_text()
+        fsh=(R/'assets/entersift/shaders/core/rift_plane.fsh').read_text()
+        layers=(C/'RiftRenderLayers.java').read_text()
+        rend=(C/'RiftPlaneRenderer.java').read_text()
+        client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
+        # 1) vertex stage passes clip space -> normalized 2D screen coordinates (recipe item 2)
+        self.assertIn('screenPos = gl_Position.xy / max(gl_Position.w, 0.00001) * 0.5 + 0.5;', vsh)
+        # 2) stepped cross mask, hollow shells, edge detection, pastel vortex, lens warp, sine drift
+        for token in ('vec2 crossField(vec2 q)', 'sdBox(q, vec2(0.0), vec2(0.16, 0.60))',
+                      'vec3 shellField(vec2 q, int i, float t)', 'float border =',
+                      'float crossEdge = crossIn * smoothstep(-0.055, -0.020, cf.x);',
+                      'vec3 vortex(vec2 q, float t, vec3 tint)',
+                      'vec3 pink   = vec3(1.00, 0.62, 0.72);',
+                      'vec3 yellow = vec3(1.00, 0.85, 0.45);',
+                      'vec3 orange = vec3(0.95, 0.45, 0.20);',
+                      '#ifdef RIFT_PLANE_LENS',
+                      'uniform sampler2D Sampler0;', 'uniform sampler2D Sampler1;',
+                      'warpedDepth > gl_FragCoord.z + 0.00001',
+                      '0.028 * sin(t * 0.31 + fi * 2.23)'):
+            self.assertIn(token, fsh)
+        # 3) Java: private pipelines (never vanilla rendertype_translucent) + a quad-only renderer
+        self.assertIn('BindGroupLayouts.SAMPLER0_SAMPLER1', layers)
+        self.assertIn('.withTexture("Sampler0", RiftScene.DEPTH)', layers)
+        self.assertIn('.withTexture("Sampler1", RiftScene.COLOR)', layers)
+        self.assertFalse((R/'assets/minecraft/shaders/core/rendertype_translucent.fsh').exists())
+        self.assertIn('RiftPlaneRenderer::new', client)
+        self.assertIn('vc.addVertex(p, -half, cy - half, 0f).setColor(0f, 0f, code, a);', rend)
+        self.assertIn('RiftScene.request() ? RiftRenderLayers.PLANE_LENS : RiftRenderLayers.PLANE', rend)
+
 if __name__=='__main__': unittest.main(verbosity=2)

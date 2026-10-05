@@ -50,7 +50,9 @@ public final class SiftClient implements ClientModInitializer {
         dev.logan.entersift.client.SiftClouds.register(); // 0.13 Dungeons-style Overworld clouds (no shader pack)
         dev.logan.entersift.client.SiftSouls.register(); // 0.14 wandering souls with blue comet trails (Sift only)
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
-        EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
+        // 0.41: the screen-space plane renderer replaces the clustered block geometry (official recipe).
+        dev.logan.entersift.client.RiftRenderLayers.initialize();
+        EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, dev.logan.entersift.client.RiftPlaneRenderer::new);
         EntityRendererRegistry.register(SiftEntities.AURA_COLUMN, dev.logan.entersift.client.AuraColumnRenderer::new);
         dev.logan.entersift.client.RiftEnergyCubeParticle.register(); // 0.25 3D voxel motes (downward drift + reduced particle density)
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,
