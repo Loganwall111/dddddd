@@ -139,7 +139,7 @@ class DataContracts(unittest.TestCase):
                       'vec3(0.95, 0.57, 0.80)', 'vec3(1.0, 0.87, 0.67)', 'v == 6 ? 0.12 : 0.28'):
             self.assertIn(token,shader)
         self.assertIn('SiftViewCapture.register()',client)
-        self.assertIn('ClientCommandManager.literal("siftshot")',capture)
+        self.assertIn('ClientCommands.literal("siftshot")',capture)
         self.assertIn('Screenshot.grab(',capture)
         self.assertIn('client.gameRenderer.mainRenderTarget()',capture)
         self.assertIn('getGameDir().toFile()',capture)

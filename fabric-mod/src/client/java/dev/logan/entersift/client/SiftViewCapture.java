@@ -1,7 +1,7 @@
 package dev.logan.entersift.client;
 
 import dev.logan.entersift.EnterTheSift;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -13,7 +13,7 @@ public final class SiftViewCapture {
 
     public static void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-            dispatcher.register(ClientCommandManager.literal("siftshot").executes(context -> {
+            dispatcher.register(ClientCommands.literal("siftshot").executes(context -> {
                 Minecraft client = Minecraft.getInstance();
                 if (client.player == null || client.level == null) {
                     EnterTheSift.LOGGER.warn("[Sift] /siftshot requires a loaded world");
