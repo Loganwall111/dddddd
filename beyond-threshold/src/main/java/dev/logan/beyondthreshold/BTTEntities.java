@@ -12,24 +12,21 @@ import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 
 public final class BTTEntities {
-	public static final EntityType<BlackHoleEntity> BLACK_HOLE = FabricEntityTypeBuilder
-			.create(SpawnGroup.MISC, BlackHoleEntity::new)
+	public static final EntityType<BlackHoleEntity> BLACK_HOLE = FabricEntityTypeBuilder.<BlackHoleEntity>create(SpawnGroup.MISC, BlackHoleEntity::new)
 			.dimensions(new EntityDimensions(4.0F, 4.0F, false))
 			.trackRangeChunks(32)
 			.fireImmune()
 			.disableSummon()
 			.build();
 
-	public static final EntityType<WatcherEyeEntity> WATCHER_EYE = FabricEntityTypeBuilder
-			.create(SpawnGroup.MISC, WatcherEyeEntity::new)
+	public static final EntityType<WatcherEyeEntity> WATCHER_EYE = FabricEntityTypeBuilder.<WatcherEyeEntity>create(SpawnGroup.MISC, WatcherEyeEntity::new)
 			.dimensions(new EntityDimensions(16.0F, 8.0F, false))
 			.trackRangeChunks(64)
 			.fireImmune()
 			.disableSummon()
 			.build();
 
-	public static final EntityType<RealityTearEntity> REALITY_TEAR = FabricEntityTypeBuilder
-			.create(SpawnGroup.MISC, RealityTearEntity::new)
+	public static final EntityType<RealityTearEntity> REALITY_TEAR = FabricEntityTypeBuilder.<RealityTearEntity>create(SpawnGroup.MISC, RealityTearEntity::new)
 			.dimensions(new EntityDimensions(3.0F, 3.0F, false))
 			.trackRangeChunks(16)
 			.fireImmune()

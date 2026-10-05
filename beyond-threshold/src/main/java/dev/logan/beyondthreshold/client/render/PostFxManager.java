@@ -7,7 +7,7 @@ import dev.logan.beyondthreshold.entity.BlackHoleEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.GlUniform;
 import net.minecraft.client.gl.PostEffectPass;
-import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.JsonEffectShaderProgram;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.entity.Entity;
@@ -117,7 +117,7 @@ public final class PostFxManager {
 
 		List<PostEffectPass> passes = gr.getPostProcessor().passes;
 		for (PostEffectPass pass : passes) {
-			ShaderProgram prog = pass.getProgram();
+			JsonEffectShaderProgram prog = pass.getProgram();
 			set(prog, "BttTime", u -> u.set(time * 0.05F));
 			set(prog, "BttIntensity", u -> u.set(intensity));
 			set(prog, "BttRes", u -> u.set(client.getWindow().getFramebufferWidth(),
@@ -136,8 +136,8 @@ public final class PostFxManager {
 		void apply(GlUniform u);
 	}
 
-	private static void set(ShaderProgram prog, String name, UniformSetter setter) {
-		GlUniform u = prog.getUniform(name);
+	private static void set(JsonEffectShaderProgram prog, String name, UniformSetter setter) {
+		GlUniform u = prog.getUniformByName(name);
 		if (u != null) {
 			setter.apply(u);
 		}

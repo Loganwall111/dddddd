@@ -5,6 +5,7 @@ import dev.logan.beyondthreshold.BTTNet;
 import dev.logan.beyondthreshold.BeyondTheThreshold;
 import dev.logan.beyondthreshold.client.render.CosmicSkyRenderer;
 import dev.logan.beyondthreshold.client.render.EntityFxRenderer;
+import dev.logan.beyondthreshold.client.render.HudOverlay;
 import dev.logan.beyondthreshold.client.render.NoopRenderer;
 import dev.logan.beyondthreshold.client.render.PostFxManager;
 import dev.logan.beyondthreshold.client.screen.BTTConfigScreen;

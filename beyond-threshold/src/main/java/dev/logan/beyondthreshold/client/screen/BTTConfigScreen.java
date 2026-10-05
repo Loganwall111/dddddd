@@ -93,7 +93,7 @@ public class BTTConfigScreen extends Screen {
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 		renderBackground(context);
 		super.render(context, mouseX, mouseY, delta);
-		drawCenteredText(context, title, width / 2, 10, 0xBFA9FF);
+		context.drawCenteredText(textRenderer, title, width / 2, 10, 0xBFA9FF);
 	}
 
 	@Override
