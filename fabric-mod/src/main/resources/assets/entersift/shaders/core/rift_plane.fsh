@@ -117,14 +117,13 @@ void main() {
     float crossEdge = crossIn * smoothstep(-0.055, -0.020, cf.x);
     float tierShade = 0.90 + 0.10 * fract(cf.y * 0.75);
 
-    vec3 shellB = vec3(0.0), shellAcc = vec3(0.0);
+    float shellB = 0.0;
     float shellCore = 0.0;
     for (int i = 0; i < 6; i++) {
         vec3 sh = shellField(q, i, t);
-        shellAcc += sh.x * vec3(1.0);
+        shellB = min(shellB + sh.x, 1.0);
         shellCore = max(shellCore, sh.y);
     }
-    shellB = min(shellAcc, 1.0);
 
     float anyMask = max(crossIn, max(shellB, shellCore * 0.5));
     if (anyMask < 0.003 && arcAmt < 0.01) {
