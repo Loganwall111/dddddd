@@ -35,6 +35,10 @@ public final class BTTTravel {
 		}
 		ServerWorld to = player.getServer().getWorld(target);
 		if (to == null) {
+			// the dimension didn't weave itself into this save — fall back hard
+			to = player.getServer().getWorld(World.OVERWORLD);
+		}
+		if (to == null) {
 			return;
 		}
 		String key = player.getUuidAsString();

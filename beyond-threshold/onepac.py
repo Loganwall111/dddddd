@@ -313,6 +313,32 @@ def main():
             "seed": args.seed + i}, indent=2))
         lang[f"dimension.beyondthreshold.{name}"] = name.replace("_", " ").title()
 
+        # datapack JSON — vanilla loads these as REAL worlds at startup,
+        # so tearing reality actually lands you somewhere that exists.
+        DATA = ROOT / "src/main/resources/data/beyondthreshold"
+        (DATA / "dimension").mkdir(parents=True, exist_ok=True)
+        (DATA / "worldgen" / "biome").mkdir(parents=True, exist_ok=True)
+        rgb = lambda c: int(c[0] * 255) << 16 | int(c[1] * 255) << 8 | int(c[2] * 255)
+        sky, neb, hor = rgb(pal[0:3]), rgb(pal[3:6]), rgb(pal[6:9])
+        (DATA / "dimension" / f"{name}.json").write_text(json.dumps({
+            "type": "minecraft:overworld",
+            "generator": {
+                "type": "minecraft:noise",
+                "settings": "minecraft:overworld",
+                "biome_source": {"type": "minecraft:fixed",
+                                 "biome": f"beyondthreshold:{name}"},
+            }}, indent=2))
+        (DATA / "worldgen" / "biome" / f"{name}.json").write_text(json.dumps({
+            "temperature": 0.8, "downfall": 0.3, "has_precipitation": False,
+            "effects": {"sky_color": sky, "fog_color": hor,
+                        "water_color": neb, "water_fog_color": sky},
+            "spawners": {"monster": [], "creature": [], "ambient": [],
+                         "axolotls": [], "underground_water_creature": [],
+                         "water_creature": [], "water_ambient": [], "misc": []},
+            "spawn_costs": {}, "carvers": {},
+            "features": [[] for _ in range(11)],
+        }, indent=2))
+
     (RES / "lang/en_us.json").write_text(json.dumps(dict(sorted({
         "item.beyondthreshold.shattered_relic": "Shattered Relic",
         "item.beyondthreshold.threshold_blade": "Threshold Blade",
