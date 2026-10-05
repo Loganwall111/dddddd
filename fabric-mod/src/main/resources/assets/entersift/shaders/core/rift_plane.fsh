@@ -178,16 +178,22 @@ void main() {
     vec3 energy = mix(orange, yellow, smoothstep(0.32, 0.68, n1));
     energy = mix(energy, pink, smoothstep(0.42, 0.78, n2));
     energy = mix(energy, tint, 0.12);
+    float hb = clamp(q.y * 0.5 + 0.5, 0.0, 1.0);          // sunset bias: pink crown, orange base
+    energy = mix(energy, orange, 0.30 * (1.0 - smoothstep(0.15, 0.55, hb)));
+    energy = mix(energy, pink,   0.30 * smoothstep(0.50, 0.90, hb));
     float hot = exp(-1.1 * dot(q, q));
-    energy = mix(energy, vec3(1.0), 0.12 + 0.32 * hot);  // near-white hot core like the refs
+    energy = mix(energy, vec3(1.0), 0.08 + 0.22 * hot);  // near-white hot core like the refs
     energy *= 0.92 + 0.28 * n1;
     energy = mix(energy, vec3(1.0), step(0.96, hash21(floor(q * 22.0) + 3.3)));  // spark pixels
 
     // ---- layer stack (back to front): aura haze, extrusion sides, glass, energy, edges ----
     vec3 col = bg;
     float a = 0.0;
-    float aura = exp(-max(length(q * vec2(0.9, 1.0)) - 0.88, 0.0) * 4.0) * reveal;
-    float aA = aura * 0.80;                // dense saturated fog, like the refs' coloured mist
+    // tinted mist hugging the cluster silhouette: zero inside, exponential falloff outside.
+    // (exp(-max(len-r,0)*k) alone is 1 across the whole interior and reads as a quad-sized
+    // rectangular wash - the aura must be driven by the silhouette distance instead.)
+    float aura = exp(-max(sdAll, 0.0) * 3.0) * smoothstep(-0.012, 0.012, sdAll) * reveal;
+    float aA = aura * 0.65;                // dense saturated fog, like the refs' coloured mist
     col = mix(col, energy, aA);
     a = max(a, aA);
 

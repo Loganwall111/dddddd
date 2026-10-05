@@ -364,14 +364,17 @@ def _plane_preview():
     energy = mix(energy, pink, sstep(0.42, 0.78, n2))
     energy = mix(energy, tint, 0.12)
     hot = np.exp(-1.1 * (q ** 2).sum(-1))
-    energy = mix(energy, np.array([1.0, 1.0, 1.0]), 0.12 + 0.32 * hot)
+    hb = np.clip(q[..., 1] * 0.5 + 0.5, 0, 1)
+    energy = mix(energy, orange, 0.30 * (1 - sstep(0.15, 0.55, hb)))
+    energy = mix(energy, pink, 0.30 * sstep(0.50, 0.90, hb))
+    energy = mix(energy, np.array([1.0, 1.0, 1.0]), 0.08 + 0.22 * hot)
     energy = energy * (0.92 + 0.28 * n1)[..., None]
     energy = mix(energy, np.array([1.0, 1.0, 1.0]), (hash21(np.floor(q * 22.0) + 3.3) > 0.96).astype(float))
 
     col = bg.copy()
     a = np.zeros_like(sdC)
-    aura = np.exp(-np.maximum(np.linalg.norm(q * np.array([0.9, 1.0]), axis=-1) - 0.88, 0.0) * 4.0) * reveal
-    aA = aura * 0.80
+    aura = np.exp(-np.maximum(sdAll, 0.0) * 3.0) * sstep(-0.012, 0.012, sdAll) * reveal
+    aA = aura * 0.65
     col = mix(col, energy, aA)
     a = np.maximum(a, aA)
     aSide = sideIn * 0.48
