@@ -217,6 +217,43 @@ vec4 soulFaceBand(vec2 uv, vec3 dir, float t, bool night) {
     return vec4(darkSoul, band * strength);
 }
 
+// Warped fBM energy field adapted from Mielon's MIT-licensed 1.21.1 portal_fields.glsl.
+// Keep the noise math, but feed it into this shader's existing 26.3 SDF/render pipeline.
+float archiveRiftHash(vec2 p) {
+    vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float archiveRiftNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(archiveRiftHash(i), archiveRiftHash(i + vec2(1.0, 0.0)), f.x),
+               mix(archiveRiftHash(i + vec2(0.0, 1.0)), archiveRiftHash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+float archiveRiftFbm(vec2 p) {
+    float n = 0.0;
+    float amplitude = 0.5;
+    for (int octave = 0; octave < 4; octave++) {
+        n += amplitude * archiveRiftNoise(p);
+        p = mat2(1.6, -1.2, 1.2, 1.6) * p;
+        amplitude *= 0.5;
+    }
+    return n;
+}
+
+vec3 archiveRiftEnergy(vec2 uv, float t, out float field) {
+    vec2 p = uv * vec2(7.0, 4.0);
+    vec2 warp = vec2(archiveRiftFbm(p * 0.6 + vec2(t * 0.13, 0.0)),
+                     archiveRiftFbm(p * 0.6 + vec2(4.0, -t * 0.12)));
+    field = archiveRiftFbm(p + warp * 2.5 + vec2(t * 0.17, -t * 0.09));
+    vec3 energy = mix(vec3(0.95, 0.57, 0.80), vec3(1.0, 0.87, 0.67), smoothstep(0.25, 0.75, field));
+    float pearl = smoothstep(0.43, 0.69, archiveRiftFbm(p * 0.55 - warp + t * 0.055));
+    return mix(energy, vec3(1.0, 0.97, 0.98), pearl * 0.82);
+}
+
 // Layer 5: Multi-Tone Interior Energy Swirl (Vibrant Coral/Pink by day, Deep Amber/Gold by night, plus style tints)
 vec3 interiorEnergy(vec2 uv, vec3 dir, float t, int v, bool night) {
     vec3 primary   = TINT[v];
@@ -229,7 +266,13 @@ vec3 interiorEnergy(vec2 uv, vec3 dir, float t, int v, bool night) {
     vec3 swirl = mix(primary, secondary, s1);
     swirl = mix(swirl, coralPink, 0.38 * (1.0 - s1) * s2);
     swirl = mix(swirl, warmGold, 0.32 * s1 * s2);
-    return swirl;
+
+    float field;
+    vec3 archiveEnergyField = archiveRiftEnergy(uv, t, field);
+    vec3 styleField = mix(primary, secondary, smoothstep(0.25, 0.75, field));
+    vec3 archiveField = mix(archiveEnergyField, styleField, 0.48);
+    // A restrained 28% layer retains the original day/night and per-style palette while adding warped, pearl-like noise.
+    return mix(swirl, archiveField, v == 6 ? 0.12 : 0.28);
 }
 
 // Layer 6: Inner Edge Glow

@@ -44,6 +44,7 @@ public final class SiftClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(context -> dev.logan.entersift.client.SiftBudget.reset());
         dev.logan.entersift.client.SiftTransition.register(); // 0.16 chromatic + orange-flash rift transition overlay
         dev.logan.entersift.client.RiftScene.register();
+        dev.logan.entersift.client.SiftViewCapture.register(); // client-only /siftshot saves the final camera frame under screenshots/
         dev.logan.entersift.client.RiftSounds.register();
         SiftSky.register();
         dev.logan.entersift.client.SiftTunnel.register(); // 0.18 warp-tunnel view inside the rift tunnel

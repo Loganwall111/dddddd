@@ -130,6 +130,20 @@ class DataContracts(unittest.TestCase):
         self.assertIn('withTexture("Sampler1", RiftScene.COLOR)',types)
         self.assertIn('RiftScene.request()', (C/'RiftPortalRenderer.java').read_text())
 
+    def test_upstream_fbm_port_and_in_game_camera_capture(self):
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
+        shader=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        capture=(C/'SiftViewCapture.java').read_text()
+        for token in ('archiveRiftHash(', 'archiveRiftNoise(', 'archiveRiftFbm(', 'archiveRiftEnergy(',
+                      'vec3(0.95, 0.57, 0.80)', 'vec3(1.0, 0.87, 0.67)', 'v == 6 ? 0.12 : 0.28'):
+            self.assertIn(token,shader)
+        self.assertIn('SiftViewCapture.register()',client)
+        self.assertIn('ClientCommandManager.literal("siftshot")',capture)
+        self.assertIn('Screenshot.grab(',capture)
+        self.assertIn('client.gameRenderer.mainRenderTarget()',capture)
+        self.assertIn('getGameDir().toFile()',capture)
+
     def test_rift_loop_assets_registration_and_cleanup(self):
         import wave
         sounds=json.loads((R/'assets/entersift/sounds.json').read_text())
