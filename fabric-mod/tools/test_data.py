@@ -39,7 +39,10 @@ class DataContracts(unittest.TestCase):
         self.assertIn('private static void boxFaces(',rift)
         # The reference's detached boxes are hollow outlines, so no frosted pane goes on the satellites.
         self.assertIn('// The detached satellites stay HOLLOW, exactly like the reference',rift)
-        self.assertIn('float[] face = look.frost();',rift)
+        # 0.37 tone: the panes are grey-lavender frosted GLASS (the references' shell), not the rift's
+        # own pink — the warmth lives in the frame and the opening.
+        self.assertIn('float[] glass = mix(look.frost(), c(0.66f, 0.66f, 0.70f), 0.55f);',rift)
+        self.assertIn('float[] face = glass;',rift)
         self.assertIn('private static boolean isWindow(RiftShape sh, int i, int j)',rift)
         self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a);',rift)   # no State: the 0.37 shell needs none
         self.assertIn('public boolean windowCell(int i, int j)',shape)
@@ -143,6 +146,15 @@ class DataContracts(unittest.TestCase):
         self.assertIn('Screenshot.grab(',capture)
         self.assertIn('client.gameRenderer.mainRenderTarget()',capture)
         self.assertIn('getGameDir().toFile()',capture)
+
+    def test_v037_crossing_is_the_front_plane_not_the_recessed_membrane(self):
+        # The recessed membrane is artwork; the portal surface is the opening plane. If crossing followed
+        # the new depths (0.62..1.10) a diagonal walk could cross the plane outside the silhouette, which
+        # is what broke gradle's RiftCrossingTest after the volume got thicker.
+        cross=(ROOT/'src/main/java/dev/logan/entersift/RiftCrossing.java').read_text()
+        self.assertNotIn('shape.d(i, j)',cross)
+        self.assertIn('if (az * bz > 0) continue;                 // the segment does not cross z = 0',cross)
+        self.assertIn('RiftCrossingTest.intersectsSegmentRatherThanOnlyEndPosition',cross)
 
     def test_v037_real_geometry_shell_retires_the_2d_shader_slice_canvas(self):
         # 0.37 (user-directed): the reference rift is a built VOLUME, so the old "2D SDF plane plus 14
@@ -272,7 +284,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('0.18f * (float) Math.sin(along * 1.9f', r)
         self.assertIn('0.075f * (float) Math.sin(along * 3.7f', r)
         # Frosted panels are framed panes.
-        self.assertIn('float in = 0.13f, ie = 0.28f * tf;', r)
+        self.assertIn('float in = 0.13f, ie = 0.34f * tf;   // the lit inset grid carries the reference\'s white beams', r)
 
     def test_v034_gauntlets_are_worn_equipment_not_held_items(self):
         # The user: "you should be able to wear them... equipped onto your arm instead of like an item".
