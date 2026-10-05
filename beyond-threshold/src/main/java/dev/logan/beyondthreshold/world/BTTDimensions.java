@@ -10,7 +10,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biomes;
+import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.source.FixedBiomeSource;
 import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
@@ -60,7 +60,7 @@ public final class BTTDimensions {
 			}
 			RegistryEntry<Biome> biome = biomes
 					.getEntry(RegistryKey.of(RegistryKeys.BIOME, new Identifier(d.biome())))
-					.orElseGet(() -> biomes.getEntry(Biomes.PLAINS).orElseThrow());
+					.orElseGet(() -> biomes.getEntry(BiomeKeys.PLAINS).orElseThrow());
 			ChunkGenerator gen = new NoiseChunkGenerator(new FixedBiomeSource(biome), noise);
 			Registry.register(dims, ALL.get(i).getValue(), new DimensionOptions(type, gen));
 			added++;
