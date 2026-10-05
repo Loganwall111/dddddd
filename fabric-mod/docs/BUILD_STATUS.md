@@ -332,7 +332,7 @@ but unusable.
 
 ## Sift Overhaul 0.36.0-alpha (Total Shader-Driven SDF Rift Rebuild with 0–100 Tick Lifecycle & Warping)
 
-- `RiftPortalRenderer.java`: Active GPU path (`SiftBudget.riftShader`) now submits `shaderQuadCanvas`
+- (retired in 0.37, see the entry at the end of this file) `RiftPortalRenderer.java`: Active GPU path (`SiftBudget.riftShader`) submitted `shaderQuadCanvas`
   (`emitDoubleQuad` at `z = +0.004f` plus 14 receding volumetric Aurora/cloud extrusion slices around the
   front plane from `z = -0.064f .. -0.844f`), deepening the shader-only volume without block meshes while feeding normalized
   UV `(0..1)` and `u_Progress` (`0..1` over Ticks `0..100`) into `rift.fsh`.
@@ -367,3 +367,25 @@ but unusable.
   this run is confirmed as a real successful capture, but its pixels have not yet been inspected here.
   Download the artifact from [run 37349186470](https://github.com/Loganwall111/dddddd/actions/runs/37349186470)
   to review the frames. This validates the mod in Minecraft, not the Dungeons II client.
+
+## Sift Overhaul 0.37.0-alpha: the rift as a built volume (real geometry, revealed membrane, mixed lightning)
+
+- `RiftPortalRenderer.java`: `shaderQuadCanvas`/`emitDoubleQuad` deleted (they were already unreferenced
+  by 0.36's `submit()`); `boxFaces` now emits each frosted cell as an extruded slab (front pane on the
+  `LIP` plane, dissolving back pane at the recess depth, inset frame on the lip); `walls()` adds the
+  four-sided reveal around the glazed square and closes the satellites into hollow extruded boxes;
+  `frame()` runs on the GPU path again with `C = PROUD` and extruded rails; `wallScale` 0.16 → 0.72
+  under `rift_structure_3d`; new `beamStrength`/`lightBeam` (the upward shaft) and
+  `mixedBolt`/`summonBolts` (multi-colour lightning variants); the rising cubes are opt-in and off.
+- `rift.fsh`: new exclusive `main()` chain — membrane early return, then `#elif RIFT_GLOW`, `#elif
+  RIFT_WALL`, `#else` legacy canvas. The membrane mixes `Sampler1` (the scene behind) over the pane as
+  the frost clears.
+- `SiftBudget.java`: `rift_structure_3d` (true), `rift_beam` (true), `rift_energy_cubes` (false).
+- `tools/ci_capture.py`: three new angles — `rift_oblique_low` (the shell in three-quarter view),
+  `rift_membrane_near` (the reveal, from spectator), `rift_morning_beam` + `rift_evening` (the beam
+  gate), plus `rift_summon_bolt`.
+- `sift-capture.yml`: `contents: write` and a publish step that commits the run's PNGs/logs under
+  `captures/run-<id>/`, because the artifact store is not reachable from the sandbox that reviews them.
+- `tools/test_data.py`: the retired `shaderQuadCanvas` contracts replaced; new
+  `test_v037_*` suites pin the shell planes, the reveal, the beam clock and the lightning variants.
+

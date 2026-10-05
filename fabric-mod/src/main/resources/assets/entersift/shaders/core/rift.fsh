@@ -14,7 +14,7 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 packLight;
 layout(location = 2) out vec4 packNormal;
 
-#ifdef RIFT_REFRACT
+#if defined(RIFT_REFRACT) || defined(RIFT_MEMBRANE) || defined(RIFT_MEMBRANE_REFRACT)
 uniform sampler2D Sampler0; // copied scene depth, nearest, reverse-Z
 uniform sampler2D Sampler1; // copied scene colour, linear, clamp-to-edge
 #endif
@@ -394,7 +394,57 @@ float fogFade() {
 }
 
 void main() {
-#if defined(RIFT_GLOW)
+#if defined(RIFT_MEMBRANE) || defined(RIFT_MEMBRANE_REFRACT)
+    // ========================================================================
+    // 0.37 MEMBRANE: the rift's opening, drawn as real geometry recessed at the
+    // back of the stepped cavity instead of being painted into a flat canvas.
+    //   riftData.rg = face uv across the opening cell
+    //   riftData.b  = view code (+8 at night)
+    //   riftData.a  = fade * 0.5 + frost * 0.5   (same packing as before)
+    // frostAmt = 1 far away (a thick frosted pane), 0 once the camera is at the
+    // opening: the frost clears, the pane thins and the real scene behind the
+    // rift shows through, which is what the reference frames show at close range.
+    // ========================================================================
+    {
+        float t = GameTime * 1200.0;
+        vec2 uv = clamp(riftData.rg, 0.0, 1.0);
+        int v = int(riftData.b * 32.0) % 8;
+        bool night = int(riftData.b * 32.0) >= 8;
+        float frostAmt = clamp(riftData.a * 2.0 - 1.0, 0.0, 1.0);
+        float fade = clamp(riftData.a * 2.0 - frostAmt, 0.0, 1.0);
+        vec3 dir = normalize(worldRay + vec3(0.0, 0.0, 1e-5));
+
+        // The destination is painted by view ray (it parallaxes as you walk) and then
+        // frosted: blurred hard at range, nearly sharp once you are at the glass.
+        float blur = 0.012 + 0.055 * frostAmt;
+        vec3 col = destination(dir, t, v, night, blur);
+        col = mix(col, interiorEnergy(uv, dir, t, v, night), 0.42);
+
+        // Recess shading: the jamb shadows the border of the opening, so the pane
+        // reads as a surface inside a cavity rather than a decal on a flat quad.
+        float edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+        float cavity = smoothstep(0.0, 0.17, edge);
+        col *= mix(0.60, 1.0, cavity);
+        col += vec3(1.0, 0.985, 0.96) * (1.0 - smoothstep(0.0, 0.05, edge)) * (0.22 + 0.30 * frostAmt);
+
+        float paneAlpha = mix(0.94, 0.62, 1.0 - frostAmt) * fade;
+
+#ifdef RIFT_MEMBRANE_REFRACT
+        // THE REVEAL: as the camera closes in, mix in the scene that is actually behind
+        // the rift (the frame copy RiftScene takes each frame), bent slightly by the glass.
+        // reveal = 0 while the pane is still frosted, 1 once you are up against the opening.
+        float reveal = smoothstep(0.42, 0.06, frostAmt);
+        vec2 screen = gl_FragCoord.xy / vec2(textureSize(Sampler1, 0));
+        vec2 bend = (uv - 0.5) * 0.030 * (1.0 - reveal);
+        vec3 behind = texture(Sampler1, clamp(screen + bend, vec2(0.002), vec2(0.998))).rgb;
+        col = mix(col, behind, reveal * 0.88);
+        paneAlpha = mix(paneAlpha, 0.42, reveal * 0.80);
+#endif
+
+        fragColor = vec4(clamp(col, 0.0, 1.0), clamp(paneAlpha, 0.0, 1.0) * fogFade()) * ColorModulator;
+        return;
+    }
+#elif defined(RIFT_GLOW)
     packLight = vec4(0.0);
     packNormal = vec4(0.0);
     fragColor = vec4(riftData.rgb, riftData.a * fogFade()) * ColorModulator;

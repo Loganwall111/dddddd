@@ -51,3 +51,22 @@ These controls do not suppress gameplay feedback, ritual particles or potion eff
 7. Check server and GPU performance with several players/rifts; particle quality reductions must remain usable.
 
 **No installable JAR or Minecraft screenshot has been produced.** The image `visual-assets.png` is a flat review of generated source textures, not a rendering of the mod in Minecraft.
+
+## 0.37 update — the rift is geometry now
+
+The 0.2-era table above is about the sky/palette/ritual work and still stands. For the Rift itself the
+0.37 state is:
+
+| Asked for (2026-10-05 photos) | What 0.37 does | Verified |
+|---|---|---|
+| True 3D, stepped slabs | `boxFaces` emits extruded slabs (lip pane + dissolving back pane), `walls` closes them, `wallScale` 0.72 under the shader | Capture run required |
+| 3D outer frame | `frame()` extrudes its rails `C → C - 0.14` with `C = PROUD`, on both paths | Capture run required |
+| Back fades to nothing with depth | `backFade(z)` floors the back pane at 0.20 alpha, deepest-first emission | Capture run required |
+| Glazed square is a hole through the thickness | four-sided reveal walls at the cell corners + lit borders | Capture run required |
+| Membrane clears with proximity, other side visible | `reveal = smoothstep(0.42, 0.06, frostAmt)` mixes the copied scene `Sampler1` over the pane and thins it | Capture run required |
+| Mixed-colour lightning, several variants | `mixedBolt` (3 shapes, 6 tints, colour mixing along the length) used by `summonBolts` and the idle crawl | Capture run required |
+| Upward light at night and morning, not evening | `beamStrength` clock gate (`rift_beam`) + `lightBeam` column; floating cubes off by default | Capture run required |
+
+No claim of a pixel match is made until the capture PNGs come back from
+`.github/workflows/sift-capture.yml` (they are committed to `captures/run-<id>/`).
+

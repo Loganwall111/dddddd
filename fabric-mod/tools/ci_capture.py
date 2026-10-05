@@ -167,15 +167,34 @@ def main():
     r.cmd("summon entersift:rift_portal 0 -56 0")
     queue("rift_summon_flash")             # grabbed ~tick 8: white flash + first lightning
     queue("rift_summon_ring")              # serialized second grab ~tick 34: expanding ring arcs
+    queue("rift_summon_bolt")              # third grab: the mixed-colour bolt variants
     await_done("rift_summon_flash")
     await_done("rift_summon_ring")
+    await_done("rift_summon_bolt")
     time.sleep(8)                       # finish the 100-tick growth + chunk settle
     shoot(r, "rift_first_person", f"tp {who} 0 -53.5 13 180 -6")
     shoot(r, "rift_side_angle", f"tp {who} 12.5 -53 0 90 -5")
+    # 0.37: low three-quarter view — this is the angle that proves the shell is real geometry
+    # (front panel lip, top faces of the steps and the recessed reveal all visible at once).
+    shoot(r, "rift_oblique_low", f"tp {who} 8.0 -54.6 8.0 135 -16")
     shoot(r, "rift_close_up", f"tp {who} 0 -53 10 180 -8")
+    # 0.37 membrane reveal: spectators cannot trigger the crossing, so the camera can sit right at
+    # the glass and photograph the frost clearing to the scene behind the rift.
+    r.cmd(f"gamemode spectator {who}")
+    time.sleep(1)
+    shoot(r, "rift_membrane_near", f"tp {who} 0 -53.2 3.4 180 -4", settle=3)
+    r.cmd(f"gamemode creative {who}")
+    r.cmd(f"tp {who} 0 -53.5 13 180 -6")
     r.cmd("time set midnight")
     time.sleep(3)
     shoot(r, "rift_night_front", f"tp {who} 0 -53.5 13 180 -6")
+    # 0.37 beam gate: ON through the night and the morning, OFF in the evening (as the references show).
+    r.cmd("time set 23400")             # early morning
+    time.sleep(2)
+    shoot(r, "rift_morning_beam", f"tp {who} 0 -53.5 13 180 -6")
+    r.cmd("time set 11800")             # dusk / evening: no column
+    time.sleep(2)
+    shoot(r, "rift_evening", f"tp {who} 0 -53.5 13 180 -6")
     # alpha-transparency proof: same rift, camera above it so the FLAT GROUND shows through the window.
     # abilities.flying never stuck, so borrow spectator's guaranteed flight for this one angle.
     r.cmd("time set noon")

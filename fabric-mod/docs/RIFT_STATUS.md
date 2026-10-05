@@ -306,3 +306,56 @@ is why the destination is painted and then frosted rather than being a live rend
 real terrain visible through the glass, the honest next step is to scope that second-render feature
 separately: it would be the largest and least verifiable change in the mod, and it needs a client to
 iterate on.
+
+### 0.37 the rift becomes a built volume (the user's four reference photos)
+
+0.27–0.36 drew the rift as a 2D SDF silhouette and *suggested* depth with shader slices. The user's
+verdict was blunt — "the rift is a flat 2D piece" — and the four attached photos show the opposite: a
+stepped cross cut out of thick frosted slabs, a glazed square that is visibly a hole *through* that
+thickness, an outer frame standing proud of the glass, and detached pieces that are hollow extruded
+boxes. 0.37 rebuilds the rift as geometry, on the GPU path as well as the fallback:
+
+**The shell.** `LIP = COLLAR` and `PROUD = COLLAR + 0.085` are the new planes. Every frosted cell is a
+real slab: a front pane on the lip plane at `0.94 * tf`, a back pane at the cell's recess depth
+`-sh.d(i, j)` whose alpha dissolves (`(0.20 + 0.80 * backFade(z)) * 0.85 * tf`), and side walls closing
+the two. Cells are emitted deepest-first so the translucent stack layers correctly. `walls()` also turns
+the corner back to the membrane plane on all four sides of the glazed square — the reveal that makes the
+opening read as a hole instead of a decal. `frame()` no longer short-circuits under the shader and
+extrudes its rails `C → C - 0.14` with `C = PROUD`.
+
+`wallScale` is the dial that decides whether any of that is visible: it was 0.16 on the GPU path, a
+leftover from when the shader painted the front face and the walls were filler. It is now 0.72 under
+`rift_structure_3d` (0.16 stays for the old look).
+
+**The opening.** The membrane moved off the front plane and into its own pipelines
+(`RIFT_MEMBRANE` / `RIFT_MEMBRANE_REFRACT`, tinted geometry rather than the additive line pass) at the
+back of the cavity, so the window cell is a genuine recess. Its shader opens `main()` with an early
+return, which turns the old `#if defined(RIFT_GLOW)` into the `#elif` of one exclusive chain — a second
+`#if` would have let two looks write the same fragment.
+
+**The reveal (Immersive-Portals-style).** `frostAmt` falls as the camera closes in, so `destination()`
+sharpens; at the same time `reveal = smoothstep(0.42, 0.06, frostAmt)` mixes `Sampler1` — the frame's own
+copy of the scene behind the rift — over the pane (88%) and thins the glass to 0.42. Distant: frosted
+glass. Up close: the world actually behind the rift, bent by 0.030 of the face uv. This is not a second
+render of a target dimension (26.3 exposes no re-entrant level pass); it is the frame the game already
+drew, read back where a player is standing close enough to see through the hole.
+
+**Lightning.** `mixedBolt()` replaces the single white `bolt()` for the summon and the idle crawl: a
+white core plus two tinted glows that mix along the length, in three shapes (`spear` / `forked trunk` /
+`crown`) picked per bolt, from `BOLT_TINTS` (white, ice, magenta, violet, gold, mint). `summonBolts()`
+fires 3 bolts at 4.5 Hz while the rift opens and 2 (night) / 1 (day) at 1.6 Hz once it is up.
+
+**The light column.** The rising floating cubes are retired (`rift_energy_cubes = false`). The
+references show a shaft at night and in the morning and not in the evening, so `beamStrength()` is a
+clock function: 1 through 13000–23000, a dawn shoulder from 22800, a 0.75-rated morning shoulder to
+6500, off 6500–13000; `lightBeam()` stacks three camera-facing bands above the top lip plus six rising
+motes. `rift_beam = false` removes it.
+
+**Dials.** `rift_structure_3d` (the wall alpha), `rift_beam` (the column), `rift_energy_cubes` (the old
+particles, off), plus the existing `rift_box_face` / `rift_proximity` / `rift_tip_fade`. Shader-side:
+the lip alpha 0.94, the back floor 0.20, and `reveal`'s band.
+
+**Unverified.** Everything above was written without a client in this sandbox, so the first 0.37 capture
+run is the real test: whether 0.72 walls are too solid, whether the dissolving backs read as depth
+rather than as holes, and whether the reveal is legible at capture resolution.
+

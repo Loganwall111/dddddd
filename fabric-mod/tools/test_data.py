@@ -41,7 +41,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('// The detached satellites stay HOLLOW, exactly like the reference',rift)
         self.assertIn('float[] face = look.frost();',rift)
         self.assertIn('private static boolean isWindow(RiftShape sh, int i, int j)',rift)
-        self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a, s);',rift)
+        self.assertIn('boxFaces(p, vc, wv, sh, look2, cam, a);',rift)   # no State: the 0.37 shell needs none
         self.assertIn('public boolean windowCell(int i, int j)',shape)
         self.assertIn('window[i][j] = !glazedSquare || (Math.abs(i - 5) <= 1 && Math.abs(j - 3) <= 1);',shape)
         self.assertIn('private final boolean[][] window;',shape)
@@ -144,15 +144,24 @@ class DataContracts(unittest.TestCase):
         self.assertIn('client.gameRenderer.mainRenderTarget()',capture)
         self.assertIn('getGameDir().toFile()',capture)
 
-    def test_dungeons_reference_uses_deeper_shader_extrusion_without_gpu_block_meshes(self):
+    def test_v037_real_geometry_shell_retires_the_2d_shader_slice_canvas(self):
+        # 0.37 (user-directed): the reference rift is a built VOLUME, so the old "2D SDF plane plus 14
+        # shader slices" canvas is retired. The stepped shell is now real geometry on every path:
+        # boxFaces (front panes on the lip plane, dissolving back panes), walls (cavity depth + the
+        # reveal around the glazed square) and the proud outer frame. The membrane is real geometry too,
+        # recessed at the back of the cavity, and the GPU/legacy split only decides HOW the opening is lit.
         C=ROOT/'src/client/java/dev/logan/entersift/client'
         renderer=(C/'RiftPortalRenderer.java').read_text()
-        self.assertIn('for (int layer = 14; layer >= 1; layer--)',renderer)
-        self.assertIn('float z = -layer * 0.06f - 0.004f;',renderer)
-        self.assertIn('float sliceFade = 0.32f * (1f - layer / 15f) * openRamp;',renderer)
-        gpu_path=renderer.split('if (gpu) {',1)[1].split('} else {',1)[0]
-        self.assertIn('shaderQuadCanvas(',gpu_path)
-        self.assertNotIn('boxFaces(',gpu_path)
+        self.assertNotIn('shaderQuadCanvas(',renderer)   # removed: it was never wired into submit() in 0.36
+        self.assertNotIn('emitDoubleQuad(',renderer)
+        self.assertIn('float wallScale = SiftBudget.riftShader ? (SiftBudget.riftStructure3d ? 0.72f : 0.16f) : 1f;',
+                      renderer)                          # side faces carry the 3D read now
+        win=renderer.split('// Paint order is deepest first',1)[1].split('out.submitCustomGeometry(pose, wallT',1)[0]
+        self.assertIn('if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf, frost));',win)
+        self.assertIn('else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf, frost, look2));',win)
+        shell=renderer.split('out.submitCustomGeometry(pose, wallT',1)[1].split('});',1)[0]
+        for token in ('boxFaces(p, vc, wv, sh, look2, cam, a);','walls(p, vc, wv, sh, look2, a, s);','frame(p, vc, wv, sh, look2, a);'):
+            self.assertIn(token,shell)                  # the shell is geometry, and it is not gpu-gated
 
     def test_ci_capture_uses_a_real_client_and_artifact_only_output(self):
         client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
@@ -166,8 +175,15 @@ class DataContracts(unittest.TestCase):
         self.assertIn('actions/setup-java@v5',workflow)
         self.assertIn('java-version: \'25\'',workflow)
         self.assertIn('actions/upload-artifact@v4',workflow)
-        self.assertIn('contents: read',workflow)
-        self.assertNotIn('git push',workflow)  # captures/logs are artifacts, never commits back to this branch
+        self.assertIn('contents: write',workflow)
+        # 0.37: the CI runner still uploads artifacts, but it also commits the PNGs under captures/run-<id>/
+        # so the pixels are reviewable straight from the branch (the artifact store is not reachable from a
+        # sandboxed reviewer, and the user's own browser session is the only other way to see them).
+        self.assertIn('git push',workflow)
+        self.assertIn('captures/run-${GITHUB_RUN_ID}',workflow)
+        # The 0.37 angles: the oblique/low view proves the shell's thickness and the time-gated beam.
+        for shot in ('rift_oblique_low', 'rift_membrane_near', 'rift_summon_bolt', 'rift_morning_beam', 'rift_evening'):
+            self.assertIn(shot,orchestrator)
 
     def test_rift_loop_assets_registration_and_cleanup(self):
         import wave
@@ -866,7 +882,10 @@ class DataContracts(unittest.TestCase):
             self.assertIn('layout(location = 1) out vec4 packLight;',t)
             self.assertIn('layout(location = 2) out vec4 packNormal;',t)
             self.assertIn('packNormal = vec4(0.5, 0.5, 1.0, 0.0);',t)
-        self.assertIn('#if defined(RIFT_GLOW)',(core/'rift.fsh').read_text())
+        # 0.37: the membrane owns the top of main() and returns early, so the other pipelines are
+        # #elif branches of the same exclusive chain (a second #if would draw two looks at once).
+        self.assertIn('#elif defined(RIFT_GLOW)',(core/'rift.fsh').read_text())
+        self.assertNotIn('#if defined(RIFT_GLOW)',(core/'rift.fsh').read_text())
         # The pack composites skip pixels whose normal alpha is 0.
         pack=ROOT/'shaderpack/shaders'
         self.assertIn('if (nb.a > 0.5)',(pack/'program/composite.fsh').read_text())
@@ -876,7 +895,56 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.36.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.37.0-alpha',(ROOT/'gradle.properties').read_text())
+
+    def test_v037_thick_3d_shell_revealed_membrane_and_mixed_lightning(self):
+        # The user's four reference screenshots are the spec: a stepped cross built out of thick frosted
+        # slabs, one glazed square that clears to the other side as you walk up to it, an outer frame that
+        # stands proud of the glass, lightning in several colours, and an upward light column at night.
+        C=ROOT/'src/client/java/dev/logan/entersift/client'
+        renderer=(C/'RiftPortalRenderer.java').read_text()
+        fsh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        budget=(C/'SiftBudget.java').read_text()
+
+        # --- the shell has a lip plane and a proud frame -----------------------------------------
+        self.assertIn('static final float LIP = COLLAR, PROUD = COLLAR + 0.085f;',renderer)
+        self.assertIn('float F = FLANGE, C = PROUD;',renderer)
+        # Panes sit on the lip; the back pane of the same cell dissolves with depth.
+        self.assertIn('rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.94f * tf);',renderer)
+        self.assertIn('float ba = (0.20f + 0.80f * backFade(z)) * 0.85f * tf;',renderer)
+        # Cells are painted deepest-first, so the translucent stack layers correctly.
+        self.assertIn('for (int a = 1; a < n; a++) {            // insertion sort, deepest (largest z-recess) first',renderer)
+        # The inset frame rides the lip too, instead of floating in front of the panel.
+        self.assertIn('float zf = LIP + 0.012f;           // 0.37: the inset frame rides on the panel\'s front lip',renderer)
+        # The glazed square is a HOLE through thick glass: frosted panels turn the corner back to the
+        # membrane plane on all four sides of it.
+        self.assertIn('if (zl > 0f && isWindow(sh, i - 1, j) && shown(sh, i - 1, j, age)) wall(p, vc, wv, x0, y0, x0, y1, lip(0f), -d, f, b, 0.90f);',renderer)
+        self.assertIn('if (zu > 0f && isWindow(sh, i, j + 1) && shown(sh, i, j + 1, age)) wall(p, vc, wv, x0, y1, x1, y1, lip(0f), -d, f, b, 0.74f);',renderer)
+
+        # --- the upward light column replaces the floating cubes ---------------------------------
+        self.assertIn('static float beamStrength(long clock, boolean inSift) {',renderer)
+        self.assertIn('float night = (c >= 13_000L && c < 23_000L) ? 1f : 0f;',renderer)
+        self.assertIn('float morning = (c >= 900L && c < 6_500L) ? 1f - (c - 900L) / 5_600f : 0f;',renderer)
+        self.assertIn('if (SiftBudget.riftBeam) lightBeam(p, vc, sh, look2, s, cam, a);',renderer)
+        self.assertIn('private static void lightBeam(',renderer)
+        # …and the cubes are opt-in, off by default, so the default look has no boxes in the sky.
+        self.assertIn('riftEnergyCubes = false;',budget)
+        self.assertIn('if (SiftBudget.riftEnergyCubes && level != null && !mc.isPaused()',renderer)
+
+        # --- lightning: mixed colours and several shapes -----------------------------------------
+        self.assertIn('static final float[][] BOLT_TINTS = {rgb(0xFFFFFF), rgb(0xBFE9FF), rgb(0xFFA6E6), rgb(0xC9A6FF), rgb(0xFFE6A8), rgb(0x9FF0D8)};',renderer)
+        self.assertIn('private static void mixedBolt(',renderer)
+        self.assertIn('private static void summonBolts(',renderer)
+        self.assertIn('int shape = (int) (RiftShape.hash(g, k, 142) * 3f) % 3;',renderer)   # spear / fork / crown
+
+        # --- the membrane reveals the other side as you close in ---------------------------------
+        self.assertIn('float reveal = smoothstep(0.42, 0.06, frostAmt);',fsh)
+        self.assertIn('col = mix(col, behind, reveal * 0.88);',fsh)
+        self.assertIn('paneAlpha = mix(paneAlpha, 0.42, reveal * 0.80);',fsh)
+        self.assertIn('float paneAlpha = mix(0.94, 0.62, 1.0 - frostAmt) * fade;',fsh)
+        self.assertIn('RIFT_MEMBRANE_REFRACT',(C/'SiftRenderTypes.java').read_text())
+        for key in ('rift_structure_3d','rift_beam','rift_energy_cubes'):
+            self.assertIn(key,budget)
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -1015,7 +1083,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.36.0-alpha',props)
+        self.assertIn('mod_version=0.37.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
@@ -1113,7 +1181,10 @@ class DataContracts(unittest.TestCase):
                       'sdBox(', 'sdMainCross(', 'sdHollowOverlays(', 'auroraCurtainsBehind(',
                       'vec2 rippleOffset = vec2(sin(uv.y * 14.0 + (gameTime * 0.05)), cos(uv.x * 10.0 - (gameTime * 0.03))) * 0.02;'):
             self.assertIn(token, fsh)
-        for token in ('enum LifecyclePhase', 'phaseForAge(', 'riftGodRayShafts(', 'shaderQuadCanvas(', 'emitDoubleQuad('):
+        # 0.37 replaced the 10-layer shader extrusion with real geometry, so the anchors are the
+        # shell builders rather than the retired slice canvas.
+        for token in ('enum LifecyclePhase', 'phaseForAge(', 'riftGodRayShafts(',
+                      'private static void boxFaces(', 'private static void walls(', 'private static void frame('):
             self.assertIn(token, rift)
         part=(C/'RiftEnergyCubeParticle.java').read_text()
         self.assertIn('velocity.y += 0.04f;', part)

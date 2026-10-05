@@ -8,7 +8,9 @@ on:
       - '.github/workflows/sift-capture.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  # 0.37: the CI sandbox cannot read GitHub's artifact storage (Blob endpoints are firewalled), so the
+  # PNGs are also committed back to the branch under captures/run-<id>/ — write access is needed for that.
+  contents: write
 concurrency:
   group: sift-capture-${{ github.ref }}
   cancel-in-progress: true
@@ -70,3 +72,28 @@ jobs:
             /tmp/gldiag.log
             /tmp/xvfb.log
           if-no-files-found: warn
+      # Belt and braces: artifacts are only readable from a browser session, so every capture is also
+      # committed to the branch. This is what lets an automated reviewer (or a fork) see the pixels.
+      - name: Publish captures to the branch
+        if: always()
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          shopt -s nullglob
+          files=(fabric-mod/build/captures/*.png)
+          logs=()
+          for f in /tmp/capture.log /tmp/client.log /tmp/server.log /tmp/gldiag.log; do
+            [ -f "$f" ] && logs+=("$f")
+          done
+          if [ ${#files[@]} -eq 0 ] && [ ${#logs[@]} -eq 0 ]; then echo "nothing to publish"; exit 0; fi
+          dest="captures/run-${GITHUB_RUN_ID}"
+          mkdir -p "$dest"
+          # A run that dies before it screenshots still publishes its logs, which is how a failure is
+          # diagnosed without the (unreachable) artifact store.
+          [ ${#files[@]} -gt 0 ] && cp "${files[@]}" "$dest/"
+          [ ${#logs[@]} -gt 0 ] && cp "${logs[@]}" "$dest/" || true
+          git config user.name "sift-capture"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$dest"
+          git commit -m "captures: headless rift run ${GITHUB_RUN_ID} [skip ci]" || { echo "nothing to commit"; exit 0; }
+          git push origin "HEAD:${GITHUB_REF_NAME}"

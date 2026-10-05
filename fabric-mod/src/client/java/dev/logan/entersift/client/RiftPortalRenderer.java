@@ -38,6 +38,15 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     /** 0.32: the references' borders are thick chunky bevels, not hairline inlays. */
     static final float COLLAR = 0.12f, FLANGE = 0.06f;
     /**
+     * 0.37 real-geometry constants. LIP is the front plane of every frosted panel (the side walls run
+     * from here to the panel's back plane), PROUD is how far the outer frame band stands in front of
+     * the glass, and BACK_FLOOR is the alpha the deepest faces dissolve to. Together they give the
+     * rift a visible thickness in oblique views instead of reading as a flat sheet.
+     */
+    static final float LIP = COLLAR, PROUD = COLLAR + 0.085f;
+    /** 0.37 varied lightning tints: white, ice, magenta, violet, warm gold, mint. */
+    static final float[][] BOLT_TINTS = {rgb(0xFFFFFF), rgb(0xBFE9FF), rgb(0xFFA6E6), rgb(0xC9A6FF), rgb(0xFFE6A8), rgb(0x9FF0D8)};
+    /**
      * 0.28 back fading (reference screenshots): the frosted voxel structure recedes behind the opening
      * plane (negative Z) and dissolves instead of ending on a hard backside. Faces fade to nothing over
      * FADE_NEAR..FADE_FAR; edges keep a fraction so the wireframe stays readable while it recedes.
@@ -87,7 +96,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     public static final class State extends EntityRenderState {
         RiftType type = RiftType.SIFT;
         float w, h, age, yaw, pitch, time;
-        long seed;
+        long seed, clock;
         double ex, ey, ez;
         boolean inSift, night;
         int view;
@@ -113,11 +122,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         var level = net.minecraft.client.Minecraft.getInstance().level;
         s.inSift = level != null && level.dimension().identifier().equals(THE_SIFT);
         long clock = SiftTides.ticks(level);
+        s.clock = clock;
         // Endure is the Sift's night-like tide; outside the Sift, use the local world clock's night range.
         s.night = s.inSift ? SiftTides.isEndure(clock) : clock >= 13_000L && clock < 23_000L;
         s.view = viewCode(s.type, s.inSift, s.seed);
         var mc = net.minecraft.client.Minecraft.getInstance();
-        if (level != null && !mc.isPaused() && SiftBudget.riftEffects && e.age() >= 60 && s.type != RiftType.PORTAL) {
+        // 0.37: the rising energy CUBES are retired by default — the references show a light
+        // column instead (see lightBeam). The particles only run if a player re-enables them.
+        if (SiftBudget.riftEnergyCubes && level != null && !mc.isPaused() && SiftBudget.riftEffects && e.age() >= 60 && s.type != RiftType.PORTAL) {
             if (level.getRandom().nextFloat() < 0.22f) {
                 double ang = Math.toRadians(-s.yaw + 180f);
                 double ox = (level.getRandom().nextDouble() - 0.5) * s.w * 0.85;
@@ -332,9 +344,13 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         Vector3f cam = new Vector3f((float) (camera.pos.x - s.ex), (float) (camera.pos.y - s.ey), (float) (camera.pos.z - s.ez))
             .rotateY((float) Math.toRadians(s.yaw + 180f));
         boolean gpu = SiftBudget.riftShader;
+        // 0.37: the GPU path draws the same REAL geometry as the fallback — the rift is a stepped
+        // voxel structure with thickness, not one flat SDF canvas. Only the render types differ.
         RenderType wallT = gpu ? SiftRenderTypes.RIFT_WALL : SiftRenderTypes.GLASS;
         RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
-        RenderType winT = gpu ? (RiftScene.request() ? SiftRenderTypes.RIFT_REFRACT : SiftRenderTypes.RIFT) : SiftRenderTypes.GLASS;
+        RenderType winT = gpu
+            ? (RiftScene.request() ? SiftRenderTypes.RIFT_MEMBRANE_REFRACT : SiftRenderTypes.RIFT_MEMBRANE)
+            : SiftRenderTypes.GLASS;
         float age = s.age;
         // 0.29r: the rift snaps in white and dissolves into its colours a few ticks later.
         float fl = whiteFlash(age);
@@ -349,92 +365,48 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         try {
             pose.rotate(new Quaternionf().rotationY((float) Math.toRadians(-s.yaw + 180f)));
             if (age <= SHOCK_END) out.submitCustomGeometry(pose, glowT, (p, vc) -> shockwave(p, vc, still, sh, look, s, cam, age));
-            if (gpu) {
+            if (age < CLUSTER_START) {
+                // Summon: seed bar, arcs, shock ripples and the reference's mixed-colour lightning.
                 float a = age;
-                out.submitCustomGeometry(pose, winT, (p, vc) -> shaderQuadCanvas(p, vc, sh, a, code));
-                if (a >= GROWN && SiftBudget.riftEffects) {
-                    out.submitCustomGeometry(pose, glowT, (p, vc) -> riftGodRayShafts(p, vc, sh, look2, s, a));
-                }
-            } else {
-                // Seed first, then rotating bar, then a brief expansion ring and stepped opening.
-                if (age < CLUSTER_START) {
-                    float a = age;
-                    out.submitCustomGeometry(pose, glowT, (p, vc) -> {
-                        seedBox(p, vc, still, sh, look, a, cam);
-                        if (SiftBudget.riftEffects) seedBolts(p, vc, sh, s, cam, look, a);
-                        if (SiftBudget.riftEffects && SiftBudget.riftFlares) rotatingArcs(p, vc, sh, s, cam, a);
-                        if (SiftBudget.riftEffects && SiftBudget.riftBloom) seedShell(p, vc, sh, s, a);
-                        if (a > 4f) ripple(p, vc, still, sh, look, (a - 4f) * 15f);
-                    });
-                }
-                if (age >= CLUSTER_START) {
-                    float a = age;
-                    if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf, frost));
-                    else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf, frost, look2));
-                    out.submitCustomGeometry(pose, wallT, (p, vc) -> walls(p, vc, wv, sh, look2, a, s));
-                    out.submitCustomGeometry(pose, glowT, (p, vc) -> {
-                        boxFaces(p, vc, wv, sh, look2, cam, a, s);
-                        rims(p, vc, wv, sh, look2, cam, a, s);
-                        if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look2, a);
-                        if (SiftBudget.riftEffects) riftBolts(p, vc, wv, sh, s, cam, look, a);
-                        if (SiftBudget.riftEffects && SiftBudget.riftFlares) {
-                            glitchTeeth(p, vc, sh, s, a);
-                            clawRibbons(p, vc, sh, s, cam, a);
-                        }
-                        if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look2, s);
-                        if (SiftBudget.riftEffects) riftGodRayShafts(p, vc, sh, look2, s, a);
-                    });
-                    out.submitCustomGeometry(pose, wallT, (p, vc) -> frame(p, vc, wv, sh, look2, a));
-                    if (SiftBudget.riftEffects && s.type != RiftType.PORTAL)
-                        out.submitCustomGeometry(pose, glowT, (p, vc) -> energyCubes(p, vc, sh, s, cam, a));
-                    if (age >= GROWN && SiftBudget.riftEffects) out.submitCustomGeometry(pose, glowT, (p, vc) -> stable(p, vc, wv, sh, look2, cam, s));
-                }
+                out.submitCustomGeometry(pose, glowT, (p, vc) -> {
+                    seedBox(p, vc, still, sh, look, a, cam);
+                    if (SiftBudget.riftEffects) seedBolts(p, vc, sh, s, cam, look, a);
+                    summonBolts(p, vc, still, sh, s, cam, look, a);
+                    if (SiftBudget.riftEffects && SiftBudget.riftFlares) rotatingArcs(p, vc, sh, s, cam, a);
+                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) seedShell(p, vc, sh, s, a);
+                    if (a > 4f) ripple(p, vc, still, sh, look, (a - 4f) * 15f);
+                });
+            }
+            if (age >= CLUSTER_START) {
+                float a = age;
+                // Paint order is deepest first: the recessed membrane, then the voxel shell
+                // (panels + reveal walls + proud frame), then everything additive on top.
+                if (gpu) out.submitCustomGeometry(pose, winT, (p, vc) -> windows(p, vc, wv, sh, a, code, s, wf, frost));
+                else out.submitCustomGeometry(pose, winT, (p, vc) -> windowsFlat(p, vc, wv, sh, a, s, wf, frost, look2));
+                out.submitCustomGeometry(pose, wallT, (p, vc) -> {
+                    boxFaces(p, vc, wv, sh, look2, cam, a);
+                    walls(p, vc, wv, sh, look2, a, s);
+                    frame(p, vc, wv, sh, look2, a);
+                });
+                out.submitCustomGeometry(pose, glowT, (p, vc) -> {
+                    rims(p, vc, wv, sh, look2, cam, a, s);
+                    if (SiftBudget.riftEffects && SiftBudget.riftBloom) bloomShell(p, vc, sh, look2, a);
+                    if (SiftBudget.riftEffects) riftBolts(p, vc, wv, sh, s, cam, look, a);
+                    summonBolts(p, vc, wv, sh, s, cam, look, a);
+                    if (SiftBudget.riftEffects && SiftBudget.riftFlares) {
+                        glitchTeeth(p, vc, sh, s, a);
+                        clawRibbons(p, vc, sh, s, cam, a);
+                    }
+                    if (SiftBudget.riftEffects && SiftBudget.riftSpill && s.type != RiftType.PORTAL) wavySideVeils(p, vc, wv, sh, look2, s);
+                    if (SiftBudget.riftEffects) riftGodRayShafts(p, vc, sh, look2, s, a);
+                    if (SiftBudget.riftBeam) lightBeam(p, vc, sh, look2, s, cam, a);
+                    else if (SiftBudget.riftEnergyCubes && SiftBudget.riftEffects && s.type != RiftType.PORTAL) energyCubes(p, vc, sh, s, cam, a);
+                    if (age >= GROWN && SiftBudget.riftEffects) stable(p, vc, wv, sh, look2, cam, s);
+                });
             }
         } finally {
             pose.popPose();
         }
-    }
-
-    /**
-     * Pure GLSL Shader-Driven Rift Canvas:
-     * Emits the double-sided 2D SDF quad plane at z = +0.004f (packing u_Progress in [0, 1] into frostAmt)
-     * plus 14 receding volumetric Aurora/cloud extrusion slices around the front plane (z = -0.064f .. -0.844f)
-     * once the stepped fracture phase begins (age >= 60). The thicker shader-only slab echoes the reference's
-     * visibly extruded cuboid frame without restoring per-block Rift meshes.
-     */
-    private static void shaderQuadCanvas(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, float age, float code) {
-        float x0 = -sh.w * 0.68f, x1 = sh.w * 0.68f;
-        float y0 = RiftShape.BASE - sh.h * 0.14f, y1 = RiftShape.BASE + sh.h * 1.18f;
-        float uProgress = clamp(age / GROWN, 0f, 1f);
-        // Volumetric extrusion slices behind the front plane (drawn back-to-front so alpha blending layers cleanly)
-        if (age >= 60f) {
-            float openRamp = clamp((age - 60f) / 25f, 0f, 1f);
-            for (int layer = 14; layer >= 1; layer--) {
-                float z = -layer * 0.06f - 0.004f;
-                float sliceFade = 0.32f * (1f - layer / 15f) * openRamp;
-                float aSlice = clamp(sliceFade, 0f, 0.90f) * 0.5f;
-                emitDoubleQuad(p, vc, x0, y0, x1, y1, z, code, aSlice);
-            }
-        }
-        // Main front SDF plane at +0.004f depth offset: fade = 1.0, frostAmt = uProgress (0.0 .. 1.0)
-        float aFront = 0.5f + 0.5f * uProgress;
-        emitDoubleQuad(p, vc, x0, y0, x1, y1, 0.004f, code, aFront);
-    }
-
-    private static void emitDoubleQuad(PoseStack.Pose p, VertexConsumer vc,
-                                       float x0, float y0, float x1, float y1, float z, float code, float a) {
-        if (!SiftBudget.take(vc)) return;
-        // Front face (+Z winding)
-        vc.addVertex(p, x0, y0, z).setColor(0f, 0f, code, a);
-        vc.addVertex(p, x1, y0, z).setColor(1f, 0f, code, a);
-        vc.addVertex(p, x1, y1, z).setColor(1f, 1f, code, a);
-        vc.addVertex(p, x0, y1, z).setColor(0f, 1f, code, a);
-        if (!SiftBudget.take(vc)) return;
-        // Back face (-Z winding)
-        vc.addVertex(p, x1, y0, -z).setColor(1f, 0f, code, a);
-        vc.addVertex(p, x0, y0, -z).setColor(0f, 0f, code, a);
-        vc.addVertex(p, x0, y1, -z).setColor(0f, 1f, code, a);
-        vc.addVertex(p, x1, y1, -z).setColor(1f, 1f, code, a);
     }
 
     /** Encodes palette and tide; framebuffer capture belongs to RiftScene, not this method. */
@@ -746,7 +718,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     private static void windows(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, float age, float code, State s, float fade, float frost) {
-        boolean boxFace = SiftBudget.riftBoxFace && !SiftBudget.riftShader;
+        // 0.37: with the stepped-box look the opening is only the glazed cells; every other cell is
+        // solid frosted slab geometry (boxFaces), on the GPU path as well as the fallback.
+        boolean boxFace = SiftBudget.riftBoxFace;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
             if (boxFace && !sh.windowCell(i, j)) continue; // the stepped box is frosted; boxFaces draws it
@@ -770,43 +744,75 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /**
-     * 0.29r: the frosted voxel box. Every body cell that is not the small square window is drawn as a solid
-     * frosted face, the detached satellites close into frosted boxes, and the window hole gets a lit border.
-     * This is what turns the rift from "a window" into the reference's stepped grey box with one glazed square.
+     * The frosted voxel box, as REAL extruded geometry since 0.37: every body cell that is not the glazed
+     * square is a slab with a front pane on the {@link #LIP} plane, a back pane at the cell's own recess
+     * depth (which dissolves with depth) and a lit inset frame. {@link #walls} closes the sides, including
+     * the reveal around the opening. This is what turns the rift from "a window" into the references'
+     * stepped grey box with one glazed square, and what gives it visible thickness in oblique views.
      */
-    private static void boxFaces(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, float age, State s) {
-        if (!SiftBudget.riftBoxFace || SiftBudget.riftShader) return;
+    private static void boxFaces(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, float age) {
+        if (!SiftBudget.riftBoxFace) return;
         // The frosted layer carries the rift's own colour (green / lime / red / yellow / orange), and the
         // frosted tips are the cells furthest from the window, warmed towards the inner glow.
         float[] face = look.frost();
         float[] tip = mix(look.frost(), look.core(), 0.30f);
         float[] pane = mix(face, tip, clamp((age - RIFT_BIRTH) / 30f, 0f, 1f));
+        float[] back = mix(look.wallBack(), look.frost(), 0.35f);
         float[] edge = mix(look.core(), c(1f, 1f, 1f), 0.45f);
+        // 0.37: every frosted cell is a REAL extruded slab. The front face sits on the lip plane and stays
+        // crisp; the back face sits at the cell's recess depth and dissolves (backFade), so the structure
+        // reads solid at the front and melts into nothing behind the opening, as the references do.
+        // Cells are emitted deepest first so the translucent faces layer in the right order.
+        int n = 0;
+        float[] key = new float[sh.cols * sh.rows];
+        int[] idx = new int[sh.cols * sh.rows];
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age) || sh.windowCell(i, j)) continue;
+            key[n] = sh.d(i, j);
+            idx[n] = i * sh.rows + j;
+            n++;
+        }
+        for (int a = 1; a < n; a++) {            // insertion sort, deepest (largest z-recess) first
+            float k = key[a];
+            int q = idx[a], b = a - 1;
+            while (b >= 0 && key[b] < k) { key[b + 1] = key[b]; idx[b + 1] = idx[b]; b--; }
+            key[b + 1] = k;
+            idx[b + 1] = q;
+        }
+        for (int a = 0; a < n; a++) {
+            int i = idx[a] / sh.rows, j = idx[a] % sh.rows;
             float z = -sh.d(i, j);
-            // Cells further from the glazed square stand taller, take the warm tip tone and fade out.
             boolean tipCell = Math.abs(i - 5) + Math.abs(j - 3) >= 4;
-            float tf = tipFade(sh, (sh.x(i) + sh.x(i + 1)) * 0.5f, (sh.y(j) + sh.y(j + 1)) * 0.5f);
+            float cx = (sh.x(i) + sh.x(i + 1)) * 0.5f, cy2 = (sh.y(j) + sh.y(j + 1)) * 0.5f;
+            float tf = tipFade(sh, cx, cy2) * spokeFade(sh, cx, cy2);
             if (tf <= 0.02f) continue;
-            rectSub(p, vc, wv, sh.x(i), sh.y(j), sh.x(i + 1), sh.y(j + 1), z, tipCell ? pane : face, 0.95f * tf);
+            float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
+            float[] col = tipCell ? pane : face;
+            // Front face on the lip plane: crisp, full strength.
+            rectSub(p, vc, wv, x0, y0, x1, y1, LIP, col, 0.94f * tf);
+            // Back face at the recess depth: dissolves with depth (0.20 floor far back).
+            float ba = (0.20f + 0.80f * backFade(z)) * 0.85f * tf;
+            if (ba > 0.01f) rectSub(p, vc, wv, x0, y0, x1, y1, z, back, ba);
             // Lit border around the glazed square, so the hole reads as cut into the box.
-            float bx0 = sh.x(i), bx1 = sh.x(i + 1), by0 = sh.y(j), by1 = sh.y(j + 1);
             float ea = 0.55f * tf;
             // 0.33: every frosted slab is a PANE IN A FRAME — the references show white lines on both sides
             // of each beam, so a bright inset rectangle sits inside each panel's own silhouette.
             float in = 0.13f, ie = 0.28f * tf;
-            line(p, vc, wv, cam, new float[]{bx0 + in, by0 + in, z + 0.026f}, new float[]{bx1 - in, by0 + in, z + 0.026f}, 0.045f, edge, ie);
-            line(p, vc, wv, cam, new float[]{bx0 + in, by1 - in, z + 0.026f}, new float[]{bx1 - in, by1 - in, z + 0.026f}, 0.045f, edge, ie);
-            line(p, vc, wv, cam, new float[]{bx0 + in, by0 + in, z + 0.026f}, new float[]{bx0 + in, by1 - in, z + 0.026f}, 0.045f, edge, ie);
-            line(p, vc, wv, cam, new float[]{bx1 - in, by0 + in, z + 0.026f}, new float[]{bx1 - in, by1 - in, z + 0.026f}, 0.045f, edge, ie);
-            if (isWindow(sh, i - 1, j)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx0, by1, z + 0.012f}, 0.08f, edge, ea);
-            if (isWindow(sh, i + 1, j)) line(p, vc, wv, cam, new float[]{bx1, by0, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.08f, edge, ea);
-            if (isWindow(sh, i, j - 1)) line(p, vc, wv, cam, new float[]{bx0, by0, z + 0.012f}, new float[]{bx1, by0, z + 0.012f}, 0.08f, edge, ea);
-            if (isWindow(sh, i, j + 1)) line(p, vc, wv, cam, new float[]{bx0, by1, z + 0.012f}, new float[]{bx1, by1, z + 0.012f}, 0.08f, edge, ea);
+            float zf = LIP + 0.012f;           // 0.37: the inset frame rides on the panel's front lip
+            line(p, vc, wv, cam, new float[]{x0 + in, y0 + in, zf}, new float[]{x1 - in, y0 + in, zf}, 0.045f, edge, ie);
+            line(p, vc, wv, cam, new float[]{x0 + in, y1 - in, zf}, new float[]{x1 - in, y1 - in, zf}, 0.045f, edge, ie);
+            line(p, vc, wv, cam, new float[]{x0 + in, y0 + in, zf}, new float[]{x0 + in, y1 - in, zf}, 0.045f, edge, ie);
+            line(p, vc, wv, cam, new float[]{x1 - in, y0 + in, zf}, new float[]{x1 - in, y1 - in, zf}, 0.045f, edge, ie);
+            if (isWindow(sh, i - 1, j)) line(p, vc, wv, cam, new float[]{x0, y0, LIP + 0.006f}, new float[]{x0, y1, LIP + 0.006f}, 0.08f, edge, ea);
+            if (isWindow(sh, i + 1, j)) line(p, vc, wv, cam, new float[]{x1, y0, LIP + 0.006f}, new float[]{x1, y1, LIP + 0.006f}, 0.08f, edge, ea);
+            if (isWindow(sh, i, j - 1)) line(p, vc, wv, cam, new float[]{x0, y0, LIP + 0.006f}, new float[]{x1, y0, LIP + 0.006f}, 0.08f, edge, ea);
+            if (isWindow(sh, i, j + 1)) line(p, vc, wv, cam, new float[]{x0, y1, LIP + 0.006f}, new float[]{x1, y1, LIP + 0.006f}, 0.08f, edge, ea);
         }
         // The detached satellites stay HOLLOW, exactly like the reference's small outlined boxes (17345525):
         // rims() already draws their lit edges and corner posts, so no frosted pane goes on them.
+        // 0.37 keeps them hollow but makes the hollow REAL: walls() closes each satellite into an
+        // extruded open box (front ring on the lip plane, back ring at the recess depth), so the corner
+        // posts and the two white outlines now sit on a genuine three-dimensional shell.
     }
 
     private static boolean isWindow(RiftShape sh, int i, int j) {
@@ -861,6 +867,14 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             if (zr <= 0) wall(p, vc, wv, x1, y0, x1, y1, lip(zr), -d, f, b, 0.84f);
             if (zd <= 0) wall(p, vc, wv, x0, y0, x1, y0, lip(zd), -d, f, b, 1f);
             if (zu <= 0) wall(p, vc, wv, x0, y1, x1, y1, lip(zu), -d, f, b, 0.76f);
+            // 0.37: the REVEAL around the glazed opening. Where a frosted panel meets a window cell the
+            // panel turns the corner back to the membrane plane, so the opening reads as a real hole
+            // through thick glass (the strongest 3D cue in the reference screenshots).
+            // The wall front is the lip plane, the back is the shared recess depth.
+            if (zl > 0f && isWindow(sh, i - 1, j) && shown(sh, i - 1, j, age)) wall(p, vc, wv, x0, y0, x0, y1, lip(0f), -d, f, b, 0.90f);
+            if (zr > 0f && isWindow(sh, i + 1, j) && shown(sh, i + 1, j, age)) wall(p, vc, wv, x1, y0, x1, y1, lip(0f), -d, f, b, 0.82f);
+            if (zd > 0f && isWindow(sh, i, j - 1) && shown(sh, i, j - 1, age)) wall(p, vc, wv, x0, y0, x1, y0, lip(0f), -d, f, b, 1f);
+            if (zu > 0f && isWindow(sh, i, j + 1) && shown(sh, i, j + 1, age)) wall(p, vc, wv, x0, y1, x1, y1, lip(0f), -d, f, b, 0.74f);
         }
         for (float[] q : sh.sats) {
             if (age < satAt(q)) continue;
@@ -892,7 +906,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
                              float[] front, float[] back, float shade, float alphaMul) {
         float[] f = {front[0] * shade, front[1] * shade, front[2] * shade}, b = {back[0] * shade, back[1] * shade, back[2] * shade};
         float af = faceA(zf, alphaMul), ab = faceA(zb, alphaMul);
-        float wallScale = SiftBudget.riftShader ? 0.16f : 1f;
+        // 0.37: the side faces used to be 16% filler on the GPU path because the shader painted the front
+        // for us. Now that the shell is real extruded geometry those side faces ARE the 3D read, so the
+        // stepped-structure option lifts them to near solid; the timid 0.16 stays for rift_structure_3d=false.
+        float wallScale = SiftBudget.riftShader ? (SiftBudget.riftStructure3d ? 0.72f : 0.16f) : 1f;
         for (int s = 0; s < SUB; s++) {
             float t0 = s / (float) SUB, t1 = (s + 1) / (float) SUB;
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
@@ -1091,21 +1108,22 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ sleek recessed bevel lip (frame)
 
     private static void frame(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
-        if (SiftBudget.riftShader) return;
+        // 0.37: the frame is real geometry on the GPU path too, and it stands PROUD of the glass,
+        // so the outer frames read as three-dimensional rails from every angle.
         float[] face = look.wallFront(), side = mix(look.wallFront(), look.wallBack(), 0.35f);
-        float F = FLANGE, C = COLLAR;
+        float F = FLANGE, C = PROUD;
         for (int i = 0; i < sh.cols; i++) for (int j = 0; j < sh.rows; j++) {
             if (!shown(sh, i, j, age)) continue;
             float x0 = sh.x(i), x1 = sh.x(i + 1), y0 = sh.y(j), y1 = sh.y(j + 1);
             boolean L = !shown(sh, i - 1, j, age), R = !shown(sh, i + 1, j, age), D = !shown(sh, i, j - 1, age), U = !shown(sh, i, j + 1, age);
             if (L) { rectSub(p, vc, wv, x0 - F, y0, x0, y1, C, face, 1f);
-                wall(p, vc, wv, x0 - F, y0 - (D ? F : 0), x0 - F, y1 + (U ? F : 0), C, 0f, side, side, 0.9f); }
+                wall(p, vc, wv, x0 - F, y0 - (D ? F : 0), x0 - F, y1 + (U ? F : 0), C, C - 0.14f, side, side, 0.9f); }
             if (R) { rectSub(p, vc, wv, x1, y0, x1 + F, y1, C, face, 1f);
-                wall(p, vc, wv, x1 + F, y0 - (D ? F : 0), x1 + F, y1 + (U ? F : 0), C, 0f, side, side, 0.82f); }
+                wall(p, vc, wv, x1 + F, y0 - (D ? F : 0), x1 + F, y1 + (U ? F : 0), C, C - 0.14f, side, side, 0.82f); }
             if (D) { rectSub(p, vc, wv, x0, y0 - F, x1, y0, C, face, 1f);
-                wall(p, vc, wv, x0 - (L ? F : 0), y0 - F, x1 + (R ? F : 0), y0 - F, C, 0f, side, side, 0.7f); }
+                wall(p, vc, wv, x0 - (L ? F : 0), y0 - F, x1 + (R ? F : 0), y0 - F, C, C - 0.14f, side, side, 0.7f); }
             if (U) { rectSub(p, vc, wv, x0, y1, x1, y1 + F, C, face, 1f);
-                wall(p, vc, wv, x0 - (L ? F : 0), y1 + F, x1 + (R ? F : 0), y1 + F, C, 0f, side, side, 1f); }
+                wall(p, vc, wv, x0 - (L ? F : 0), y1 + F, x1 + (R ? F : 0), y1 + F, C, C - 0.14f, side, side, 1f); }
             if (L && D) rect(p, vc, wv, x0 - F, y0 - F, x0, y0, C, face, 1f);
             if (R && D) rect(p, vc, wv, x1, y0 - F, x1 + F, y0, C, face, 1f);
             if (L && U) rect(p, vc, wv, x0 - F, y1, x0, y1 + F, C, face, 1f);
@@ -1352,6 +1370,156 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             bolt(p, vc, Warp.STILL, cam, new float[]{sx, sy, 0.05f}, new float[]{ex, ey, ez}, g, look, 0.9f);
         }
     }
+
+    // ------------------------------------------------------------------ 0.37 upward light column
+
+    /**
+     * How strong the upward light column is right now.
+     *
+     * The references show the shaft at NIGHT and in the MORNING, and not in the evening, so this is a
+     * function of the local clock: full through the night (13000..23000), a softer morning shaft from
+     * the dawn boundary (23000..24000 and 0..6500) that fades out by mid-morning, and nothing from
+     * mid-morning through evening (6500..13000). Inside the Sift it follows the dimension's own dim tide.
+     * Dial: `rift_beam` in config/entersift-client.properties turns the whole column off.
+     */
+    static float beamStrength(long clock, boolean inSift) {
+        if (!SiftBudget.riftBeam) return 0f;
+        if (inSift) return 0.80f;
+        float c = clock % 24000L;
+        float night = (c >= 13_000L && c < 23_000L) ? 1f : 0f;
+        float dawn = (c >= 22_800L || c < 900L) ? 1f : 0f;
+        float morning = (c >= 900L && c < 6_500L) ? 1f - (c - 900L) / 5_600f : 0f;
+        float f = Math.max(night, Math.max(dawn, morning * 0.75f));
+        return f * f * (3f - 2f * f);
+    }
+
+    /**
+     * 0.37 the upward light column that replaces the old floating cubes. Three stacked camera-facing
+     * bands (bright core, coloured halo) rise from the top lip and thin out with height, plus a few
+     * rising motes. Additive, so it reads as light rather than geometry.
+     */
+    private static void lightBeam(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, Look look, State s, Vector3f cam, float age) {
+        float k = beamStrength(s.clock, s.inSift);
+        if (k <= 0.01f) return;
+        if (age < GROWN) k *= clamp((age - CLUSTER_START) / 26f, 0f, 1f); // builds up as the rift finishes growing
+        if (k <= 0.01f) return;
+        float top = sh.y(sh.rows);
+        float pulse = 0.86f + 0.14f * (float) Math.sin(s.time * 1.7f);
+        float[] core = mix(look.core(), c(1f, 1f, 1f), 0.55f);
+        float[] halo = look.halo();
+        float height = sh.h * 1.9f + 2.0f;
+        float w = Math.max(0.55f, sh.w * 0.17f);
+        if (sh.maxDepth < 0.30f) w *= 0.75f;                       // the permanent PORTAL gets a tighter shaft
+        for (int seg = 0; seg < 3; seg++) {
+            float y0 = top + 0.10f + height * (seg / 3f);
+            float y1 = top + 0.10f + height * ((seg + 1) / 3f);
+            float a = k * pulse * (0.34f - seg * 0.095f);
+            if (a <= 0.01f) continue;
+            float coreW = w * (0.42f - seg * 0.10f);
+            float outerW = w * (1.0f + seg * 0.35f);
+            band(p, vc, Warp.STILL, cam, new float[]{0f, y0, 0.02f}, new float[]{0f, y1, 0.02f},
+                coreW, outerW, core, halo, a);
+        }
+        // Rising motes inside the column, so the shaft is alive instead of a static gradient.
+        for (int i = 0; i < 6; i++) {
+            float life = (RiftShape.hash(s.seed, i, 210) + s.time * (0.05f + 0.03f * RiftShape.hash(s.seed, i, 211))) % 1f;
+            float x = (RiftShape.hash(s.seed, i, 212) - 0.5f) * w * 1.4f;
+            float z = 0.05f + (RiftShape.hash(s.seed, i, 213) - 0.5f) * 0.25f;
+            float y = top + 0.20f + life * height * 0.9f;
+            float a = k * (float) Math.sin(life * Math.PI) * 0.40f;
+            if (a < 0.02f) continue;
+            float q = 0.018f + 0.012f * RiftShape.hash(s.seed, i, 214);
+            line(p, vc, Warp.STILL, cam, new float[]{x, y - q, z}, new float[]{x, y + q * 2.2f, z}, q, c(1f, 1f, 1f), a);
+        }
+    }
+
+    // ------------------------------------------------------------------ 0.37 varied summon lightning
+
+    /**
+     * One lightning bolt whose COLOUR MIXES along its length (white core + two tinted glow tones) and
+     * whose topology is one of three reference shapes: 0 = upward spear, 1 = forked trunk with side
+     * branches, 2 = short crown spike. The reference frames show several colours at once — ice, magenta,
+     * violet, warm gold — so the tints are picked per bolt from {@link #BOLT_TINTS}.
+     */
+    private static void mixedBolt(PoseStack.Pose p, VertexConsumer vc, Warp wv, Vector3f cam,
+                                  float[] a, float[] b, long seed, int shape, float alpha) {
+        if (alpha <= 0.02f) return;
+        float[] tintA = BOLT_TINTS[(int) (RiftShape.hash(seed, 3, 9) * BOLT_TINTS.length) % BOLT_TINTS.length];
+        float[] tintB = BOLT_TINTS[(int) (RiftShape.hash(seed, 4, 11) * BOLT_TINTS.length) % BOLT_TINTS.length];
+        float len = (float) Math.sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]) + (b[2] - a[2]) * (b[2] - a[2]));
+        if (len < 1e-4f) return;
+        int segs = shape == 1 ? 12 : shape == 2 ? 6 : 9;
+        float kink = shape == 2 ? 0.22f : 0.13f;
+        float[] prev = a;
+        for (int i = 1; i <= segs; i++) {
+            float f = i / (float) segs;
+            float jit = (i == segs ? 0f : kink * len * 0.5f);
+            float[] q = {a[0] + (b[0] - a[0]) * f + (RiftShape.hash(seed, i, 61) - 0.5f) * jit * 2f,
+                         a[1] + (b[1] - a[1]) * f + (RiftShape.hash(seed, i, 62) - 0.5f) * jit * 2f,
+                         a[2] + (b[2] - a[2]) * f + (RiftShape.hash(seed, i, 63) - 0.5f) * jit};
+            float[] tint = mix(tintA, tintB, f);                     // the mixed colour runs along the bolt
+            float w = (0.030f + 0.020f * (1f - f)) * (shape == 2 ? 0.8f : 1f);
+            line(p, vc, wv, cam, prev, q, w, c(1f, 1f, 1f), alpha);              // hot white core
+            line(p, vc, wv, cam, prev, q, w * 6.0f, tint, alpha * 0.30f);        // coloured glow
+            if (shape == 1 && i % 4 == 2 && i + 2 < segs) {                      // branch off the trunk
+                float[] br = {q[0] + (RiftShape.hash(seed, i, 71) - 0.5f) * len * 0.6f,
+                              q[1] + len * (0.12f + 0.18f * RiftShape.hash(seed, i, 72)),
+                              q[2] + (RiftShape.hash(seed, i, 73) - 0.5f) * len * 0.3f};
+                float[] brTint = BOLT_TINTS[(int) (RiftShape.hash(seed, i, 74) * BOLT_TINTS.length) % BOLT_TINTS.length];
+                line(p, vc, wv, cam, q, br, w * 0.7f, c(1f, 1f, 1f), alpha * 0.85f);
+                line(p, vc, wv, cam, q, br, w * 4.2f, brTint, alpha * 0.24f);
+            }
+            prev = q;
+        }
+    }
+
+    /**
+     * Summon-time lightning (0.37). During the opening the references show mixed-colour bolts that
+     * climb UP off the structure and fork into the sky, so this emits: upward spears from the top of
+     * the flowering silhouette, forked trunks from the arms, and a few crown spikes — all re-aimed a
+     * few times a second, all in different tints. Mature rifts keep a rare evening-free arc.
+     */
+    private static void summonBolts(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
+        if (!SiftBudget.riftBolts) return;
+        boolean summoning = age <= RIFT_BIRTH + 14f;
+        float ramp = summoning ? 1f : clamp((age - GROWN) / 40f, 0f, 1f);
+        if (!summoning && age < GROWN) return;
+        int step = (int) (s.time * (summoning ? 4.5f : 1.6f));
+        int count = summoning ? 3 : (s.night ? 2 : 1);
+        float top = sh.y(sh.rows);
+        for (int k = 0; k < count; k++) {
+            long g = s.seed + step * 613L + k * 97L;
+            if (RiftShape.hash(g, k, 141) < (summoning ? 0.18f : 0.45f)) continue;
+            int shape = (int) (RiftShape.hash(g, k, 142) * 3f) % 3;
+            float alpha = (0.85f + 0.15f * RiftShape.hash(g, k, 143)) * (summoning ? 1f : 0.55f * ramp);
+            float sx, sy, sz;
+            if (shape == 0) {                   // spear climbing off the top of the structure
+                sx = (RiftShape.hash(g, k, 144) - 0.5f) * sh.w * 0.85f;
+                sy = top - 0.1f + RiftShape.hash(g, k, 145) * 0.3f;
+                sz = 0.05f;
+            } else if (shape == 1) {            // forked trunk from the arms
+                sx = (RiftShape.hash(g, k, 146) < 0.5f ? -1f : 1f) * sh.w * 0.48f;
+                sy = sh.cy() + (RiftShape.hash(g, k, 147) - 0.5f) * sh.h * 0.4f;
+                sz = 0.06f;
+            } else {                            // crown spike near the cap
+                sx = (RiftShape.hash(g, k, 148) - 0.5f) * sh.w * 0.4f;
+                sy = sh.cy() + sh.h * (0.35f + 0.25f * RiftShape.hash(g, k, 149));
+                sz = 0.04f;
+            }
+            float reach = (shape == 0 ? 3.2f : 2.2f) + 3.0f * RiftShape.hash(g, k, 150);
+            float[] from = {sx, sy, sz};
+            float[] to = {sx + (RiftShape.hash(g, k, 151) - 0.5f) * reach * 0.9f,
+                          sy + reach * (shape == 2 ? 0.7f : 1.0f),
+                          sz + (RiftShape.hash(g, k, 152) - 0.5f) * reach * 0.5f};
+            mixedBolt(p, vc, wv, cam, from, to, g, shape, alpha);
+            if (shape == 1) {                   // a second trunk, so the fork reads as a fork
+                float[] to2 = {sx - (to[0] - from[0]) * 0.5f, sy + reach * 0.8f, sz + (RiftShape.hash(g, k, 153) - 0.5f) * 0.6f};
+                mixedBolt(p, vc, wv, cam, from, to2, g + 7919L, 0, alpha * 0.75f);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ primitives
 
     // ------------------------------------------------------------------ primitives
 

@@ -101,6 +101,26 @@ public final class SiftRenderTypes {
         RenderSetup.builder(RIFT_REFRACT_PIPELINE)
             .withTexture("Sampler0", RiftScene.DEPTH).withTexture("Sampler1", RiftScene.COLOR).createRenderSetup());
 
+    /**
+     * 0.37 the membrane: the rift's opening surface, emitted as real recessed geometry.
+     * RIFT_MEMBRANE paints the frosted destination, RIFT_MEMBRANE_REFRACT additionally
+     * reveals the scene that is really behind the rift as the camera closes in.
+     */
+    public static final RenderPipeline RIFT_MEMBRANE_PIPELINE = RenderPipelines.register(riftVariant("rift_membrane", "RIFT_MEMBRANE")
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build());
+    public static final RenderPipeline RIFT_MEMBRANE_REFRACT_PIPELINE = RenderPipelines.register(riftVariant("rift_membrane_refract", "RIFT_MEMBRANE_REFRACT")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0_SAMPLER1)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build());
+    public static final RenderType RIFT_MEMBRANE = RenderType.create("entersift_rift_membrane",
+        RenderSetup.builder(RIFT_MEMBRANE_PIPELINE).createRenderSetup());
+    public static final RenderType RIFT_MEMBRANE_REFRACT = RenderType.create("entersift_rift_membrane_refract",
+        RenderSetup.builder(RIFT_MEMBRANE_REFRACT_PIPELINE)
+            .withTexture("Sampler0", RiftScene.DEPTH).withTexture("Sampler1", RiftScene.COLOR).createRenderSetup());
+
     /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
     public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
