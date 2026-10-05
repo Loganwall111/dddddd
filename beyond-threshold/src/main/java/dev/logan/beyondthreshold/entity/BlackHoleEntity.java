@@ -12,6 +12,7 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -59,7 +60,7 @@ public class BlackHoleEntity extends Entity {
 		if (collapseTimer < 0) {
 			collapseTimer = 40;
 			dataTracker.set(PHASE, 1);
-			world.playSound(null, getBlockPos(), SoundEvents.ENTITY_WITHER_DEATH, SoundCategory.HOSTILE, 4.0F, 0.4F);
+			getWorld().playSound(null, getBlockPos(), SoundEvents.ENTITY_WITHER_DEATH, SoundCategory.HOSTILE, 4.0F, 0.4F);
 		}
 	}
 
@@ -78,7 +79,7 @@ public class BlackHoleEntity extends Entity {
 		super.tick();
 		age++;
 
-		if (world.isClient) {
+		if (getWorld().isClient) {
 			return;
 		}
 
@@ -89,12 +90,12 @@ public class BlackHoleEntity extends Entity {
 		if (age % 3 == 0) {
 			double a = random.nextDouble() * Math.PI * 2;
 			double rr = r * (1.2 + random.nextDouble() * 2.0);
-			world.spawnParticles(ParticleTypes.REVERSE_PORTAL,
+			getWorld().spawnParticles(ParticleTypes.REVERSE_PORTAL,
 					c.x + Math.cos(a) * rr, c.y + random.nextDouble() * 2 - 1, c.z + Math.sin(a) * rr,
 					6, 0.4, 0.4, 0.4, 0.02);
 		}
 
-		for (ServerPlayerEntity p : world.getPlayers()) {
+		for (PlayerEntity bttPe : getWorld().getPlayers()) { if (!(bttPe instanceof ServerPlayerEntity p)) continue;
 			double d = p.getPos().distanceTo(c);
 			double range = r * 6.0;
 			if (d > range) {
@@ -156,25 +157,25 @@ public class BlackHoleEntity extends Entity {
 	private void collapseNow() {
 		Vec3d c = getPos();
 		float power = BTTConfig.get().collapsePower;
-		for (ServerPlayerEntity p : world.getPlayers()) {
+		for (PlayerEntity bttPe : getWorld().getPlayers()) { if (!(bttPe instanceof ServerPlayerEntity p)) continue;
 			if (p.getPos().distanceTo(c) < 160) {
 				BTTNet.sendFlash(p, 1.0F);
 				BTTNet.sendShake(p, 1.5F);
 			}
 		}
-		world.playSound(null, getBlockPos(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 10.0F, 0.3F);
-		world.createExplosion(this, c.x, c.y, c.z, power, true, World.ExplosionSourceType.MOB);
+		getWorld().playSound(null, getBlockPos(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 10.0F, 0.3F);
+		getWorld().createExplosion(this, c.x, c.y, c.z, power, true, World.ExplosionSourceType.MOB);
 		// shockwave ring of delayed secondary detonations
 		for (int i = 0; i < 8; i++) {
 			final double a = i / 8.0 * Math.PI * 2;
 			final double rr = power * 1.6;
 			BTTScheduler.in(4 + i * 2, () -> {
-				world.createExplosion(this, c.x + Math.cos(a) * rr, c.y, c.z + Math.sin(a) * rr,
+				getWorld().createExplosion(this, c.x + Math.cos(a) * rr, c.y, c.z + Math.sin(a) * rr,
 						power * 0.35F, false, World.ExplosionSourceType.TNT);
 			});
 		}
-		world.spawnParticles(ParticleTypes.FLASH, c.x, c.y, c.z, 1, 0, 0, 0, 0);
-		world.spawnParticles(ParticleTypes.EXPLOSION, c.x, c.y, c.z, 24, 4, 4, 4, 0.2);
+		getWorld().spawnParticles(ParticleTypes.FLASH, c.x, c.y, c.z, 1, 0, 0, 0, 0);
+		getWorld().spawnParticles(ParticleTypes.EXPLOSION, c.x, c.y, c.z, 24, 4, 4, 4, 0.2);
 		discard();
 	}
 

@@ -8,7 +8,7 @@ import net.minecraft.server.world.ServerWorld;
 /** Opens the sky: the gigantic human eye manifests above the player. */
 public final class WatcherSpawning {
 	public static void begin(MinecraftServer server, ServerPlayerEntity player) {
-		if (player.getScoreboardTags().contains(BeyondTheThreshold.TAG_THRESHOLD)) {
+		if (player.getCommandTags().contains(BeyondTheThreshold.TAG_THRESHOLD)) {
 			return;
 		}
 		ServerWorld world = player.getServerWorld();

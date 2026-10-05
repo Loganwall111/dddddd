@@ -9,6 +9,7 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
@@ -60,7 +61,7 @@ public class RealityTearEntity extends Entity {
 	@Override
 	public void tick() {
 		super.tick();
-		if (world.isClient) {
+		if (getWorld().isClient) {
 			return;
 		}
 		if (age > 2400) {
@@ -68,7 +69,7 @@ public class RealityTearEntity extends Entity {
 			return;
 		}
 		Box gate = getBoundingBox().expand(0.7, 0.4, 0.7);
-		for (ServerPlayerEntity p : world.getPlayers()) {
+		for (PlayerEntity bttPe : getWorld().getPlayers()) { if (!(bttPe instanceof ServerPlayerEntity p)) continue;
 			if (gate.contains(p.getPos())) {
 				BTTTravel.travel(p, BTTDimensions.byIndex(getDimIndex()));
 				break;

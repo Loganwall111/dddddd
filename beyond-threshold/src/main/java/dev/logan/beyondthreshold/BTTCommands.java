@@ -90,9 +90,9 @@ public final class BTTCommands {
 
 	private static int glasses(ServerPlayerEntity p, boolean worn) {
 		if (worn) {
-			p.getScoreboardTags().add(BeyondTheThreshold.TAG_GLASSES);
+			p.getCommandTags().add(BeyondTheThreshold.TAG_GLASSES);
 		} else {
-			p.getScoreboardTags().remove(BeyondTheThreshold.TAG_GLASSES);
+			p.getCommandTags().remove(BeyondTheThreshold.TAG_GLASSES);
 		}
 		BTTNet.sendGlasses(p, worn);
 		return SINGLE_SUCCESS;

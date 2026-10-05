@@ -10,6 +10,7 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -59,13 +60,13 @@ public class WatcherEyeEntity extends Entity {
 	public void tick() {
 		super.tick();
 
-		if (world.isClient) {
+		if (getWorld().isClient) {
 			return;
 		}
 
 		ServerPlayerEntity target = null;
 		double best = 90.0;
-		for (ServerPlayerEntity p : world.getPlayers()) {
+		for (PlayerEntity bttPe : getWorld().getPlayers()) { if (!(bttPe instanceof ServerPlayerEntity p)) continue;
 			double d = p.getPos().distanceTo(getPos());
 			if (d < best) {
 				best = d;
@@ -89,12 +90,12 @@ public class WatcherEyeEntity extends Entity {
 			Vec3d move = to.length() > 1.0 ? to.normalize().multiply(0.35) : Vec3d.ZERO;
 			setPos(pos.x + move.x, pos.y + dy, pos.z + move.z);
 			if (age % 40 == 0) {
-				world.playSound(null, getBlockPos(), SoundEvents.ENTITY_WARDEN_AMBIENT, SoundCategory.HOSTILE, 3.0F, 0.4F);
+				getWorld().playSound(null, getBlockPos(), SoundEvents.ENTITY_WARDEN_AMBIENT, SoundCategory.HOSTILE, 3.0F, 0.4F);
 			}
 			if (best < 20.0) {
 				dataTracker.set(STAGE, 1);
 				BTTNet.sendEyeSequence(target, 1);
-				world.playSound(null, getBlockPos(), SoundEvents.ENTITY_WARDEN_ROAR, SoundCategory.HOSTILE, 3.0F, 0.6F);
+				getWorld().playSound(null, getBlockPos(), SoundEvents.ENTITY_WARDEN_ROAR, SoundCategory.HOSTILE, 3.0F, 0.6F);
 			}
 		} else if (stage == 1) {
 			// grab: pull the player up into the light
@@ -107,14 +108,14 @@ public class WatcherEyeEntity extends Entity {
 			target.setVelocity(v);
 			target.velocityDirty = true;
 			target.fallDistance = 0.0F;
-			world.spawnParticles(ParticleTypes.REVERSE_PORTAL, target.getX(), target.getY() + 1, target.getZ(), 40, 1.2, 2.0, 1.2, 0.1);
+			getWorld().spawnParticles(ParticleTypes.REVERSE_PORTAL, target.getX(), target.getY() + 1, target.getZ(), 40, 1.2, 2.0, 1.2, 0.1);
 			if (grabTicks > 140) {
 				// reality reassembles: the threshold is open now
-				target.getScoreboardTags().add(BeyondTheThreshold.TAG_THRESHOLD);
+				target.getCommandTags().add(BeyondTheThreshold.TAG_THRESHOLD);
 				BTTNet.sendThreshold(target, true);
 				BTTNet.sendEyeSequence(target, 2);
-				world.playSound(null, target.getBlockPos(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 4.0F, 0.7F);
-				world.spawnParticles(ParticleTypes.PORTAL, target.getX(), target.getY() + 1, target.getZ(), 200, 2, 2, 2, 0.4);
+				getWorld().playSound(null, target.getBlockPos(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 4.0F, 0.7F);
+				getWorld().spawnParticles(ParticleTypes.PORTAL, target.getX(), target.getY() + 1, target.getZ(), 200, 2, 2, 2, 0.4);
 				discard();
 			}
 		}

@@ -25,11 +25,11 @@ public class RadiateGlassesItem extends Item {
 	@Override
 	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
 		if (!world.isClient && user instanceof ServerPlayerEntity sp) {
-			boolean worn = !user.getScoreboardTags().contains(BeyondTheThreshold.TAG_GLASSES);
+			boolean worn = !user.getCommandTags().contains(BeyondTheThreshold.TAG_GLASSES);
 			if (worn) {
-				user.getScoreboardTags().add(BeyondTheThreshold.TAG_GLASSES);
+				user.getCommandTags().add(BeyondTheThreshold.TAG_GLASSES);
 			} else {
-				user.getScoreboardTags().remove(BeyondTheThreshold.TAG_GLASSES);
+				user.getCommandTags().remove(BeyondTheThreshold.TAG_GLASSES);
 			}
 			BTTNet.sendGlasses(sp, worn);
 			user.sendMessage(Text.translatable(worn

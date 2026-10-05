@@ -49,12 +49,12 @@ public class BeyondTheThreshold implements ModInitializer {
 		// The eye finds every new traveller once.
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.getPlayer();
-			if (!player.getScoreboardTags().contains(TAG_INTRO)) {
-				player.getScoreboardTags().add(TAG_INTRO);
+			if (!player.getCommandTags().contains(TAG_INTRO)) {
+				player.getCommandTags().add(TAG_INTRO);
 				BTTScheduler.in(100, () -> WatcherSpawning.begin(server, player));
 			}
-			BTTNet.sendGlasses(player, player.getScoreboardTags().contains(TAG_GLASSES));
-			BTTNet.sendThreshold(player, player.getScoreboardTags().contains(TAG_THRESHOLD));
+			BTTNet.sendGlasses(player, player.getCommandTags().contains(TAG_GLASSES));
+			BTTNet.sendThreshold(player, player.getCommandTags().contains(TAG_THRESHOLD));
 		});
 
 		ServerTickEvents.END_SERVER_TICK.register(server -> BTTScheduler.tick(server));
