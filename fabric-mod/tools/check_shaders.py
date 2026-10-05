@@ -28,6 +28,13 @@ def expand(path: Path, seen=()) -> list[str]:
     return out
 
 
+def annotate(title: str, msg: str):
+    """Run-log downloads are unavailable in the dev sandbox, so failures surface as GitHub
+    annotations (readable through the check-runs API)."""
+    msg = msg.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::error title={title}::{msg[:4000]}")
+
+
 CORE_DIR = Path(__file__).resolve().parents[1] / "src/main/resources/assets/entersift/shaders/core"
 DIRECTIVE = re.compile(r"^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)$")
 
@@ -121,6 +128,7 @@ def main():
             if r.returncode != 0:
                 errors += 1
                 print(f"FAIL {prog.relative_to(ROOT)}\n{r.stdout}{r.stderr}")
+                annotate(prog.relative_to(ROOT).as_posix(), (r.stdout + r.stderr))
             else:
                 print(f"ok   {prog.relative_to(ROOT)}")
     errors += check_core(tool)
@@ -181,6 +189,7 @@ def check_core(tool) -> int:
                 if r.returncode != 0:
                     errors += 1
                     print(f"FAIL core/{prog.name} [{define or 'base'}]\n{r.stdout}{r.stderr}")
+                    annotate(f"core/{prog.name} [{define or 'base'}]", (r.stdout + r.stderr))
                 else:
                     print(f"ok   core/{prog.name} [{define or 'base'}]")
     return errors
