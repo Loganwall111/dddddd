@@ -1,0 +1,61 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "one",
+        "dstrgb": "zero"
+    },
+    "vertex": "minecraft:blit",
+    "attributes": [
+        "Position"
+    ],
+    "samplers": [
+        {
+            "name": "DiffuseSampler"
+        }
+    ],
+    "fragment": "beyondthreshold:mandela_blobs",
+    "uniforms": [
+        {
+            "name": "ProjMat"
+        },
+        {
+            "name": "InSize"
+        },
+        {
+            "name": "OutSize"
+        },
+        {
+            "name": "BttTime",
+            "type": "float",
+            "count": 1,
+            "values": [
+                0.0
+            ]
+        },
+        {
+            "name": "BttIntensity",
+            "type": "float",
+            "count": 1,
+            "values": [
+                1.0
+            ]
+        },
+        {
+            "name": "BttRes",
+            "type": "float",
+            "count": 2,
+            "values": [
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "name": "BttSeed",
+            "type": "float",
+            "count": 1,
+            "values": [
+                0.0
+            ]
+        }
+    ]
+}

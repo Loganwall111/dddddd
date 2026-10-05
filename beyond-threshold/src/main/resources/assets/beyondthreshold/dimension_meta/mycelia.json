@@ -1,0 +1,27 @@
+{
+  "dimension": "beyondthreshold:mycelia",
+  "biome": "mushroom_fields",
+  "palette": {
+    "nebula_a": [
+      0.176,
+      0.522,
+      0.898
+    ],
+    "nebula_b": [
+      0.898,
+      0.176,
+      0.898
+    ],
+    "horizon": [
+      0.898,
+      0.306,
+      0.176
+    ],
+    "glow": [
+      0.251,
+      0.898,
+      0.176
+    ]
+  },
+  "seed": 1341
+}

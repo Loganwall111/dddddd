@@ -1,0 +1,27 @@
+{
+  "dimension": "beyondthreshold:ember",
+  "biome": "badlands",
+  "palette": {
+    "nebula_a": [
+      0.898,
+      0.176,
+      0.349
+    ],
+    "nebula_b": [
+      0.792,
+      0.898,
+      0.176
+    ],
+    "horizon": [
+      0.176,
+      0.898,
+      0.62
+    ],
+    "glow": [
+      0.2,
+      0.176,
+      0.898
+    ]
+  },
+  "seed": 1340
+}

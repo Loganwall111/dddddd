@@ -1,0 +1,7 @@
+{
+    "targets": [ "minecraft:main", "btt_swap" ],
+    "passes": [
+        { "name": "beyondthreshold:matrix_dissolve", "intarget": "minecraft:main", "outtarget": "btt_swap" },
+        { "name": "minecraft:blit", "intarget": "btt_swap", "outtarget": "minecraft:main" }
+    ]
+}

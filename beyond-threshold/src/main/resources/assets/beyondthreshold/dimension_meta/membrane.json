@@ -1,0 +1,27 @@
+{
+  "dimension": "beyondthreshold:membrane",
+  "biome": "plains",
+  "palette": {
+    "nebula_a": [
+      0.176,
+      0.898,
+      0.49
+    ],
+    "nebula_b": [
+      0.404,
+      0.176,
+      0.898
+    ],
+    "horizon": [
+      0.898,
+      0.176,
+      0.467
+    ],
+    "glow": [
+      0.8,
+      0.898,
+      0.176
+    ]
+  },
+  "seed": 1337
+}

@@ -1,0 +1,27 @@
+{
+  "dimension": "beyondthreshold:aurora",
+  "biome": "snowy_plains",
+  "palette": {
+    "nebula_a": [
+      0.898,
+      0.176,
+      0.69
+    ],
+    "nebula_b": [
+      0.898,
+      0.686,
+      0.176
+    ],
+    "horizon": [
+      0.176,
+      0.898,
+      0.4
+    ],
+    "glow": [
+      0.176,
+      0.42,
+      0.898
+    ]
+  },
+  "seed": 1338
+}

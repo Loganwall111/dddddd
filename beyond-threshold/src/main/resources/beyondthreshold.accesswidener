@@ -1,0 +1,7 @@
+accessWidener	v2	named
+
+# Post-processing pipeline control (Mandela Effect / lensing / matrix dissolve)
+accessible	field	net/minecraft/client/render/GameRenderer	postProcessor	Lnet/minecraft/client/gl/PostEffectProcessor;
+accessible	method	net/minecraft/client/render/GameRenderer	loadPostEffect	(Lnet/minecraft/util/Identifier;)V
+accessible	method	net/minecraft/client/gl/PostEffectProcessor	getPasses	()Ljava/util/List;
+accessible	method	net/minecraft/client/gl/PostPass	getProgram	()Lnet/minecraft/client/gl/ShaderProgram;
