@@ -373,7 +373,7 @@ def _plane_preview():
 
     col = bg.copy()
     a = np.zeros_like(sdC)
-    aura = np.exp(-np.maximum(sdAll, 0.0) * 5.0) * (1 - sstep(0.45, 0.75, np.maximum(sdAll, 0.0))) * sstep(-0.012, 0.012, sdAll) * reveal
+    aura = np.exp(-np.maximum(sdAll, 0.0) * 6.0) * (1 - sstep(0.22, 0.42, np.maximum(sdAll, 0.0))) * sstep(-0.012, 0.012, sdAll) * reveal
     aA = aura * 0.65
     col = mix(col, energy, aA)
     a = np.maximum(a, aA)

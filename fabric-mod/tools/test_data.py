@@ -1100,7 +1100,7 @@ class DataContracts(unittest.TestCase):
                       'vec3 yellow = vec3(1.00, 0.85, 0.45);',
                       'vec3 orange = vec3(0.95, 0.45, 0.20);',
                       'energy = mix(energy, vec3(1.0), 0.08 + 0.22 * hot);',
-                      'float aura = exp(-max(sdAll, 0.0) * 5.0) * (1.0 - smoothstep(0.45, 0.75, max(sdAll, 0.0)))',
+                      'float aura = exp(-max(sdAll, 0.0) * 6.0) * (1.0 - smoothstep(0.22, 0.42, max(sdAll, 0.0)))',
                       '#ifdef RIFT_PLANE_LENS',
                       'uniform sampler2D Sampler0;', 'uniform sampler2D Sampler1;',
                       'warpedDepth > gl_FragCoord.z + 0.00001',
