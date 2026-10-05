@@ -411,7 +411,7 @@ public final class SiftSky {
 
     // ------------------------------------------------------------------ 0.23 quilted pastel sky
 
-    private static final int QAZ = 6, QEL = 3;
+    private static final int QAZ = 12, QEL = 5;
     /** 0.23 MCD2 reference: the Sift sky is a QUILT of huge soft pastel rectangles (mint / pink / peach /
      *  lilac / cream), not a smooth gradient. Tiles drift slowly and each fades with smoothstep toward
      *  its borders so neighbouring patches blend like brushed candy (alpha blended over the dome). */
@@ -423,7 +423,7 @@ public final class SiftSky {
         for (int i = 0; i < QAZ; i++) for (int j = 0; j < QEL; j++) {
             float h = hash(i, j, 171);
             float[] col = lerp(QUILT[(int) (h * QUILT.length) % QUILT.length], pal.blobs()[(i + j) % 4], 0.15f);
-            float alpha = 0.26f + 0.26f * hash(i, j, 172);
+            float alpha = 0.22f + 0.24f * hash(i, j, 172);
             alpha *= 0.85f + 0.15f * (float) Math.sin(t * 0.09f + h * 6.28f);
             double az0 = (i / (float) QAZ + drift) * Math.PI * 2, az1 = ((i + 1) / (float) QAZ + drift) * Math.PI * 2;
             double el0 = -0.05 + j / (float) QEL * 1.5, el1 = -0.05 + (j + 1) / (float) QEL * 1.5;
@@ -434,7 +434,7 @@ public final class SiftSky {
                 float sx = gx / (float) g * 2 - 1, sy = gy / (float) g * 2 - 1;
                 double az = az0 + (az1 - az0) * gx / g, el = el0 + (el1 - el0) * gy / g;
                 d[gy * (g + 1) + gx] = dir(az, el);
-                a[gy][gx] = alpha * smooth(1f, 0.82f, Math.abs(sx)) * smooth(1f, 0.82f, Math.abs(sy));
+                a[gy][gx] = alpha * smooth(1f, 0.90f, Math.abs(sx)) * smooth(1f, 0.90f, Math.abs(sy));
             }
             for (int gy = 0; gy < g; gy++) for (int gx = 0; gx < g; gx++) {
                 int a0 = gy * (g + 1) + gx, a1 = a0 + 1, a2 = a0 + g + 2, a3 = a0 + g + 1;
