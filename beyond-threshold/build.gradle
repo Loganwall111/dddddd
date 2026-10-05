@@ -13,6 +13,10 @@ repositories {
 	mavenCentral()
 }
 
+loom {
+	accessWidenerPath = file("src/main/resources/beyondthreshold.accesswidener")
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_version}:v2"

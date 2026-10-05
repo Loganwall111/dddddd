@@ -222,7 +222,7 @@ def emit_java(seed, variants, dims, palettes):
     a("	}")
     a("")
     a("	private static net.minecraft.block.AbstractBlock.Settings AbstractBlockSettingsCopy(Block from) {")
-    a("		return net.minecraft.block.AbstractBlock.Settings.copyOf(from);")
+    a("		return net.minecraft.block.AbstractBlock.Settings.copy(from);")
     a("	}")
     a("")
     a("	public static int variantCount() {")

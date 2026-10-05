@@ -77,9 +77,5 @@ public class RealityTearEntity extends Entity {
 		}
 	}
 
-	@Override
-	public Box getBoundingBox() {
-		// a vertical slit facing the player's yaw at spawn time
-		return super.getBoundingBox();
-	}
+
 }

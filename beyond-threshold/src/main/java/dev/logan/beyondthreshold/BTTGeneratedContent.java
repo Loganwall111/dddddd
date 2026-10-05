@@ -75,7 +75,7 @@ public final class BTTGeneratedContent {
 	}
 
 	private static net.minecraft.block.AbstractBlock.Settings AbstractBlockSettingsCopy(Block from) {
-		return net.minecraft.block.AbstractBlock.Settings.copyOf(from);
+		return net.minecraft.block.AbstractBlock.Settings.copy(from);
 	}
 
 	public static int variantCount() {
