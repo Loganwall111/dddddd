@@ -110,6 +110,7 @@ def generate(seed=DEFAULT_SEED, count=DEFAULT_REALMS):
         files[path] = value if isinstance(value, bytes) else (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode()
     lang = {
         "itemGroup.beyond": "Beyond Minecraft",
+        "tag.item.beyond.realm_crystals": "Realm Crystals",
         "key.category.beyond": "Beyond Minecraft",
         "key.beyond.guide": "Open the Field Guide",
         "key.beyond.mandela": "Cycle Mandela lens",

@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -39,7 +40,7 @@ def main():
     for name, text in logs.items():
         if not text: continue
         lines = text.splitlines()
-        failure_lines = [i for i, line in enumerate(lines) if any(key in line for key in ("BEYOND_SERVER_SMOKE_FAIL", "BEYOND_CLIENT_INTEGRATION_FAIL", "BEYOND_CLIENT_SHADER_SMOKE_FAIL", "error:", "Couldn't parse", "Error loading", "FAILURE:"))]
+        failure_lines = [i for i, line in enumerate(lines) if re.search(r"\.java:\d+: error:", line) or any(key in line for key in ("BEYOND_SERVER_SMOKE_FAIL", "BEYOND_CLIENT_INTEGRATION_FAIL", "BEYOND_CLIENT_SHADER_SMOKE_FAIL", "Couldn't parse", "Error loading", "FAILURE:"))]
         if failure_lines:
             start = max(0, failure_lines[0] - 3)
             annotation("error", "Beyond " + name + " diagnostics", "\n".join(lines[start:start + 65])[:12000])

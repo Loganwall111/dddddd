@@ -69,7 +69,7 @@ public final class FieldGuideScreen extends Screen {
         switch (page) {
             case 0 -> {
                 heading(ctx, "00 / THE WITNESS", false);
-                paragraph(ctx, "You thought the sky was empty.\n\nThe first time you arrive, something on the other side of it opens an eye. The world is not destroyed. It is being observed.\n\nLook toward the northern sky. The encounter dissolves into falling code, leaving the Overworld intact.", false, 91);
+                paragraph(ctx, "You thought the sky was empty.\n\nThe first time you arrive, something on the other side of it opens an eye. The world is not destroyed. It is being observed.\n\nLook just above your original facing direction. The encounter dissolves into falling code, leaving the Overworld intact.", false, 91);
                 heading(ctx, "YOUR FIRST EXPERIMENT", true);
                 paragraph(ctx, "1. Use a disposable test world.\n2. Run /beyond kit with cheats.\n3. Equip the glasses in your head slot.\n4. Use the knife toward open space.\n5. Walk through the membrane.\n\nB · this guide\nV · change the Mandela lens\nO · immediately toggle effects", true, 91);
             }
@@ -87,7 +87,7 @@ public final class FieldGuideScreen extends Screen {
                     maxScroll = Math.max(maxScroll, ly + scroll - (y + h - 64));
                 }
                 heading(ctx, "A WAY BACK", true);
-                paragraph(ctx, "Sneak-use the Reality Knife, or type /beyond return. The first external origin is remembered across nested trips.\n\nEach new realm begins with a copy of your current inventory, then keeps its own snapshot. Root reality restores its own inventory. Chests are not isolated.\n\nEight compiled realms, not literally infinite worlds. Back up playerdata before experimenting.", true, 91);
+                paragraph(ctx, "Sneak-use the Reality Knife, or type /beyond return. The first external origin is remembered across nested trips.\n\nBy default, each new realm begins with a copy of your current inventory, then keeps its own snapshot. Root reality restores its own inventory. Chests are not isolated.\n\nEight compiled realms, not literally infinite worlds. Back up playerdata before experimenting.", true, 91);
             }
             case 3 -> {
                 heading(ctx, "03 / THE MANDELA EFFECT", false);
@@ -104,7 +104,11 @@ public final class FieldGuideScreen extends Screen {
         }
         ctx.disableScissor();
         ctx.drawCenteredTextWithShadow(textRenderer, (page + 1) + " / " + TABS.length + (maxScroll > 0 ? "  ·  WHEEL TO SCROLL" : "  ·  ALPHA 0.1"), x + w / 2, y + h - 22, MUTED);
-        super.render(ctx, mouseX, mouseY, delta);
+        // In 1.21.1 Screen.render applies the default background blur before its widgets.
+        // We already drew our own book and ink: render only our registered children here,
+        // otherwise the text is blurred while the later buttons remain sharp.
+        for (var child : children()) if (child instanceof net.minecraft.client.gui.Drawable drawable)
+            drawable.render(ctx, mouseX, mouseY, delta);
     }
     private void heading(DrawContext ctx, String text, boolean right) {
         ctx.drawText(textRenderer, text, x + (right ? w / 2 + 16 : 16), y + 72, TEAL, false);

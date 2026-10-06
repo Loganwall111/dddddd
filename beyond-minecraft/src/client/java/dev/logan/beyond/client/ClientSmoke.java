@@ -57,7 +57,7 @@ public final class ClientSmoke {
                 // The workflow copies ONLY its freshly generated server world to this name.
                 require(Files.isRegularFile(client.runDirectory.toPath().resolve("saves/beyond-ci/level.dat")), "missing isolated CI save");
                 client.options.getViewDistance().setValue(2);
-                client.options.getSimulationDistance().setValue(2);
+                client.options.getSimulationDistance().setValue(5);
                 client.options.getMaxFps().setValue(30);
                 client.options.pauseOnLostFocus = false;
                 client.options.tutorialStep = net.minecraft.client.tutorial.TutorialStep.NONE;
@@ -193,7 +193,9 @@ public final class ClientSmoke {
                     int[] actual = sampleWorldPixels(client); int difference = 0;
                     for (int i = 0; i < actual.length; i++) for (int bit = 0; bit < 24; bit += 8)
                         difference = Math.max(difference, Math.abs(((actual[i] >> bit) & 255) - ((occlusionReference[i] >> bit) & 255)));
+                    require(CosmicRenderer.ready(), CosmicRenderer.status());
                     require(difference <= 3, "native foreground occlusion drift: " + difference);
+                    BeyondMinecraft.LOGGER.info("BEYOND_NATIVE_OCCLUSION max_channel_difference={}", difference);
                     capture(client, "07-native-depth-occlusion");
                     BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true scale=true native_depth_occlusion=true screenshots=true", CosmicRenderer.renderedFrames());
                     complete = true; client.scheduleStop();
