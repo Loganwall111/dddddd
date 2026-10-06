@@ -1,61 +1,43 @@
-
-[12:13:49] [Server thread/INFO] (Minecraft) Changing view distance to 2, from 10
-[12:13:49] [Server thread/INFO] (Minecraft) Changing simulation distance to 12, from 0
-[12:13:49] [Render thread/INFO] (Minecraft) Time elapsed: 843 ms
-[12:13:50] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=-1 ticks=121 frames=0 screen=LevelLoadingScreen / 
-[12:13:50] [Server thread/INFO] (Minecraft) Player367[local:E:3433f6d9] logged in with entity id 6 at (25.5, 82.0, -17.5)
-[12:13:50] [Server thread/INFO] (Minecraft) Player367 joined the game
-[12:13:51] [Render thread/INFO] (Minecraft) [System] [CHAT] Beyond Minecraft · Something has noticed you. [B] opens the Field Guide; [O] disables visual effects.
-[12:13:51] [Render thread/INFO] (Minecraft) Loaded 2 advancements
-[12:13:51] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=1
-[12:13:59] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 01-witness colors=1784
-[12:13:59] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=2
-[12:14:01] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 02-singularity colors=1679
-[12:14:01] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=3
-[12:14:03] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 03-membrane colors=1765
-[12:14:03] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=4
-[12:14:04] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-0 colors=1818
-[12:14:05] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=4 ticks=333 frames=67 screen=none
-[12:14:06] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-1 colors=1814
-[12:14:07] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-2 colors=2103
-[12:14:08] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-3 colors=838
-[12:14:10] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-4 colors=1824
-[12:14:11] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-5 colors=1284
-[12:14:11] [Server thread/INFO] (Minecraft) Player367 has made the advancement [Diamonds!]
-[12:14:11] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=6
-[12:14:11] [Render thread/INFO] (Minecraft) [System] [CHAT] Player367 has made the advancement [Diamonds!]
-[12:14:11] [Render thread/INFO] (Minecraft) Loaded 22 advancements
-[12:14:14] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 05-generated-realm colors=1440
-[12:14:14] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=7
-[12:14:14] [Render thread/INFO] (Minecraft) Loaded 35 advancements
-[12:14:16] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=8
-[12:14:17] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=9
-[12:14:20] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=635 frames=191 screen=none
-[12:14:35] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=936 frames=434 screen=none
-[12:14:50] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=1237 frames=681 screen=none
-[12:15:05] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=1538 frames=928 screen=none
-[12:15:20] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=1839 frames=1173 screen=none
-[12:15:35] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=2140 frames=1426 screen=none
-[12:15:50] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=2440 frames=1676 screen=none
-[12:16:05] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=2741 frames=1929 screen=none
-[12:16:20] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=3042 frames=2180 screen=none
-[12:16:35] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=3343 frames=2434 screen=none
-[12:16:50] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=3643 frames=2686 screen=none
-[12:17:05] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=3944 frames=2939 screen=none
-[12:17:20] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=4245 frames=3192 screen=none
-[12:17:35] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=4546 frames=3444 screen=none
-[12:17:50] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=4847 frames=3697 screen=none
-[12:18:05] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=5147 frames=3949 screen=none
-[12:18:21] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=5448 frames=4198 screen=none
-[12:18:36] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=5749 frames=4445 screen=none
-[12:18:51] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=6050 frames=4695 screen=none
-[12:19:06] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=9 ticks=6351 frames=4945 screen=none
-[12:19:13] [Render thread/ERROR] (Beyond Minecraft) BEYOND_CLIENT_INTEGRATION_FAIL stage=9
-java.lang.IllegalStateException: integration smoke timed out at stage 9
-	at knot/dev.logan.beyond.client.ClientSmoke.tick(ClientSmoke.java:47) ~[client/:?]
+[12:25:40] [Render thread/INFO] (Minecraft) Time elapsed: 934 ms
+[12:25:40] [Server thread/INFO] (Minecraft) Player806[local:E:89c6c609] logged in with entity id 4 at (8.5, 70.0, -9.5)
+[12:25:40] [Server thread/INFO] (Minecraft) Player806 joined the game
+[12:25:41] [Render thread/INFO] (Minecraft) [System] [CHAT] Beyond Minecraft · Something has noticed you. [B] opens the Field Guide; [O] disables visual effects.
+[12:25:41] [Render thread/INFO] (Minecraft) Loaded 2 advancements
+[12:25:41] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=1
+[12:25:44] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=1 ticks=186 frames=11 screen=none
+[12:25:46] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 01-witness colors=1866
+[12:25:46] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=2
+[12:25:48] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 02-singularity colors=1663
+[12:25:48] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=3
+[12:25:50] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 03-membrane colors=1871
+[12:25:50] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=4
+[12:25:51] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-0 colors=1947
+[12:25:52] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-1 colors=1935
+[12:25:54] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-2 colors=2201
+[12:25:55] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-3 colors=816
+[12:25:57] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-4 colors=1932
+[12:25:58] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-5 colors=1414
+[12:25:58] [Server thread/INFO] (Minecraft) Player806 has made the advancement [Diamonds!]
+[12:25:58] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=6
+[12:25:58] [Render thread/INFO] (Minecraft) [System] [CHAT] Player806 has made the advancement [Diamonds!]
+[12:25:58] [Render thread/INFO] (Minecraft) Loaded 22 advancements
+[12:25:59] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=6 ticks=487 frames=274 screen=none
+[12:26:01] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 05-generated-realm colors=1209
+[12:26:01] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=7
+[12:26:01] [Render thread/INFO] (Minecraft) Loaded 35 advancements
+[12:26:03] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=8
+[12:26:04] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=9
+[12:26:09] [Server thread/INFO] (Minecraft) Player806 was killed
+[12:26:09] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=10
+[12:26:09] [Render thread/INFO] (Minecraft) [System] [CHAT] Player806 was killed
+[12:26:13] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=12
+[12:26:14] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=12 ticks=789 frames=567 screen=none
+[12:26:14] [Render thread/ERROR] (Beyond Minecraft) BEYOND_CLIENT_INTEGRATION_FAIL stage=12
+java.lang.IllegalStateException: server-side integration assertion
+	at knot/dev.logan.beyond.client.ClientSmoke.tick(ClientSmoke.java:45) ~[client/:?]
 	at knot/dev.logan.beyond.client.BeyondClient.lambda$onInitializeClient$3(BeyondClient.java:48) ~[client/:?]
 	at knot/net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.lambda$static$2(ClientTickEvents.java:43) ~[fabric-lifecycle-events-v1-client-2.3.12+6c1df3606a.jar:?]
-	at knot/net.minecraft.client.MinecraftClient.handler$znb000$fabric-lifecycle-events-v1$onEndTick(MinecraftClient.java:5683) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.MinecraftClient.handler$zhb000$fabric-lifecycle-events-v1$onEndTick(MinecraftClient.java:5183) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at knot/net.minecraft.client.MinecraftClient.tick(MinecraftClient.java:2012) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at knot/net.minecraft.client.MinecraftClient.render(MinecraftClient.java:1246) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at knot/net.minecraft.client.MinecraftClient.run(MinecraftClient.java:882) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
@@ -64,37 +46,55 @@ java.lang.IllegalStateException: integration smoke timed out at stage 9
 	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:74) [fabric-loader-0.16.9.jar:?]
 	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.16.9.jar:?]
 	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
-[12:19:13] [Render thread/INFO] (Minecraft) Stopping!
-[12:19:13] [Server thread/INFO] (Minecraft) Player367 lost connection: Disconnected
-[12:19:13] [Server thread/INFO] (Minecraft) Player367 left the game
-[12:19:13] [Server thread/INFO] (Minecraft) Stopping singleplayer server as player logged out
-[12:19:13] [Server thread/INFO] (Minecraft) Stopping server
-[12:19:13] [Server thread/INFO] (Minecraft) Saving players
-[12:19:13] [Server thread/INFO] (Minecraft) Saving worlds
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_01
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_06
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_02
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_04
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_05
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_03
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_07
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_00
-[12:19:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (beyond-ci): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_01): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_06): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_02): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_04): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_05): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_03): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_07): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_00): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
-[12:19:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1791288781637.json
+Caused by: java.lang.AssertionError: normal scale restore
+	at knot/dev.logan.beyond.client.ClientSmoke.require(ClientSmoke.java:203) ~[client/:?]
+	at knot/dev.logan.beyond.client.ClientSmoke.lambda$tick$11(ClientSmoke.java:164) ~[client/:?]
+	at knot/dev.logan.beyond.client.ClientSmoke.lambda$server$12(ClientSmoke.java:187) ~[client/:?]
+	at knot/net.minecraft.server.ServerTask.run(ServerTask.java:18) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ThreadExecutor.executeTask(ThreadExecutor.java:162) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ReentrantThreadExecutor.executeTask(ReentrantThreadExecutor.java:23) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.executeTask(MinecraftServer.java:864) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.executeTask(MinecraftServer.java:173) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ThreadExecutor.runTask(ThreadExecutor.java:136) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runOneTask(MinecraftServer.java:846) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runTask(MinecraftServer.java:840) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ThreadExecutor.runTasks(ThreadExecutor.java:145) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runTasks(MinecraftServer.java:810) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runTasksTillTickEnd(MinecraftServer.java:815) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:702) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.method_29739(MinecraftServer.java:281) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[?:?]
+[12:26:14] [Render thread/INFO] (Minecraft) Stopping!
+[12:26:15] [Server thread/INFO] (Minecraft) Player806 lost connection: Disconnected
+[12:26:15] [Server thread/INFO] (Minecraft) Player806 left the game
+[12:26:15] [Server thread/INFO] (Minecraft) Stopping singleplayer server as player logged out
+[12:26:15] [Server thread/INFO] (Minecraft) Stopping server
+[12:26:15] [Server thread/INFO] (Minecraft) Saving players
+[12:26:15] [Server thread/INFO] (Minecraft) Saving worlds
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_07
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_01
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_03
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_00
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_02
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_06
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_04
+[12:26:15] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_05
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (beyond-ci): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_07): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_01): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_03): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_00): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_02): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_06): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_04): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_05): All chunks are saved
+[12:26:15] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1791289507627.json
 
-BUILD SUCCESSFUL in 6m 17s
+BUILD SUCCESSFUL in 1m 10s
 8 actionable tasks: 2 executed, 6 up-to-date
