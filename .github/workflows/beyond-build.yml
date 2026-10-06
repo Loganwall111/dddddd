@@ -11,13 +11,13 @@ on:
         type: boolean
         default: false
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: beyond-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   fabric:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -91,18 +91,38 @@ jobs:
             beyond-minecraft/run/crash-reports/
             beyond-minecraft/run/screenshots/beyond-*.png
             beyond-minecraft/build/verification.json
-      - name: Publish requested verified snapshot (session branch only)
-        if: success() && github.event_name == 'workflow_dispatch' && inputs.publish_snapshot && github.ref == 'refs/heads/arena/9f9c3178-dddddd'
+  publish-session-snapshot:
+    needs: fabric
+    if: github.ref == 'refs/heads/arena/9f9c3178-dddddd' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_snapshot))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: arena/9f9c3178-dddddd
+      - uses: actions/download-artifact@v4
+        with:
+          name: Beyond-Minecraft-1.21.1-alpha
+          path: beyond-minecraft/.ci-binary
+      - uses: actions/download-artifact@v4
+        with:
+          name: Beyond-verification
+          path: beyond-minecraft/.ci-evidence
+      - name: Publish small verified deliverable and actual runtime evidence
+        working-directory: beyond-minecraft
         shell: bash
         run: |
+          # Refuse to attach an old binary to newly edited sources. Never force-push.
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           mkdir -p docs/runtime releases
-          cp build/verification.json docs/runtime/verification.json
-          cp run/screenshots/beyond-*.png docs/runtime/
-          cp build/libs/beyond-minecraft-0.1.0-alpha.jar releases/
+          cp .ci-evidence/build/verification.json docs/runtime/verification.json
+          cp .ci-evidence/run/screenshots/beyond-*.png docs/runtime/
+          cp .ci-binary/beyond-minecraft-0.1.0-alpha.jar releases/
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/runtime
-          # One small, explicitly requested installable deliverable; other build artifacts stay ignored.
+          # One small requested installable deliverable. Other build output remains ignored.
           git add -f releases/beyond-minecraft-0.1.0-alpha.jar
           git commit -m 'Record verified Beyond alpha and real client screenshots [skip ci]'
           git push origin HEAD:arena/9f9c3178-dddddd
