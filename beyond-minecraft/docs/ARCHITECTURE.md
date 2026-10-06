@@ -13,8 +13,10 @@ runs on a player's computer. The generator's output is deterministic and bounded
 `RealityManager` owns transient anomalies. Item use creates an anomaly after server
 validation. Clients receive at most four nearby immutable snapshots; no C2S spawn API
 exists. Ticking has caps for lifetime, influence radius, velocity and processed entities.
-No `setBlockState` runs for gravity or explosions. Arrival plinths are the only runtime
+Gravity never writes terrain. In normal gameplay, arrival plinths are the only runtime
 block-writing path and require an entirely clear bounded volume in a Beyond dimension.
+The opt-in client CI harness additionally constructs a wall in its disposable fixture world;
+that test-only path is never enabled in normal installations.
 
 A membrane is a swept segment/plane intersection with a rounded-rectangle boundary.
 The GLSL uses the same fourth-power silhouette. Both directions are supported. A cool-
@@ -43,12 +45,18 @@ This is intentional inventory cloning, NOT protection against economic duplicati
 
 Fabric's `CoreShaderRegistrationCallback` registers two GLSL 150 programs. The vanilla
 resource loader owns shader-program lifetimes. `WorldRenderEvents.LAST` captures the
-current projection and view matrices; a tail injection into `GameRenderer.renderWorld`
-runs the composite before HUD/screens. A single owned scratch color framebuffer avoids
-read/write feedback. Vanilla's depth buffer is read, never replaced, and remains intact.
+current projection and view matrices and runs the composite immediately, before the hand
+and HUD. **The ordering matters:** vanilla clears world depth before rendering the hand.
+A `GameRenderer.renderWorld` tail hook would therefore misclassify terrain as sky. No client
+mixin is needed. A single owned scratch color framebuffer avoids read/write feedback.
+World depth is read, never replaced or written by Beyond. The later vanilla hand/GUI passes
+remain unprocessed.
 
 The shader reconstructs rays using inverse projection and inverse view, so anomalies are
 world anchored, not fixed screen stickers. Original depth masks foreground occlusion.
+Nearby singularities use a conservative photon-sphere envelope to reject foreground
+geometry even when the camera is inside the large ray-integration domain. A native client
+fixture compares twenty opaque-wall pixels with the compositor on/off (measured error: zero).
 Shader failure disables visuals; the original color attachment is untouched until a complete
 scratch pass exists. FBO resources are released on disconnect/shutdown and resized as needed.
 
@@ -83,3 +91,15 @@ Glasses select six fixed procedural shader families. Their spatial variations ar
 noise driven; they do not generate or compile arbitrary new GLSL programs during gameplay.
 Menus expose only implemented controls. Reduced motion freezes animation; O disables all
 Beyond post-processing. These controls do not disable server-authoritative interactions.
+
+## 7. Evidence boundaries
+
+The real-client harness uses a copied, disposable world. It tests actual player objects,
+dimension packets, vanilla death and respawn, NBT injections, scale resets and framebuffer
+compositing. See `docs/runtime/verification.json` and `latest-client-log.txt` for the exact
+source commit, build run and evidence hashes. `beyond-*.png` files are unedited Minecraft
+screenshots, not web mockups. The optional offscreen GPU test is separately labeled: it
+adapts only the GLSL version/precision preamble for a synthetic WebGL 2 fixture.
+
+This still does not establish multiplayer safety, a long-running persistence guarantee,
+third-party renderer compatibility or a performance budget on customers' GPUs.

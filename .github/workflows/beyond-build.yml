@@ -93,7 +93,7 @@ jobs:
             beyond-minecraft/build/verification.json
   publish-session-snapshot:
     needs: fabric
-    if: always() && github.ref == 'refs/heads/arena/9f9c3178-dddddd' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_snapshot))
+    if: always() && github.ref == 'refs/heads/arena/9f9c3178-dddddd' && github.event_name == 'workflow_dispatch' && inputs.publish_snapshot
     runs-on: ubuntu-24.04
     permissions:
       contents: write

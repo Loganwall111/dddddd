@@ -1,11 +1,29 @@
-# Interactive acceptance matrix — not yet signed off
+# Acceptance matrix
+
+## Automated checkpoints that passed
+
+- [x] 198 resource/metadata documents; 233 byte-reproducible generated artifacts.
+- [x] 10 Python authoring tests and 30 JUnit simulation/vault tests.
+- [x] Native GLSL 150 compile/link; 15 separate offscreen shader regression checks.
+- [x] Dedicated-server registry load and chunk/safe-landing generation in every compiled realm.
+- [x] Actual Minecraft client shader load, first-person compositing and six equipped-glasses lenses.
+- [x] Root -> A -> B -> root -> A using a real integrated-server player; separate inventory snapshots.
+- [x] The real player's vanilla NBT contains the journey through the server mixin.
+- [x] keepInventory OFF: death in A, root respawn restores root inventory, revisit does not reload dropped inventory.
+- [x] Shrink and normal-scale reset, including same-tick dimension recalculation.
+- [x] A native opaque wall occludes a singularity; twenty compared samples have zero RGB difference.
+- [x] Actual-client screenshots inspected; field-guide text is crisp after removing double background blur.
+
+These are automated checkpoints, **not** a claim that the following interactive/multiplayer matrix is signed off.
+
+## Interactive acceptance — still open
 
 Use disposable Fabric 1.21.1 worlds. Back up both world and playerdata between save tests.
 The automated workflow is useful evidence, not a substitute for these checks.
 
 ## Rendering / resource safety
 
-- [ ] First Overworld join: north-facing eye, arm silhouette, code dissolve; no camera lock.
+- [ ] First Overworld join: eye above the initial view direction, arm silhouette, code dissolve; no camera lock.
 - [ ] Rejoin: no repeated introduction. `/beyond witness` replays it.
 - [ ] O immediately removes every Beyond post-process effect; HUD remains legible.
 - [ ] Each lens requires glasses equipped in the HEAD slot; hand-held glasses do not count.
@@ -29,7 +47,7 @@ The automated workflow is useful evidence, not a substitute for these checks.
 - [ ] Per-world/per-player caps, lifetime expiry and `/beyond clear` remove all snapshots.
 - [ ] Logout/server restart: transient anomalies do not survive or retain chunk tickets.
 - [ ] Travel through every realm, inspect custom blocks, biome fog, feature columns and recipes.
-- [ ] Root return from nested realm trips restores the ORIGINAL coordinates.
+- [ ] Root return from nested realm trips chooses a safe position near the ORIGINAL root origin.
 - [ ] Block original return area: safe failure, no terrain destruction or inventory loss.
 - [ ] Void recovery, beds/anchors, unusual world borders and scaled players.
 - [ ] Scale growth blocked by ceiling; normal reset removes only Beyond's own modifier.

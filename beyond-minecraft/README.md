@@ -8,9 +8,15 @@ A standalone, shader-driven first playable slice inspired by the supplied cosmic
 fractured-world and black-hole references. It does not replace Enter the Sift or the
 Lumital browser app elsewhere in this repository.
 
-**Verification is in progress.** See [BUILD_STATUS.md](docs/BUILD_STATUS.md) for actual
-results rather than assuming authored source is a tested release. Use a disposable,
-backed-up world. Both the client and server need this mod and Fabric API.
+**Built and smoke-tested in real Minecraft 1.21.1.** Download the
+[installable alpha JAR](releases/beyond-minecraft-0.1.0-alpha.jar), then follow
+[INSTALL.md](INSTALL.md). See [the verification record](docs/BUILD_STATUS.md) for the
+exact tested source, checksums and remaining limits. Use a disposable, backed-up world.
+Both the client and server need this mod and Fabric API; this is not production-certified.
+
+[Actual in-game membrane screenshot](docs/runtime/beyond-03-membrane.png) ·
+[Generated realm](docs/runtime/beyond-05-generated-realm.png) ·
+[Field guide/settings](docs/runtime/beyond-06-field-guide.png)
 
 ## The first slice
 
@@ -53,7 +59,7 @@ cd beyond-minecraft
 ./gradlew build             # Windows: gradlew.bat build
 ```
 
-After a successful build, the installable file is:
+The already-verified binary is in `releases/`. For your own successful build, the installable file is:
 
 ```
 build/libs/beyond-minecraft-0.1.0-alpha.jar
@@ -80,7 +86,7 @@ No external shader pack is required. Python is not needed by players or by norma
 ## Five-minute test
 
 1. Create a **new Creative test world with cheats**; start with no other renderer mods.
-2. Look **north and upward** for the eye; the introduction lasts approximately 14 seconds.
+2. Look **slightly above your initial facing direction** for the eye; the introduction lasts approximately 14 seconds.
 3. Run `/beyond kit` for the five tools. Open the guide with **B** or by using its item.
 4. Equip the glasses in the head slot. Press **V** through all six views; **O** must disable them.
 5. Aim the knife at clear air at walking height, use it, wait briefly, and walk through the membrane.
@@ -125,7 +131,10 @@ scale prism = amethyst + clock + ender pearl. Realm crystals craft into four ech
   economy: first-visit copies are intentional, and ordinary chests can transfer copied items.
 - Death policy follows vanilla for the active realm: the post-death live inventory is captured,
   then an independent root inventory is restored on cross-world respawn. Same-world respawn
-  does not reload a stale snapshot. Multiplayer/death/keepInventory must be playtested.
+  does not reload a stale snapshot. Automated keepInventory-OFF cross-world death/respawn
+  passed; keepInventory-ON, altered respawn rules, containers and multiplayer still need testing.
+- Beyond dimensions use vanilla bed/anchor restrictions: **beds and respawn anchors are not
+  safe respawn points and can explode**. Use `/beyond return`, not a bed, to leave a realm.
 - If inventory isolation is disabled while someone is away, an existing vault is still restored
   when they return to root. Do not edit vault NBT or remove realms while players are inside them.
 - **Back up the complete world, especially `playerdata`, before changing seeds, realm counts or
@@ -173,8 +182,22 @@ python3 tools/check_shaders.py             # requires glslangValidator; fails if
 The isolated CI test server accepts the Minecraft EULA for that disposable automated test
 instance only; installing or operating your own server requires your own agreement to its terms.
 `BEYOND_SMOKE=1` enables the server harness and shuts down after registry/worldgen/NBT checks.
-`BEYOND_CLIENT_SMOKE=1` enables the client shader-load harness and exits after resource loading.
-Neither harness runs in normal installations.
+`BEYOND_CLIENT_SMOKE=1` opens only the disposable `saves/beyond-ci` fixture, renders actual
+worlds and all six lenses, takes screenshots, exercises inventory/respawn/scale, and compares
+native foreground pixels with effects on/off. It deliberately kills its **test** player and
+places a **test** wall. Never point this harness at a valuable save. Neither harness runs in
+normal installations.
+
+Optional Linux offscreen regression tests (synthetic buffers, not a substitute for Minecraft):
+
+```sh
+npm install --prefix tools/.runtime @sparticuz/chromium@153.0.0 playwright-core@1.63.0
+node tools/test_gpu.mjs   # requires standard Linux Chromium/NSS shared libraries
+```
+
+30 JUnit tests, 10 Python tests and 15 offscreen shader checks passed, alongside the real
+server/client checks. The checked-in small JAR and screenshots are one reviewed release
+snapshot. Normal CI pushes upload artifacts; replacing that snapshot is opt-in.
 
 See [architecture](docs/ARCHITECTURE.md), [verification](docs/BUILD_STATUS.md) and the
 [manual test matrix](docs/TEST_PLAN.md). Original code and generated art: Apache-2.0.
