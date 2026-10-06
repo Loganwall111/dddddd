@@ -40,7 +40,7 @@ public class WatcherEyeEntity extends Entity {
 
 	@Override
 	protected void initDataTracker() {
-		dataTracker.set(STAGE, 0);
+		dataTracker.startTracking(STAGE, 0);
 	}
 
 	public int getStage() {

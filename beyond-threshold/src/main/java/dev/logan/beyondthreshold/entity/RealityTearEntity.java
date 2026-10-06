@@ -35,7 +35,7 @@ public class RealityTearEntity extends Entity {
 
 	@Override
 	protected void initDataTracker() {
-		dataTracker.set(DIM_INDEX, 0);
+		dataTracker.startTracking(DIM_INDEX, 0);
 	}
 
 	public int getDimIndex() {

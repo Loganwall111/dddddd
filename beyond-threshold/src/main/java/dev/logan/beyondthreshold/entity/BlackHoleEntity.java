@@ -45,8 +45,8 @@ public class BlackHoleEntity extends Entity {
 
 	@Override
 	protected void initDataTracker() {
-		dataTracker.set(RADIUS, 5.0F);
-		dataTracker.set(PHASE, 0);
+		dataTracker.startTracking(RADIUS, 5.0F);
+		dataTracker.startTracking(PHASE, 0);
 	}
 
 	public float getRadius() {
