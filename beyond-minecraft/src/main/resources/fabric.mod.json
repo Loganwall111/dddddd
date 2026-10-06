@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "beyond",
+  "version": "${version}",
+  "name": "Beyond Minecraft",
+  "description": "A shader-driven fracture in the Overworld. The Witness, gravitational singularities, reality membranes and seeded realms. Experimental first playable slice.",
+  "authors": ["Logan"],
+  "license": "Apache-2.0",
+  "icon": "assets/beyond/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.logan.beyond.BeyondMinecraft"],
+    "client": ["dev.logan.beyond.client.BeyondClient"]
+  },
+  "mixins": ["beyond.mixins.json", {"config": "beyond.client.mixins.json", "environment": "client"}],
+  "depends": {"fabricloader": ">=0.16.9", "minecraft": "~1.21.1", "java": ">=21", "fabric-api": ">=0.102.1"}
+}

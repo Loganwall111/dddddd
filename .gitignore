@@ -16,3 +16,10 @@ __pycache__/
 
 # Encoded in CI from fabric-mod/art/audio/*.wav (tools: oggenc)
 fabric-mod/src/main/resources/assets/entersift/sounds/
+
+# Beyond Minecraft: disposable worlds, reports and tool runtimes
+beyond-minecraft/run/
+beyond-minecraft/.idea/
+beyond-minecraft/tools/.runtime/
+beyond-minecraft/tools/test-output/
+beyond-minecraft/releases/

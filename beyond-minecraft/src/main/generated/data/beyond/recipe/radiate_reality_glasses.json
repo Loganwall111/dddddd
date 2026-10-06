@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:spyglass"
+    },
+    {
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "item": "minecraft:gold_ingot"
+    }
+  ],
+  "result": {
+    "id": "beyond:radiate_reality_glasses"
+  }
+}

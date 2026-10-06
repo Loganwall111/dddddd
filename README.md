@@ -1,3 +1,11 @@
+# Beyond Minecraft — new standalone 1.21.1 mod
+
+The new **[Beyond Minecraft project](beyond-minecraft/README.md)** lives in `beyond-minecraft/`: built-in GLSL, the Witness encounter, gravitational anomalies, reality membranes, Radiate Reality Glasses, a field-guide config screen and a deterministic realm compiler. **Fabric 1.21.1 / Java 21**, separate from the existing 26.3 mod below.
+
+See its **[verification record](beyond-minecraft/docs/BUILD_STATUS.md)** for tested versus unverified behavior. This is a bounded first playable slice, not a claim of finished infinite dimensions, seamless recursive portals or AAA physics. The existing projects below are preserved.
+
+---
+
 # Enter the Sift — Fabric mod project
 
 The requested Minecraft mod is in **[`fabric-mod/`](fabric-mod/README.md)**. It targets **Minecraft Java 26.3 / Fabric / JDK 25** and includes source, original animated textures, dimension/worldgen data, gameplay functions, vanilla-Java rendering (no shader pack), tests and a GitHub Actions build workflow.

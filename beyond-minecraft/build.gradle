@@ -1,0 +1,35 @@
+plugins { id 'fabric-loom' version '1.7.4' }
+version = project.mod_version
+group = project.maven_group
+base { archivesName = project.archives_base_name }
+repositories { mavenCentral() }
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        beyond { sourceSet sourceSets.main; sourceSet sourceSets.client }
+    }
+}
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+sourceSets.main.resources.srcDir 'src/main/generated'
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+tasks.withType(JavaCompile).configureEach { options.release = 21 }
+java { withSourcesJar(); sourceCompatibility = JavaVersion.VERSION_21; targetCompatibility = JavaVersion.VERSION_21 }
+test { useJUnitPlatform() }
+tasks.register('generateMultiverse', Exec) {
+    commandLine 'python3', 'tools/generate_multiverse.py'
+}
+// Generated resources are checked in: Java-only consumers do not need Python to build.
+tasks.register('verifyGenerated', Exec) {
+    commandLine 'python3', 'tools/generate_multiverse.py', '--check'
+}
