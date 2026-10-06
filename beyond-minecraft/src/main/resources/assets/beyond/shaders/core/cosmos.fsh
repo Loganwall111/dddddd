@@ -152,7 +152,7 @@ vec3 directionFor(vec2 uv) {
     return normalize((CameraToWorld * vec4(normalize(view.xyz / max(abs(view.w), EPS)), 0.0)).xyz);
 }
 float sceneDistance(vec2 uv, float depth) {
-    if (depth > .999995) return 1e8;
+    if (depth > .9999999) return 1e8;
     vec4 view = InverseProjection * vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
     return length(view.xyz / max(abs(view.w), EPS));
 }
@@ -163,7 +163,7 @@ vec3 sampleBentScene(vec3 direction, vec3 original) {
     if (min(uv.x, uv.y) < .002 || max(uv.x,uv.y) > .998) return skyField(direction, RealmTheme);
     vec3 sampled = texture(SceneSampler, uv).rgb;
     float depth = texture(DepthSampler, uv).r;
-    if (depth > .999995 && CosmicPresence > .5) sampled = mix(sampled, skyField(direction, RealmTheme), .87);
+    if (depth > .9999999 && CosmicPresence > .5) sampled = mix(sampled, skyField(direction, RealmTheme), .87);
     return sampled;
 }
 
@@ -343,7 +343,7 @@ vec3 mandela(vec3 color, vec2 uv, vec3 rd, float depth) {
         color += vec3(.10,.04,.16) * (1.0 - luminance) * .26;
     } else if (LensMode < 4.5) {
         float ripple = fbm(rd * 4.0 + CameraPosition * .003 + vec3(Time * .027,0,0));
-        if (depth > .999995) {
+        if (depth > .9999999) {
             float blob = smoothstep(.56,.65,ripple);
             vec3 membraneColor = .4 + .4 * cos(vec3(0,2,4) + ripple * 18.0 + rd.y * 3.0);
             color = mix(color, membraneColor * (.27 + .5 * max(0.0,rd.y)), blob * .80);
@@ -365,10 +365,9 @@ void main() {
     float distance = sceneDistance(uv, depth);
     vec3 rd = directionFor(uv);
     vec3 color = original;
-    bool isSky = depth > .999995;
+    bool isSky = depth > .9999999;
     if (CosmicPresence > .5 && isSky) {
         vec3 cosmic = skyField(rd, RealmTheme);
-        cosmic = witness(cosmic, rd);
         // Distant sky singularity is visual only. The relic's local singularities below have server gravity.
         vec3 center = normalize(vec3(-.58,.42,-.87)) * 1200.0;
         LightRay skyRay = bendRay(rd, center, 112.0, 1e8, 931.0);
@@ -377,6 +376,9 @@ void main() {
             vec3 hole = skyBehind * skyRay.transmission + compressLight(skyRay.emission);
             cosmic = mix(cosmic, hole, skyRay.footprint);
         }
+        // The Witness is nearer than the distant sky lens: do not let its broad integration
+        // footprint erase the iris, leaving only the corner of an eye visible.
+        cosmic = witness(cosmic, rd);
         color = mix(color, cosmic, RealmTheme < -.5 ? .88 : .96);
     }
     for (int i = 3; i >= 0; i--) {

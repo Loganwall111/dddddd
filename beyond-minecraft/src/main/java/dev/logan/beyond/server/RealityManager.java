@@ -199,9 +199,10 @@ public final class RealityManager {
         Vec3d preferred = j.origin != null && world.getRegistryKey().equals(j.originWorld) ? j.origin : world.getSpawnPos().toBottomCenterPos();
         var landing = SafeLanding.find(world, preferred, player.getWidth(), player.getHeight(), false, Blocks.OBSIDIAN);
         if (landing.isEmpty()) { message(player, "Your return area is obstructed. Try normal scale, or ask an operator to clear your original arrival point."); j.travelCooldown = 80; return false; }
+        boolean isolated = !j.inventory.active().equals("root");
         teleport(player, world, landing.get(), j.originYaw, j.originPitch);
         j.origin = null; j.originWorld = null;
-        message(player, "Root reality restored. Your original inventory is waiting.");
+        message(player, isolated ? "Root reality restored. Your original inventory is waiting." : "Root reality restored. Shared inventory unchanged.");
         return true;
     }
     private static void teleport(ServerPlayerEntity player, ServerWorld world, Vec3d pos, float yaw, float pitch) {

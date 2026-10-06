@@ -34,10 +34,14 @@ public final class ClientSmoke {
     private static volatile Throwable failure;
     private static long lastHeartbeat;
     private static long loadingStarted;
+    private static int observedStage = -99;
+    private static long stageStarted;
     private ClientSmoke() {}
     public static void tick(MinecraftClient client) {
         if (!ENABLED || complete) return;
         try {
+            if (observedStage != stage) { observedStage = stage; stageStarted = System.currentTimeMillis(); }
+            if (stage >= 0 && System.currentTimeMillis() - stageStarted > 90000) throw new IllegalStateException("Stage stalled: " + stage);
             if (failure != null) throw new IllegalStateException("server-side integration assertion", failure);
             if (System.currentTimeMillis() - lastHeartbeat > 15000) {
                 BeyondMinecraft.LOGGER.info("BEYOND_HEARTBEAT stage={} ticks={} frames={} screen={}", stage, bootTicks, CosmicRenderer.renderedFrames(),
@@ -55,6 +59,7 @@ public final class ClientSmoke {
                 client.options.getSimulationDistance().setValue(2);
                 client.options.getMaxFps().setValue(30);
                 client.options.pauseOnLostFocus = false;
+                client.options.tutorialStep = net.minecraft.client.tutorial.TutorialStep.NONE;
                 stage = -1; loadingStarted = System.currentTimeMillis();
                 client.createIntegratedServerLoader().start("beyond-ci", () -> fail(client, new IllegalStateException("CI world load cancelled")));
                 return;
@@ -115,6 +120,7 @@ public final class ClientSmoke {
                     require(RealityManager.enter(p, 0), "enter first realm");
                     require(p.getInventory().getStack(0).isOf(Items.DIAMOND) && p.getInventory().getStack(0).getCount() == 7, "first realm clones inventory");
                     p.getInventory().setStack(0, new ItemStack(Items.EMERALD, 3));
+                    p.teleport(p.getServerWorld(), p.getX(), p.getY() + 8, p.getZ() + 9, 180, 18);
                 });
                 case 6 -> { if (stageTicks > 60 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) {
                     capture(client, "05-generated-realm");
@@ -135,27 +141,34 @@ public final class ClientSmoke {
                     require(RealityManager.enter(p, 0), "revisit realm zero");
                     require(p.getInventory().getStack(0).isOf(Items.EMERALD) && p.getInventory().getStack(0).getCount() == 3, "modified realm snapshot restored");
                     p.getServerWorld().getGameRules().get(GameRules.KEEP_INVENTORY).set(false, p.getServer());
-                    p.kill();
+
                 }); }
-                case 9 -> { if (client.currentScreen instanceof DeathScreen && stageTicks > 25) {
+                case 9 -> { if (stageTicks > 100) server(client, p -> {
+                    // Damage during a dimension teleport is intentionally ignored by vanilla until
+                    // the client ACK arrives. Kill only after travel protection has expired.
+                    p.changeGameMode(GameMode.SURVIVAL);
+                    boolean damaged = p.damage(p.getDamageSources().genericKill(), Float.MAX_VALUE);
+                    require(damaged && !p.isAlive(), "post-teleport death must actually occur");
+                }); }
+                case 10 -> { if (client.currentScreen instanceof DeathScreen && stageTicks > 25) {
                     client.player.requestRespawn(); client.setScreen(null); stage++; stageTicks = 0;
                 } }
-                case 10 -> { if (stageTicks > 45 && client.player.isAlive() && client.world.getRegistryKey().equals(World.OVERWORLD)) server(client, p -> {
+                case 11 -> { if (stageTicks > 45 && client.player.isAlive() && client.world.getRegistryKey().equals(World.OVERWORLD)) server(client, p -> {
                     require(p.getInventory().getStack(0).isOf(Items.DIAMOND) && p.getInventory().getStack(0).getCount() == 7, "root inventory after realm death");
                     require(RealityManager.enter(p, 0), "return to deceased realm");
                     require(p.getInventory().getStack(0).isEmpty(), "dropped realm inventory must not resurrect");
                 }); }
-                case 11 -> { if (stageTicks > 30 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) server(client, p -> {
+                case 12 -> { if (stageTicks > 30 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) server(client, p -> {
                     require(RealityManager.returnHome(p), "final safe return");
                     require(RealityManager.scale(p, .125), "small scale");
                     require(RealityManager.scale(p, 1), "normal scale restore");
                 }); }
-                case 12 -> { if (stageTicks > 35 && client.world.getRegistryKey().equals(World.OVERWORLD)) {
+                case 13 -> { if (stageTicks > 35 && client.world.getRegistryKey().equals(World.OVERWORLD)) {
                     BeyondClient.openGuide();
                     for (var child : List.copyOf(client.currentScreen.children())) if (child instanceof ButtonWidget b && b.getMessage().getString().contains("Settings")) { b.onPress(); break; }
                     stage++; stageTicks = 0;
                 } }
-                case 13 -> { if (stageTicks > 25) {
+                case 14 -> { if (stageTicks > 25) {
                     capture(client, "06-field-guide");
                     require(CosmicRenderer.ready() && CosmicRenderer.renderedFrames() > 30, "actual post-process frames");
                     BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true scale=true screenshots=true", CosmicRenderer.renderedFrames());

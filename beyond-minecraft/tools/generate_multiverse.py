@@ -193,8 +193,8 @@ def generate(seed=DEFAULT_SEED, count=DEFAULT_REALMS):
     put("data/beyond/dimension_type/membrane.json", {
         "ultrawarm": False, "natural": False, "piglin_safe": False, "respawn_anchor_works": False,
         "bed_works": False, "has_raids": False, "has_skylight": True, "has_ceiling": False,
-        "coordinate_scale": 1.0, "ambient_light": .12, "logical_height": 384, "min_y": -64, "height": 384,
-        "infiniburn": "#minecraft:infiniburn_overworld", "effects": "minecraft:overworld", "fixed_time": 13500,
+        "coordinate_scale": 1.0, "ambient_light": .22, "logical_height": 384, "min_y": -64, "height": 384,
+        "infiniburn": "#minecraft:infiniburn_overworld", "effects": "minecraft:overworld", "fixed_time": 6000,
         "monster_spawn_block_light_limit": 0, "monster_spawn_light_level": 0})
     for tag, values in (("dirt", dirt), ("mineable/pickaxe", pickaxe)):
         put(f"data/minecraft/tags/block/{tag}.json", {"replace": False, "values": values})
