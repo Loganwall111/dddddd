@@ -10,8 +10,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1] / "src/main/resources"
 
 
+def usable(tool):
+    if not tool:
+        return False
+    try:
+        r = subprocess.run([tool, "--version"], capture_output=True, timeout=30)
+        return r.returncode == 0
+    except Exception as e:
+        print(f"tool {tool} not runnable: {e}")
+        return False
+
+
 def main():
     tool = sys.argv[1] if len(sys.argv) > 1 else shutil.which("glslangValidator")
+    if not usable(tool):
+        tool = shutil.which("glslang") or shutil.which("glslangValidator")
+    if not usable(tool):
+        tool = None
     programs = sorted(p for p in ROOT.rglob("*") if p.suffix in (".vsh", ".fsh"))
     errors = 0
     with tempfile.TemporaryDirectory() as tmp:
@@ -24,6 +39,7 @@ def main():
                 continue
             if not tool:
                 print("FAIL: no glslangValidator provided — compile check is mandatory")
+                print("::error file=tools/check_shaders.py::glslang tool not found; CI must provide it")
                 sys.exit(1)
             stage = "vert" if prog.suffix == ".vsh" else "frag"
             out = Path(tmp) / (prog.relative_to(ROOT).as_posix().replace("/", "__") + "." + stage)
