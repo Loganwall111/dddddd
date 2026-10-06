@@ -348,6 +348,7 @@ def main():
         "item.beyondthreshold.shattered_relic": "Shattered Relic",
         "item.beyondthreshold.threshold_blade": "Threshold Blade",
         "item.beyondthreshold.radiate_reality_glasses": "Radiate Reality Glasses",
+        "itemGroup.beyondthreshold.main": "Beyond the Threshold",
         "key.beyondthreshold.cycle": "Cycle Mandela Reality",
         "key.beyondthreshold.config": "Threshold Config",
         "key.beyondthreshold.category": "Beyond the Threshold",

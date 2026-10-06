@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " E ",
+    " D ",
+    " S "
+  ],
+  "key": {
+    "E": { "item": "minecraft:ender_eye" },
+    "D": { "item": "minecraft:diamond" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": { "item": "beyondthreshold:threshold_blade", "count": 1 }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "OCO",
+    "CEC",
+    "OCO"
+  ],
+  "key": {
+    "C": { "item": "minecraft:crying_obsidian" },
+    "O": { "item": "minecraft:obsidian" },
+    "E": { "item": "minecraft:ender_eye" }
+  },
+  "result": { "item": "beyondthreshold:shattered_relic", "count": 1 }
+}

@@ -46,11 +46,11 @@ public class BeyondTheThreshold implements ModInitializer {
 		// from procedurally generated variant blocks when chunks load.
 		ServerChunkEvents.CHUNK_LOAD.register((world, chunk) -> PaletteSwapper.onChunkLoad(world, chunk));
 
-		// The eye finds every new traveller once.
+		// The eye finds every traveller whose threshold moment never
+		// completed (TAG_THRESHOLD is only set once the eye grabs you).
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayerEntity player = handler.getPlayer();
-			if (!player.getCommandTags().contains(TAG_INTRO)) {
-				player.getCommandTags().add(TAG_INTRO);
+			if (!player.getCommandTags().contains(TAG_THRESHOLD)) {
 				BTTScheduler.in(100, () -> WatcherSpawning.begin(server, player));
 			}
 			BTTNet.sendGlasses(player, player.getCommandTags().contains(TAG_GLASSES));

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "A A",
+    "G G"
+  ],
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "G": { "item": "minecraft:tinted_glass" }
+  },
+  "result": { "item": "beyondthreshold:radiate_reality_glasses", "count": 1 }
+}

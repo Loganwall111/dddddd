@@ -1,8 +1,9 @@
 #version 150
 
 // MANDELA EFFECT // ABSOLUTE REALISM
-// Cinematic grade: filmic tonemap, micro-sharpen, bloom, sun warmth,
-// film grain, lens vignette and gentle chromatic fringing.
+// A deliberately *visible* cinematic grade: rich contrast, saturated
+// life, warm highlights / cool shadows split-toning, bloom, sharpen,
+// film grain, vignette and lens fringing. It must look AAA at a glance.
 
 uniform sampler2D DiffuseSampler;
 in vec2 texCoord;
@@ -23,42 +24,47 @@ void main() {
     vec2 cc = uv - 0.5;
     float r2 = dot(cc, cc);
 
-    // gentle lens fringing
-    float cr = texture(DiffuseSampler, uv + cc * r2 * 0.06).r;
+    // lens fringing at the edges
+    float cr = texture(DiffuseSampler, uv + cc * r2 * 0.08).r;
     float cg = texture(DiffuseSampler, uv).g;
-    float cb = texture(DiffuseSampler, uv - cc * r2 * 0.06).b;
+    float cb = texture(DiffuseSampler, uv - cc * r2 * 0.08).b;
     vec3 col = vec3(cr, cg, cb);
 
-    // micro sharpen
+    // crisp micro-sharpen
     vec3 blur = vec3(0.0);
-    blur += texture(DiffuseSampler, uv + vec2(1.5, 0.0) / BttRes).rgb;
-    blur += texture(DiffuseSampler, uv - vec2(1.5, 0.0) / BttRes).rgb;
-    blur += texture(DiffuseSampler, uv + vec2(0.0, 1.5) / BttRes).rgb;
-    blur += texture(DiffuseSampler, uv - vec2(0.0, 1.5) / BttRes).rgb;
+    blur += texture(DiffuseSampler, uv + vec2(1.25, 0.0) / BttRes).rgb;
+    blur += texture(DiffuseSampler, uv - vec2(1.25, 0.0) / BttRes).rgb;
+    blur += texture(DiffuseSampler, uv + vec2(0.0, 1.25) / BttRes).rgb;
+    blur += texture(DiffuseSampler, uv - vec2(0.0, 1.25) / BttRes).rgb;
     blur *= 0.25;
-    col += (col - blur) * 0.55;
+    col += (col - blur) * 0.7;
 
-    // bloom: cheap 8-tap bright pass
+    // bloom: 12-tap bright pass, wide soft radius
     vec3 b = vec3(0.0);
-    for (int i = 0; i < 8; i++) {
-        float a = float(i) * 0.7853981;
-        vec2 off = vec2(cos(a), sin(a)) * (6.0 / BttRes);
-        vec3 s = texture(DiffuseSampler, uv + off).rgb;
-        b += max(s - 0.55, 0.0);
+    for (int i = 0; i < 12; i++) {
+        float a = float(i) * 0.5235988;
+        vec2 off = vec2(cos(a), sin(a)) * (9.0 / BttRes);
+        b += max(texture(DiffuseSampler, uv + off).rgb - 0.5, 0.0);
     }
-    b /= 8.0;
-    col += b * 0.6;
+    b /= 12.0;
+    col += b * 0.75;
 
-    // warm sun grade + saturation
+    // vivid saturation + punchy contrast
     float l = luma(col);
-    col = mix(vec3(l), col, 1.22);
-    col *= vec3(1.06, 1.0, 0.94);
-    col = aces(col * 1.12);
+    col = mix(vec3(l), col, 1.42);
+    col = (col - 0.5) * 1.18 + 0.5;
 
-    // vignette + grain
-    col *= 1.0 - r2 * 0.55;
+    // split toning: golden sun on highlights, teal air in shadows
+    float lw = clamp(luma(col), 0.0, 1.0);
+    col = mix(col, col * vec3(0.86, 1.05, 1.10), (1.0 - lw) * 0.55);
+    col = mix(col, col * vec3(1.10, 1.02, 0.88), lw * 0.60);
+
+    col = aces(col * 1.18);
+
+    // cinematic vignette + fine grain
+    col *= 1.0 - r2 * 0.85;
     float grain = fract(sin(dot(uv * BttRes + BttTime * 60.0, vec2(12.9898, 78.233))) * 43758.5453);
-    col += (grain - 0.5) * 0.035;
+    col += (grain - 0.5) * 0.03;
 
     fragColor = vec4(mix(texture(DiffuseSampler, uv).rgb, col, BttIntensity), 1.0);
 }
