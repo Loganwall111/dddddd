@@ -36,6 +36,9 @@ public final class CosmicSkyRenderer {
 		}
 		MinecraftClient c = MinecraftClient.getInstance();
 		BttGL.Prog p = BttGL.get("sky/cosmic");
+		if (p == null) {
+			return;
+		}
 		p.use();
 
 		Quaternionf q = new Quaternionf(ctx.camera().getRotation()).conjugate();

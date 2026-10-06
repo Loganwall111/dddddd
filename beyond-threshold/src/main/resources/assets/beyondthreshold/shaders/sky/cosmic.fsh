@@ -1,138 +1,103 @@
 #version 150
 
-// BEYOND THE THRESHOLD — the true sky.
-// mode 0 (overworld): the nameless colossus. Its head and shoulders loom
-// over the horizon, its arms are the horizon, and you are standing on its
-// skin. A lensing black hole hangs above.
-// mode 1+: procedural dimension skies: membrane grids, floating voxel
-// isles, aurora veils, all seeded.
+// THE THRESHOLD SKY
+// The truth the intro reveals: the overworld rests on the arm of a
+// nameless colossus. Raymarched nebula, star field, its silhouette with
+// two burning eyes, and a lensing black hole on a fixed sky anchor.
 
 in vec3 vDir;
 out vec4 fragColor;
 
 uniform float BttTime;
-uniform float BttMode;
-uniform float BttSeed;
 uniform vec3 PalA;
 uniform vec3 PalB;
 uniform vec3 PalHorizon;
 uniform vec3 PalGlow;
+uniform float BttMode;
+uniform float BttSeed;
 uniform vec3 BttBHDir;
 uniform float BttBHStrength;
 
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float hash1(float n) { return fract(sin(n * 12.9898) * 43758.5453); }
-float noise(vec2 p) {
-    vec2 i = floor(p), f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x),
-               mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
-}
-float fbm(vec2 p) {
-    float v = 0.0, a = 0.5;
-    for (int i = 0; i < 5; i++) { v += a * noise(p); p *= 2.07; a *= 0.5; }
-    return v;
+float hash(vec3 p) {
+    p = fract(p * 0.3183099 + 0.1);
+    p *= 17.0;
+    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
 }
 
-mat2 rot2(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+float noise(vec3 x) {
+    vec3 i = floor(x);
+    vec3 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(hash(i), hash(i + vec3(1.0, 0.0, 0.0)), f.x),
+                   mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+               mix(mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x),
+                   mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+}
+
+float fbm(vec3 p) {
+    float a = 0.5;
+    float s = 0.0;
+    for (int i = 0; i < 5; i++) {
+        s += a * noise(p);
+        p = p * 2.03 + 11.1;
+        a *= 0.55;
+    }
+    return s;
+}
 
 void main() {
     vec3 d = normalize(vDir);
     float t = BttTime;
 
-    // ---------- deep space base ----------
-    vec2 suv = vec2(atan(d.z, d.x), asin(clamp(d.y, -1.0, 1.0)));
-    vec3 col = mix(vec3(0.008, 0.006, 0.02), PalA * 0.25, smoothstep(-0.4, 0.6, d.y));
+    // deep-space base gradient
+    vec3 col = mix(PalA * 0.22, PalB * 0.16, 0.5 + 0.5 * d.y);
 
-    // stars
-    vec2 sgrid = suv * vec2(160.0, 100.0);
-    float sh = hash(floor(sgrid));
-    float star = smoothstep(0.996, 1.0, sh) * (0.6 + 0.4 * sin(t * 3.0 + sh * 90.0));
-    col += star * vec3(0.9, 0.95, 1.0);
+    // swirling two-tone nebula
+    vec3 np = d * 3.1 + vec3(t * 0.02, BttSeed * 6.28, 0.0);
+    float n1 = fbm(np);
+    float n2 = fbm(np * 1.9 + n1 * 1.4 + 7.3);
+    col = mix(col, PalA * 1.7, smoothstep(0.35, 0.85, n2) * 0.55);
+    col = mix(col, PalB * 1.9, smoothstep(0.5, 0.95, n1 * n2 + 0.25) * 0.4);
 
-    // ---------- lensing warp around the black hole ----------
-    vec3 B = normalize(BttBHDir);
-    float ba = length(d - B);
-    float ein = 0.10 * BttBHStrength;
-    vec2 bendDir = normalize(d.xy - B.xy + 1e-5);
-    vec3 dw = normalize(d + vec3(bendDir, 0.0) * (ein * ein / max(ba, 0.02)) * 0.6);
+    // burning horizon
+    float hz = pow(1.0 - abs(d.y), 6.0);
+    col += PalHorizon * hz * (0.5 + 0.35 * n1);
 
-    // ---------- nebula (warped) ----------
-    vec2 nuv = vec2(atan(dw.z, dw.x), asin(clamp(dw.y, -1.0, 1.0)));
-    float neb = fbm(nuv * 3.0 + vec2(t * 0.05, -t * 0.02) + BttSeed * 7.0);
-    neb += 0.5 * fbm(nuv * 7.0 - t * 0.03);
-    vec3 nebCol = mix(PalA, PalB, smoothstep(0.35, 0.75, neb));
-    col += nebCol * neb * neb * 0.9;
+    // star field with twinkle
+    float st = hash(floor(d * 240.0));
+    float star = smoothstep(0.998, 1.0, st) * (0.6 + 0.4 * sin(t * 3.0 + st * 40.0));
+    col += vec3(star) * (0.7 + 0.6 * st);
 
-    // ---------- black hole ----------
-    float x = ba / ein;
-    float coreM = 1.0 - smoothstep(0.30, 0.40, x);
-    float ringM = exp(-abs(x - 1.1) * 7.0);
-    float swirlA = atan(dot(d - B, normalize(cross(B, vec3(0, 1, 0)))), dot(d - B, B));
-    vec3 diskCol = mix(PalHorizon, vec3(1.0, 0.95, 0.85), ringM);
-    diskCol = mix(diskCol, PalGlow, 0.5 + 0.5 * sin(swirlA * 3.0 + t * 0.7));
-    col += diskCol * ringM * 1.6 * BttBHStrength;
-    col += PalHorizon * 0.25 * BttBHStrength / (1.0 + x * x * x * x);
-    col = mix(col, vec3(0.0), coreM);
+    // the colossus: head + shoulders silhouette cradling the world
+    vec3 hd = normalize(vec3(0.10, 0.30, -0.95));
+    float aHead = 1.0 - dot(d, hd);
+    float head = smoothstep(0.05, 0.02, aHead);
+    vec3 sd = normalize(vec3(hd.x, hd.y - 0.30, hd.z));
+    float shoulders = smoothstep(0.34, 0.12, 1.0 - dot(d, sd));
+    float sil = max(head, shoulders * 0.92);
+    col = mix(col, vec3(0.02, 0.01, 0.05), sil);
+    // rim light breathing around the head
+    float rim = smoothstep(0.075, 0.03, abs(aHead - 0.05)) * (1.0 - sil);
+    col += PalGlow * rim * (0.45 + 0.2 * sin(t * 0.7));
+    // two burning eyes
+    vec3 e1 = normalize(hd + vec3(-0.032, 0.012, 0.02));
+    vec3 e2 = normalize(hd + vec3(0.032, 0.012, 0.02));
+    float eye = smoothstep(0.0016, 0.0004, 1.0 - dot(d, e1))
+              + smoothstep(0.0016, 0.0004, 1.0 - dot(d, e2));
+    float blink = 0.75 + 0.25 * sin(t * 0.9 + BttSeed * 9.0);
+    col += PalGlow * eye * 2.4 * blink;
 
-    // ---------- horizon fire ----------
-    float hor = pow(1.0 - abs(d.y), 4.0);
-    col += PalHorizon * hor * 0.55;
+    // lensing black hole: void disk + photon ring + swirl
+    vec3 bd = normalize(BttBHDir);
+    float ba = 1.0 - dot(d, bd);
+    float disk = smoothstep(0.02, 0.0, ba);
+    float ring = smoothstep(0.014, 0.0, abs(ba - 0.035));
+    float swirl = noise(vec3(atan(d.z, d.x) * 6.0, ba * 40.0, t * 0.6));
+    col = mix(col, vec3(0.0), disk);
+    col += (PalHorizon * 1.6 + PalGlow * swirl * 0.7) * ring * BttBHStrength;
 
-    // ---------- the colossus (mode 0) ----------
-    if (BttMode < 0.5) {
-        vec3 H = normalize(vec3(0.14, 0.20, -0.97));          // head
-        vec3 S = normalize(vec3(0.10, -0.05, -0.99));         // shoulders
-        vec3 A1 = normalize(vec3(-0.85, 0.01, -0.53));        // left arm
-        vec3 A2 = normalize(vec3(0.92, 0.00, -0.40));         // right arm
-
-        float head = length(d - H);
-        float shoulder = length((d - S) * vec3(1.0, 2.8, 1.0));
-        float arm1 = length((d - A1) * vec3(1.0, 3.4, 1.6));
-        float arm2 = length((d - A2) * vec3(1.0, 3.4, 1.6));
-        float body = min(min(head - 0.24, shoulder - 0.55), min(arm1 - 0.30, arm2 - 0.30));
-        float mask = 1.0 - smoothstep(-0.01, 0.02, body);
-
-        // skin: dark flesh of the void with nebula veins
-        vec3 skin = vec3(0.015, 0.010, 0.030)
-                + PalA * fbm(suv * 14.0) * 0.22
-                + PalGlow * pow(fbm(suv * 30.0 + t * 0.02), 3.0) * 0.5;
-        float rim = smoothstep(0.05, 0.0, abs(body)) ;
-        skin += PalGlow * rim * 0.9;
-
-        // eyes of the watcher: two burning points on the head
-        vec3 E1 = normalize(H + vec3(-0.075, 0.02, 0.0));
-        vec3 E2 = normalize(H + vec3(0.075, 0.02, 0.0));
-        float blink = 0.6 + 0.4 * smoothstep(0.97, 1.0, sin(t * 0.11));
-        float eye = exp(-pow(length(d - E1) * 55.0, 2.0)) + exp(-pow(length(d - E2) * 55.0, 2.0));
-        skin += PalGlow * eye * 3.0 * blink + vec3(1.0) * eye * blink;
-
-        col = mix(col, skin, mask);
-    } else {
-        // ---------- procedural dimension membrane ----------
-        float grid = abs(fract(suv.x * 18.0 + BttSeed) - 0.5) + abs(fract(suv.y * 12.0) - 0.5);
-        float line = smoothstep(0.06, 0.0, grid);
-        col += PalGlow * line * 0.12 * (0.5 + 0.5 * sin(t + suv.y * 20.0));
-
-        // floating voxel isles
-        vec2 ig = suv * vec2(26.0, 16.0);
-        vec2 cell = floor(ig);
-        float h = hash(cell + BttSeed * 31.0);
-        if (h > 0.955) {
-            vec2 f = fract(ig) - 0.5;
-            float isl = step(max(abs(f.x), abs(f.y)), 0.16 + 0.1 * hash(cell + 2.0));
-            float top = step(f.y, -0.02);
-            vec3 icol = mix(PalB, PalHorizon, top) * (0.5 + 0.5 * h * 7.0);
-            col = mix(col, icol, isl * smoothstep(-0.7, -0.2, d.y));
-        }
-
-        // aurora veils
-        float aur = exp(-abs(d.y - 0.35 - 0.15 * noise(vec2(suv.x * 4.0 + t * 0.1, t * 0.05))) * 6.0);
-        col += mix(PalB, PalGlow, 0.5 + 0.5 * sin(suv.x * 6.0 + t * 0.3)) * aur * 0.5;
-    }
-
-    // gentle dither to avoid banding
-    col += (hash(suv * 913.0) - 0.5) / 255.0;
+    // dither away banding
+    col += (hash(d * 512.0) - 0.5) * 0.015;
 
     fragColor = vec4(col, 1.0);
 }

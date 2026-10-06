@@ -23,7 +23,8 @@ def main():
                 errors += 1
                 continue
             if not tool:
-                continue
+                print("FAIL: no glslangValidator provided — compile check is mandatory")
+                sys.exit(1)
             stage = "vert" if prog.suffix == ".vsh" else "frag"
             out = Path(tmp) / (prog.relative_to(ROOT).as_posix().replace("/", "__") + "." + stage)
             out.write_text("\n".join(lines) + "\n")

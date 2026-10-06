@@ -6,6 +6,6 @@ uniform mat4 ProjMat;
 out vec3 vDir;
 
 void main() {
-    vDir = normalize(Position);
-    gl_Position = ProjMat * RotMat * vec4(Position * 240.0, 1.0);
+    vDir = (RotMat * vec4(Position, 1.0)).xyz;
+    gl_Position = ProjMat * vec4(Position, 1.0);
 }

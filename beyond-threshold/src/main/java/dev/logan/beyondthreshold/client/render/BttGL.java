@@ -66,10 +66,10 @@ public final class BttGL {
 	private static int cubeVbo = -1;
 
 	public static Prog get(String name) {
-		Prog p = CACHE.get(name);
-		if (p != null) {
-			return p;
+		if (CACHE.containsKey(name)) {
+			return CACHE.get(name);
 		}
+		Prog p = null;
 		try {
 			String v = read(new Identifier("beyondthreshold", "shaders/" + name + ".vsh"));
 			String f = read(new Identifier("beyondthreshold", "shaders/" + name + ".fsh"));
@@ -87,7 +87,8 @@ public final class BttGL {
 			GL20.glDeleteShader(fs);
 			p = new Prog(prog);
 		} catch (Exception e) {
-			throw new IllegalStateException("btt shader " + name, e);
+			// never take the whole game down for a shader bug
+			System.err.println("[btt] shader '" + name + "' unavailable, fx disabled: " + e);
 		}
 		CACHE.put(name, p);
 		return p;

@@ -53,12 +53,18 @@ public final class EntityFxRenderer {
 			Vec3d rel = e.getPos().subtract(cam.getPos());
 			if (e instanceof BlackHoleEntity bh) {
 				BttGL.Prog p = BttGL.get("fx/blackhole");
+				if (p == null) {
+					continue;
+				}
 				begin(p, proj, rot, rel, bh.getRadius() * 3.2F);
 				p.f("BttTime", t * 0.02F);
 				p.f("BttCollapse", bh.isCollapsing() ? 1.0F : 0.0F);
 				BttGL.drawQuad();
 			} else if (e instanceof WatcherEyeEntity eye) {
 				BttGL.Prog p = BttGL.get("fx/eye");
+				if (p == null) {
+					continue;
+				}
 				begin(p, proj, rot, rel, 14.0F);
 				p.f("BttTime", t * 0.02F);
 				p.f("BttStage", eye.getStage());
@@ -70,6 +76,9 @@ public final class EntityFxRenderer {
 			} else {
 				RealityTearEntity tear = (RealityTearEntity) e;
 				BttGL.Prog p = BttGL.get("fx/tear");
+				if (p == null) {
+					continue;
+				}
 				begin(p, proj, rot, rel, 2.6F);
 				p.f("BttTime", t * 0.03F);
 				p.f("BttSeed", tear.getDimIndex() * 0.137F);
