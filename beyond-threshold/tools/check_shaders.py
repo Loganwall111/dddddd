@@ -32,6 +32,9 @@ def main():
             if r.returncode != 0:
                 errors += 1
                 print(f"FAIL {prog.relative_to(ROOT)}\n{r.stdout}{r.stderr}")
+                first = next((l.strip() for l in (r.stdout + r.stderr).splitlines()
+                              if "ERROR" in l or "error" in l), "compile failed")
+                print(f"::error file={prog},title=GLSL compile failed::{first[:180]}")
             else:
                 print(f"ok   {prog.relative_to(ROOT)}")
     if not tool:
