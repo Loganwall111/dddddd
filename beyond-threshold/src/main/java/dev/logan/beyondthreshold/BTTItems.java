@@ -31,7 +31,7 @@ public final class BTTItems {
 		ItemGroup group = FabricItemGroup.builder()
 				.displayName(Text.translatable("itemGroup.beyondthreshold.main"))
 				.icon(() -> SHATTERED_RELIC.getDefaultStack())
-				.entries((ctx) -> {
+				.entries((context, ctx) -> {
 					ctx.add(SHATTERED_RELIC);
 					ctx.add(THRESHOLD_BLADE);
 					ctx.add(RADIATE_GLASSES);
