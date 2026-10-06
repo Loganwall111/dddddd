@@ -50,6 +50,26 @@ public final class HudOverlay {
 			context.drawTextWithShadow(c.textRenderer, Text.literal(label), 6, 6,
 					0xCC000000 | cols[BTTClientState.mandelaMode % cols.length]);
 		}
+
+		// ---- diagnostics strip (bottom-left) ----
+		int eyes = 0, holes = 0, tears = 0;
+		for (net.minecraft.entity.Entity e : c.world.getEntities()) {
+			if (e instanceof dev.logan.beyondthreshold.entity.WatcherEyeEntity) eyes++;
+			else if (e instanceof dev.logan.beyondthreshold.entity.BlackHoleEntity) holes++;
+			else if (e instanceof dev.logan.beyondthreshold.entity.RealityTearEntity) tears++;
+		}
+		String[] dbg = {
+				"BTT post=" + PostFxManager.status()
+						+ " sky=" + (CosmicSkyRenderer.shouldOverride() ? "on" : "off"),
+				"BTT glasses=" + (BTTClientState.glassesWorn ? "on" : "off")
+						+ " mode=" + BTTClientState.mandelaMode
+						+ " eye=" + eyes + " hole=" + holes + " tear=" + tears,
+				"BTT fx-failed=" + (BttGL.failed().isEmpty() ? "none" : String.join(",", BttGL.failed())),
+		};
+		for (int i = 0; i < dbg.length; i++) {
+			context.drawTextWithShadow(c.textRenderer, Text.literal(dbg[i]), 4,
+					h - 40 + i * 11, 0xAA000000 | 0x9FE8FF);
+		}
 	}
 
 	private static void drawCentered(MinecraftClient c, DrawContext context, String s, int y, int color) {

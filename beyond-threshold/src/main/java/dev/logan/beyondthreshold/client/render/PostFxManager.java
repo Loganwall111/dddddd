@@ -27,6 +27,11 @@ public final class PostFxManager {
 	public static void tick(MinecraftClient client) {
 	}
 
+	/** HUD diagnostics: which post processor is currently driving the frame. */
+	public static String status() {
+		return current.isEmpty() ? "off" : current;
+	}
+
 	public static void onFrameStart(MinecraftClient client, float tickDelta) {
 		if (client.world == null || client.player == null) {
 			return;

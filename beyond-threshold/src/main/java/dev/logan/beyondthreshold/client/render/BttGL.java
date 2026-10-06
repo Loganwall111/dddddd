@@ -10,7 +10,9 @@ import org.lwjgl.opengl.GL20;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,8 +64,14 @@ public final class BttGL {
 	}
 
 	private static final Map<String, Prog> CACHE = new HashMap<>();
+	private static final List<String> FAILED = new ArrayList<>();
 	private static int quadVbo = -1;
 	private static int cubeVbo = -1;
+
+	/** HUD diagnostics: shaders that failed to compile at runtime. */
+	public static List<String> failed() {
+		return FAILED;
+	}
 
 	public static Prog get(String name) {
 		if (CACHE.containsKey(name)) {
@@ -88,6 +96,7 @@ public final class BttGL {
 			p = new Prog(prog);
 		} catch (Exception e) {
 			// never take the whole game down for a shader bug
+			FAILED.add(name);
 			System.err.println("[btt] shader '" + name + "' unavailable, fx disabled: " + e);
 		}
 		CACHE.put(name, p);
