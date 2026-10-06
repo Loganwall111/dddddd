@@ -181,7 +181,7 @@ def generate(seed=DEFAULT_SEED, count=DEFAULT_REALMS):
             "spawners": {}, "spawn_costs": {}, "carvers": {}, "features": features})
         put(f"data/beyond/worldgen/configured_feature/{key}_pillars.json", {
             "type": "minecraft:block_column", "config": {
-                "layers": [{"height": {"type": "minecraft:uniform", "value": {"min_inclusive": 3, "max_inclusive": 18 + theme}},
+                "layers": [{"height": {"type": "minecraft:uniform", "min_inclusive": 3, "max_inclusive": 18 + theme},
                             "provider": {"type": "minecraft:simple_state_provider", "state": {"Name": f"beyond:{blocks[2]}"}}}],
                 "direction": "up", "allowed_placement": {"type": "minecraft:matching_blocks", "blocks": ["minecraft:air"]},
                 "prioritize_tip": False}})

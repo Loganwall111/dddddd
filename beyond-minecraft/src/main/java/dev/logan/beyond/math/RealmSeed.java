@@ -11,6 +11,6 @@ public final class RealmSeed {
     public static int slot(long worldSeed, long traveler, int cursor, int count) {
         if (count < 1 || count > 32) throw new IllegalArgumentException("Realm count must be 1..32");
         // Each cycle visits every slot once, without an ever-growing dimension registry.
-        return Math.floorMod(Math.floorMod(mix(worldSeed ^ traveler), count) + cursor, count);
+        return Math.floorMod((long) Math.floorMod(mix(worldSeed ^ traveler), count) + cursor, count);
     }
 }

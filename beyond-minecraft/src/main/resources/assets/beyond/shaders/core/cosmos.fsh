@@ -42,7 +42,7 @@ float hash13(vec3 p) {
     p += dot(p, p.zyx + 31.32);
     return fract((p.x + p.y) * p.z);
 }
-float noise3(vec3 p) {
+float valueNoise(vec3 p) {
     vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     return mix(mix(mix(hash13(i), hash13(i + vec3(1,0,0)), f.x),
                    mix(hash13(i + vec3(0,1,0)), hash13(i + vec3(1,1,0)), f.x), f.y),
@@ -51,7 +51,7 @@ float noise3(vec3 p) {
 }
 float fbm(vec3 p) {
     float f = 0.0, a = .5;
-    for (int i = 0; i < 4; i++) { f += noise3(p) * a; p = p * 2.03 + vec3(13.1,7.7,19.3); a *= .5; }
+    for (int i = 0; i < 4; i++) { f += valueNoise(p) * a; p = p * 2.03 + vec3(13.1,7.7,19.3); a *= .5; }
     return f;
 }
 vec3 spectral(float theme, float x) {
@@ -98,7 +98,7 @@ vec3 witness(vec3 background, vec3 rd) {
     float facing = dot(rd, axis);
     if (facing <= .12) return background;
     vec2 q = vec2(dot(rd, right), dot(rd, up)) / facing;
-    float active = IntroPhase < 0.0 ? .12 : smoothstep(.2, 2.7, IntroPhase) * (1.0 - smoothstep(10.5, 14.0, IntroPhase));
+    float presence = IntroPhase < 0.0 ? .12 : smoothstep(.2, 2.7, IntroPhase) * (1.0 - smoothstep(10.5, 14.0, IntroPhase));
     float dissolve = IntroPhase < 0.0 ? 0.0 : smoothstep(6.5, 12.5, IntroPhase);
     // A celestial forearm, reaching fingers and a head-shaped silhouette sit BEHIND terrain.
     float body = capsule2(q, vec2(-.85,-.75), vec2(-.28,-.26), .17);
@@ -110,14 +110,14 @@ vec3 witness(vec3 background, vec3 rd) {
     float skin = 1.0 - smoothstep(-.015, .025, body);
     float lines = pow(abs(sin(q.y * 64.0 + fbm(vec3(q * 6.0, 3.1)) * 8.0)), 26.0);
     vec3 bodyColor = vec3(.018,.025,.059) + vec3(.10,.055,.19) * lines;
-    background = mix(background, bodyColor, skin * .66 * max(active, .4));
+    background = mix(background, bodyColor, skin * .66 * max(presence, .4));
     vec2 e = q * mix(1.0, .91, IntroPhase < 0.0 ? 0.0 : smoothstep(1.0, 6.0, IntroPhase) * Motion);
     float lidHeight = .22 * (1.0 - pow(clamp(abs(e.x) / .60, 0.0, 1.0), 1.7));
     float edge = abs(e.y) - lidHeight;
     float eyeMask = (1.0 - smoothstep(-.005, .009, edge)) * (1.0 - smoothstep(.588, .607, abs(e.x)));
     float r = length(e), theta = atan(e.y, e.x);
     vec3 sclera = mix(vec3(.20,.115,.16), vec3(.72,.72,.64), exp(-abs(e.x) * 1.6));
-    float veins = pow(abs(sin(theta * 22.0 + r * 39.0 + noise3(vec3(e * 32.0,2.0)) * 6.0)), 22.0) * smoothstep(.22,.51,r);
+    float veins = pow(abs(sin(theta * 22.0 + r * 39.0 + valueNoise(vec3(e * 32.0,2.0)) * 6.0)), 22.0) * smoothstep(.22,.51,r);
     sclera = mix(sclera, vec3(.35,.065,.12), veins * .4);
     float striation = .5 + .5 * sin(theta * 156.0 + sin(theta * 47.0) * 2.0 + r * 30.0);
     float irisMask = 1.0 - smoothstep(.191, .207, r);
@@ -131,8 +131,8 @@ vec3 witness(vec3 background, vec3 rd) {
     float cells = hash12(floor(e * vec2(76,58)));
     float pixelKeep = 1.0 - smoothstep(cells - .08, cells + .08, dissolve);
     float aura = exp(-abs(edge) * 70.0) * (1.0 - smoothstep(.59,.68,abs(e.x)));
-    background += aura * vec3(.20,.31,.58) * active * .5;
-    background = mix(background, eye, eyeMask * active * pixelKeep);
+    background += aura * vec3(.20,.31,.58) * presence * .5;
+    background = mix(background, eye, eyeMask * presence * pixelKeep);
     if (IntroPhase >= 0.0) {
         vec2 grid = q * vec2(69,43);
         vec2 cell = floor(grid);
@@ -140,7 +140,7 @@ vec3 witness(vec3 background, vec3 rd) {
         vec2 glyph = fract(grid) - .5;
         float ink = step(.32, abs(glyph.x)) * step(abs(glyph.y), .37) + step(abs(glyph.x), .33) * step(abs(glyph.y), .045);
         float rain = ink * pow(stream, 9.0) * step(.55, hash12(cell));
-        background += rain * vec3(.16,.68,.49) * dissolve * (1.0 - dissolve) * 1.5 * active;
+        background += rain * vec3(.16,.68,.49) * dissolve * (1.0 - dissolve) * 1.5 * presence;
     }
     return background;
 }
@@ -204,7 +204,7 @@ LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float s
         if (diskRadius > 1.8 && diskRadius < 6.8 && abs(diskHeight) < .48) {
             float phi = atan(diskPoint.z, diskPoint.x);
             float bands = .64 + .36 * sin(diskRadius * 19.0 - phi * 3.0 + Time * .42);
-            float turbulent = .55 + .45 * noise3(vec3(diskRadius * 4.0, phi * 6.0 + Time * .06, seed * .0001));
+            float turbulent = .55 + .45 * valueNoise(vec3(diskRadius * 4.0, phi * 6.0 + Time * .06, seed * .0001));
             float density = exp(-abs(diskHeight) * 18.0) * smoothstep(1.8,2.3,diskRadius) * (1.0 - smoothstep(5.5,6.8,diskRadius));
             density *= bands * turbulent * ds * 2.6;
             float heat = pow(2.0 / diskRadius, .72);
