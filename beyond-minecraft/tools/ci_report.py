@@ -39,12 +39,12 @@ def main():
     for name, text in logs.items():
         if not text: continue
         lines = text.splitlines()
-        failure_lines = [i for i, line in enumerate(lines) if any(key in line for key in ("BEYOND_SERVER_SMOKE_FAIL", "BEYOND_CLIENT_INTEGRATION_FAIL", "BEYOND_CLIENT_SHADER_SMOKE_FAIL", "error:", "Failed to load", "Couldn't parse", "Error loading", "FAILURE:"))]
+        failure_lines = [i for i, line in enumerate(lines) if any(key in line for key in ("BEYOND_SERVER_SMOKE_FAIL", "BEYOND_CLIENT_INTEGRATION_FAIL", "BEYOND_CLIENT_SHADER_SMOKE_FAIL", "error:", "Couldn't parse", "Error loading", "FAILURE:"))]
         if failure_lines:
             start = max(0, failure_lines[0] - 3)
             annotation("error", "Beyond " + name + " diagnostics", "\n".join(lines[start:start + 65])[:12000])
-        elif name == "client" and not checks["client_in_world_integration"]:
-            annotation("warning", "Beyond incomplete client run", "\n".join(lines[-65:])[:12000])
+        if name == "client" and not checks["client_in_world_integration"]:
+            annotation("warning", "Beyond incomplete client run", "\n".join(line[:550] for line in lines[-85:])[:18000])
     return 0
 
 if __name__ == "__main__": main()

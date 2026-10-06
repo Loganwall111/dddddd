@@ -179,6 +179,10 @@ LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float s
     float impact2 = max(0.0, dot(origin, origin) - along * along);
     const float domain = 9.0;
     if (along < 0.0 || impact2 > domain * domain) return result;
+    // The integration domain may contain the CAMERA for a nearby well. Its entry distance
+    // is then zero and is not a valid occlusion proxy. Reject foreground surfaces against
+    // a conservative photon-sphere envelope before sampling or capturing any scene rays.
+    if (geometryDistance < max(0.0, (along - 2.8) * rs)) return result;
     float nearT = max(0.0, along - sqrt(max(0.0, domain * domain - impact2)));
     if (nearT * rs > geometryDistance) return result;
     vec3 p = origin + rd * nearT, v = rd;

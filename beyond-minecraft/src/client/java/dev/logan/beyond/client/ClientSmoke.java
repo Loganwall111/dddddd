@@ -32,11 +32,18 @@ public final class ClientSmoke {
     private static volatile int stage = -2;
     private static volatile boolean pending, complete;
     private static volatile Throwable failure;
+    private static long lastHeartbeat;
+    private static long loadingStarted;
     private ClientSmoke() {}
     public static void tick(MinecraftClient client) {
         if (!ENABLED || complete) return;
         try {
             if (failure != null) throw new IllegalStateException("server-side integration assertion", failure);
+            if (System.currentTimeMillis() - lastHeartbeat > 15000) {
+                BeyondMinecraft.LOGGER.info("BEYOND_HEARTBEAT stage={} ticks={} frames={} screen={}", stage, bootTicks, CosmicRenderer.renderedFrames(),
+                    client.currentScreen == null ? "none" : client.currentScreen.getClass().getSimpleName() + " / " + client.currentScreen.getTitle().getString());
+                lastHeartbeat = System.currentTimeMillis();
+            }
             if (++bootTicks > 6500) throw new IllegalStateException("integration smoke timed out at stage " + stage);
             if (stage == -2) {
                 if (bootTicks < 120) return;
@@ -48,7 +55,7 @@ public final class ClientSmoke {
                 client.options.getSimulationDistance().setValue(2);
                 client.options.getMaxFps().setValue(30);
                 client.options.pauseOnLostFocus = false;
-                stage = -1;
+                stage = -1; loadingStarted = System.currentTimeMillis();
                 client.createIntegratedServerLoader().start("beyond-ci", () -> fail(client, new IllegalStateException("CI world load cancelled")));
                 return;
             }
@@ -56,10 +63,19 @@ public final class ClientSmoke {
                 // Only this explicitly opt-in, disposable test save may bypass an experimental-world prompt.
                 if (client.currentScreen instanceof BackupPromptScreen screen) {
                     for (var child : List.copyOf(screen.children())) {
-                        if (child instanceof ButtonWidget b && b.getMessage().getString().toLowerCase(java.util.Locale.ROOT).contains("proceed")) { b.onPress(); break; }
+                        if (child instanceof ButtonWidget b && b.active && !b.getMessage().getString().equals(net.minecraft.text.Text.translatable("gui.cancel").getString())) {
+                            BeyondMinecraft.LOGGER.info("BEYOND_CI accepting disposable-world backup prompt: {}", b.getMessage().getString());
+                            b.onPress(); break;
+                        }
                     }
                 }
-                if (client.world == null || client.player == null || client.getServer() == null) return;
+                if (client.world == null || client.player == null || client.getServer() == null) {
+                    if (System.currentTimeMillis() - loadingStarted > 150000) {
+                        capture(client, "00-loading-diagnostic");
+                        throw new IllegalStateException("CI world did not open: " + (client.currentScreen == null ? "no screen" : client.currentScreen.getClass().getName() + " / " + client.currentScreen.getTitle().getString()));
+                    }
+                    return;
+                }
                 client.setScreen(null); stage = 0; stageTicks = 0;
             }
             if (pending || client.player == null || client.world == null) return;
