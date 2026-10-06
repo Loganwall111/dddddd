@@ -1,61 +1,69 @@
 {
-  "source_commit": "4fb0d6828cb6221443960c6a13d6bb42f48ef621",
-  "run_url": "https://github.com/Loganwall111/dddddd/actions/runs/37462868470",
+  "source_commit": "2321aac558195ea3643f5b39a1edba8f49c2a627",
+  "run_url": "https://github.com/Loganwall111/dddddd/actions/runs/37463439847",
   "checks": {
     "junit_tests": 30,
     "junit_failures": 0,
     "server_realms_and_journey": true,
     "client_native_glsl": true,
-    "client_in_world_integration": false
+    "client_in_world_integration": true
   },
   "artifacts": {
     "beyond-minecraft-0.1.0-alpha-sources.jar": {
-      "bytes": 169556,
-      "sha256": "193ae1d237fb5a043bb6356ae8d5890cd58dae780ff4e143c635df77551b0f10"
+      "bytes": 169274,
+      "sha256": "7f815fa948834e7676eb2af517618a300be5c8e83197186ed5ed7c65125a6a59"
     },
     "beyond-minecraft-0.1.0-alpha.jar": {
-      "bytes": 213914,
-      "sha256": "9936279cac25baec1a6523d160d611253c950a8c138fc6593bc8671aca7d1812"
+      "bytes": 213399,
+      "sha256": "a65a78e0ef20f68d57c86aab78b7fb85e5f07066d2b18fe84b319f35ca89656d"
     },
     "beyond-04-lens-1.png": {
-      "bytes": 656809,
-      "sha256": "d0fe390a825e1887c6c1a9e9e0b95475645856b6fbe9b01f230aa23df9346a38"
+      "bytes": 661679,
+      "sha256": "19a02c518778d23e48366349f3513246182124b62f9a2984b53d23137c218afe"
     },
     "beyond-04-lens-3.png": {
-      "bytes": 435654,
-      "sha256": "31a0d78aaf287eff8b418f9422054cceabfdc142c53b3255b616f6de0c92caa3"
+      "bytes": 420850,
+      "sha256": "c42f13b2cfd39f30f3e9036296ceaf1cc35fd4f95b73142719b867aa5b1dd071"
     },
     "beyond-02-singularity.png": {
-      "bytes": 498205,
-      "sha256": "1f82731007d3f07cf3e525b10641af45558ab13eeb7ad56e25eedbcd913df048"
+      "bytes": 493338,
+      "sha256": "dac74998a719188f7938cd6b694e1f4e5c03a57805085c0d584166e55d652971"
     },
     "beyond-04-lens-2.png": {
-      "bytes": 580765,
-      "sha256": "8aaf0bb6798db1a72b6904f1ef4555a650fd8aaf842b0c246ae4d8fa0c68ac42"
+      "bytes": 567559,
+      "sha256": "93dcc7c60afde86a8112676faaa992411a86c0d1e72660703bf96e7dba94dcd9"
     },
     "beyond-04-lens-5.png": {
-      "bytes": 468035,
-      "sha256": "461eea74d9292e46f1e4999a83d0e61d55a86950beaf5d852feeb118faeb544a"
+      "bytes": 455118,
+      "sha256": "6b3b837ffafb46000569cb9487169d0a2fd674722337431669be82574454b12f"
     },
     "beyond-01-witness.png": {
-      "bytes": 527872,
-      "sha256": "ec7cadfd57d8e0c499cee8a4a72f943e9b3cbee62dfddf164321bcb2ab27db74"
+      "bytes": 527867,
+      "sha256": "fae8fd3aa33a3641fcf404876ed10d068223aed0086d1c8aa65b5b3622bdabe6"
     },
     "beyond-03-membrane.png": {
-      "bytes": 586581,
-      "sha256": "ad47a02b6ed1c83b14a4012e8fe8f53c15d076848f4f236a4d9aaf60448862fb"
+      "bytes": 577257,
+      "sha256": "1ba50eb18e08ca236f2300a01cf256cd7a46aff3fbab46664a5d2e1072085b20"
+    },
+    "beyond-07-native-depth-occlusion.png": {
+      "bytes": 41805,
+      "sha256": "b38ccdfe1ea7a79e4e8bd9c59d0bb7772ac626e4f00a3907cff0f58a1a1f9541"
     },
     "beyond-05-generated-realm.png": {
-      "bytes": 571771,
-      "sha256": "211186204e79d5723c5f766b9b33c2ad378c2f0e2c052b7cb6757b463ddacff9"
+      "bytes": 616646,
+      "sha256": "2db874f35394a1cf744192982690cc41d37eb837491ca10788e2cc8413effcf0"
     },
     "beyond-04-lens-0.png": {
-      "bytes": 615604,
-      "sha256": "1f0f1ad3335adee96b563f9f3bdd4135037dadcbd407a403a3bd6160541596f8"
+      "bytes": 604974,
+      "sha256": "e666745eb38c859bd60f3215074fd461ccb6a4b8252a1ed5883e5b022e823df4"
     },
     "beyond-04-lens-4.png": {
-      "bytes": 610708,
-      "sha256": "eaadf7a45f06184fb272f94ec40bdd0c8d6e85dbbf3f0d48ff3bbdc78811750d"
+      "bytes": 602335,
+      "sha256": "ad433aec4edf1678a1fbbc3d5a0f4ae08cedb0bbc8fc561e27e95c6177a8639d"
+    },
+    "beyond-06-field-guide.png": {
+      "bytes": 208247,
+      "sha256": "2e4f128daf73a6581936841a893915cbccf615aba41fdd40e23fc6b6cc47856a"
     }
   }
 }
