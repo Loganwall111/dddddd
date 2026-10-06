@@ -18,7 +18,7 @@ public final class FieldGuideScreen extends Screen {
     private static final int INK = 0xFFC7D6D9, MUTED = 0xFF80989F, GOLD = 0xFFD6B87C, TEAL = 0xFF7BE1D4;
     private static final String[] TABS = {"Witness", "Gravity", "Atlas", "Mandela", "Settings"};
     private final Screen parent;
-    private int page, x, y, w, h, column;
+    private int page, x, y, w, h, column, scroll, maxScroll;
     public FieldGuideScreen(Screen parent) { super(Text.literal("The Beyond Field Guide")); this.parent = parent; }
     @Override protected void init() {
         w = Math.min(610, width - 20); h = Math.min(330, height - 20);
@@ -51,11 +51,12 @@ public final class FieldGuideScreen extends Screen {
     }
     private static String on(boolean value) { return value ? "on" : "off"; }
     private void refresh() { BeyondClient.CONFIG.save(); clearAndInit(); }
-    private void changePage(int page) { this.page = page; clearAndInit(); }
+    private void changePage(int page) { this.page = page; scroll = maxScroll = 0; clearAndInit(); }
     private void button(String label, int bx, int by, int bw, int bh, Runnable action) {
         addDrawableChild(ButtonWidget.builder(Text.literal(label), b -> action.run()).dimensions(bx, by, Math.max(10, bw), bh).build());
     }
     @Override public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        maxScroll = 0;
         ctx.fillGradient(0, 0, width, height, 0xCF02040D, 0xED060610);
         ctx.fill(x - 2, y - 2, x + w + 2, y + h + 2, 0xFF5B4B3A);
         ctx.fillGradient(x, y, x + w, y + h, 0xFF17242D, 0xFF0B141F);
@@ -80,9 +81,10 @@ public final class FieldGuideScreen extends Screen {
             }
             case 2 -> {
                 heading(ctx, "02 / THE LIVING ATLAS", false);
-                int ly = y + 92;
+                int ly = y + 92 - scroll;
                 for (int i = 0; i < Math.min(8, BeyondMinecraft.CATALOG.realms().size()); i++) {
-                    ctx.drawText(textRenderer, "%02d  %s".formatted(i, BeyondMinecraft.CATALOG.realms().get(i).name()), x + 16, ly, INK, false); ly += 16;
+                    if (ly >= y + 91 && ly < y + h - 66) ctx.drawText(textRenderer, "%02d  %s".formatted(i, BeyondMinecraft.CATALOG.realms().get(i).name()), x + 16, ly, INK, false); ly += 16;
+                    maxScroll = Math.max(maxScroll, ly + scroll - (y + h - 64));
                 }
                 heading(ctx, "A WAY BACK", true);
                 paragraph(ctx, "Sneak-use the Reality Knife, or type /beyond return. The first external origin is remembered across nested trips.\n\nEach new realm begins with a copy of your current inventory, then keeps its own snapshot. Root reality restores its own inventory. Chests are not isolated.\n\nEight compiled realms, not literally infinite worlds. Back up playerdata before experimenting.", true, 91);
@@ -101,20 +103,24 @@ public final class FieldGuideScreen extends Screen {
             }
         }
         ctx.disableScissor();
-        ctx.drawCenteredTextWithShadow(textRenderer, (page + 1) + " / " + TABS.length + "  ·  SOURCE ALPHA 0.1", x + w / 2, y + h - 22, MUTED);
+        ctx.drawCenteredTextWithShadow(textRenderer, (page + 1) + " / " + TABS.length + (maxScroll > 0 ? "  ·  WHEEL TO SCROLL" : "  ·  ALPHA 0.1"), x + w / 2, y + h - 22, MUTED);
         super.render(ctx, mouseX, mouseY, delta);
     }
     private void heading(DrawContext ctx, String text, boolean right) {
         ctx.drawText(textRenderer, text, x + (right ? w / 2 + 16 : 16), y + 72, TEAL, false);
     }
     private void paragraph(DrawContext ctx, String text, boolean right, int offsetY) {
-        int left = x + (right ? w / 2 + 16 : 16), top = y + offsetY;
+        int left = x + (right ? w / 2 + 16 : 16), top = y + offsetY - scroll;
         for (String line : text.split("\n", -1)) {
             if (line.isEmpty()) { top += 7; continue; }
             for (var wrapped : textRenderer.wrapLines(Text.literal(line), column - 4)) {
-                ctx.drawText(textRenderer, wrapped, left, top, INK, false); top += 11;
+                if (top >= y + 91 && top < y + h - 66) ctx.drawText(textRenderer, wrapped, left, top, INK, false); top += 11;
             }
         }
+        maxScroll = Math.max(maxScroll, top + scroll - (y + h - 64));
+    }
+    @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        scroll = Math.clamp(scroll - (int) (vertical * 22), 0, Math.max(0, maxScroll)); return true;
     }
     @Override public void close() { BeyondClient.CONFIG.save(); if (client != null) client.setScreen(parent); }
     @Override public boolean shouldPause() { return true; }

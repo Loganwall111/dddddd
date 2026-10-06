@@ -29,6 +29,8 @@ public final class CosmicRenderer {
     private static final Matrix4f projection = new Matrix4f(), inverseProjection = new Matrix4f(), cameraToWorld = new Matrix4f(), worldToCamera = new Matrix4f();
     private static Vec3d camera = Vec3d.ZERO;
     private static boolean captured, failed;
+    private static long renderedFrames;
+    public static long renderedFrames() { return renderedFrames; }
     private static String failure = "";
     private static BooleanSupplier irisActive = () -> false;
     private CosmicRenderer() {}
@@ -59,7 +61,7 @@ public final class CosmicRenderer {
         WorldRenderEvents.LAST.register(context -> {
             projection.set(context.projectionMatrix()); inverseProjection.set(projection).invert();
             worldToCamera.set(context.positionMatrix()); cameraToWorld.set(worldToCamera).invert();
-            camera = context.camera().getPos(); captured = true;
+            camera = context.camera().getPos(); ClientReality.observeCamera(cameraToWorld); captured = true;
         });
     }
     public static void render(float delta) {
@@ -84,6 +86,8 @@ public final class CosmicRenderer {
             cosmos.getUniformOrDefault("CameraToWorld").set(cameraToWorld);
             cosmos.getUniformOrDefault("WorldToCamera").set(worldToCamera);
             cosmos.getUniformOrDefault("Resolution").set((float) width, (float) height);
+            var witness = ClientReality.witnessDirection;
+            cosmos.getUniformOrDefault("WitnessDirection").set(witness.x, witness.y, witness.z);
             cosmos.getUniformOrDefault("CameraPosition").set((float) (camera.x % 8192), (float) (camera.y % 8192), (float) (camera.z % 8192));
             float time = ((ClientReality.ticks % 144000) + delta) / 20f;
             cosmos.getUniformOrDefault("Time").set(BeyondClient.CONFIG.reducedMotion ? 0 : time);
@@ -116,6 +120,7 @@ public final class CosmicRenderer {
             main.beginWrite(true);
             blit.addSampler("SceneSampler", scratch.getColorAttachment());
             draw(blit);
+            renderedFrames++;
         } catch (Exception error) {
             fail("post-process runtime", error);
             client.player.sendMessage(Text.literal("Beyond visuals disabled safely. Gameplay is intact. Check latest.log; [B] opens the guide."), false);

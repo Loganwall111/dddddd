@@ -5,8 +5,13 @@ on:
   pull_request:
     paths: ['beyond-minecraft/**', '.github/workflows/beyond-build.yml']
   workflow_dispatch:
+    inputs:
+      publish_snapshot:
+        description: 'Publish the verified small JAR and actual runtime screenshots on this session branch'
+        type: boolean
+        default: false
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: beyond-${{ github.ref }}
   cancel-in-progress: true
@@ -18,8 +23,8 @@ jobs:
       run:
         working-directory: beyond-minecraft
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -33,7 +38,10 @@ jobs:
           python3 -m unittest discover -s tools -p 'test_*.py' -v
           python3 tools/check_shaders.py
       - name: Compile both environments and run JUnit tests
-        run: ./gradlew --no-daemon --console=plain build
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --console=plain build 2>&1 | tee build-smoke.log
       - name: Load real Minecraft registries and generate every realm
         shell: bash
         run: |
@@ -51,13 +59,20 @@ jobs:
       - name: Compile shaders in the actual Minecraft client (Mesa / Xvfb)
         shell: bash
         run: |
+          mkdir -p run/saves
+          cp -a run/world run/saves/beyond-ci
           set +e
-          BEYOND_CLIENT_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 ALSOFT_DRIVERS=null timeout 480 xvfb-run -a -s '-screen 0 1280x720x24' ./gradlew --no-daemon --console=plain runClient 2>&1 | tee client-smoke.log
+          BEYOND_CLIENT_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 ALSOFT_DRIVERS=null timeout 480 xvfb-run -a -s '-screen 0 1280x720x24' ./gradlew --no-daemon --console=plain runClient --args="--width 960 --height 540" 2>&1 | tee client-smoke.log
           result=${PIPESTATUS[0]}
           set -e
           test "$result" = 0
           grep -q 'BEYOND_CLIENT_SHADER_SMOKE_PASS' client-smoke.log
           ! grep -q 'BEYOND_CLIENT_SHADER_SMOKE_FAIL' client-smoke.log
+          grep -q 'BEYOND_CLIENT_INTEGRATION_PASS' client-smoke.log
+          ! grep -q 'BEYOND_CLIENT_INTEGRATION_FAIL' client-smoke.log
+      - name: Summarize diagnostics and artifact hashes
+        if: always()
+        run: python3 tools/ci_report.py
       - name: Upload installable alpha (only after all checks pass)
         uses: actions/upload-artifact@v4
         with:
@@ -74,3 +89,20 @@ jobs:
             beyond-minecraft/*-smoke.log
             beyond-minecraft/run/logs/latest.log
             beyond-minecraft/run/crash-reports/
+            beyond-minecraft/run/screenshots/beyond-*.png
+            beyond-minecraft/build/verification.json
+      - name: Publish requested verified snapshot (session branch only)
+        if: success() && github.event_name == 'workflow_dispatch' && inputs.publish_snapshot && github.ref == 'refs/heads/arena/9f9c3178-dddddd'
+        shell: bash
+        run: |
+          mkdir -p docs/runtime releases
+          cp build/verification.json docs/runtime/verification.json
+          cp run/screenshots/beyond-*.png docs/runtime/
+          cp build/libs/beyond-minecraft-0.1.0-alpha.jar releases/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/runtime
+          # One small, explicitly requested installable deliverable; other build artifacts stay ignored.
+          git add -f releases/beyond-minecraft-0.1.0-alpha.jar
+          git commit -m 'Record verified Beyond alpha and real client screenshots [skip ci]'
+          git push origin HEAD:arena/9f9c3178-dddddd

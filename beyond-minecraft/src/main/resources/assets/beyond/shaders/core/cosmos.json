@@ -289,6 +289,16 @@
         0,
         0
       ]
+    },
+    {
+      "name": "WitnessDirection",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0,
+        0.48,
+        -1
+      ]
     }
   ]
 }

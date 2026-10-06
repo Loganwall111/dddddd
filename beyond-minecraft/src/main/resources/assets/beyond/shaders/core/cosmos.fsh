@@ -9,6 +9,7 @@ uniform mat4 CameraToWorld;
 uniform mat4 WorldToCamera;
 uniform vec2 Resolution;
 uniform vec3 CameraPosition;
+uniform vec3 WitnessDirection;
 uniform float Time;
 uniform float Motion;
 uniform float IntroPhase;
@@ -93,8 +94,9 @@ vec3 skyField(vec3 rd, float theme) {
 }
 
 vec3 witness(vec3 background, vec3 rd) {
-    vec3 axis = normalize(vec3(0.0,.48,-1.0));
-    vec3 right = vec3(1,0,0), up = normalize(cross(right, axis));
+    vec3 axis = normalize(WitnessDirection);
+    vec3 right = normalize(cross(axis, vec3(0,1,0)) + vec3(.00001,0,0));
+    vec3 up = normalize(cross(right, axis));
     float facing = dot(rd, axis);
     if (facing <= .12) return background;
     vec2 q = vec2(dot(rd, right), dot(rd, up)) / facing;
