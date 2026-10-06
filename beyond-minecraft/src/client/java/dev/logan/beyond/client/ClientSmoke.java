@@ -36,6 +36,7 @@ public final class ClientSmoke {
     private static long loadingStarted;
     private static int observedStage = -99;
     private static long stageStarted;
+    private static int[] occlusionReference;
     private ClientSmoke() {}
     public static void tick(MinecraftClient client) {
         if (!ENABLED || complete) return;
@@ -171,7 +172,30 @@ public final class ClientSmoke {
                 case 14 -> { if (stageTicks > 25) {
                     capture(client, "06-field-guide");
                     require(CosmicRenderer.ready() && CosmicRenderer.renderedFrames() > 30, "actual post-process frames");
-                    BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true scale=true screenshots=true", CosmicRenderer.renderedFrames());
+                    client.setScreen(null);
+                    ClientReality.skipIntroduction();
+                    server(client, p -> {
+                        p.changeGameMode(GameMode.CREATIVE); p.getAbilities().flying = true; p.sendAbilitiesUpdate();
+                        p.teleport(p.getServer().getOverworld(), .5, 120, .5, 180, 0);
+                        p.setVelocity(net.minecraft.util.math.Vec3d.ZERO);
+                        // CI fixture only: a real opaque wall between player and singularity.
+                        for (int x = -6; x <= 6; x++) for (int y = 116; y <= 129; y++)
+                            p.getServerWorld().setBlockState(new net.minecraft.util.math.BlockPos(x, y, -3), net.minecraft.block.Blocks.WHITE_CONCRETE.getDefaultState());
+                        Journey.of(p).travelCooldown = 0;
+                        require(RealityManager.spawn(p, true), "occluded singularity fixture");
+                    });
+                } }
+                case 15 -> { if (stageTicks > 50) { BeyondClient.CONFIG.enabled = false; stage++; stageTicks = 0; } }
+                case 16 -> { if (stageTicks > 15) {
+                    occlusionReference = sampleWorldPixels(client); BeyondClient.CONFIG.enabled = true; stage++; stageTicks = 0;
+                } }
+                case 17 -> { if (stageTicks > 15) {
+                    int[] actual = sampleWorldPixels(client); int difference = 0;
+                    for (int i = 0; i < actual.length; i++) for (int bit = 0; bit < 24; bit += 8)
+                        difference = Math.max(difference, Math.abs(((actual[i] >> bit) & 255) - ((occlusionReference[i] >> bit) & 255)));
+                    require(difference <= 3, "native foreground occlusion drift: " + difference);
+                    capture(client, "07-native-depth-occlusion");
+                    BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true scale=true native_depth_occlusion=true screenshots=true", CosmicRenderer.renderedFrames());
                     complete = true; client.scheduleStop();
                 } }
                 default -> { }
@@ -199,6 +223,15 @@ public final class ClientSmoke {
             image.writeTo(directory.resolve("beyond-" + name + ".png"));
             BeyondMinecraft.LOGGER.info("BEYOND_SCREENSHOT {} colors={}", name, colors.size());
         }
+    }
+    private static int[] sampleWorldPixels(MinecraftClient client) {
+        int[] samples = new int[20]; int i = 0;
+        try (var image = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {
+            // No HUD, crosshair, held item, tutorial or actionbar pixels are included.
+            for (int row = 0; row < 4; row++) for (int col = 0; col < 5; col++)
+                samples[i++] = image.getColor((int) (image.getWidth() * (.18 + col * .055)), (int) (image.getHeight() * (.22 + row * .075)));
+        }
+        return samples;
     }
     private static void require(boolean value, String message) { if (!value) throw new AssertionError(message); }
     private static void fail(MinecraftClient client, Throwable error) {

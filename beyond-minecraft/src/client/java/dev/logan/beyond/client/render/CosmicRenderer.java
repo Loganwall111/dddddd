@@ -21,7 +21,7 @@ import org.lwjgl.opengl.GL11;
 import java.util.function.BooleanSupplier;
 
 /** Owns one scratch color target. Never samples an attachment while rendering into it.
- * Runs AFTER the world/hand, BEFORE all HUD/screens, and preserves vanilla's depth buffer.
+ * Runs AFTER world rendering, BEFORE the hand clears world depth and BEFORE HUD/screens, and preserves vanilla's depth buffer.
  */
 public final class CosmicRenderer {
     private static ShaderProgram cosmos, blit;
@@ -62,6 +62,9 @@ public final class CosmicRenderer {
             projection.set(context.projectionMatrix()); inverseProjection.set(projection).invert();
             worldToCamera.set(context.positionMatrix()); cameraToWorld.set(worldToCamera).invert();
             camera = context.camera().getPos(); ClientReality.observeCamera(cameraToWorld); captured = true;
+            // Vanilla clears the WORLD depth buffer before drawing the first-person hand.
+            // Compositing at GameRenderer.renderWorld TAIL would misclassify all terrain as sky.
+            render(context.tickCounter().getTickDelta(false));
         });
     }
     public static void render(float delta) {

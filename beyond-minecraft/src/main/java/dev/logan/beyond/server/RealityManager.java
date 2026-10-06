@@ -251,6 +251,7 @@ public final class RealityManager {
         attribute.removeModifier(BeyondMinecraft.id("scale"));
         if (scale != 1) attribute.addPersistentModifier(new EntityAttributeModifier(BeyondMinecraft.id("scale"), scale - 1,
             EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        player.calculateDimensions();
         player.fallDistance = 0;
         message(player, "Your scale: " + scale + "×"); return true;
     }
