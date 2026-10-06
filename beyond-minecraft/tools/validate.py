@@ -13,6 +13,9 @@ GEN = ROOT / "src/main/generated"
 
 def validate():
     count = 0
+    metadata = json.loads((RES / "fabric.mod.json").read_text())
+    assert metadata["depends"]["minecraft"] == "1.21.1", "Do not advertise untested 1.21.x compatibility"
+    assert metadata["id"] == "beyond"
     for directory in (RES, GEN):
         for path in directory.rglob("*"):
             if path.suffix in (".json", ".mcmeta"):
