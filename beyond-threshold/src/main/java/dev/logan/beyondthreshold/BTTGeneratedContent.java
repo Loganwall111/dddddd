@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
@@ -35,7 +36,7 @@ public final class BTTGeneratedContent {
 		BLOCKS[0] = new Block[16];
 		ITEMS[0] = new BlockItem[16];
 		for (int i = 0; i < 16; i++) {
-			Block b = new Block(AbstractBlockSettingsCopy(Blocks.GRASS_BLOCK));
+			Block b = new Block(settingsFor(0));
 			BLOCKS[0][i] = b;
 			Registry.register(Registries.BLOCK, new Identifier(BeyondTheThreshold.MOD_ID, "vb_grass" + i), b);
 			BlockItem bi = new BlockItem(b, new Item.Settings());
@@ -45,7 +46,7 @@ public final class BTTGeneratedContent {
 		BLOCKS[1] = new Block[16];
 		ITEMS[1] = new BlockItem[16];
 		for (int i = 0; i < 16; i++) {
-			Block b = new Block(AbstractBlockSettingsCopy(Blocks.STONE));
+			Block b = new Block(settingsFor(1));
 			BLOCKS[1][i] = b;
 			Registry.register(Registries.BLOCK, new Identifier(BeyondTheThreshold.MOD_ID, "vb_stone" + i), b);
 			BlockItem bi = new BlockItem(b, new Item.Settings());
@@ -55,7 +56,7 @@ public final class BTTGeneratedContent {
 		BLOCKS[2] = new Block[16];
 		ITEMS[2] = new BlockItem[16];
 		for (int i = 0; i < 16; i++) {
-			Block b = new Block(AbstractBlockSettingsCopy(Blocks.OAK_LOG));
+			Block b = new Block(settingsFor(2));
 			BLOCKS[2][i] = b;
 			Registry.register(Registries.BLOCK, new Identifier(BeyondTheThreshold.MOD_ID, "vb_log" + i), b);
 			BlockItem bi = new BlockItem(b, new Item.Settings());
@@ -65,7 +66,7 @@ public final class BTTGeneratedContent {
 		BLOCKS[3] = new Block[16];
 		ITEMS[3] = new BlockItem[16];
 		for (int i = 0; i < 16; i++) {
-			Block b = new Block(AbstractBlockSettingsCopy(Blocks.OAK_LEAVES));
+			Block b = new Block(settingsFor(3));
 			BLOCKS[3][i] = b;
 			Registry.register(Registries.BLOCK, new Identifier(BeyondTheThreshold.MOD_ID, "vb_leaves" + i), b);
 			BlockItem bi = new BlockItem(b, new Item.Settings());
@@ -74,8 +75,13 @@ public final class BTTGeneratedContent {
 		}
 	}
 
-	private static net.minecraft.block.AbstractBlock.Settings AbstractBlockSettingsCopy(Block from) {
-		return net.minecraft.block.AbstractBlock.Settings.copy(from);
+	private static net.minecraft.block.AbstractBlock.Settings settingsFor(int kind) {
+		return switch (kind) {
+			case 0 -> net.minecraft.block.AbstractBlock.Settings.create().strength(0.6F).sounds(BlockSoundGroup.GRASS);
+			case 1 -> net.minecraft.block.AbstractBlock.Settings.create().strength(1.5F, 6.0F).sounds(BlockSoundGroup.STONE);
+			case 2 -> net.minecraft.block.AbstractBlock.Settings.create().strength(2.0F).sounds(BlockSoundGroup.WOOD);
+			default -> net.minecraft.block.AbstractBlock.Settings.create().strength(0.2F).nonOpaque().sounds(BlockSoundGroup.GRASS);
+		};
 	}
 
 	public static int variantCount() {
