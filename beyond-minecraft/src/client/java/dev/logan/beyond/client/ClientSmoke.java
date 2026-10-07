@@ -241,6 +241,8 @@ public final class ClientSmoke {
                         critter.setVariant(1);
                         critter.refreshPositionAndAngles(p.getX() + look.x * 5, p.getY() + look.y * 5, p.getZ() + look.z * 5, 180, 0);
                         critter.setVelocity(Vec3d.ZERO);
+                        critter.setAiDisabled(true);                 // hold still
+                        critter.setNoGravity(true);                  // do not fall out of the frame
                         require(p.getServerWorld().spawnEntity(critter), "tidal critter fixture");
                         require(Spaghettification.forEntity(critter) != null, "the well's tidal reach covers the fixture");
                     });
@@ -407,8 +409,8 @@ public final class ClientSmoke {
                 if (Spaghettification.forEntity(critter) != null) stretchable = true;
             }
         }
-        BeyondMinecraft.LOGGER.info("BEYOND_TIDAL_DIAG applied={} last_stretch={} nodes={} client_critters={} stretchable={} alive={} flying={} screen={}",
-            Spaghettification.applied, Spaghettification.lastStretch, ClientReality.nodes.size(), clientCritters, stretchable,
+        BeyondMinecraft.LOGGER.info("BEYOND_TIDAL_DIAG applied={} hooks={} last_stretch={} nodes={} client_critters={} stretchable={} alive={} flying={} screen={}",
+            Spaghettification.applied, Spaghettification.hooksFired, Spaghettification.lastStretch, ClientReality.nodes.size(), clientCritters, stretchable,
             client.player != null && client.player.isAlive(), client.player != null && client.player.getAbilities().flying,
             client.currentScreen == null ? "none" : client.currentScreen.getClass().getSimpleName());
     }

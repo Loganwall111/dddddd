@@ -18,6 +18,7 @@ import java.util.IdentityHashMap;
 public final class Spaghettification {
     /** Incremented by the render mixin. The CI client smoke asserts this actually ran. */
     public static volatile long applied;
+    public static volatile long hooksFired;
     public static volatile float lastStretch = 1f;
     private static final Vector3f UP = new Vector3f(0f, 1f, 0f);
     private static final ThreadLocal<IdentityHashMap<Entity, Integer>> ACTIVE_RENDER_DEPTH =
@@ -46,6 +47,7 @@ public final class Spaghettification {
     /** Begin a renderer-specific matrix scope; nested superclass render calls do not double-stretch. */
     public static void beginRender(Entity entity, float tickDelta, MatrixStack matrices) {
         matrices.push();
+        hooksFired++;
         var depths = ACTIVE_RENDER_DEPTH.get();
         Integer depth = depths.get(entity);
         if (depth != null) { depths.put(entity, depth + 1); return; }
