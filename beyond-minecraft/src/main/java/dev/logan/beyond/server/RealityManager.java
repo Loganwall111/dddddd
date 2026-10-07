@@ -119,7 +119,7 @@ public final class RealityManager {
         BlockState vein = Registries.BLOCK.get(BeyondMinecraft.id(
             BeyondMinecraft.CATALOG.realms().get(Math.floorMod(slot, BeyondMinecraft.CATALOG.realms().size())).blocks().get(2)))
             .getDefaultState();
-        RiftVeins.open(world, center, world.getSeed() ^ (center.x * 31.0) ^ (center.z * 17.0) ^ player.getUuid().getLeastSignificantBits(),
+        RiftVeins.open(world, center, world.getSeed() ^ (long) (center.x * 31) ^ (long) (center.z * 17) ^ player.getUuid().getLeastSignificantBits(),
             vein, kind);
         for (ServerPlayerEntity p : world.getPlayers()) sync(p, false);
         message(player, switch (kind) {
