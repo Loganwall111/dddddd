@@ -25,7 +25,10 @@ NESTED_TYPES = {"minecraft:always_true", "minecraft:blob_foliage_placer", "minec
                 "minecraft:fixed", "minecraft:matching_blocks", "minecraft:matching_fluids",
                 "minecraft:noise_provider", "minecraft:plain_flower_provider", "minecraft:simple_state_provider",
                 "minecraft:straight_trunk_placer", "minecraft:tag_match", "minecraft:two_layers_feature_size",
-                "minecraft:uniform", "minecraft:weighted_state_provider"}
+                "minecraft:uniform", "minecraft:weighted_state_provider",
+                # height providers
+                "minecraft:biased_to_bottom", "minecraft:constant", "minecraft:trapezoid",
+                "minecraft:very_biased_to_bottom", "minecraft:weighted_list"}
 
 
 def check_nested_types(path, value):

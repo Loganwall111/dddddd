@@ -61,7 +61,6 @@ class GeneratorTests(unittest.TestCase):
     def test_no_generated_function_force_loads_chunks(self):
         self.assertFalse(any(p.endswith(".mcfunction") for p in gen.generate(5, 1)))
 
-if __name__ == "__main__": unittest.main()
 
     def test_spawn_categories_are_lower_case(self):
         """1.21 serialises spawn categories by name; "CREATURE" is a registry load failure."""
@@ -96,3 +95,4 @@ if __name__ == "__main__": unittest.main()
                 continue
             validate.check_nested_types(Path(path), json.loads(data)["config"])
 
+if __name__ == "__main__": unittest.main()
