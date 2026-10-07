@@ -30,7 +30,20 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - name: Install native shader and software-GL test tools
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools xvfb xauth libgl1-mesa-dri libopenal1 libflite1 libnss3
+        shell: bash
+        run: |
+          # The runner image is the only network dependency here; a stalled mirror must not eat
+          # the job's whole time budget, so every attempt is bounded and retried.
+          for attempt in 1 2 3; do
+            if timeout 420 sudo apt-get update -qq -o Acquire::Retries=3 \
+               && timeout 420 sudo apt-get install -y -qq --no-install-recommends glslang-tools xvfb xauth libgl1-mesa-dri libopenal1 libflite1 libnss3; then
+              exit 0
+            fi
+            echo "::warning::native test tools attempt $attempt failed; retrying"
+            sleep 10
+          done
+          echo "::error::could not install glslang-tools/xvfb after three attempts"
+          exit 1
       - name: Verify generated resources and resource contracts
         run: |
           python3 tools/generate_multiverse.py --check
