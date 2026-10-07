@@ -1,0 +1,100 @@
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+audio_open_alsa: failed to open audio device default. No such file or directory
+[12:43:44] [Render thread/INFO] (Beyond Minecraft) BEYOND_CLIENT_SHADER_SMOKE_PASS native_glsl=true resource_reload=true
+[12:43:45] [Render thread/INFO] (Minecraft) Loaded 1311 recipes
+[12:43:45] [Render thread/INFO] (Minecraft) Loaded 1399 advancements
+[12:43:46] [Render thread/INFO] (Beyond Minecraft) BEYOND_CI accepting disposable-world backup prompt: Create Backup and Load
+[12:43:46] [Render thread/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 72 new biomes in 1.159 ms
+[12:43:46] [Server thread/INFO] (Minecraft) Starting integrated minecraft server version 1.21.1
+[12:43:46] [Server thread/INFO] (Minecraft) Generating keypair
+[12:43:49] [Server thread/INFO] (Minecraft) Preparing start region for dimension minecraft:overworld
+[12:43:50] [Render thread/INFO] (Minecraft) Preparing spawn area: 0%
+[12:43:50] [Render thread/INFO] (Minecraft) Preparing spawn area: 0%
+[12:43:50] [Server thread/INFO] (Minecraft) Changing view distance to 2, from 10
+[12:43:50] [Server thread/INFO] (Minecraft) Changing simulation distance to 5, from 0
+[12:43:50] [Render thread/INFO] (Minecraft) Time elapsed: 1196 ms
+[12:43:51] [Server thread/INFO] (Minecraft) Player853[local:E:e918214f] logged in with entity id 4 at (17.5, 71.0, -5.5)
+[12:43:51] [Server thread/INFO] (Minecraft) Player853 joined the game
+[12:43:51] [Render thread/INFO] (Minecraft) [System] [CHAT] Beyond Minecraft · Something has noticed you. [B] opens the Field Guide; [O] disables visual effects.
+[12:43:51] [Render thread/INFO] (Minecraft) Loaded 2 advancements
+[12:43:51] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=1
+[12:43:54] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=1 ticks=150 frames=1 screen=none
+[12:43:57] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 01-witness colors=1863
+[12:43:57] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=2
+[12:43:59] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 02-singularity colors=1673
+[12:43:59] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=3
+[12:44:01] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 03-membrane colors=1625
+[12:44:01] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=4
+[12:44:02] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-0 colors=1675
+[12:44:04] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-1 colors=1672
+[12:44:05] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-2 colors=2048
+[12:44:06] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-3 colors=720
+[12:44:08] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-4 colors=1711
+[12:44:09] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 04-lens-5 colors=1167
+[12:44:09] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=5 ticks=459 frames=207 screen=none
+[12:44:09] [Server thread/INFO] (Minecraft) Player853 has made the advancement [Diamonds!]
+[12:44:09] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=6
+[12:44:09] [Render thread/INFO] (Minecraft) [System] [CHAT] Player853 has made the advancement [Diamonds!]
+[12:44:09] [Render thread/INFO] (Minecraft) Loaded 22 advancements
+[12:44:12] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 05-generated-realm colors=1090
+[12:44:12] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=7
+[12:44:12] [Render thread/INFO] (Minecraft) Loaded 35 advancements
+[12:44:14] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=8
+[12:44:15] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=9
+[12:44:20] [Server thread/INFO] (Minecraft) Player853 was killed
+[12:44:20] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=10
+[12:44:20] [Render thread/INFO] (Minecraft) [System] [CHAT] Player853 was killed
+[12:44:24] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=12
+[12:44:24] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=12 ticks=759 frames=467 screen=none
+[12:44:25] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=13
+[12:44:27] [Server thread/INFO] (Minecraft) Saving and pausing game...
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_07
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_01
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_05
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_02
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_03
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_00
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_04
+[12:44:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_06
+[12:44:29] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 06-field-guide colors=81
+[12:44:29] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=15
+[12:44:33] [Render thread/INFO] (Beyond Minecraft) BEYOND_NATIVE_OCCLUSION max_channel_difference=0
+[12:44:33] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 07-native-depth-occlusion colors=37
+[12:44:33] [Render thread/INFO] (Beyond Minecraft) BEYOND_CLIENT_INTEGRATION_PASS frames=681 world_travel=true inventory_round_trip=true player_nbt=true death_restore=true scale=true native_depth_occlusion=true screenshots=true
+[12:44:33] [Render thread/INFO] (Minecraft) Stopping!
+[12:44:33] [Server thread/INFO] (Minecraft) Player853 lost connection: Disconnected
+[12:44:33] [Server thread/INFO] (Minecraft) Player853 left the game
+[12:44:33] [Server thread/INFO] (Minecraft) Stopping singleplayer server as player logged out
+[12:44:33] [Server thread/INFO] (Minecraft) Stopping server
+[12:44:33] [Server thread/INFO] (Minecraft) Saving players
+[12:44:33] [Server thread/INFO] (Minecraft) Saving worlds
+[12:44:33] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_07
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_01
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_05
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_02
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_03
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_00
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_04
+[12:44:34] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_06
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (beyond-ci): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_07): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_01): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_05): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_02): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_03): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_00): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_04): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_06): All chunks are saved
+[12:44:34] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1791290589186.json
+
+BUILD SUCCESSFUL in 1m 28s
+8 actionable tasks: 2 executed, 6 up-to-date

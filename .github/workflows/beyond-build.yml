@@ -1,0 +1,141 @@
+name: Beyond Minecraft — build & smoke test
+on:
+  push:
+    paths: ['beyond-minecraft/**', '.github/workflows/beyond-build.yml']
+  pull_request:
+    paths: ['beyond-minecraft/**', '.github/workflows/beyond-build.yml']
+  workflow_dispatch:
+    inputs:
+      publish_snapshot:
+        description: 'Publish the verified small JAR and actual runtime screenshots on this session branch'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: beyond-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  fabric:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: beyond-minecraft
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install native shader and software-GL test tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq glslang-tools xvfb xauth libgl1-mesa-dri libopenal1 libflite1 libnss3
+      - name: Verify generated resources and resource contracts
+        run: |
+          python3 tools/generate_multiverse.py --check
+          python3 tools/validate.py
+          python3 -m unittest discover -s tools -p 'test_*.py' -v
+          python3 tools/check_shaders.py
+      - name: Compile both environments and run JUnit tests
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          ./gradlew --no-daemon --console=plain build 2>&1 | tee build-smoke.log
+          result=${PIPESTATUS[0]}
+          # Maven Central occasionally serves incomplete/transient metadata. Retry only dependency
+          # resolution failures with a fresh metadata check; source/compiler failures remain red.
+          if [ "$result" -ne 0 ] && grep -Eq 'Could not (resolve|find)|Could not parse POM' build-smoke.log; then
+            echo '::warning::Dependency metadata resolution failed; retrying once with --refresh-dependencies.'
+            ./gradlew --no-daemon --console=plain --refresh-dependencies build 2>&1 | tee -a build-smoke.log
+            result=${PIPESTATUS[0]}
+          fi
+          exit "$result"
+      - name: Load real Minecraft registries and generate every realm
+        shell: bash
+        run: |
+          mkdir -p run
+          # Isolated automated test server only. No production server or public port.
+          echo 'eula=true' > run/eula.txt
+          printf 'online-mode=false\nserver-ip=127.0.0.1\nlevel-seed=84921603\nview-distance=2\nsimulation-distance=2\nmax-tick-time=120000\n' > run/server.properties
+          set +e
+          BEYOND_SMOKE=1 timeout 480 ./gradlew --no-daemon --console=plain runServer --args=nogui 2>&1 | tee server-smoke.log
+          result=${PIPESTATUS[0]}
+          set -e
+          test "$result" = 0
+          grep -q 'BEYOND_SERVER_SMOKE_PASS' server-smoke.log
+          ! grep -q 'BEYOND_SERVER_SMOKE_FAIL' server-smoke.log
+      - name: Compile shaders in the actual Minecraft client (Mesa / Xvfb)
+        shell: bash
+        run: |
+          mkdir -p run/saves
+          cp -a run/world run/saves/beyond-ci
+          set +e
+          BEYOND_CLIENT_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 ALSOFT_DRIVERS=null timeout 480 xvfb-run -a -s '-screen 0 1280x720x24' ./gradlew --no-daemon --console=plain runClient --args="--width 960 --height 540" 2>&1 | tee client-smoke.log
+          result=${PIPESTATUS[0]}
+          set -e
+          test "$result" = 0
+          grep -q 'BEYOND_CLIENT_SHADER_SMOKE_PASS' client-smoke.log
+          ! grep -q 'BEYOND_CLIENT_SHADER_SMOKE_FAIL' client-smoke.log
+          grep -q 'BEYOND_CLIENT_INTEGRATION_PASS' client-smoke.log
+          ! grep -q 'BEYOND_CLIENT_INTEGRATION_FAIL' client-smoke.log
+      - name: Summarize diagnostics and artifact hashes
+        if: always()
+        run: python3 tools/ci_report.py
+      - name: Upload installable alpha (only after all checks pass)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beyond-Minecraft-1.21.1-alpha
+          path: |
+            beyond-minecraft/build/libs/*.jar
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beyond-verification
+          path: |
+            beyond-minecraft/build/reports/tests/
+            beyond-minecraft/*-smoke.log
+            beyond-minecraft/run/logs/latest.log
+            beyond-minecraft/run/crash-reports/
+            beyond-minecraft/run/screenshots/beyond-*.png
+            beyond-minecraft/build/verification.json
+  publish-session-snapshot:
+    needs: fabric
+    if: always() && startsWith(github.ref, 'refs/heads/arena/') && github.event_name == 'workflow_dispatch' && inputs.publish_snapshot
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/download-artifact@v4
+        if: needs.fabric.result == 'success'
+        with:
+          name: Beyond-Minecraft-1.21.1-alpha
+          path: beyond-minecraft/.ci-binary
+      - uses: actions/download-artifact@v4
+        with:
+          name: Beyond-verification
+          path: beyond-minecraft/.ci-evidence
+      - name: Publish small verified deliverable and actual runtime evidence
+        working-directory: beyond-minecraft
+        shell: bash
+        run: |
+          # Refuse to attach an old binary to newly edited sources. Never force-push.
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p docs/runtime releases
+          cp .ci-evidence/build/verification.json docs/runtime/verification.json
+          find .ci-evidence/run/screenshots -name 'beyond-*.png' -exec cp {} docs/runtime/ \; 2>/dev/null || true
+          # A failed run publishes diagnostics, never an unverified replacement JAR.
+          if test -f .ci-evidence/client-smoke.log; then tail -100 .ci-evidence/client-smoke.log | cut -c1-700 > docs/runtime/latest-client-log.txt; fi
+          if test -f .ci-binary/beyond-minecraft-0.1.0-alpha.jar; then cp .ci-binary/beyond-minecraft-0.1.0-alpha.jar releases/; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/runtime
+          # One small requested installable deliverable. Other build output remains ignored.
+          if test -f .ci-binary/beyond-minecraft-0.1.0-alpha.jar; then git add -f releases/beyond-minecraft-0.1.0-alpha.jar; fi
+          git commit -m 'Record Beyond runtime evidence and any verified deliverable [skip ci]'
+          git push origin HEAD:"$GITHUB_REF_NAME"

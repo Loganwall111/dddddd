@@ -1,0 +1,234 @@
+{
+  "schema": 2,
+  "seed": 84921603,
+  "realms": [
+    {
+      "id": "realm_00",
+      "name": "Lucent Canopy",
+      "theme": 0,
+      "color": 7916705,
+      "seed": 2460582,
+      "blocks": [
+        "realm_00_stratum",
+        "realm_00_surface",
+        "realm_00_crystal",
+        "realm_00_flora",
+        "realm_00_core"
+      ],
+      "terrain": "canopy",
+      "ambient": 0.24,
+      "time": 6000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_01",
+      "name": "The Violet Fold",
+      "theme": 1,
+      "color": 11502591,
+      "seed": 7312355,
+      "blocks": [
+        "realm_01_stratum",
+        "realm_01_surface",
+        "realm_01_crystal",
+        "realm_01_flora",
+        "realm_01_core"
+      ],
+      "terrain": "spire",
+      "ambient": 0.22,
+      "time": 15000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_02",
+      "name": "Cinder Cathedral",
+      "theme": 2,
+      "color": 14382930,
+      "seed": 844536,
+      "blocks": [
+        "realm_02_stratum",
+        "realm_02_surface",
+        "realm_02_crystal",
+        "realm_02_flora",
+        "realm_02_core"
+      ],
+      "terrain": "canyon",
+      "ambient": 0.28,
+      "time": 18000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_03",
+      "name": "Boreal Memory",
+      "theme": 3,
+      "color": 10082541,
+      "seed": 1665438,
+      "blocks": [
+        "realm_03_stratum",
+        "realm_03_surface",
+        "realm_03_crystal",
+        "realm_03_flora",
+        "realm_03_core"
+      ],
+      "terrain": "plateau",
+      "ambient": 0.3,
+      "time": 6000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_04",
+      "name": "Rose Continuum",
+      "theme": 4,
+      "color": 15899610,
+      "seed": 4046572,
+      "blocks": [
+        "realm_04_stratum",
+        "realm_04_surface",
+        "realm_04_crystal",
+        "realm_04_flora",
+        "realm_04_core"
+      ],
+      "terrain": "bloom",
+      "ambient": 0.26,
+      "time": 12000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_05",
+      "name": "Pelagic Dream",
+      "theme": 5,
+      "color": 5092823,
+      "seed": 4412120,
+      "blocks": [
+        "realm_05_stratum",
+        "realm_05_surface",
+        "realm_05_crystal",
+        "realm_05_flora",
+        "realm_05_core"
+      ],
+      "terrain": "ocean",
+      "ambient": 0.2,
+      "time": 6000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_06",
+      "name": "Obsidian Hymn",
+      "theme": 6,
+      "color": 11591635,
+      "seed": 2964426,
+      "blocks": [
+        "realm_06_stratum",
+        "realm_06_surface",
+        "realm_06_crystal",
+        "realm_06_flora",
+        "realm_06_core"
+      ],
+      "terrain": "cavern",
+      "ambient": 0.14,
+      "time": 18000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_07",
+      "name": "The Ochre Archive",
+      "theme": 7,
+      "color": 13942935,
+      "seed": 5083805,
+      "blocks": [
+        "realm_07_stratum",
+        "realm_07_surface",
+        "realm_07_crystal",
+        "realm_07_flora",
+        "realm_07_core"
+      ],
+      "terrain": "dune",
+      "ambient": 0.3,
+      "time": 9000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    },
+    {
+      "id": "realm_08",
+      "name": "The Vesper Between",
+      "theme": 8,
+      "color": 13162212,
+      "seed": 7223067,
+      "blocks": [
+        "realm_08_stratum",
+        "realm_08_surface",
+        "realm_08_crystal",
+        "realm_08_flora",
+        "realm_08_core"
+      ],
+      "terrain": "between",
+      "ambient": 0.42,
+      "time": 6000,
+      "materials": 5,
+      "generator": "beyond:between"
+    },
+    {
+      "id": "realm_09",
+      "name": "The Endless Labyrinth",
+      "theme": 9,
+      "color": 15922423,
+      "seed": 4226857,
+      "blocks": [
+        "realm_09_stratum",
+        "realm_09_surface",
+        "realm_09_crystal",
+        "realm_09_flora",
+        "realm_09_core"
+      ],
+      "terrain": "labyrinth",
+      "ambient": 0.52,
+      "time": 6000,
+      "materials": 5,
+      "generator": "beyond:labyrinth"
+    },
+    {
+      "id": "realm_10",
+      "name": "The Fractal Hollow",
+      "theme": 10,
+      "color": 15265269,
+      "seed": 2760793,
+      "blocks": [
+        "realm_10_stratum",
+        "realm_10_surface",
+        "realm_10_crystal",
+        "realm_10_flora",
+        "realm_10_core"
+      ],
+      "terrain": "fractal",
+      "ambient": 0.4,
+      "time": 6000,
+      "materials": 5,
+      "generator": "beyond:fractal"
+    },
+    {
+      "id": "realm_11",
+      "name": "The Temporal Reach",
+      "theme": 11,
+      "color": 14731418,
+      "seed": 4340793,
+      "blocks": [
+        "realm_11_stratum",
+        "realm_11_surface",
+        "realm_11_crystal",
+        "realm_11_flora",
+        "realm_11_core"
+      ],
+      "terrain": "temporal",
+      "ambient": 0.26,
+      "time": 23000,
+      "materials": 5,
+      "generator": "minecraft:noise"
+    }
+  ]
+}

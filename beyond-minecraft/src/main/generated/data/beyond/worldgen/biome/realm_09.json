@@ -1,0 +1,56 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.6,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 724242,
+    "fog_color": 15922423,
+    "water_color": 2787740,
+    "water_fog_color": 1259333,
+    "grass_color": 15922423,
+    "foliage_color": 15922423,
+    "mood_sound": {
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000,
+      "offset": 2.0,
+      "block_search_extent": 8
+    }
+  },
+  "spawners": {
+    "CREATURE": [
+      {
+        "type": "beyond:realm_critter",
+        "weight": 8,
+        "minCount": 1,
+        "maxCount": 3
+      },
+      {
+        "type": "minecraft:endermite",
+        "weight": 2,
+        "minCount": 1,
+        "maxCount": 3
+      }
+    ]
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "beyond:realm_09_pillars"
+    ],
+    [
+      "beyond:realm_09_scatter"
+    ],
+    [
+      "beyond:realm_09_veins"
+    ],
+    [],
+    [],
+    [],
+    []
+  ]
+}

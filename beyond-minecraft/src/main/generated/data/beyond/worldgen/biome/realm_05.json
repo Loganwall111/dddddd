@@ -1,0 +1,58 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.6,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 531504,
+    "fog_color": 5092823,
+    "water_color": 2787740,
+    "water_fog_color": 1259333,
+    "grass_color": 5092823,
+    "foliage_color": 5092823,
+    "mood_sound": {
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000,
+      "offset": 2.0,
+      "block_search_extent": 8
+    }
+  },
+  "spawners": {
+    "CREATURE": [
+      {
+        "type": "beyond:realm_critter",
+        "weight": 8,
+        "minCount": 1,
+        "maxCount": 3
+      }
+    ],
+    "WATER_CREATURE": [
+      {
+        "type": "minecraft:glow_squid",
+        "weight": 6,
+        "minCount": 1,
+        "maxCount": 3
+      }
+    ]
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "beyond:realm_05_pillars"
+    ],
+    [
+      "beyond:realm_05_blob"
+    ],
+    [
+      "beyond:realm_05_fluid"
+    ],
+    [],
+    [],
+    [],
+    []
+  ]
+}

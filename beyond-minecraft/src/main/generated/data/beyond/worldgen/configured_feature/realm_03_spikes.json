@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:block_column",
+  "config": {
+    "layers": [
+      {
+        "height": {
+          "type": "minecraft:uniform",
+          "min_inclusive": 3,
+          "max_inclusive": 11
+        },
+        "provider": {
+          "type": "minecraft:simple_state_provider",
+          "state": {
+            "Name": "beyond:realm_03_crystal"
+          }
+        }
+      }
+    ],
+    "direction": "up",
+    "allowed_placement": {
+      "type": "minecraft:matching_blocks",
+      "blocks": [
+        "beyond:realm_03_surface",
+        "beyond:realm_03_stratum"
+      ]
+    },
+    "prioritize_tip": false
+  }
+}

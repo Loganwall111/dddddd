@@ -1,0 +1,12 @@
+{
+  "type": "beyond:void",
+  "generator": {
+    "type": "beyond:labyrinth_generator",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "beyond:realm_09"
+    },
+    "material": "beyond:realm_09_stratum",
+    "accent": "beyond:realm_09_surface"
+  }
+}

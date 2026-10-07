@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "beyond:realm_01_crystal"
+    }
+  ],
+  "result": {
+    "id": "beyond:realm_01_echo",
+    "count": 4
+  }
+}
