@@ -68,6 +68,11 @@ public class FractalGenerator extends ChunkGenerator {
                     // The starting pillar and its staircase make the hollow walkable from spawn.
                     if (!solid && Math.abs(x) <= 6 && Math.abs(z) <= 6 && y >= 40 && y <= 72) solid = true;
                     if (!solid && BeyondWorldgen.spiral(x, z, y, 9, 17, .55, 1.1)) solid = true;
+                    // A bore through the mass above the pillar: arrivals are placed in open space, and
+                    // the shaft is the way back up out of the sponge.
+                    if (solid && Math.abs(x) <= 2 && Math.abs(z) <= 2 && y > 72 && y <= 208) solid = false;
+                    // The room at the foot of the bore, standing on the pillar's top face.
+                    if (solid && Math.abs(x) <= 6 && Math.abs(z) <= 6 && y > 72 && y <= 82) solid = false;
                     if (!solid) continue;
                     boolean edge = BeyondWorldgen.menger(x + 1, y, z, cell, levels) != BeyondWorldgen.menger(x, y + 1, z, cell, levels);
                     cursor.set(x, y, z);
