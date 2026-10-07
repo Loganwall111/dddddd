@@ -72,6 +72,9 @@ public final class ClientSmoke {
                 client.options.getSimulationDistance().setValue(5);
                 client.options.getMaxFps().setValue(30);
                 client.options.pauseOnLostFocus = false;
+                // Software-GL CI: the cheapest ray budget still exercises the whole pipeline.
+                BeyondClient.CONFIG.quality = 0;
+                BeyondClient.CONFIG.intensity = Math.min(BeyondClient.CONFIG.intensity, .8f);
                 client.options.tutorialStep = net.minecraft.client.tutorial.TutorialStep.NONE;
                 stage = -1; loadingStarted = System.currentTimeMillis();
                 client.createIntegratedServerLoader().start("beyond-ci", () -> fail(client, new IllegalStateException("CI world load cancelled")));
@@ -247,7 +250,7 @@ public final class ClientSmoke {
                         require(RealityManager.enter(p, hub), "travel into the Between");
                     });
                 } }
-                case 20 -> { if (stageTicks > 70 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_08")) {
+                case 20 -> { if (stageTicks > 50 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_08")) {
                     capture(client, "11-between");
                     server(client, p -> {
                         int fractal = BeyondMinecraft.CATALOG.indexOf("realm_10");
@@ -255,7 +258,7 @@ public final class ClientSmoke {
                         require(RealityManager.enter(p, fractal), "travel into the fractal hollow");
                     });
                 } }
-                case 21 -> { if (stageTicks > 70 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_10")) {
+                case 21 -> { if (stageTicks > 50 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_10")) {
                     capture(client, "12-fractal");
                     server(client, p -> {
                         int labyrinth = BeyondMinecraft.CATALOG.indexOf("realm_09");
@@ -263,7 +266,7 @@ public final class ClientSmoke {
                         require(RealityManager.enter(p, labyrinth), "travel into the labyrinth");
                     });
                 } }
-                case 22 -> { if (stageTicks > 70 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_09")) {
+                case 22 -> { if (stageTicks > 50 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_09")) {
                     capture(client, "13-labyrinth");
                     server(client, p -> {
                         RealityManager.clear(p);

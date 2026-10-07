@@ -2,104 +2,122 @@
 
 ## 1. Authoring boundary
 
-`tools/generate_multiverse.py` -> `src/main/generated` -> `RealmCatalog` -> static
-registries. Default catalog: 8 realms / 24 blocks / 8 echoes. Textures, loot, recipes,
-biomes, custom 3D density fields and animated crystal columns share that catalog.
-No Python interpreter, external process, arbitrary script execution or registry mutation
-runs on a player's computer. The generator's output is deterministic and bounded.
+`tools/generate_multiverse.py` → `src/main/generated` → `RealmCatalog` → static registries.
+Default catalog: **12 realms / 60 blocks / 78 items**, 530 generated resources. Textures, block and
+item models, blockstates, loot tables, recipes, biomes, noise settings, placed features, spawners
+and animated crystal metadata all come from that one catalog. No Python interpreter, external
+process or registry mutation runs on a player's computer; the generator is deterministic, bounded
+(≤ 32 realms) and byte-checked by `--check` and by `validate.py`.
+
+Runtime generation is a different thing and is unbounded: the three custom chunk generators are
+closed-form functions of the coordinates, so a realm has no finite edge and no per-block storage
+growth.
 
 ## 2. Server boundary
 
-`RealityManager` owns transient anomalies. Item use creates an anomaly after server
-validation. Clients receive at most four nearby immutable snapshots; no C2S spawn API
-exists. Ticking has caps for lifetime, influence radius, velocity and processed entities.
-Gravity never writes terrain. In normal gameplay, arrival plinths are the only runtime
-block-writing path and require an entirely clear bounded volume in a Beyond dimension.
-The opt-in client CI harness additionally constructs a wall in its disposable fixture world;
-that test-only path is never enabled in normal installations.
+`RealityManager` owns transient anomalies. Item use, commands or a horizon crossing create an
+anomaly only after server validation (world border, chunk loaded, clear volume, per-world and
+per-player budgets, travel cooldown). Clients receive at most **six** immutable snapshots, encoded
+and validated on both sides (`RealityPayload.Node` rejects non-finite coordinates, radii outside
+0.25–512, unknown kinds, ages beyond lifetime). No C2S spawn API exists.
 
-A membrane is a swept segment/plane intersection with a rounded-rectangle boundary.
-The GLSL uses the same fourth-power silhouette. Both directions are supported. A cool-
-down, rider rejection and resetting previous positions prevent repeated crossing loops.
+Subsystems, each with its own file and its own budget:
 
-The gravity integrator is softened Newtonian-like gameplay acceleration with a tapered
-finite radius. It is intentionally distinct from the client light-ray integrator.
+| System | Responsibility | Hard limits |
+|---|---|---|
+| `SkyWells` | one persistent **prime** well per root world (and per realm if enabled), anchored to spawn at build-limit height, fed by particles | 1 well per world, radius ≤ `maxNodeRadius` |
+| `Suction` | softened inverse-square pull on living entities, items and falling blocks; horizon consumption; tornado of real blocks | ≤128 entities/well/tick, ≤4000 torn blocks, ≤24 blocks/tick, no block entities/fluids/bedrock/barriers |
+| `Tunnels` | durable-seat wormhole corridor: a bounded run of barrier blocks in the sky, torn down on completion, disconnect and shutdown | fixed 46-block run, barriers only, never overwrites terrain |
+| `Umbrella` | branch rewrite around a return point, deterministic from the era seed | 18 columns/tick, radius ≤40, refuses bedrock/barriers/fluids/block entities |
+| `SafeLanding` | bounded arrival search | 9 candidate columns + optional plinth in a Beyond space only |
+
+A membrane is a swept segment/plane intersection with a rounded-rectangle boundary; the GLSL uses
+the same fourth-power silhouette. Both directions are supported, and a cooldown plus resetting
+forward samples prevent repeated crossing loops. The gravity integrator is softened Newtonian-like
+gameplay acceleration with a tapered finite radius and an explicit velocity cap — deliberately
+distinct from the client's light-ray integrator.
+
+Consumption is a *deliberate* gameplay destruction budget: eaten entities are discarded, torn blocks
+become real `FallingBlockEntity` instances and are then eaten too. Nothing deletes terrain silently;
+every write path is bounded and refuses protected block classes.
 
 ## 3. Player persistence boundary
 
-`ServerPlayerJourneyMixin` appends one `BeyondJourney` compound to vanilla playerdata.
-The journey contains the first external origin, intro state, realm cursor and a
-`InventoryLedger<NbtCompound>`. `InventoryLedger` is copy-on-boundary and has no Minecraft
-imports: its isolation, serialization failure, death and capacity semantics have unit tests.
-
-The live vanilla inventory remains authoritative in the active scope. A boundary first
-copies the outgoing live snapshot, then selects a deep copy of the existing destination
-snapshot (or clones live on its first visit). The scope changes only after copying succeeds.
-Live inventory + journal are serialized in the same player save; no second file can drift.
-
-World-change and respawn callbacks cover normal mod travel and external dimension changes.
-External cross-dimension chest/cursor behavior and multiplayer remain manual test obligations.
-This is intentional inventory cloning, NOT protection against economic duplication.
+`ServerPlayerJourneyMixin` appends one `BeyondJourney` compound to vanilla playerdata: first external
+origin, intro state, realm cursor, **era and era seed**, and an `InventoryLedger<NbtCompound>`.
+`InventoryLedger` is copy-on-boundary and has no Minecraft imports, so its isolation and failure
+semantics are unit-tested. Live inventory stays authoritative in the active scope; a boundary copies
+the outgoing live snapshot, then selects a deep copy of the destination snapshot (or clones live on
+first visit). Scope changes only after copying succeeds. World-change and respawn callbacks cover
+mod travel and external dimension changes.
 
 ## 4. Client rendering boundary
 
-Fabric's `CoreShaderRegistrationCallback` registers two GLSL 150 programs. The vanilla
-resource loader owns shader-program lifetimes. `WorldRenderEvents.LAST` captures the
-current projection and view matrices and runs the composite immediately, before the hand
-and HUD. **The ordering matters:** vanilla clears world depth before rendering the hand.
-A `GameRenderer.renderWorld` tail hook would therefore misclassify terrain as sky. No client
-mixin is needed. A single owned scratch color framebuffer avoids read/write feedback.
-World depth is read, never replaced or written by Beyond. The later vanilla hand/GUI passes
-remain unprocessed.
+Fabric's `CoreShaderRegistrationCallback` registers two GLSL 150 programs; the vanilla resource
+loader owns shader-program lifetimes. `WorldRenderEvents.LAST` captures projection and view matrices
+and composites immediately — after world rendering, before the hand clears world depth, and before
+HUD/screens. A single owned scratch color framebuffer avoids read/write feedback: the scene is copied
+into it, the cosmos pass reads the scene color and vanilla depth, and a blit pass writes back. World
+depth is read, never replaced or written.
 
-The shader reconstructs rays using inverse projection and inverse view, so anomalies are
-world anchored, not fixed screen stickers. Original depth masks foreground occlusion.
-Nearby singularities use a conservative photon-sphere envelope to reject foreground
-geometry even when the camera is inside the large ray-integration domain. A native client
-fixture compares twenty opaque-wall pixels with the compositor on/off (measured error: zero).
-Shader failure disables visuals; the original color attachment is untouched until a complete
-scratch pass exists. FBO resources are released on disconnect/shutdown and resized as needed.
+Uniforms: inverse projection/projection, camera-to-world/world-to-camera, resolution, camera
+position, Witness direction and anchor, time, motion, intro phase, effect strength, ray steps, lens
+mode, transition, realm theme, cosmic presence, nebula proximity, era, tunnel state and phase, and
+six `Node`/`Style` pairs. `Style.x` is `kind + 1`; `Style.yzw` carry yaw, realm seed and realm theme,
+so the same program renders every anomaly kind, every realm vista and every era treatment without
+recompiling.
 
-A supported Iris API reports active packs; the compositor suspends itself when their depth
-conventions may differ. No untested promise of universal shader-pack interoperability is made.
+Anomaly envelopes are computed on the client from snapshot age and lifetime (persistent wells ramp
+in and never fade), and `Spaghettification` derives its stretch from the same snapshots, so the lens
+and the tidal stretch always agree without extra packets.
 
 ## 5. Light-ray approximation
 
-In Schwarzschild-radius units, the shader integrates
+In Schwarzschild-radius units the shader integrates
 
 ```
 p'' = -1.5 * |p × v|² * p / |p|⁵
 ```
 
-using adaptive velocity-Verlet steps. In the orbital plane this corresponds to the null
-orbit equation `u'' + u = 1.5 u²`. Rays are captured inside the horizon; a finite-thickness
-emissive disk is sampled along the path. The display adds stylized spectral grading,
-Doppler-inspired beaming and photon-ring emphasis. Sampled scene colors are screen-space,
-so hidden/off-screen geometry cannot be reconstructed. This is not Kerr ray tracing,
-full radiative transfer, physically calibrated astronomy or physically realistic gameplay.
-The step budget and domain truncate near-critical orbits; no infinite ray loop is possible.
+with adaptive velocity-Verlet steps. Rays are captured inside the horizon; near-miss rays bend real
+sampled scene geometry, which is why the sky well distorts terrain, water and cloud rather than
+painting an image. A finite-thickness emissive disk is sampled along the path, with spectral
+grading, beam emphasis and an Einstein ring. Non-lensing kinds (membranes and tears) instead show a
+seeded, parallaxed procedural vista of the realm behind the opening. Sampled scene colors are
+screen-space, so hidden geometry cannot be reconstructed; this is not Kerr ray tracing, not full
+radiative transfer, and the step budget truncates near-critical orbits by design.
 
-## 6. Portals and Mandela lenses
+## 6. Client presentation layers
 
-Membrane interiors raymarch an original, finite-budget procedural vista (floating strata,
-crystals, vegetation forms and waterfall ribbons). It is seeded and styled by the real
-realm catalog, but is not the actual destination chunk mesh. The real world loads on
-crossing. Supporting multiple live worlds, recursion, entity clipping, network ownership
-and portal collision would be a separate renderer/engine integration project.
-
-Glasses select six fixed procedural shader families. Their spatial variations are seeded/
-noise driven; they do not generate or compile arbitrary new GLSL programs during gameplay.
-Menus expose only implemented controls. Reduced motion freezes animation; O disables all
-Beyond post-processing. These controls do not disable server-authoritative interactions.
+- **Witness:** person-shaped figure (head, shoulders, torso, reaching arm, opening eye) anchored to
+  the sky well's world position, drawn behind the scene through the real depth buffer, animated by
+  time and by the camera's proximity to the well.
+- **Reality treatments (12):** whole-screen re-authoring for the visor, keyed by `LensMode`, from
+  photoreal-ish city blocks and traffic streaks to Backrooms, Poolrooms, cel shading, an eighties CRT
+  broadcast and psychedelic folding. `Wave0…5` remain reserved for future per-node ripple shaping
+  and are declared but driven at zero today.
+- **Rift:** layered tear rendering — jagged silhouette, glass bubbles, lightning discharge and a rag
+  of dragged geometry — with a birth envelope so the tear opens rather than popping into place.
+- **Tunnel:** time-wave overlay driven by the corridor's real progress plus phase.
+- **Era:** per-era grade (giant wood, neon city, primeval, alien, veined, bleached, ashen).
+- **Spaghettification:** `EntityRendererStretchMixin` pushes a matrix at the head of every entity
+  render, rescales along the pull axis expressed in the entity's own rotated frame (unambiguous for
+  vertical pulls since yaw does not change Y), applies a volume-preserving thin-out, and pops at
+  return. It is a render transform only; collision, health and inventory are untouched.
+- **Seamless travel:** loading screens are dismissed by class-name match (never by compile-time
+  reference) while a transition is in flight or while the player stands in a Beyond space. Gameplay
+  is unchanged: the server still sends the world, the client still loads it.
+- **Ambience:** vanilla sounds retuned far below normal pitch assembled into a hum-dominant
+  soundscape for generated spaces, plus a proximity rumble near colossal wells.
 
 ## 7. Evidence boundaries
 
-The real-client harness uses a copied, disposable world. It tests actual player objects,
-dimension packets, vanilla death and respawn, NBT injections, scale resets and framebuffer
-compositing. See `docs/runtime/verification.json` and `latest-client-log.txt` for the exact
-source commit, build run and evidence hashes. `beyond-*.png` files are unedited Minecraft
-screenshots, not web mockups. The optional offscreen GPU test is separately labeled: it
-adapts only the GLSL version/precision preamble for a synthetic WebGL 2 fixture.
+The real-client harness uses a copied, disposable world and asserts against live objects: scale
+extremes, the sky well reaching the client as a persistent node, measured lens difference, applied
+entity stretch, tear → hub → fractal → maze travel, corridor arming and teardown without leftover
+barriers, Umbrella rewrites of real columns, and zero-drift native foreground occlusion. Screenshots
+in `docs/runtime/` are unedited Minecraft captures, not mockups.
 
-This still does not establish multiplayer safety, a long-running persistence guarantee,
-third-party renderer compatibility or a performance budget on customers' GPUs.
+What this still does not establish: multiplayer behaviour, long-running persistence guarantees,
+third-party renderer compatibility, a performance budget on real GPUs, recursive live portal
+rendering, or photoreal asset fidelity.

@@ -2,203 +2,247 @@
 
 ### The world is not empty. Something is looking back.
 
-**Minecraft Java 1.21.1 · Fabric · Java 21 · 0.1.0-alpha**
+**Minecraft Java 1.21.1 · Fabric · Java 21 · 0.2.0-alpha**
 
-A standalone, shader-driven first playable slice inspired by the supplied cosmic-eye,
-fractured-world and black-hole references. It does not replace Enter the Sift or the
-Lumital browser app elsewhere in this repository.
+A standalone, shader-driven playable slice: a colossal **reachable** singularity above the
+Overworld, a person-shaped Presence standing in the sky, twelve procedural realms with their own
+materials, tidal spaghettification, tornado gravity, time tunnels, a Tear into a bubble universe,
+an endless white maze, a Menger-sponge fractal world, twelve reality-switching visors and the
+Umbrella Effect. It does not replace Enter the Sift or the Lumital browser app elsewhere in this
+repository.
 
-**Built and smoke-tested in real Minecraft 1.21.1.** Download the
-[installable alpha JAR](releases/beyond-minecraft-0.1.0-alpha.jar), then follow
-[INSTALL.md](INSTALL.md). See [the verification record](docs/BUILD_STATUS.md) for the
-exact tested source, checksums and remaining limits. Use a disposable, backed-up world.
-Both the client and server need this mod and Fabric API; this is not production-certified.
+**Build and smoke-test status lives in [docs/BUILD_STATUS.md](docs/BUILD_STATUS.md).** Download the
+installable alpha from [releases/](releases/) (the checked-in JAR is the last full green snapshot),
+then follow [INSTALL.md](INSTALL.md). Both client and server need this mod and Fabric API. This is a
+bounded alpha, not production-certified: use a disposable, backed-up world.
 
-[Actual in-game membrane screenshot](docs/runtime/beyond-03-membrane.png) ·
-[Generated realm](docs/runtime/beyond-05-generated-realm.png) ·
-[Field guide/settings](docs/runtime/beyond-06-field-guide.png)
+![Generated realm](docs/runtime/beyond-05-generated-realm.png)
 
-## The first slice
+## What this build actually does
 
-- **The Witness:** an enormous procedural human-like eye, a celestial arm silhouette,
-  spectral veins, stars, and a code-dissolve introduction behind the Overworld's actual
-  terrain. The sky singularity is decorative; it does not secretly exert server gravity.
-  Your player is not forcibly moved, grabbed or killed by the introduction.
-- **Shattered Relic:** opens a local singularity with a ray-integrated accretion disk,
-  depth-aware lensing, capped server-side attraction and real dimension travel through
-  its horizon. No terrain destruction, forced PvP, damage blasts or permanent chunk tickets.
-- **Reality Knife:** opens a finite, double-sided, violet-rimmed membrane. The fragment
-  shader renders an original destination-inspired floating-island vista. Walking across
-  the plane performs a real, safety-checked Minecraft dimension change. **The vista is
-  not a live rendering of destination chunks; crossing is not a seamless recursive portal.**
-- **Radiate Reality Glasses:** actual wearable head equipment, original armor/item textures,
-  and six Mandela lenses: Lucid, Aurora, Prismatic, Negative Space, Living Membrane and
-  Echo Memory. Press **V** to cycle. These change perception, not terrain collisions.
-- **Scale Prism:** cycles **1/8× → 1/2× → 1× → 3×**, using Minecraft's scale attribute and
-  a namespaced modifier. Growing is rejected if the new body intersects solid terrain.
-- **The Field Guide:** a real in-game book and visual settings screen. Quality, intensity,
-  motion, introduction and sky controls affect the real renderer. **O** is the visual
-  emergency toggle; gameplay and return commands remain active when effects are off.
-- **Seeded multiverse compiler:** one standard-library Python authoring script generates
-  eight registered realms, eight biomes, 24 blocks, eight echo items, noise settings,
-  animated textures, recipes, loot tables, feature placements and a shared catalog.
-- **Realm inventory vault:** first entry into a realm copies the current inventory once;
-  subsequent visits restore that realm's independent snapshot. Root reality retains its
-  own inventory. Vault and origin data live inside the same playerdata NBT as vanilla's
-  live inventory, rather than in a separate, crash-inconsistent save file.
+### The sky well is real, and you can fly to it
 
-There are **37 registered items in total**, counting block items and the five tools.
+- A persistent **prime singularity** floats **232 blocks above spawn**, roughly 760 blocks out:
+  inside the build limit, so it is a place you can reach, not a backdrop.
+- Its lens genuinely **warps the rendered scene** — terrain, water, cloud and other anomalies bend
+  around the photon sphere, because the post-processor integrates a Schwarzschild-style null orbit
+  per pixel against the real depth buffer. It is not a picture in the sky.
+- Fly in: cloud and rod particles thicken into a **nebula shell** you can pass through. Walk in, and
+  the horizon takes you to the bubble hub; look back the other way and the Overworld is visibly
+  bent behind you.
+- It **grows** by feeding: every mob, item or torn block it swallows increases its radius, up to the
+  configured cap.
+
+### Spaghettification, tornado gravity, and things with mass
+
+- Gravity pulls **every** living entity, item and falling block — not just the player. Anything that
+  reaches the horizon is consumed and the well swells.
+- Entities inside a tidal reach are drawn **stretched along the pull axis** and thinned out, in the
+  entity's own local frame (client-side render transform; server physics and collisions are
+  untouched). Mobs, animals and items all become noodles.
+- A feeding well runs a **tornado**: bounded numbers of real blocks and whole tree columns are
+  detached as falling blocks, spiral, and are eaten. Never bedrock, barriers, command blocks,
+  containers or fluids; the whole thing is budgeted per tick and per well.
+- Six anomaly kinds exist: membrane, singularity, **tear**, **wormhole**, **quasar** (which pushes
+  instead of pulling) and the world-owned **prime** well. Each is a different shader treatment and a
+  different gameplay object.
+
+### The Tear, the bubble cluster and the abyss
+
+- **Tear the fabric** with the Reality Tear item (`R` key or item): a colossal detonation, a
+  pressure-wave sound, a particle shockwave, and then the rift opens in the sky with its own
+  animation — layered lightning, glass bubbles, a torn silhouette and a rag of reality caught in it.
+- Step through: **no loading screen**. Vanilla's terrain/level/loading overlays are dismissed while
+  Beyond is moving you or while you stand in a Beyond space, and the post-processor's warp covers
+  the swap. You simply keep walking.
+- Beyond the tear is the **bubble hub**: a cracked white-and-black puzzle plate floating in a void,
+  ringed by glass shells containing lit pocket worlds you can fly into and out of, with a genuine
+  **black abyss at the centre**.
+- Fall into the abyss and the world turns into **the endless white maze**: pure white brick, black
+  seam lines, layered floors and walls as far as the world height allows, with gaps that drop you
+  into the layer below. Dig down, and it keeps going.
+- The **fractal hollow** is a Menger-sponge world threaded with a helical staircase: recursive
+  chambers, tunnels that feed into more tunnels, and the same structure repeating deeper and deeper.
+
+### Twelve realms, not twelve colours
+
+- **12 realms**: Lucent Canopy, Violet Fold, Cinder Cathedral, Boreal Memory, Rose Continuum,
+  Pelagic Dream, Obsidian Hymn, Ochre Archive, Vesper Between, Endless Labyrinth, Fractal Hollow,
+  Temporal Reach. Nine are compiled noise terrain with their own noise settings, biome, fog and sky
+  colour; three are drawn by **custom chunk generators** (bubble hub, white maze, fractal sponge)
+  that are pure closed-form functions of the coordinates — infinite in every direction, no storage
+  growth, identical for every player.
+- Each realm owns **five materials** — stratum, surface, crystal (animated, emissive), flora, core —
+  with its own procedurally painted texture family, block properties, recipes and echo item. They are
+  not recolours of one another.
+- Each biome carries its own spawner table of the mod's creature, the **Realm Critter**: four
+  families (canopy, fold, cinder, void) that differ in **body size** (0.75× to 1.6×), skin, family
+  name and behaviour — grazers, stalkers, runners and huge void drifters that watch you and flee
+  rather than force a fight.
+
+### Twelve realities behind one pair of glasses
+
+- The **Radiate Reality Glasses** (head slot) switch the whole screen, not a tint: Lucid, Aurora,
+  Prismatic, Negative Space, Living Membrane, Echo Memory, **Neon City** (colossal city blocks and
+  traffic light streaks), **Backrooms**, **Poolrooms**, **Cel Animation**, **Eighties CRT** and
+  **Chromatic Fold**. Press **V** to cycle, or use the Field Guide.
+- The same program also drives the era treatments, the tunnel overlay and the rift, so the visor
+  and the world always agree about which reality you are standing in.
+
+### Unlimited scale
+
+- The **Scale Prism** walks a ladder from **1/1024×** — a speck that fits between two blocks of air —
+  to **4096×**, which is far taller than the build limit, with 14 rungs in between
+  (1/256, 1/64, 1/16, ¼, ½, 1, 2, 8, 32, 128, 512, 2048 …). Nothing caps growth at tree size or
+  shrinking at block size.
+- Growing is refused when the new body would intersect terrain (a full volume test up to 16×, a
+  sampled occupancy scan above that, because a 4096× body is millions of blocks).
+- Sub-quarter-scale bodies get a **per-tick travel cap** proportional to their own height, so a
+  1/1024× player cannot tunnel through a block in one gravity step.
+
+### The Umbrella Effect
+
+- Every branch you displace through increments your **era**, and the reality you come back to is
+  rewritten around your arrival point: gigantic living trees, a frozen neon eighties street grid,
+  a primeval jungle, alien-corrupted ground, veined rock, a bleached white branch, or an already
+  burned one.
+- Rewrites are budgeted, deterministic (they come from the journey's era seed, so the same branch
+  rewrites the same way), and refuse to touch bedrock, barriers, containers, fluids or block
+  entities.
+- `/beyond era` shows where you are; `/beyond era 3` sets the branch directly.
+
+### The Presence in the sky
+
+- The Overworld figure reads as a **person**: a head, shoulders, an arm reaching up through the
+  cloud deck, and an eye that opens and tracks you. It is animated, anchored to a real world
+  position, and it behaves as a dynamic skybox behind the actual terrain rather than a fixed decal.
+- It never attacks and never moves the player. The first-join encounter dissolves into falling code.
+
+### Sound
+
+- The in-between spaces carry their own soundscape assembled from vanilla audio retuned far below
+  its normal pitch: a **soft hum** as the dominant layer, a **very quiet vacuum**, and
+  whisper-like arrivals that never resolve into words. Approaching a colossal well adds a slowly
+  rising rumble. Everything is gated by the Ambience toggle.
 
 ## Install / build
 
-Use a **Fabric 1.21.1** installation with **Java 21** and **Fabric API 0.102.1+1.21.1
-or a compatible 1.21.1 release**. Fabric Loader must be at least 0.16.9.
+Use a **Fabric 1.21.1** installation with **Java 21** and **Fabric API 0.102.1+1.21.1**. Fabric
+Loader must be at least 0.16.9.
 
 ```sh
 cd beyond-minecraft
 ./gradlew build             # Windows: gradlew.bat build
 ```
 
-The already-verified binary is in `releases/`. For your own successful build, the installable file is:
+The installable file is `build/libs/beyond-minecraft-0.1.0-alpha.jar`; put it in the client's `mods`
+directory (and the server's). **Do not install the `-sources.jar`.** No external shader pack is
+required.
 
-```
-build/libs/beyond-minecraft-0.1.0-alpha.jar
-```
+### Renderer compatibility and honest limits
 
-Put that JAR in the client's `mods` directory (and the server's for multiplayer).
-**Do not install the `-sources.jar`, source ZIP or the 26.3 Enter the Sift mod into this
-1.21.1 instance.** The separate GitHub workflow publishes artifacts only after its checks pass.
-No external shader pack is required. Python is not needed by players or by normal Java builds.
+- Written for the **vanilla 1.21.1 OpenGL renderer**. Rendering is isolated to the client source set
+  and consumes one scratch framebuffer; it reads vanilla depth and never writes it.
+- The compositor runs in `WorldRenderEvents.LAST`, after world rendering and before the hand clears
+  world depth, so real foreground geometry stays in front of the effect. The last verified native
+  fixture measured a zero-channel difference across 20 foreground samples.
+- A supported Iris API reporting an active shader pack suspends Beyond's effects instead of fighting
+  over depth conventions. Sodium, macOS and real GPU drivers still need their own passes.
+- **Portal vistas are procedural, not live renders of the destination world.** The rift shows a
+  seeded, styled, parallaxed vista of the realm behind it — the real chunks load when you cross. A
+  genuinely recursive Immersive-Portals-style live render is not in this build, and neither are
+  photoreal textures: the city, Poolrooms and Backrooms realities are GLSL treatments with geometric
+  structure, not scanned photography.
+- The Menger sponge recurses three levels and repeats forever in extent; "a thousand levels" is not
+  what the code does. The abyss, the maze and the fractal are world-height bounded, not
+  mathematically unbounded.
+- No target-GPU FPS claim is made: CI runs software OpenGL (Mesa/Xvfb) with a reduced ray budget.
 
-### Renderer compatibility
+## Controls
 
-- Written for the **vanilla 1.21.1 OpenGL renderer**. Rendering is isolated to the client source set.
-- A supported Iris API reporting an active shader pack suspends this mod's effects instead of
-  fighting for its depth buffers. If the Iris API is unrecognized, suspension is conservative.
-- Sodium, other post-process mods, macOS and actual NVIDIA/AMD/Intel drivers require their own
-  compatibility passes. Do not infer support from a successful software-OpenGL CI smoke test.
-- Shaders compile at resource reload. Failures disable Beyond visuals and log an error; particles
-  provide a limited fallback. The field guide reports shader status. The HUD is not post-processed.
-- Four nearby anomalies at most are sent to each renderer; ray budgets are 32 / 48 / 72 steps.
-  The effect uses one scratch color framebuffer, reads vanilla depth and never writes it.
-  It is not a deferred renderer, PBR texture pack, DLSS implementation or path tracer.
+| Key | Action |
+|---|---|
+| **B** | Field Guide (also by using the guide item) |
+| **V** | Next reality through the glasses |
+| **O** | Emergency toggle for all Beyond visuals |
+| **G** / **H** | Grow / shrink with the Scale Prism |
+| **R** | Tear the fabric |
 
-## Five-minute test
-
-1. Create a **new Creative test world with cheats**; start with no other renderer mods.
-2. Look **slightly above your initial facing direction** for the eye; the introduction lasts approximately 14 seconds.
-3. Run `/beyond kit` for the five tools. Open the guide with **B** or by using its item.
-4. Equip the glasses in the head slot. Press **V** through all six views; **O** must disable them.
-5. Aim the knife at clear air at walking height, use it, wait briefly, and walk through the membrane.
-6. Note the realm in `/beyond where`. Change a few inventory items.
-7. **Sneak-use the knife**, or run **`/beyond return`**. Confirm the original inventory is restored.
-8. Use the relic; approach its dark center to cross. Creative flight disables attraction, not travel.
-9. Use the scale prism in open space. Finish at normal scale before testing enclosed rooms.
-
-### Commands
+## Commands
 
 | Command | Permission | Purpose |
 |---|---|---|
-| `/beyond` | Everyone | Help |
-| `/beyond where` | Everyone | Dimension and inventory scope |
-| `/beyond return` | Everyone | Escape a Beyond realm without needing an item |
-| `/beyond kit` | Operator / cheats | Give the tools |
-| `/beyond rift` | Operator / cheats | Open a membrane |
-| `/beyond singularity` | Operator / cheats | Open a gravitational anomaly |
-| `/beyond realm 0` … `7` | Operator / cheats | Visit a compiled realm |
-| `/beyond witness` | Operator / cheats | Replay the encounter |
-| `/beyond clear` | Operator / cheats | Remove this world's temporary anomalies |
-| `/beyond scale 0.125` … `3` | Operator / cheats | Adjust scale; `1` removes our modifier |
+| `/beyond` | everyone | Help |
+| `/beyond where` | everyone | Dimension, inventory scope and era |
+| `/beyond return` | everyone | Escape a Beyond space without an item |
+| `/beyond kit` | operator | All six tools |
+| `/beyond rift` · `singularity` · `tear` · `wormhole` · `quasar` | operator | Open a specific anomaly |
+| `/beyond realm 0` … `11` | operator | Visit a realm, the hub, the maze or the fractal |
+| `/beyond scale`, `grow`, `shrink`, `0.0009…4096` | operator | Arbitrary scale |
+| `/beyond era [0…64]` | operator | Show or set the Umbrella branch |
+| `/beyond well` | operator | Report the sky well's position, radius and feed count |
+| `/beyond witness` | operator | Replay the encounter |
+| `/beyond clear` | operator | Remove this world's temporary anomalies |
 
-All five tool recipes are shapeless; consult generated recipes or your recipe-viewing mod:
-knife = iron sword + echo shard + ender pearl; relic = echo shard + eye of ender + amethyst;
-glasses = spyglass + eye of ender + gold ingot; guide = book + amethyst;
-scale prism = amethyst + clock + ender pearl. Realm crystals craft into four echo items and back.
+## Safety model
 
-## Safety and inventory semantics
+- Default limits: 12 anomalies per world, 3 per player, 50-second lifetime for transient anomalies,
+  24-block influence radius, 0.85 blocks/tick velocity cap, 4000-block tornado budget, 900 torn
+  blocks and 9000 rewritten blocks per Umbrella job. Every value is clamped when the config loads.
+- No client packet can request spawn coordinates, dimensions, scale or eras. Snapshots are
+  server-authored and validated on both encode and decode.
+- Tornado and Umbrella rewrites never touch bedrock, barriers, command/structure blocks, block
+  entities or fluids, and never remove unbreakable blocks.
+- Gravity pulls the creator among players; the sky well's own pull is a separate flag
+  (`primePullsPlayers`). Creative flight resists it.
+- Realm inventories: first entry into a space clones the live inventory once, later visits restore
+  that space's own snapshot, and root reality keeps its own. Vault data lives in the same playerdata
+  NBT as vanilla's live inventory. This is deliberate isolation, **not** anti-duplication protection.
+- Beyond dimensions keep vanilla bed/anchor restrictions: beds and respawn anchors can explode.
+  Use `/beyond return`.
+- Back up the whole world, especially `playerdata`, before changing seeds, realm counts or versions.
 
-- Default limits: 12 anomalies per world, two per creator, 50-second lifetime, 24-block attraction
-  radius, 0.85-block/tick velocity cap and 96 processed entities per well/tick. Configuration is
-  clamped on load. No client packet can request arbitrary spawn coordinates or dimensions.
-- Gravity affects only the creator among players. It does not pull other players into a PvP trap.
-- Arrival searches are bounded. If no ground is suitable, a small plinth can be placed **only
-  in empty space inside a generated realm**. Return never carves or builds in your original world.
-- Nested realm trips retain the first non-Beyond origin. A blocked return refuses the teleport
-  rather than clearing blocks. An operator may need to clear that position. Void recovery tries
-  the same safe return; it is not a guarantee against death if the original location is obstructed.
-- Vault snapshots include main inventory, armor, offhand and selected slot. They do **not** clone
-  health, XP, ender chests or placed containers. Snapshot isolation is NOT an anti-duplication
-  economy: first-visit copies are intentional, and ordinary chests can transfer copied items.
-- Death policy follows vanilla for the active realm: the post-death live inventory is captured,
-  then an independent root inventory is restored on cross-world respawn. Same-world respawn
-  does not reload a stale snapshot. Automated keepInventory-OFF cross-world death/respawn
-  passed; keepInventory-ON, altered respawn rules, containers and multiplayer still need testing.
-- Beyond dimensions use vanilla bed/anchor restrictions: **beds and respawn anchors are not
-  safe respawn points and can explode**. Use `/beyond return`, not a bed, to leave a realm.
-- If inventory isolation is disabled while someone is away, an existing vault is still restored
-  when they return to root. Do not edit vault NBT or remove realms while players are inside them.
-- **Back up the complete world, especially `playerdata`, before changing seeds, realm counts or
-  versions.** Generated registries are a world compatibility contract, not disposable shader data.
+Settings live in `config/beyond-visuals.json` (client) and `config/beyond-server.json` (server).
 
-Settings: `config/beyond-visuals.json` on each client; `config/beyond-server.json` on the server.
-Server settings take effect after restart. Before uninstalling, return every player to root,
-restore normal scale, and back up; custom blocks/dimensions cannot remain usable without the mod.
-
-## Procedural authoring (not infinite runtime registry creation)
+## Procedural authoring
 
 ```sh
-python3 tools/generate_multiverse.py                       # default 8 realms, seed 84921603
-python3 tools/generate_multiverse.py --check               # no-write reproducibility check
-python3 tools/generate_multiverse.py --seed 1234 --realms 16
+python3 tools/generate_multiverse.py                       # default 12 realms, seed 84921603
+python3 tools/generate_multiverse.py --check               # byte-for-byte reproducibility gate
+python3 tools/generate_multiverse.py --seed 1234 --realms 32
+python3 tools/validate.py                                  # resource, shader, mixin contracts
+python3 tools/lint_shader.py                               # structural GLSL check
+python3 tools/check_shaders.py                             # real glslangValidator compile + link
+python3 -m unittest discover -s tools -p 'test_*.py'
 ```
 
-Minecraft freezes block/item/dimension registries during startup. Therefore this script produces
-**a finite catalog before building**, and the Java initializer registers exactly that catalog.
-Different seeds give different original textures and world-generation parameters; the world's
-own seed also affects actual terrain. A maximum of 32 realms prevents runaway resource growth.
-The script uses vanilla model templates and a vanilla noise-settings schema, not extracted or
-AI-generated copies of Minecraft textures. All authored pixels are generated locally by code.
+Minecraft freezes block/item/dimension registries at startup, so the catalog is compiled **before**
+the build and the Java initializer registers exactly that catalog: 12 realms produce 60 blocks, 78
+items, animated crystal metadata, per-realm noise settings, biomes, features and spawners — 530
+generated resources, all reproducible from one seed. Echo realms beyond twelve reuse the palette
+ladder with shifted hues, and the cap is 32. Runtime world generation, in contrast, is unbounded:
+the realm generators are coordinate functions, so there is no "edge of the map" inside a realm.
 
-## What is deliberately NOT claimed
-
-This alpha does **not** contain: truly infinite blocks/dimensions, procedural guns, tornado/weather
-simulation, a physical human Overworld or grabbing hand, dynamic fluid simulation, ragdolls,
-realistic nuclear physics, physically accurate black-hole dynamics, Kerr lensing, seamless
-recursive Immersive-Portals-style world rendering, infinite non-Euclidean geometry, giant
-authored civilizations, or AAA/photorealistic production quality.
-
-The shaders, server mechanics and generated content are real code. Those larger systems are
-future engineering milestones, not feature names attached to a fake menu.
-
-## Verification commands
+## Verification
 
 ```sh
 python3 tools/validate.py
-python3 -m unittest discover -s tools -p 'test_*.py' -v
-python3 tools/check_shaders.py             # requires glslangValidator; fails if unavailable
+python3 tools/lint_shader.py
+python3 tools/check_shaders.py
 ./gradlew test build
+BEYOND_SMOKE=1 ./gradlew runServer --args=nogui
+BEYOND_CLIENT_SMOKE=1 xvfb-run -a ./gradlew runClient
 ```
 
-The isolated CI test server accepts the Minecraft EULA for that disposable automated test
-instance only; installing or operating your own server requires your own agreement to its terms.
-`BEYOND_SMOKE=1` enables the server harness and shuts down after registry/worldgen/NBT checks.
-`BEYOND_CLIENT_SMOKE=1` opens only the disposable `saves/beyond-ci` fixture, renders actual
-worlds and all six lenses, takes screenshots, exercises inventory/respawn/scale, and compares
-native foreground pixels with effects on/off. It deliberately kills its **test** player and
-places a **test** wall. Never point this harness at a valuable save. Neither harness runs in
-normal installations.
+The CI harnesses run in disposable fixtures (`beyond-ci`, an isolated copied world) and are never
+active in normal installations. The client harness asserts, against real objects: scale extremes are
+reachable and reversible, the sky well exists and reaches the client as a persistent node, the lens
+measurably changes the scene, spaghettification is actually applied to a rendered entity, a tear
+leads to the bubble hub and from there to the fractal hollow and the white maze, a wormhole corridor
+arms and tears itself down without leaving barriers, the Umbrella Effect really rewrites the world
+around you, and native foreground occlusion still has zero drift with effects on. Screenshots from
+the run are uploaded as CI artifacts.
 
-Optional Linux offscreen regression tests (synthetic buffers, not a substitute for Minecraft):
-
-```sh
-npm install --prefix tools/.runtime @sparticuz/chromium@153.0.0 playwright-core@1.63.0
-node tools/test_gpu.mjs   # requires standard Linux Chromium/NSS shared libraries
-```
-
-30 JUnit tests, 10 Python tests and 15 offscreen shader checks passed, alongside the real
-server/client checks. The checked-in small JAR and screenshots are one reviewed release
-snapshot. Normal CI pushes upload artifacts; replacing that snapshot is opt-in.
-
-See [architecture](docs/ARCHITECTURE.md), [verification](docs/BUILD_STATUS.md) and the
-[manual test matrix](docs/TEST_PLAN.md). Original code and generated art: Apache-2.0.
-Minecraft is a Mojang/Microsoft product; this is an unofficial mod.
+See [architecture](docs/ARCHITECTURE.md), [verification record](docs/BUILD_STATUS.md) and the
+[manual test matrix](docs/TEST_PLAN.md). Original code and generated art: Apache-2.0. Minecraft is a
+Mojang/Microsoft product; this is an unofficial mod.
