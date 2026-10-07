@@ -288,6 +288,11 @@ public final class ClientSmoke {
                     server(client, p -> {
                         RealityManager.clear(p);
                         Journey.of(p).travelCooldown = 0;
+                        // The maze's own arrival chamber (a 14x14 shaft at the origin) is the one
+                        // place with guaranteed headroom, so the tunnel fixture opens there.
+                        p.teleport(p.getServerWorld(), .5, 53, .5, 180, 0);
+                        p.setVelocity(Vec3d.ZERO);
+                        p.fallDistance = 0;
                         int before = Journey.of(p).era;
                         require(spawnAimed(p, Anomaly.Kind.WORMHOLE), "wormhole creation");
                         require(RealityManager.enter(p, 0), "leave the labyrinth for the wormhole test");
