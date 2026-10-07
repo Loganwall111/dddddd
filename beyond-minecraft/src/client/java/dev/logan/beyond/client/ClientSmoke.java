@@ -409,8 +409,8 @@ public final class ClientSmoke {
                 if (Spaghettification.forEntity(critter) != null) stretchable = true;
             }
         }
-        BeyondMinecraft.LOGGER.info("BEYOND_TIDAL_DIAG applied={} hooks={} last_stretch={} nodes={} client_critters={} stretchable={} alive={} flying={} screen={}",
-            Spaghettification.applied, Spaghettification.hooksFired, Spaghettification.lastStretch, ClientReality.nodes.size(), clientCritters, stretchable,
+        BeyondMinecraft.LOGGER.info("BEYOND_TIDAL_DIAG applied={} hooks={} critter_hooks={} last_stretch={} nodes={} client_critters={} stretchable={} alive={} flying={} screen={}",
+            Spaghettification.applied, Spaghettification.hooksFired, Spaghettification.critterHooks, Spaghettification.lastStretch, ClientReality.nodes.size(), clientCritters, stretchable,
             client.player != null && client.player.isAlive(), client.player != null && client.player.getAbilities().flying,
             client.currentScreen == null ? "none" : client.currentScreen.getClass().getSimpleName());
     }

@@ -19,6 +19,8 @@ public final class Spaghettification {
     /** Incremented by the render mixin. The CI client smoke asserts this actually ran. */
     public static volatile long applied;
     public static volatile long hooksFired;
+    /** How many of those renders were this mod's own creature — the CI fixture. */
+    public static volatile long critterHooks;
     public static volatile float lastStretch = 1f;
     private static final Vector3f UP = new Vector3f(0f, 1f, 0f);
     private static final ThreadLocal<IdentityHashMap<Entity, Integer>> ACTIVE_RENDER_DEPTH =
@@ -48,6 +50,7 @@ public final class Spaghettification {
     public static void beginRender(Entity entity, float tickDelta, MatrixStack matrices) {
         matrices.push();
         hooksFired++;
+        if (entity instanceof dev.logan.beyond.entity.RealmCritter) critterHooks++;
         var depths = ACTIVE_RENDER_DEPTH.get();
         Integer depth = depths.get(entity);
         if (depth != null) { depths.put(entity, depth + 1); return; }
