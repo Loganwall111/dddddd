@@ -39,6 +39,8 @@ public class FractalGenerator extends ChunkGenerator {
         com.mojang.serialization.Codec.INT.optionalFieldOf("cell", 12).forGetter(generator -> generator.cell),
         com.mojang.serialization.Codec.INT.optionalFieldOf("levels", 3).forGetter(generator -> generator.levels)
     ).apply(instance, FractalGenerator::new));
+    private static final int ARRIVAL_Y = 100;
+    private static final int ARRIVAL_RADIUS = 2;
     private final BiomeSource biomeSource;
     private final String material, accent;
     private final int cell, levels;
@@ -68,6 +70,13 @@ public class FractalGenerator extends ChunkGenerator {
                     // The starting pillar and its staircase make the hollow walkable from spawn.
                     if (!solid && Math.abs(x) <= 6 && Math.abs(z) <= 6 && y >= 40 && y <= 72) solid = true;
                     if (!solid && BeyondWorldgen.spiral(x, z, y, 9, 17, .55, 1.1)) solid = true;
+                    // The Menger pattern repeats up to the world ceiling, so reserve a small,
+                    // deterministic landing pad with headroom instead of asking players to spawn
+                    // on a high sponge face with no safe place to stand.
+                    if (Math.abs(x) <= ARRIVAL_RADIUS && Math.abs(z) <= ARRIVAL_RADIUS) {
+                        if (y == ARRIVAL_Y - 1) solid = true;
+                        else if (y >= ARRIVAL_Y && y <= ARRIVAL_Y + 2) solid = false;
+                    }
                     if (!solid) continue;
                     boolean edge = BeyondWorldgen.menger(x + 1, y, z, cell, levels) != BeyondWorldgen.menger(x, y + 1, z, cell, levels);
                     cursor.set(x, y, z);
