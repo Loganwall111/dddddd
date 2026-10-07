@@ -1,9 +1,17 @@
 {
-  "type": "minecraft:block_blob",
+  "type": "minecraft:ore",
   "config": {
-    "state": {
-      "Name": "beyond:realm_05_flora"
-    },
-    "radius": 3
+    "size": 11,
+    "discard_chance_on_air_exposure": 0.05,
+    "targets": [
+      {
+        "target": {
+          "predicate_type": "minecraft:always_true"
+        },
+        "state": {
+          "Name": "beyond:realm_05_flora"
+        }
+      }
+    ]
   }
 }

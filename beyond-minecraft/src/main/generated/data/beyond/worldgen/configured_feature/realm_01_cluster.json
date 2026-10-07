@@ -1,9 +1,17 @@
 {
-  "type": "minecraft:block_blob",
+  "type": "minecraft:ore",
   "config": {
-    "state": {
-      "Name": "beyond:realm_01_crystal"
-    },
-    "radius": 2
+    "size": 6,
+    "discard_chance_on_air_exposure": 0.0,
+    "targets": [
+      {
+        "target": {
+          "predicate_type": "minecraft:always_true"
+        },
+        "state": {
+          "Name": "beyond:realm_01_crystal"
+        }
+      }
+    ]
   }
 }

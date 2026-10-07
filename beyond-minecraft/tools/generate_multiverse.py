@@ -309,13 +309,17 @@ def decoration(feature_lists, realm, key, blocks, theme):
             placement=[{"type": "minecraft:count", "count": 6}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:heightmap", "heightmap": "WORLD_SURFACE_WG"}, {"type": "minecraft:biome"}])
     if "crystal_cluster" in realm["decor"]:
-        placed[f"{key}_cluster"] = dict(configured=("minecraft:block_blob", {
-            "state": {"Name": f"beyond:{crystal}"}, "radius": 2}),
+        placed[f"{key}_cluster"] = dict(configured=("minecraft:ore", {
+            "size": 6, "discard_chance_on_air_exposure": 0.0,
+            "targets": [{"target": {"predicate_type": "minecraft:always_true"},
+                         "state": {"Name": f"beyond:{crystal}"}}]}),
             placement=[{"type": "minecraft:count", "count": 9}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:heightmap", "heightmap": "WORLD_SURFACE_WG"}, {"type": "minecraft:biome"}])
     if "blob" in realm["decor"]:
-        placed[f"{key}_blob"] = dict(configured=("minecraft:block_blob", {
-            "state": {"Name": f"beyond:{flora}"}, "radius": 3}),
+        placed[f"{key}_blob"] = dict(configured=("minecraft:ore", {
+            "size": 11, "discard_chance_on_air_exposure": 0.05,
+            "targets": [{"target": {"predicate_type": "minecraft:always_true"},
+                         "state": {"Name": f"beyond:{flora}"}}]}),
             placement=[{"type": "minecraft:count", "count": 5}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING"}, {"type": "minecraft:biome"}])
     if "geode" in realm["decor"]:
@@ -357,8 +361,10 @@ def decoration(feature_lists, realm, key, blocks, theme):
             placement=[{"type": "minecraft:count", "count": 6}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:heightmap", "heightmap": "WORLD_SURFACE_WG"}, {"type": "minecraft:biome"}])
     if "bubbles" in realm["decor"]:
-        placed[f"{key}_bubble_growth"] = dict(configured=("minecraft:block_blob", {
-            "state": {"Name": f"beyond:{crystal}"}, "radius": 4}),
+        placed[f"{key}_bubble_growth"] = dict(configured=("minecraft:ore", {
+            "size": 14, "discard_chance_on_air_exposure": 0.0,
+            "targets": [{"target": {"predicate_type": "minecraft:always_true"},
+                         "state": {"Name": f"beyond:{crystal}"}}]}),
             placement=[{"type": "minecraft:count", "count": 24}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:height_range", "height": {"type": "minecraft:uniform",
                         "min_inclusive": {"absolute": -20}, "max_inclusive": {"absolute": 120}}},
@@ -366,10 +372,11 @@ def decoration(feature_lists, realm, key, blocks, theme):
     # Generated spaces (bubble hub, labyrinth, fractal) dress themselves in Java, but every realm
     # still ships at least one flora scatter and one crystal vein so the biome is never bare.
     if len(placed) < 2 or realm["terrain"] in ("between", "labyrinth", "fractal", "temporal"):
-        placed[f"{key}_scatter"] = dict(configured=("minecraft:random_patch", {
-            "tries": 24, "xz_spread": 6, "y_spread": 3,
-            "feature": {"type": "minecraft:simple_block", "config": {
-                "to_place": {"type": "minecraft:simple_state_provider", "state": {"Name": f"beyond:{flora}"}}}}}),
+        placed[f"{key}_scatter"] = dict(configured=("minecraft:block_column", {
+            "layers": [{"height": {"type": "minecraft:uniform", "min_inclusive": 1, "max_inclusive": 3},
+                        "provider": {"type": "minecraft:simple_state_provider", "state": {"Name": f"beyond:{flora}"}}}],
+            "direction": "up", "allowed_placement": {"type": "minecraft:matching_blocks", "blocks": ["minecraft:air"]},
+            "prioritize_tip": False}),
             placement=[{"type": "minecraft:count", "count": 8}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:heightmap", "heightmap": "WORLD_SURFACE_WG"}, {"type": "minecraft:biome"}])
     if realm["terrain"] in ("between", "labyrinth", "fractal"):
