@@ -7,6 +7,39 @@ import struct
 import sys
 import generate_multiverse
 
+
+SPAWN_GROUPS = {"monster", "creature", "ambient", "axolotls", "underground_water_creature",
+                "water_creature", "water_ambient", "misc"}
+UPPER_CASE_LITERALS = {"MOTION_BLOCKING", "MOTION_BLOCKING_NO_LEAVES", "OCEAN_FLOOR", "OCEAN_FLOOR_WG",
+                       "WORLD_SURFACE", "WORLD_SURFACE_WG"}
+FEATURE_TYPES = {"minecraft:block_column", "minecraft:block_pile", "minecraft:geode", "minecraft:ice_spike",
+                 "minecraft:lake", "minecraft:ore", "minecraft:random_patch", "minecraft:simple_block",
+                 "minecraft:tree"}
+PLACEMENT_TYPES = {"minecraft:biome", "minecraft:block_predicate_filter", "minecraft:count",
+                   "minecraft:count_multiplier", "minecraft:environment_scan", "minecraft:height_range",
+                   "minecraft:heightmap", "minecraft:in_square", "minecraft:noise_based_count",
+                   "minecraft:noise_threshold_count", "minecraft:random_offset", "minecraft:rarity_filter",
+                   "minecraft:square", "minecraft:surface_relative_threshold_filter",
+                   "minecraft:surface_water_depth_filter", "minecraft:water_depth_threshold"}
+NESTED_TYPES = {"minecraft:always_true", "minecraft:blob_foliage_placer", "minecraft:block_match",
+                "minecraft:fixed", "minecraft:matching_blocks", "minecraft:matching_fluids",
+                "minecraft:noise_provider", "minecraft:plain_flower_provider", "minecraft:simple_state_provider",
+                "minecraft:straight_trunk_placer", "minecraft:tag_match", "minecraft:two_layers_feature_size",
+                "minecraft:uniform", "minecraft:weighted_state_provider"}
+
+
+def check_nested_types(path, value):
+    """Every 'type' inside a configured feature must be a real feature/provider/placement id."""
+    if isinstance(value, dict):
+        for entry, nested in value.items():
+            if entry == "type" and isinstance(nested, str) and nested.startswith("minecraft:"):
+                assert nested in FEATURE_TYPES | PLACEMENT_TYPES | NESTED_TYPES, (path.name, nested)
+            else:
+                check_nested_types(path, nested)
+    elif isinstance(value, list):
+        for nested in value:
+            check_nested_types(path, nested)
+
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "src/main/resources"
 GEN = ROOT / "src/main/generated"
@@ -54,14 +87,33 @@ def validate():
                 assert (GEN / f"data/beyond/worldgen/noise/{key}{suffix}.json").is_file(), key
         biome = json.loads((GEN / f"data/beyond/worldgen/biome/{key}.json").read_text())
         assert biome["spawners"], "every realm declares its own creature roster"
-        for group in biome["spawners"].values():
-            for entry in group:
+        assert set(biome) >= {"effects", "spawners", "spawn_costs", "carvers", "features"}
+        for group, entries in biome["spawners"].items():
+            # Spawn categories are lower-case in 1.21 data; "CREATURE" is a registry crash, not a style nit.
+            assert group in SPAWN_GROUPS, (key, group)
+            for entry in entries:
                 assert entry["type"].startswith(("beyond:", "minecraft:"))
         decoration = list((GEN / "data/beyond/worldgen/placed_feature").glob(f"{key}_*.json"))
         assert len(decoration) >= 2, f"{key} needs realm-specific decoration"
         for path in (GEN / "data/beyond/worldgen/placed_feature").glob(f"{key}_*.json"):
             link = json.loads(path.read_text())
+            assert isinstance(link["feature"], str), "random_patch and friends need a placed-feature *reference*"
             assert (GEN / f"data/beyond/worldgen/configured_feature/{link['feature'].split(':')[1]}.json").is_file(), path
+            for modifier in link["placement"]:
+                assert modifier["type"] in PLACEMENT_TYPES, (path.name, modifier["type"])
+        for path in (GEN / "data/beyond/worldgen/configured_feature").glob(f"{key}_*.json"):
+            configured = json.loads(path.read_text())
+            assert configured["type"] in FEATURE_TYPES, (path.name, configured["type"])
+            check_nested_types(path, configured["config"])
+    # Enumerations in generated data are easy to get subtly wrong (a lowercase name where the game
+    # expects upper case, or the reverse) and only a real registry load catches it. Keep an explicit
+    # allow-list so an unexpected all-caps literal fails here instead of on a CI runner.
+    upper = set()
+    for path in GEN.rglob("*.json"):
+        for literal in re.findall(r":\s*\"([A-Z][A-Z_]+)\"", path.read_text()):
+            if literal not in UPPER_CASE_LITERALS:
+                upper.add((path.relative_to(GEN).as_posix(), literal))
+    assert not upper, sorted(upper)[:6]
     for item in all_items:
         model = GEN / f"assets/beyond/models/item/{item}.json"; assert model.exists(), item
     for block in all_blocks:

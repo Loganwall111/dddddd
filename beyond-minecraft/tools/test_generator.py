@@ -1,7 +1,9 @@
 import hashlib
 import json
 import struct
+import re
 import unittest
+from pathlib import Path
 import generate_multiverse as gen
 
 class GeneratorTests(unittest.TestCase):
@@ -60,3 +62,37 @@ class GeneratorTests(unittest.TestCase):
         self.assertFalse(any(p.endswith(".mcfunction") for p in gen.generate(5, 1)))
 
 if __name__ == "__main__": unittest.main()
+
+    def test_spawn_categories_are_lower_case(self):
+        """1.21 serialises spawn categories by name; "CREATURE" is a registry load failure."""
+        output = gen.generate(3, 12)
+        for path, data in output.items():
+            if "/worldgen/biome/" not in path:
+                continue
+            for group in json.loads(data)["spawners"]:
+                self.assertIn(group, {"monster", "creature", "ambient", "axolotls", "underground_water_creature",
+                                      "water_creature", "water_ambient", "misc"})
+
+    def test_every_feature_type_is_a_real_vanilla_type(self):
+        """The registry only knows the ids the game ships: unknown ones abort world load."""
+        import validate
+        output = gen.generate(3, 12)
+        seen = set()
+        for path, data in output.items():
+            if "/worldgen/configured_feature/" not in path and "/worldgen/placed_feature/" not in path:
+                continue
+            for literal in re.findall(r'"type":\s*"(minecraft:[a-z_]+)"', data.decode()):
+                seen.add(literal)
+            if "/worldgen/placed_feature/" in path:
+                self.assertIsInstance(json.loads(data)["feature"], str, path)
+        unknown = seen - (validate.FEATURE_TYPES | validate.PLACEMENT_TYPES | validate.NESTED_TYPES)
+        self.assertEqual(set(), unknown)
+
+    def test_every_configured_feature_matches_its_type(self):
+        import validate
+        output = gen.generate(3, 12)
+        for path, data in output.items():
+            if "/worldgen/configured_feature/" not in path:
+                continue
+            validate.check_nested_types(Path(path), json.loads(data)["config"])
+
