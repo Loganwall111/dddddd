@@ -44,8 +44,12 @@ public final class SafeLanding {
                 if (y <= world.getBottomY() + 2 || y > ceiling) continue;
                 BlockPos center = new BlockPos(column.getX(), y, column.getZ());
                 for (int radius = widest; radius >= 0; radius--) {
+                    // Only the body space has to be empty. The pad layer underneath is deliberately
+                    // excluded from that test: an arrival pad built by an earlier visit is a floor,
+                    // not an obstruction, and refusing it made a generated realm unenterable a second
+                    // time — exactly the "no safe arrival exists" a returning player would hit.
                     boolean clear = true;
-                    for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, (int) Math.ceil(height), radius))) {
+                    for (BlockPos p : BlockPos.iterate(center.add(-radius, 0, -radius), center.add(radius, (int) Math.ceil(height), radius))) {
                         if (!world.getWorldBorder().contains(p) || !world.isAir(p)) { clear = false; break; }
                     }
                     if (!clear) continue;
