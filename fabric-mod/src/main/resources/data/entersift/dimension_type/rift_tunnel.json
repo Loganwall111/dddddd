@@ -1,0 +1,31 @@
+{
+  "ambient_light": 1.0,
+  "attributes": {
+    "minecraft:visual/fog_color": "#ff8a3c",
+    "minecraft:visual/sky_color": "#ff7a30",
+    "minecraft:visual/cloud_color": "#00ffffff",
+    "minecraft:visual/ambient_light_color": "#ffb070",
+    "minecraft:audio/ambient_sounds": {
+      "loop": "entersift:ambient.sift.loop"
+    },
+    "minecraft:gameplay/bed_rule": {
+      "can_set_spawn": "never",
+      "can_sleep": "never",
+      "error_message": {
+        "text": "There is no rest between worlds."
+      }
+    }
+  },
+  "coordinate_scale": 1.0,
+  "default_clock": "minecraft:overworld",
+  "has_ceiling": true,
+  "has_ender_dragon_fight": false,
+  "has_skylight": false,
+  "height": 256,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "logical_height": 256,
+  "min_y": 0,
+  "monster_spawn_block_light_limit": 0,
+  "monster_spawn_light_level": 0,
+  "timelines": []
+}

@@ -1,0 +1,63 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#e89a7a"
+  },
+  "attributes": {
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:lava"
+          },
+          "probability": 0.0008
+        },
+        {
+          "particle": {
+            "type": "minecraft:bubble_pop"
+          },
+          "probability": 0.004
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    },
+    "minecraft:visual/fog_color": "#ffd4bc"
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [
+      "entersift:ichor_lake"
+    ],
+    [
+      "entersift:ichor_hot_spring"
+    ],
+    [],
+    [
+      "entersift:ichor_volcano",
+      "entersift:ember_shrine"
+    ],
+    [],
+    [
+      "entersift:ember_ore",
+      "entersift:cinder_glow_ore"
+    ],
+    [],
+    [
+      "entersift:ichor_spring"
+    ],
+    [
+      "entersift:glow_tuft_campaign_peaks"
+    ],
+    []
+  ]
+}

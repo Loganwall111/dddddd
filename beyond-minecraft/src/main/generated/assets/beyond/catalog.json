@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "seed": 84921603,
+  "realms": [
+    {
+      "id": "realm_00",
+      "name": "Lucent Canopy",
+      "theme": 0,
+      "color": 7916705,
+      "seed": 2460582,
+      "blocks": [
+        "realm_00_stratum",
+        "realm_00_surface",
+        "realm_00_crystal"
+      ]
+    },
+    {
+      "id": "realm_01",
+      "name": "The Violet Fold",
+      "theme": 1,
+      "color": 11502591,
+      "seed": 900160,
+      "blocks": [
+        "realm_01_stratum",
+        "realm_01_surface",
+        "realm_01_crystal"
+      ]
+    },
+    {
+      "id": "realm_02",
+      "name": "Cinder Cathedral",
+      "theme": 2,
+      "color": 14382930,
+      "seed": 2077168,
+      "blocks": [
+        "realm_02_stratum",
+        "realm_02_surface",
+        "realm_02_crystal"
+      ]
+    },
+    {
+      "id": "realm_03",
+      "name": "Boreal Memory",
+      "theme": 3,
+      "color": 10082541,
+      "seed": 2145538,
+      "blocks": [
+        "realm_03_stratum",
+        "realm_03_surface",
+        "realm_03_crystal"
+      ]
+    },
+    {
+      "id": "realm_04",
+      "name": "Rose Continuum",
+      "theme": 4,
+      "color": 15899610,
+      "seed": 5668068,
+      "blocks": [
+        "realm_04_stratum",
+        "realm_04_surface",
+        "realm_04_crystal"
+      ]
+    },
+    {
+      "id": "realm_05",
+      "name": "Pelagic Dream",
+      "theme": 5,
+      "color": 5092823,
+      "seed": 1665438,
+      "blocks": [
+        "realm_05_stratum",
+        "realm_05_surface",
+        "realm_05_crystal"
+      ]
+    },
+    {
+      "id": "realm_06",
+      "name": "Obsidian Hymn",
+      "theme": 6,
+      "color": 11591635,
+      "seed": 5040095,
+      "blocks": [
+        "realm_06_stratum",
+        "realm_06_surface",
+        "realm_06_crystal"
+      ]
+    },
+    {
+      "id": "realm_07",
+      "name": "The Ochre Archive",
+      "theme": 7,
+      "color": 13942935,
+      "seed": 2356096,
+      "blocks": [
+        "realm_07_stratum",
+        "realm_07_surface",
+        "realm_07_crystal"
+      ]
+    }
+  ]
+}

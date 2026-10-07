@@ -1,0 +1,34 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:threshold_stage_7"
+    },
+    "title": {
+      "text": "Beyond the Threshold"
+    },
+    "description": {
+      "text": "Sing the eight notes, open the portal and step into the Sift"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "enter": {
+      "trigger": "minecraft:changed_dimension",
+      "conditions": {
+        "to": "entersift:the_sift"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "enter"
+    ]
+  ],
+  "parent": "entersift:guardian",
+  "rewards": {
+    "experience": 100
+  }
+}

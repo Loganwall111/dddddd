@@ -1,0 +1,57 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#7ad6cf"
+  },
+  "attributes": {
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.004
+        },
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.006
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    },
+    "minecraft:visual/fog_color": "#e2ecff"
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:pale_tree",
+      "entersift:sift_grass",
+      "entersift:glow_bulb",
+      "entersift:blue_grass_pale_grove",
+      "entersift:pink_grass_pale_grove",
+      "entersift:glow_tuft_pale_grove",
+      "entersift:sift_bloom_pale_grove"
+    ],
+    []
+  ]
+}

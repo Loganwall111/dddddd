@@ -1,0 +1,158 @@
+/*
+ * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package dev.logan.entersift;
+
+import java.util.Optional;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+
+public abstract class IchorFluid extends FlowingFluid {
+	/**
+	 * 0.14: ichor bubbles and steams where it is open to the air (Campaign Peaks hot springs, pools and
+	 * seas): an occasional bubble pop and a wisp of white steam from source blocks. Client-side only.
+	 */
+	@Override
+	protected void animateTick(net.minecraft.world.level.Level level, BlockPos pos, FluidState state, net.minecraft.util.RandomSource random) {
+		if (!state.isSource() || !level.getBlockState(pos.above()).isAir()) return;
+		if (random.nextInt(14) == 0)
+			level.addParticle(net.minecraft.core.particles.ParticleTypes.BUBBLE_POP, pos.getX() + random.nextDouble(), pos.getY() + 0.95, pos.getZ() + random.nextDouble(), 0.0, 0.04, 0.0);
+		if (random.nextInt(60) == 0)
+			level.addParticle(net.minecraft.core.particles.ParticleTypes.WHITE_SMOKE, pos.getX() + random.nextDouble(), pos.getY() + 1.0, pos.getZ() + random.nextDouble(), 0.0, 0.03, 0.0);
+	}
+
+	public IchorFluid() {
+	}
+
+	@Override
+	public Fluid getFlowing() {
+		return SiftContent.FLOWING_ICHOR;
+	}
+
+	@Override
+	public Fluid getSource() {
+		return SiftContent.ICHOR;
+	}
+
+	@Override
+	public Item getBucket() {
+		return SiftContent.ICHOR_BUCKET;
+	}
+
+	@Override
+	protected boolean canConvertToSource(ServerLevel level) {
+		return false;
+	}
+
+	@Override
+	protected void beforeDestroyingBlock(LevelAccessor level, BlockPos pos, BlockState state) {
+		BlockEntity blockEntity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
+		Block.dropResources(state, level, pos, blockEntity);
+	}
+
+	@Override
+	public int getSlopeFindDistance(LevelReader level) {
+		return 4;
+	}
+
+	@Override
+	public BlockState createLegacyBlock(FluidState state) {
+		return SiftContent.ICHOR_BLOCK.defaultBlockState().setValue(LiquidBlock.LEVEL, getLegacyLevel(state));
+	}
+
+	@Override
+	public boolean isSame(Fluid fluid) {
+		return fluid == SiftContent.ICHOR || fluid == SiftContent.FLOWING_ICHOR;
+	}
+
+	@Override
+	public int getDropOff(LevelReader level) {
+		return 1;
+	}
+
+	@Override
+	public int getTickDelay(LevelReader level) {
+		return 12;
+	}
+
+	@Override
+	public boolean canBeReplacedWith(FluidState state, BlockGetter level, BlockPos pos, Fluid fluid, Direction direction) {
+		return direction == Direction.DOWN && !fluid.isSame(SiftContent.ICHOR);
+	}
+
+	@Override
+	protected float getExplosionResistance() {
+		return 100.0F;
+	}
+
+	@Override
+	public Optional<SoundEvent> getPickupSound() {
+		return Optional.of(SoundEvents.BUCKET_FILL);
+	}
+
+	public static class Flowing extends IchorFluid {
+		public Flowing() {
+		}
+
+		@Override
+		protected void createFluidStateDefinition(StateDefinition.Builder<Fluid, FluidState> builder) {
+			super.createFluidStateDefinition(builder);
+			builder.add(LEVEL);
+		}
+
+		@Override
+		public int getAmount(FluidState state) {
+			return state.getValue(LEVEL);
+		}
+
+		@Override
+		public boolean isSource(FluidState state) {
+			return false;
+		}
+	}
+
+	public static class Still extends IchorFluid {
+		public Still() {
+		}
+
+		@Override
+		public int getAmount(FluidState state) {
+			return 8;
+		}
+
+		@Override
+		public boolean isSource(FluidState state) {
+			return true;
+		}
+	}
+}

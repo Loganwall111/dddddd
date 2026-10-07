@@ -1,0 +1,33 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.6,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 1188408,
+    "fog_color": 7916705,
+    "water_color": 2787740,
+    "water_fog_color": 1259333,
+    "grass_color": 7916705,
+    "foliage_color": 7916705
+  },
+  "spawners": {},
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "beyond:realm_00_pillars"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:trees_plains"
+    ],
+    []
+  ]
+}

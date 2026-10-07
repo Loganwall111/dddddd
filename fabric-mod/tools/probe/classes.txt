@@ -1,0 +1,97 @@
+-protected net.minecraft.client.model.EntityModel
+-protected net.minecraft.world.entity.Mob
+-protected net.minecraft.world.entity.PathfinderMob
+-protected net.minecraft.world.entity.monster.Monster
+-protected net.minecraft.client.renderer.entity.layers.RenderLayer
+-protected net.minecraft.world.entity.animal.Animal
+net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents
+net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext
+net.fabricmc.fabric.api.client.rendering.v1.level.AbstractLevelRenderContext
+net.fabricmc.fabric.api.client.rendering.v1.level.LevelTerrainRenderContext
+net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents$CollectSubmits
+net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents$AfterTranslucentFeatures
+net.minecraft.client.renderer.SubmitNodeCollector
+net.minecraft.client.renderer.OrderedSubmitNodeCollector
+net.minecraft.client.renderer.SubmitNodeCollector$CustomGeometryRenderer
+net.minecraft.client.renderer.state.level.CameraRenderState
+net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry
+net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry$TexturedLayerDefinitionProvider
+com.mojang.blaze3d.vertex.VertexConsumer
+com.mojang.blaze3d.vertex.PoseStack
+com.mojang.blaze3d.vertex.PoseStack$Pose
+net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder
+net.minecraft.world.entity.ai.attributes.Attributes
+net.minecraft.world.entity.SpawnPlacementTypes
+net.minecraft.world.entity.EntitySpawnReason
+net.minecraft.world.entity.ai.goal.GoalSelector
+net.minecraft.world.entity.ai.goal.MeleeAttackGoal
+net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal
+net.minecraft.world.entity.ai.goal.LookAtPlayerGoal
+net.minecraft.world.entity.ai.goal.RandomLookAroundGoal
+net.minecraft.world.entity.ai.goal.FloatGoal
+net.minecraft.world.entity.ai.goal.PanicGoal
+net.minecraft.world.entity.ai.goal.AvoidEntityGoal
+net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal
+net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal
+-protected net.minecraft.world.entity.ai.goal.Goal
+net.minecraft.world.entity.LivingEntity
+net.minecraft.world.entity.Entity
+net.minecraft.world.level.Level
+net.minecraft.server.level.ServerLevel
+net.minecraft.core.particles.ParticleTypes
+net.minecraft.sounds.SoundEvents
+net.minecraft.client.renderer.LightCoordsUtil
+net.minecraft.client.renderer.texture.OverlayTexture
+net.minecraft.client.Minecraft
+net.minecraft.client.multiplayer.ClientLevel
+net.minecraft.client.Camera
+net.minecraft.world.entity.player.Player
+net.minecraft.world.item.SpawnEggItem
+net.fabricmc.fabric.api.biome.v1.BiomeModifications
+net.fabricmc.fabric.api.biome.v1.BiomeSelectors
+net.minecraft.client.renderer.state.level.LevelRenderState
+net.minecraft.world.entity.Display$BlockDisplay
+-protected net.minecraft.world.entity.Display
+net.minecraft.world.level.block.state.properties.IntegerProperty
+net.minecraft.world.level.block.state.properties.BooleanProperty
+net.minecraft.world.level.block.state.properties.BlockStateProperties
+net.minecraft.world.level.block.state.StateDefinition$Builder
+-protected net.minecraft.world.level.block.Block
+-protected net.minecraft.world.level.block.state.BlockBehaviour
+net.minecraft.world.level.block.RenderShape
+net.minecraft.client.renderer.rendertype.RenderTypes
+net.minecraft.client.DeltaTracker
+net.minecraft.client.Minecraft
+net.minecraft.client.renderer.RenderPipelines
+com.mojang.blaze3d.pipeline.RenderPipeline
+-protected net.minecraft.client.renderer.SkyRenderer
+net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler
+net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler
+net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderingRegistry
+net.minecraft.client.renderer.fog.FogRenderer
+net.minecraft.client.renderer.rendertype.RenderType
+net.minecraft.client.Options
+-protected net.minecraft.world.entity.Entity
+-protected net.minecraft.client.renderer.entity.EntityRenderer
+net.minecraft.client.renderer.entity.state.EntityRenderState
+net.minecraft.client.renderer.entity.EntityRendererProvider$Context
+net.minecraft.world.level.storage.ValueInput
+net.minecraft.world.level.storage.ValueOutput
+net.minecraft.network.syncher.SynchedEntityData$Builder
+net.minecraft.network.syncher.SynchedEntityData
+net.minecraft.network.syncher.EntityDataSerializers
+net.minecraft.world.entity.EntityType$Builder
+net.minecraft.world.entity.EntityDimensions
+com.mojang.renderpearl.api.pipeline.RenderPipeline
+com.mojang.renderpearl.api.pipeline.RenderPipeline$Builder
+com.mojang.renderpearl.api.pipeline.RenderPipeline$Snippet
+com.mojang.renderpearl.api.pipeline.BlendFunction
+com.mojang.renderpearl.api.pipeline.PrimitiveTopology
+net.minecraft.client.renderer.rendertype.RenderSetup
+net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder
+net.minecraft.client.renderer.RenderPipelines
+com.mojang.blaze3d.vertex.DefaultVertexFormat
+com.mojang.renderpearl.api.vertex.DefaultVertexFormat
+com.mojang.renderpearl.api.vertex.VertexFormat
+net.minecraft.sounds.SoundEvent
+net.minecraft.sounds.SoundEvents

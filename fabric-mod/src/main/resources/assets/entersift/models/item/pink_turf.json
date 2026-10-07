@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "entersift:block/pink_turf_top",
+    "side": "entersift:block/pink_turf_side",
+    "bottom": "entersift:block/sift_earth"
+  }
+}

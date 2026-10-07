@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "entersift:item/red_rift_gauntlet"
+  }
+}

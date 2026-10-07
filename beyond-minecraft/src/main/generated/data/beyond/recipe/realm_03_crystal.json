@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "EE",
+    "EE"
+  ],
+  "key": {
+    "E": {
+      "item": "beyond:realm_03_echo"
+    }
+  },
+  "result": {
+    "id": "beyond:realm_03_crystal"
+  }
+}

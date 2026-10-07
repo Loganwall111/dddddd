@@ -1,0 +1,1 @@
+$execute unless entity @e[type=entersift:rift_portal,tag=sift.portal_anchor,distance=..1] run summon entersift:rift_portal ~ ~ ~ {Tags:["sift.forming","sift.portal_anchor"],RiftType:4,Width:$(pw)f,Height:$(sy)f,Rotation:[$(yaw)f,0f]}

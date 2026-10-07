@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:spring_feature",
+  "state": {
+    "id": "minecraft:water",
+    "properties": {
+      "falling": "true"
+    }
+  },
+  "requires_block_below": true,
+  "rock_count": 4,
+  "hole_count": 1,
+  "valid_blocks": [
+    "entersift:crag_rock",
+    "entersift:crag_band",
+    "entersift:pale_crust",
+    "entersift:crag_rock_dark",
+    "entersift:crag_band",
+    "entersift:pale_crust",
+    "minecraft:deepslate"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:glass",
+    "minecraft:amethyst_shard",
+    "minecraft:prismarine_crystals"
+  ],
+  "result": {
+    "id": "entersift:sift_mosaic",
+    "count": 2
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "entersift:rose_spire",
+  "result": {
+    "id": "entersift:rose_path",
+    "count": 1
+  }
+}

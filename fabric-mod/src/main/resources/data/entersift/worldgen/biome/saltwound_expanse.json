@@ -1,0 +1,56 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#46b9b4"
+  },
+  "attributes": {
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:soul"
+          },
+          "probability": 0.003
+        },
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.004
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    },
+    "minecraft:visual/fog_color": "#f2f2e2"
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:soul_salt",
+      "entersift:crystals",
+      "entersift:ruined_arch",
+      "entersift:sift_coral_yellow",
+      "entersift:blue_grass_saltwound_expanse",
+      "entersift:glow_tuft_saltwound_expanse"
+    ],
+    []
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:rose_spire"
+    },
+    "title": {
+      "text": "Sift Cartographer"
+    },
+    "description": {
+      "text": "Visit every biome of the Sift"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "carapace": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:location": {
+              "biomes": "entersift:carapace"
+            }
+          }
+        }
+      }
+    },
+    "singer_meadow": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:location": {
+              "biomes": "entersift:singer_meadow"
+            }
+          }
+        }
+      }
+    },
+    "saltwound_expanse": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:location": {
+              "biomes": "entersift:saltwound_expanse"
+            }
+          }
+        }
+      }
+    },
+    "rose_spires": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:location": {
+              "biomes": "entersift:rose_spires"
+            }
+          }
+        }
+      }
+    },
+    "pale_grove": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:location": {
+              "biomes": "entersift:pale_grove"
+            }
+          }
+        }
+      }
+    },
+    "tidepool_reef": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:location": {
+              "biomes": "entersift:tidepool_reef"
+            }
+          }
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "carapace"
+    ],
+    [
+      "singer_meadow"
+    ],
+    [
+      "saltwound_expanse"
+    ],
+    [
+      "rose_spires"
+    ],
+    [
+      "pale_grove"
+    ],
+    [
+      "tidepool_reef"
+    ]
+  ],
+  "parent": "entersift:enter",
+  "rewards": {
+    "experience": 150
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:blub_spawn_egg"
+    },
+    "title": {
+      "text": "Blub?"
+    },
+    "description": {
+      "text": "Meet a Blub... the hard way"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "blub": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:entity_type": "entersift:blub"
+          }
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "blub"
+    ]
+  ],
+  "parent": "entersift:enter"
+}

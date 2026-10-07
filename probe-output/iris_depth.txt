@@ -1,0 +1,251 @@
+=== net.irisshaders.iris.mixin.MixinRenderPipeline
+Compiled from "MixinRenderPipeline.java"
+public class net.irisshaders.iris.mixin.MixinRenderPipeline {
+  public net.irisshaders.iris.mixin.MixinRenderPipeline();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  private void iris$change(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<com.mojang.renderpearl.api.vertex.VertexFormat>);
+    Code:
+         0: invokestatic  #7                  // Method net/irisshaders/iris/Iris.isPackInUseQuick:()Z
+         3: ifeq          194
+         6: invokestatic  #13                 // Method java/lang/Thread.currentThread:()Ljava/lang/Thread;
+         9: invokevirtual #19                 // Method java/lang/Thread.getName:()Ljava/lang/String;
+        12: ldc           #23                 // String Render
+        14: invokevirtual #25                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+        17: ifeq          194
+        20: getstatic     #31                 // Field net/irisshaders/iris/vertices/ImmediateState.isRenderingLevel:Z
+        23: ifeq          194
+        26: getstatic     #37                 // Field net/irisshaders/iris/vertices/ImmediateState.skipExtension:Ljava/lang/ThreadLocal;
+        29: invokevirtual #41                 // Method java/lang/ThreadLocal.get:()Ljava/lang/Object;
+        32: checkcast     #47                 // class java/lang/Boolean
+        35: invokevirtual #49                 // Method java/lang/Boolean.booleanValue:()Z
+        38: ifne          194
+        41: aload_1
+        42: invokevirtual #52                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.getReturnValue:()Ljava/lang/Object;
+        45: checkcast     #57                 // class com/mojang/renderpearl/api/vertex/VertexFormat
+        48: astore_2
+        49: aload_0
+        50: checkcast     #59                 // class com/mojang/renderpearl/api/pipeline/RenderPipeline
+        53: astore_3
+        54: aload_2
+        55: getstatic     #61                 // Field com/mojang/blaze3d/vertex/DefaultVertexFormat.BLOCK:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+        58: invokestatic  #67                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+        61: ifeq          74
+        64: aload_1
+        65: getstatic     #73                 // Field net/irisshaders/iris/vertices/IrisVertexFormats.TERRAIN:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+        68: invokevirtual #78                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.setReturnValue:(Ljava/lang/Object;)V
+        71: goto          194
+        74: aload_2
+        75: getstatic     #82                 // Field com/mojang/blaze3d/vertex/DefaultVertexFormat.POSITION_TEX_LIGHTMAP_COLOR:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+        78: invokestatic  #67                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+        81: ifeq          94
+        84: aload_1
+        85: getstatic     #85                 // Field net/irisshaders/iris/vertices/IrisVertexFormats.GLYPH:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+        88: invokevirtual #78                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.setReturnValue:(Ljava/lang/Object;)V
+        91: goto          194
+        94: aload_2
+        95: getstatic     #88                 // Field com/mojang/blaze3d/vertex/DefaultVertexFormat.POSITION_TEX_COLOR:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+        98: invokestatic  #67                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+       101: ifeq          124
+       104: aload_3
+       105: getstatic     #91                 // Field net/minecraft/client/renderer/RenderPipelines.TEXT_SEE_THROUGH:Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;
+       108: invokevirtual #97                 // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+       111: ifeq          124
+       114: aload_1
+       115: getstatic     #85                 // Field net/irisshaders/iris/vertices/IrisVertexFormats.GLYPH:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       118: invokevirtual #78                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.setReturnValue:(Ljava/lang/Object;)V
+       121: goto          194
+       124: aload_2
+       125: getstatic     #100                // Field com/mojang/blaze3d/vertex/DefaultVertexFormat.ENTITY:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       128: invokestatic  #67                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+       131: ifeq          144
+       134: aload_1
+       135: getstatic     #103                // Field net/irisshaders/iris/vertices/IrisVertexFormats.ENTITY:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       138: invokevirtual #78                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.setReturnValue:(Ljava/lang/Object;)V
+       141: goto          194
+       144: aload_2
+       145: getstatic     #104                // Field com/mojang/blaze3d/vertex/DefaultVertexFormat.ENTITY_GLINT_SPECIAL:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       148: invokestatic  #67                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+       151: ifeq          164
+       154: aload_1
+       155: getstatic     #107                // Field net/irisshaders/iris/vertices/IrisVertexFormats.ENTITY_GLINT_SPECIAL:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       158: invokevirtual #78                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.setReturnValue:(Ljava/lang/Object;)V
+       161: goto          194
+       164: aload_2
+       165: getstatic     #108                // Field net/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkMeshFormats.COMPACT:Lnet/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkVertexType;
+       168: invokeinterface #114,  1          // InterfaceMethod net/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkVertexType.getVertexFormat:()Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       173: invokestatic  #67                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+       176: ifeq          194
+       179: aload_1
+       180: getstatic     #120                // Field net/irisshaders/iris/shaderpack/materialmap/WorldRenderingSettings.INSTANCE:Lnet/irisshaders/iris/shaderpack/materialmap/WorldRenderingSettings;
+       183: invokevirtual #126                // Method net/irisshaders/iris/shaderpack/materialmap/WorldRenderingSettings.getVertexFormat:()Lnet/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkVertexType;
+       186: invokeinterface #114,  1          // InterfaceMethod net/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkVertexType.getVertexFormat:()Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       191: invokevirtual #78                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.setReturnValue:(Ljava/lang/Object;)V
+       194: return
+
+  private void iris$change2(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<java.util.List<com.mojang.renderpearl.api.vertex.VertexFormat>>);
+    Code:
+         0: invokestatic  #7                  // Method net/irisshaders/iris/Iris.isPackInUseQuick:()Z
+         3: ifeq          256
+         6: invokestatic  #13                 // Method java/lang/Thread.currentThread:()Ljava/lang/Thread;
+         9: invokevirtual #19                 // Method java/lang/Thread.getName:()Ljava/lang/String;
+        12: ldc           #23                 // String Render
+        14: invokevirtual #25                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+        17: ifeq          256
+        20: getstatic     #31                 // Field net/irisshaders/iris/vertices/ImmediateState.isRenderingLevel:Z
+        23: ifeq          256
+        26: getstatic     #37                 // Field net/irisshaders/iris/vertices/ImmediateState.skipExtension:Ljava/lang/ThreadLocal;
+        29: invokevirtual #41                 // Method java/lang/ThreadLocal.get:()Ljava/lang/Object;
+        32: checkcast     #47                 // class java/lang/Boolean
+        35: invokevirtual #49                 // Method java/lang/Boolean.booleanValue:()Z
+        38: ifne          256
+        41: aload_1
+        42: invokevirtual #52                 // Method org/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable.getReturnValue:()Ljava/lang/Object;
+        45: checkcast     #129                // class java/util/List
+        48: iconst_0
+        49: invokeinterface #131,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+        54: checkcast     #57                 // class com/mojang/renderpearl/api/vertex/VertexFormat
+        57: astore_2
+        58: aload_0
+        59: checkcast     #59                 // class com/mojang/renderpearl/api/pipeline/RenderPipeline
+        62: astore_3
+        63: aload_2
+        64: getstatic     #61                 // Field com/mojang/blaze3d/vertex/DefaultVertexFormat.BLOCK:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+        67: invokestatic  #67                 // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+        70: ifeq          93
+        73: aload_1
+        74: iconst_1
+        75: anewarray     #57                 // class com/mojang/renderpearl/api/vertex/VertexFormat
+=== net.irisshaders.iris.mixin.MixinGlRenderPipeline
+Compiled from "MixinGlRenderPipeline.java"
+public class net.irisshaders.iris.mixin.MixinGlRenderPipeline implements net.irisshaders.iris.mixinterface.GlRenderPipelineAccess {
+  private com.mojang.renderpearl.backend.opengl.GlProgram program;
+
+  private com.mojang.renderpearl.backend.api.BackendRenderPipeline$CreateInfo createInfo;
+
+  public net.irisshaders.iris.mixin.MixinGlRenderPipeline();
+    Code:
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+
+  private void iris$setCreateInfo(com.mojang.renderpearl.backend.opengl.GlDevice, com.mojang.renderpearl.backend.api.BackendRenderPipeline$CreateInfo, com.mojang.renderpearl.backend.opengl.GlProgram, com.mojang.renderpearl.backend.opengl.VertexArray, org.spongepowered.asm.mixin.injection.callback.CallbackInfo);
+    Code:
+         0: aload_0
+         1: aload_2
+         2: putfield      #7                  // Field createInfo:Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline$CreateInfo;
+         5: return
+
+  public com.mojang.renderpearl.backend.api.BackendRenderPipeline$CreateInfo getCreateInfo();
+    Code:
+         0: aload_0
+         1: getfield      #7                  // Field createInfo:Lcom/mojang/renderpearl/backend/api/BackendRenderPipeline$CreateInfo;
+         4: areturn
+
+  private boolean iris$redirectCull(com.mojang.renderpearl.backend.opengl.GlRenderPipeline, com.llamalad7.mixinextras.injector.wrapoperation.Operation<java.lang.Boolean>);
+    Code:
+         0: invokestatic  #13                 // Method net/irisshaders/iris/shadows/ShadowRenderingState.areShadowsCurrentlyBeingRendered:()Z
+         3: ifne          33
+         6: aload_2
+         7: iconst_1
+         8: anewarray     #2                  // class java/lang/Object
+        11: dup
+        12: iconst_0
+        13: aload_1
+        14: aastore
+        15: invokeinterface #19,  2           // InterfaceMethod com/llamalad7/mixinextras/injector/wrapoperation/Operation.call:([Ljava/lang/Object;)Ljava/lang/Object;
+        20: checkcast     #25                 // class java/lang/Boolean
+        23: invokevirtual #27                 // Method java/lang/Boolean.booleanValue:()Z
+        26: ifeq          33
+        29: iconst_1
+        30: goto          34
+        33: iconst_0
+        34: ireturn
+
+  private void iris$pass(int, com.llamalad7.mixinextras.injector.wrapoperation.Operation<java.lang.Void>);
+    Code:
+         0: invokestatic  #30                 // Method net/irisshaders/iris/Iris.getPipelineManager:()Lnet/irisshaders/iris/pipeline/PipelineManager;
+         3: invokevirtual #36                 // Method net/irisshaders/iris/pipeline/PipelineManager.getPipelineNullable:()Lnet/irisshaders/iris/pipeline/WorldRenderingPipeline;
+         6: astore_3
+         7: invokestatic  #13                 // Method net/irisshaders/iris/shadows/ShadowRenderingState.areShadowsCurrentlyBeingRendered:()Z
+        10: ifeq          164
+        13: aload_2
+        14: iconst_1
+        15: anewarray     #2                  // class java/lang/Object
+        18: dup
+        19: iconst_0
+        20: iload_1
+        21: tableswitch   { // 512 to 519
+                     512: 131
+                     513: 77
+                     514: 95
+                     515: 86
+                     516: 122
+                     517: 104
+                     518: 113
+                     519: 68
+                 default: 140
+            }
+        68: sipush        519
+        71: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        74: goto          154
+        77: sipush        516
+        80: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        83: goto          154
+        86: sipush        518
+        89: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        92: goto          154
+        95: sipush        514
+        98: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+       101: goto          154
+       104: sipush        517
+       107: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+       110: goto          154
+       113: sipush        515
+       116: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+       119: goto          154
+       122: sipush        513
+       125: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+       128: goto          154
+       131: sipush        512
+       134: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+       137: goto          154
+       140: new           #50                 // class java/lang/IllegalStateException
+       143: dup
+       144: iload_1
+       145: invokedynamic #52,  0             // InvokeDynamic #0:makeConcatWithConstants:(I)Ljava/lang/String;
+       150: invokespecial #56                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+       153: athrow
+       154: aastore
+       155: invokeinterface #19,  2           // InterfaceMethod com/llamalad7/mixinextras/injector/wrapoperation/Operation.call:([Ljava/lang/Object;)Ljava/lang/Object;
+       160: pop
+       161: goto          182
+       164: aload_2
+       165: iconst_1
+       166: anewarray     #2                  // class java/lang/Object
+       169: dup
+       170: iconst_0
+       171: iload_1
+       172: invokestatic  #42                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+       175: aastore
+       176: invokeinterface #19,  2           // InterfaceMethod com/llamalad7/mixinextras/injector/wrapoperation/Operation.call:([Ljava/lang/Object;)Ljava/lang/Object;
+       181: pop
+       182: return
+
+  private void iris$enableBlend(int, com.llamalad7.mixinextras.injector.wrapoperation.Operation<java.lang.Void>);
+    Code:
+         0: aload_0
+         1: getfield      #59                 // Field program:Lcom/mojang/renderpearl/backend/opengl/GlProgram;
+         4: instanceof    #63                 // class net/irisshaders/iris/pipeline/programs/IrisProgram
+=== reverseZ refs
+./net/irisshaders/iris/apiimpl/IrisApiV0Impl.class
+./net/irisshaders/iris/mixin/UndoReverseZFive.class
+./net/irisshaders/iris/mixin/UndoReverseZThree.class
+./net/irisshaders/iris/mixin/UndoReverseZFour.class
+./net/irisshaders/iris/mixin/UndoReverseZOne.class
+./net/irisshaders/iris/mixin/UndoReverseZThree$1.class
+./net/irisshaders/iris/mixin/UndoReverseZTwo.class
+./net/irisshaders/iris/api/v0/IrisApi.class

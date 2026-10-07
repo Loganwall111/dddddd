@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "entersift:rift_membrane",
+    "minecraft:orange_dye"
+  ],
+  "result": {
+    "id": "entersift:rift_orange",
+    "count": 1
+  }
+}

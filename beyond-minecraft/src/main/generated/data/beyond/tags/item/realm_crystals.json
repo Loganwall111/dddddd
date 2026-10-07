@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "beyond:realm_00_crystal",
+    "beyond:realm_01_crystal",
+    "beyond:realm_02_crystal",
+    "beyond:realm_03_crystal",
+    "beyond:realm_04_crystal",
+    "beyond:realm_05_crystal",
+    "beyond:realm_06_crystal",
+    "beyond:realm_07_crystal"
+  ]
+}

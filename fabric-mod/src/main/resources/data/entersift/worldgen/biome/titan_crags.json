@@ -1,0 +1,73 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#7fd3cf"
+  },
+  "attributes": {
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:cherry_leaves"
+          },
+          "probability": 0.006
+        },
+        {
+          "particle": {
+            "type": "minecraft:white_ash"
+          },
+          "probability": 0.008
+        },
+        {
+          "particle": {
+            "type": "minecraft:snowflake"
+          },
+          "probability": 0.003
+        },
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.003
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    },
+    "minecraft:visual/fog_color": "#f4dfe6",
+    "minecraft:visual/fog_start_distance": 12.0,
+    "minecraft:visual/fog_end_distance": 110.0
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:titan_crag",
+      "entersift:crag_spire",
+      "entersift:crag_boulder",
+      "entersift:crag_tree",
+      "entersift:sift_grass",
+      "entersift:blue_grass_titan_crags",
+      "entersift:pink_grass_titan_crags",
+      "entersift:glow_tuft_titan_crags",
+      "entersift:sift_bloom_titan_crags"
+    ],
+    []
+  ]
+}

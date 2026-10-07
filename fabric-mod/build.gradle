@@ -1,0 +1,51 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+version = project.mod_version
+group = project.maven_group
+base { archivesName = project.archives_base_name }
+repositories { mavenCentral() }
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        entersift {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+tasks.withType(JavaCompile).configureEach { options.release = 25 }
+java { withSourcesJar(); sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
+test { useJUnitPlatform() }
+// 0.11: optional Dungeons II Overworld Iris pack (OFF by default; the Sift itself needs no shaders).
+tasks.register('bundleShaders', Zip) {
+    from 'shaderpack'
+    archiveFileName = 'Dungeons-II-Overworld-0.15.zip'
+    preserveFileTimestamps = false // 0.18.2: identical content -> identical bytes (the client updates the pack only on change)
+    reproducibleFileOrder = true
+    destinationDirectory = layout.buildDirectory.dir('generated/sift-shaders/assets/entersift/shaderpacks')
+}
+sourceSets.main.resources.srcDir layout.buildDirectory.dir('generated/sift-shaders')
+processResources {
+    dependsOn bundleShaders
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+// Shader resources are also consumed by the sources archive.
+tasks.named("sourcesJar") { dependsOn tasks.named("bundleShaders") }
+
+
+// CI API probe helper (tools/probe): writes the compile classpath to a file.
+tasks.register('printProbeClasspath') {
+    def out = layout.buildDirectory.file('probe-classpath.txt')
+    def cp = sourceSets.client.compileClasspath + sourceSets.main.compileClasspath
+    doLast { def f = out.get().asFile; f.parentFile.mkdirs(); f.text = cp.files.findAll { it.exists() }.join(':') }
+}

@@ -1,0 +1,66 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0,
+  "effects": {
+    "water_color": "#46b9b4"
+  },
+  "attributes": {
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:soul"
+          },
+          "probability": 0.003
+        },
+        {
+          "particle": {
+            "type": "minecraft:glow"
+          },
+          "probability": 0.006
+        },
+        {
+          "particle": {
+            "type": "minecraft:spore_blossom_air"
+          },
+          "probability": 0.004
+        }
+      ]
+    },
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {}
+      }
+    },
+    "minecraft:visual/fog_color": "#d6f4de"
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "entersift:soul_salt",
+      "entersift:ruined_arch",
+      "entersift:weeping_soul_tree",
+      "entersift:flowers",
+      "entersift:sift_grass",
+      "entersift:glow_bulb",
+      "entersift:blue_grass_singer_meadow",
+      "entersift:pink_grass_singer_meadow",
+      "entersift:glow_tuft_singer_meadow",
+      "entersift:sift_bloom_singer_meadow"
+    ],
+    []
+  ]
+}

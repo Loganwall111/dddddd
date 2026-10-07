@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:ore",
+  "discard_chance_on_air_exposure": 0.0,
+  "size": 7,
+  "targets": [
+    {
+      "state": "entersift:ember_ore",
+      "target": {
+        "predicate_type": "minecraft:block_match",
+        "block": "entersift:cinder_rock"
+      }
+    },
+    {
+      "state": "entersift:ember_ore",
+      "target": {
+        "predicate_type": "minecraft:block_match",
+        "block": "entersift:crag_rock"
+      }
+    }
+  ]
+}

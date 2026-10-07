@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:terracotta",
+    "minecraft:pink_dye",
+    "entersift:salt"
+  ],
+  "result": {
+    "id": "entersift:rose_spire",
+    "count": 2
+  }
+}

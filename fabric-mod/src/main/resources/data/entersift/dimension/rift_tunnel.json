@@ -1,0 +1,18 @@
+{
+  "type": "entersift:rift_tunnel",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "entersift:rift_tunnel",
+      "layers": [
+        {
+          "block": "minecraft:air",
+          "height": 1
+        }
+      ],
+      "lakes": false,
+      "features": false,
+      "structure_overrides": []
+    }
+  }
+}

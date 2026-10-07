@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "entersift:rift_gauntlet",
+    "minecraft:red_dye"
+  ],
+  "result": {
+    "id": "entersift:red_rift_gauntlet",
+    "count": 1
+  }
+}

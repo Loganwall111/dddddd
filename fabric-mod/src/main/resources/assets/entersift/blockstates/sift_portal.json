@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "entersift:block/sift_portal"
+      },
+      {
+        "model": "entersift:block/sift_portal",
+        "y": 180
+      },
+      {
+        "model": "entersift:block/sift_portal_1"
+      },
+      {
+        "model": "entersift:block/sift_portal_1",
+        "y": 180
+      }
+    ]
+  }
+}

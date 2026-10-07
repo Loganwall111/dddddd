@@ -1,0 +1,31 @@
+{
+  "values": [
+    "entersift:salt",
+    "entersift:soul_salt",
+    "entersift:carapace",
+    "entersift:threshold",
+    "entersift:blub_jelly",
+    "entersift:saltstone",
+    "entersift:rift_membrane",
+    "entersift:rift_edge",
+    "entersift:resonance_red",
+    "entersift:resonance_magenta",
+    "entersift:resonance_pink",
+    "entersift:resonance_cyan",
+    "entersift:resonance_blue",
+    "entersift:resonance_purple",
+    "entersift:rose_spire",
+    "entersift:spire_bricks",
+    "entersift:rose_path",
+    "entersift:teal_path",
+    "entersift:reef_stone",
+    "entersift:ruin_bricks",
+    "entersift:mossy_ruin_bricks",
+    "entersift:ruin_tiles",
+    "entersift:cinder_rock",
+    "entersift:ash_crust",
+    "entersift:cinder_glow",
+    "entersift:ember_ore",
+    "entersift:sinter"
+  ]
+}

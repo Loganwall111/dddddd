@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "id": "entersift:rift_gauntlet"
+    },
+    "title": {
+      "text": "Tear the Veil"
+    },
+    "description": {
+      "text": "Obtain a Rift Gauntlet"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "gauntlet": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "entersift:rift_gauntlet"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "gauntlet"
+    ]
+  ],
+  "parent": "entersift:guardian"
+}

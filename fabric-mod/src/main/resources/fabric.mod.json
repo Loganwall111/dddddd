@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "entersift",
+  "version": "${version}",
+  "name": "Enter the Sift",
+  "description": "Salt, souls, and the song beneath the ancient city. Experimental dimension mod by Logan.",
+  "authors": ["Logan"],
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.logan.entersift.EnterTheSift"],
+    "client": ["dev.logan.entersift.SiftClient"]
+  },
+  "depends": {"fabricloader": ">=0.19.5", "minecraft": "~26.3", "java": ">=25", "fabric-api": ">=0.161.0+26.3"},
+  "suggests": {"iris": "*"}
+}

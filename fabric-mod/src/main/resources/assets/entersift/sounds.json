@@ -1,0 +1,295 @@
+{
+  "ritual.song": {
+    "subtitle": "subtitles.entersift.ritual.song",
+    "sounds": [
+      {
+        "name": "entersift:ritual/song",
+        "stream": true,
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "music.sift": {
+    "sounds": [
+      {
+        "name": "entersift:music/sift_1",
+        "stream": true
+      },
+      {
+        "name": "entersift:music/sift_2",
+        "stream": true
+      }
+    ]
+  },
+  "ambient.sift.loop": {
+    "sounds": [
+      {
+        "name": "entersift:ambient/sift_loop"
+      }
+    ]
+  },
+  "ambient.sift.mood": {
+    "sounds": [
+      {
+        "name": "entersift:ambient/sift_mood"
+      }
+    ],
+    "subtitle": "subtitles.entersift.ambient.sift.mood"
+  },
+  "ambient.sift.additions": {
+    "sounds": [
+      {
+        "name": "entersift:ambient/sift_add_1",
+        "volume": 0.6
+      },
+      {
+        "name": "entersift:ambient/sift_add_2",
+        "volume": 0.6
+      },
+      {
+        "name": "entersift:ambient/sift_add_3",
+        "volume": 0.6
+      }
+    ]
+  },
+  "entity.blub.ambient": {
+    "sounds": [
+      "entersift:entity/blub/ambient1",
+      "entersift:entity/blub/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.blub.ambient"
+  },
+  "entity.blub.hurt": {
+    "sounds": [
+      "entersift:entity/blub/hurt1",
+      "entersift:entity/blub/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.blub.hurt"
+  },
+  "entity.blub.death": {
+    "sounds": [
+      "entersift:entity/blub/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.blub.death"
+  },
+  "entity.sculker.ambient": {
+    "sounds": [
+      "entersift:entity/sculker/ambient1",
+      "entersift:entity/sculker/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.sculker.ambient"
+  },
+  "entity.sculker.hurt": {
+    "sounds": [
+      "entersift:entity/sculker/hurt1",
+      "entersift:entity/sculker/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.sculker.hurt"
+  },
+  "entity.sculker.death": {
+    "sounds": [
+      "entersift:entity/sculker/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.sculker.death"
+  },
+  "entity.sculkling.ambient": {
+    "sounds": [
+      "entersift:entity/sculkling/ambient1",
+      "entersift:entity/sculkling/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.sculkling.ambient"
+  },
+  "entity.sculkling.hurt": {
+    "sounds": [
+      "entersift:entity/sculkling/hurt1",
+      "entersift:entity/sculkling/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.sculkling.hurt"
+  },
+  "entity.sculkling.death": {
+    "sounds": [
+      "entersift:entity/sculkling/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.sculkling.death"
+  },
+  "entity.antlerling.ambient": {
+    "sounds": [
+      "entersift:entity/antlerling/ambient1",
+      "entersift:entity/antlerling/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.antlerling.ambient"
+  },
+  "entity.antlerling.hurt": {
+    "sounds": [
+      "entersift:entity/antlerling/hurt1",
+      "entersift:entity/antlerling/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.antlerling.hurt"
+  },
+  "entity.antlerling.death": {
+    "sounds": [
+      "entersift:entity/antlerling/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.antlerling.death"
+  },
+  "entity.drift_jelly.ambient": {
+    "sounds": [
+      "entersift:entity/drift_jelly/ambient1",
+      "entersift:entity/drift_jelly/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.drift_jelly.ambient"
+  },
+  "entity.drift_jelly.hurt": {
+    "sounds": [
+      "entersift:entity/drift_jelly/hurt1",
+      "entersift:entity/drift_jelly/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.drift_jelly.hurt"
+  },
+  "entity.drift_jelly.death": {
+    "sounds": [
+      "entersift:entity/drift_jelly/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.drift_jelly.death"
+  },
+  "entity.licker.ambient": {
+    "sounds": [
+      "entersift:entity/licker/ambient1",
+      "entersift:entity/licker/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.licker.ambient"
+  },
+  "entity.licker.hurt": {
+    "sounds": [
+      "entersift:entity/licker/hurt1",
+      "entersift:entity/licker/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.licker.hurt"
+  },
+  "entity.licker.death": {
+    "sounds": [
+      "entersift:entity/licker/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.licker.death"
+  },
+  "entity.overseer.ambient": {
+    "sounds": [
+      "entersift:entity/overseer/ambient1",
+      "entersift:entity/overseer/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.overseer.ambient"
+  },
+  "entity.overseer.hurt": {
+    "sounds": [
+      "entersift:entity/overseer/hurt1",
+      "entersift:entity/overseer/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.overseer.hurt"
+  },
+  "entity.overseer.death": {
+    "sounds": [
+      "entersift:entity/overseer/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.overseer.death"
+  },
+  "entity.twisted_warden.ambient": {
+    "sounds": [
+      "entersift:entity/twisted_warden/ambient1",
+      "entersift:entity/twisted_warden/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.twisted_warden.ambient"
+  },
+  "entity.twisted_warden.hurt": {
+    "sounds": [
+      "entersift:entity/twisted_warden/hurt1",
+      "entersift:entity/twisted_warden/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.twisted_warden.hurt"
+  },
+  "entity.twisted_warden.death": {
+    "sounds": [
+      "entersift:entity/twisted_warden/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.twisted_warden.death"
+  },
+  "entity.note_bird.ambient": {
+    "sounds": [
+      "entersift:entity/note_bird/ambient1",
+      "entersift:entity/note_bird/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.note_bird.ambient"
+  },
+  "entity.note_bird.hurt": {
+    "sounds": [
+      "entersift:entity/note_bird/hurt1",
+      "entersift:entity/note_bird/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.note_bird.hurt"
+  },
+  "entity.note_bird.death": {
+    "sounds": [
+      "entersift:entity/note_bird/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.note_bird.death"
+  },
+  "entity.singer.ambient": {
+    "sounds": [
+      "entersift:entity/singer/ambient1",
+      "entersift:entity/singer/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.singer.ambient"
+  },
+  "entity.singer.hurt": {
+    "sounds": [
+      "entersift:entity/singer/hurt1",
+      "entersift:entity/singer/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.singer.hurt"
+  },
+  "entity.singer.death": {
+    "sounds": [
+      "entersift:entity/singer/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.singer.death"
+  },
+  "entity.soul_bee.ambient": {
+    "sounds": [
+      "entersift:entity/soul_bee/ambient1",
+      "entersift:entity/soul_bee/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.soul_bee.ambient"
+  },
+  "entity.soul_bee.hurt": {
+    "sounds": [
+      "entersift:entity/soul_bee/hurt1",
+      "entersift:entity/soul_bee/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.soul_bee.hurt"
+  },
+  "entity.soul_bee.death": {
+    "sounds": [
+      "entersift:entity/soul_bee/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.soul_bee.death"
+  },
+  "entity.watchling.ambient": {
+    "sounds": [
+      "entersift:entity/watchling/ambient1",
+      "entersift:entity/watchling/ambient2"
+    ],
+    "subtitle": "subtitles.entersift.entity.watchling.ambient"
+  },
+  "entity.watchling.hurt": {
+    "sounds": [
+      "entersift:entity/watchling/hurt1",
+      "entersift:entity/watchling/hurt2"
+    ],
+    "subtitle": "subtitles.entersift.entity.watchling.hurt"
+  },
+  "entity.watchling.death": {
+    "sounds": [
+      "entersift:entity/watchling/death"
+    ],
+    "subtitle": "subtitles.entersift.entity.watchling.death"
+  }
+}

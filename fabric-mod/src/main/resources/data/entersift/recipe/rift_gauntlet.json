@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SES",
+    "SNS",
+    " S "
+  ],
+  "key": {
+    "S": "entersift:soul_salt",
+    "E": "minecraft:echo_shard",
+    "N": "minecraft:netherite_ingot"
+  },
+  "result": {
+    "id": "entersift:rift_gauntlet",
+    "count": 1
+  }
+}

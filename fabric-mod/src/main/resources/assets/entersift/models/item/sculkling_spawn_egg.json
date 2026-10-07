@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "entersift:item/sculkling_spawn_egg"
+  }
+}

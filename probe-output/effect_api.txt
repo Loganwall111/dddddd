@@ -1,0 +1,86 @@
+===== net.minecraft.world.effect.MobEffect
+Compiled from "MobEffect.java"
+public class net.minecraft.world.effect.MobEffect implements net.minecraft.world.flag.FeatureElement,net.fabricmc.fabric.api.entity.event.v1.effect.FabricMobEffect {
+  public static final com.mojang.serialization.Codec<net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>> CODEC;
+  public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>> STREAM_CODEC;
+  protected net.minecraft.world.effect.MobEffect(net.minecraft.world.effect.MobEffectCategory, int);
+  protected net.minecraft.world.effect.MobEffect(net.minecraft.world.effect.MobEffectCategory, int, net.minecraft.core.particles.ParticleOptions);
+  public void applyInstantaneousEffect(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.Entity, net.minecraft.world.entity.Entity, net.minecraft.world.entity.LivingEntity, int, double);
+  public net.minecraft.world.effect.MobEffectCategory getCategory();
+  public net.minecraft.world.effect.MobEffect addAttributeModifier(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.resources.Identifier, double, net.minecraft.world.entity.ai.attributes.AttributeModifier$Operation);
+  public net.minecraft.world.effect.MobEffect setBlendDuration(int);
+  public net.minecraft.world.effect.MobEffect setBlendDuration(int, int, int);
+  public void createModifiers(int, java.util.function.BiConsumer<net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier>);
+  public net.minecraft.core.particles.ParticleOptions createParticleOptions(net.minecraft.world.effect.MobEffectInstance);
+  public net.minecraft.world.effect.MobEffect withSoundOnAdded(net.minecraft.sounds.SoundEvent);
+  public net.minecraft.world.effect.MobEffect requiredFeatures(net.minecraft.world.flag.FeatureFlag...);
+===== net.minecraft.world.effect.MobEffectInstance
+Compiled from "MobEffectInstance.java"
+public class net.minecraft.world.effect.MobEffectInstance implements java.lang.Comparable<net.minecraft.world.effect.MobEffectInstance> {
+  public static final com.mojang.serialization.Codec<net.minecraft.world.effect.MobEffectInstance> CODEC;
+  public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.world.effect.MobEffectInstance> STREAM_CODEC;
+  public net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>);
+  public net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, int);
+  public net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, int, int);
+  public net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, int, int, boolean, boolean);
+  public net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, int, int, boolean, boolean, boolean);
+  public net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, int, int, boolean, boolean, boolean, net.minecraft.world.effect.MobEffectInstance);
+  public net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffectInstance);
+  public boolean update(net.minecraft.world.effect.MobEffectInstance);
+  public boolean isInfiniteDuration();
+  public boolean endsWithin(int);
+  public net.minecraft.world.effect.MobEffectInstance withScaledDuration(float);
+  public net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> getEffect();
+  public int getDuration();
+  public int compareTo(net.minecraft.world.effect.MobEffectInstance);
+  public boolean is(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>);
+  public void copyBlendState(net.minecraft.world.effect.MobEffectInstance);
+===== net.minecraft.world.effect.MobEffectCategory
+Compiled from "MobEffectCategory.java"
+public final class net.minecraft.world.effect.MobEffectCategory extends java.lang.Enum<net.minecraft.world.effect.MobEffectCategory> {
+  public static final net.minecraft.world.effect.MobEffectCategory BENEFICIAL;
+  public static final net.minecraft.world.effect.MobEffectCategory HARMFUL;
+  public static final net.minecraft.world.effect.MobEffectCategory NEUTRAL;
+  public static net.minecraft.world.effect.MobEffectCategory[] values();
+  public static net.minecraft.world.effect.MobEffectCategory valueOf(java.lang.String);
+===== net.minecraft.core.Registry
+public interface net.minecraft.core.Registry<T> extends net.minecraft.core.IdMap<T>, com.mojang.serialization.Keyable, net.minecraft.core.HolderLookup$RegistryLookup<T>, net.fabricmc.fabric.api.event.registry.FabricRegistry {
+  public default com.mojang.serialization.Codec<net.minecraft.core.Holder<T>> holderByNameCodec();
+  public abstract java.util.Optional<net.minecraft.core.Holder$Reference<T>> getAny();
+  public abstract java.util.Optional<net.minecraft.core.Holder$Reference<T>> getRandom(net.minecraft.util.RandomSource);
+  public static <T> T register(net.minecraft.core.Registry<? super T>, java.lang.String, T);
+  public static <V, T extends V> T register(net.minecraft.core.Registry<V>, net.minecraft.resources.Identifier, T);
+  public static <V, T extends V> T register(net.minecraft.core.Registry<V>, net.minecraft.resources.ResourceKey<V>, T);
+  public static <R, T extends R> net.minecraft.core.Holder$Reference<T> registerForHolder(net.minecraft.core.Registry<R>, net.minecraft.resources.ResourceKey<R>, T);
+  public static <R, T extends R> net.minecraft.core.Holder$Reference<T> registerForHolder(net.minecraft.core.Registry<R>, net.minecraft.resources.Identifier, T);
+  public abstract net.minecraft.core.Holder$Reference<T> createIntrusiveHolder(T);
+  public abstract java.util.Optional<net.minecraft.core.Holder$Reference<T>> get(int);
+  public abstract java.util.Optional<net.minecraft.core.Holder$Reference<T>> get(net.minecraft.resources.Identifier);
+  public abstract net.minecraft.core.Holder<T> wrapAsHolder(T);
+  public default java.lang.Iterable<net.minecraft.core.Holder<T>> getTagOrEmpty(net.minecraft.tags.TagKey<T>);
+  public abstract java.util.stream.Stream<net.minecraft.core.HolderSet$Named<T>> getTags();
+  public default net.minecraft.core.IdMap<net.minecraft.core.Holder<T>> asHolderIdMap();
+===== net.minecraft.world.entity.LivingEntity
+public abstract class net.minecraft.world.entity.LivingEntity extends net.minecraft.world.entity.Entity implements net.minecraft.world.entity.Attackable,net.minecraft.world.waypoints.WaypointTransmitter {
+  protected net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> getEquipSound(net.minecraft.world.entity.EquipmentSlot, net.minecraft.world.item.ItemStack, net.minecraft.world.item.equipment.Equippable);
+  protected void triggerOnDeathMobEffects(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.Entity$RemovalReason);
+  public static boolean areAllEffectsAmbient(java.util.Collection<net.minecraft.world.effect.MobEffectInstance>);
+  public java.util.Collection<net.minecraft.world.effect.MobEffectInstance> getActiveEffects();
+  public java.util.Map<net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, net.minecraft.world.effect.MobEffectInstance> getActiveEffectsMap();
+  public boolean hasEffect(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>);
+  public net.minecraft.world.effect.MobEffectInstance getEffect(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>);
+  public float getEffectBlendFactor(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>, float);
+  public final boolean addEffect(net.minecraft.world.effect.MobEffectInstance);
+  public boolean addEffect(net.minecraft.world.effect.MobEffectInstance, net.minecraft.world.entity.Entity);
+  public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance);
+  public void forceAddEffect(net.minecraft.world.effect.MobEffectInstance, net.minecraft.world.entity.Entity);
+  public final net.minecraft.world.effect.MobEffectInstance removeEffectNoUpdate(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>);
+  public boolean removeEffect(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>);
+  protected void onEffectAdded(net.minecraft.world.effect.MobEffectInstance, net.minecraft.world.entity.Entity);
+  public void sendEffectToPassengers(net.minecraft.world.effect.MobEffectInstance);
+  protected void onEffectUpdated(net.minecraft.world.effect.MobEffectInstance, boolean, net.minecraft.world.entity.Entity);
+  protected void onEffectsRemoved(java.util.Collection<net.minecraft.world.effect.MobEffectInstance>);
+  protected void onAttributeUpdated(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>);
+  public net.minecraft.world.entity.ai.attributes.AttributeInstance getAttribute(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>);
+  public double getAttributeValue(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>);
+  public double getAttributeBaseValue(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>);
