@@ -3,7 +3,8 @@
   "package": "dev.logan.beyond.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "EntityRendererStretchMixin"
+    "EntityRendererStretchMixin",
+    "EntityRenderDispatcherStretchMixin"
   ],
   "injectors": {
     "defaultRequire": 1

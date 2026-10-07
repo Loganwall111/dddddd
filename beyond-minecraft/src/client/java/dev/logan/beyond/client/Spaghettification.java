@@ -51,6 +51,9 @@ public final class Spaghettification {
         matrices.push();
         hooksFired++;
         if (entity instanceof dev.logan.beyond.entity.RealmCritter) critterHooks++;
+        if (hooksFired <= 24 || hooksFired % 400 == 0)
+            dev.logan.beyond.BeyondMinecraft.LOGGER.info("BEYOND_RENDER hook={} entity={} stretch={}", hooksFired,
+                entity.getType().toString(), forEntity(entity) != null);
         var depths = ACTIVE_RENDER_DEPTH.get();
         Integer depth = depths.get(entity);
         if (depth != null) { depths.put(entity, depth + 1); return; }
