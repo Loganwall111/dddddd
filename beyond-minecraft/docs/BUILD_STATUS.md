@@ -15,16 +15,18 @@
 | Real dedicated server | Actual Minecraft registry codecs loaded; every realm generated chunks and a safe landing; journey/root/realm NBT and scale checks passed |
 | Real Minecraft client | Mesa/Xvfb software OpenGL, 960×540: native programs loaded, post-process frames rendered, and the in-world integration suite passed |
 | In-world integration | World travel (root → realm → nested realm → root), inventory clone/mutation/restore, player NBT persistence, keepInventory-OFF death and non-resurrection, scale extremes 1/1024× → 4096×, sky well as a persistent client node, measurable lensing, tidal stretch applied to a rendered creature, tear → hub → fractal → labyrinth travel, an armed and torn-down wormhole corridor, the Umbrella branch rewrite, and foreground depth occlusion |
-| Screenshots | 20 real client captures uploaded with the run (`Beyond-verification` artifact, `run/screenshots/beyond-*.png`) |
+| Screenshots | 25 real client captures uploaded with the run (`Beyond-verification` artifact, `run/screenshots/beyond-*.png`) and rendered as a gallery at [`docs/runtime/index.html`](runtime/index.html) |
 
 **Installable alpha from that run:** `beyond-minecraft-0.1.0-alpha.jar` — 478,070 bytes,
 SHA-256 `c11fac12a9774fc40fa70d467097d903fab12012f7cce0aa6c9293e9476884d4`
 (`-sources.jar` 403,559 bytes, SHA-256 `e197807199a872be4c02616105ee206fff23396176393713a4d97f21285819f8`).
 The JAR is built by CI; commit documentation edits only, so a later commit does not invalidate it.
 
-To publish the freshly verified JAR and that run's screenshots onto this branch, start
-**Actions → Beyond the Threshold — build & validate → Run workflow** with **publish_snapshot**
-enabled. The publishing job refuses to attach an old binary to edited sources and never force-pushes.
+The publishing job now runs automatically after every push to a session branch (`arena/*`), so the
+captures and the verified JAR from a green run land in `docs/runtime/` and `releases/` on their own;
+**Actions → Beyond the Threshold — build, playtest & capture → Run workflow** with **publish_snapshot**
+enabled remains as a manual path. Each publish replaces the previous snapshot's frames rather than
+accumulating them, refuses to attach an old binary to edited sources, and never force-pushes.
 
 ## Defects found and corrected on the way to this record
 
@@ -54,6 +56,7 @@ is made, and Iris/Sodium or real vendor drivers still need their own passes. The
 disposable (`beyond-ci`); servers, multiplayer, VR and long-session play are not covered here.
 See [TEST_PLAN.md](TEST_PLAN.md) for the manual matrix that remains.
 
-The screenshots committed under `docs/runtime/` are real, unedited Minecraft captures from the
-previous green snapshot; the newest captures travel with each run's `Beyond-verification` artifact
-until a publish run refreshes this directory.
+The screenshots committed under `docs/runtime/` are real, unedited Minecraft captures of the newest
+green run on this branch — CI writes them there after each successful in-world suite, alongside
+`index.html`, `verification.json` and the tail of the client log. The same frames always accompany
+the run itself in the `Beyond-verification` artifact.

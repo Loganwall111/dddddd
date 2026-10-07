@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beyond the Threshold -- in-client capture gallery</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 2rem clamp(1rem, 4vw, 4rem) 4rem; background: #0b0a12; color: #e8e6f2;
+         font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size: clamp(1.4rem, 3vw, 2.1rem); margin: 0 0 .35rem; letter-spacing: .01em; }
+  .lede { color: #a9a4c4; max-width: 62ch; margin: 0 0 1.2rem; }
+  .hud { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: center; margin: 0 0 1.6rem;
+          color: #bdb8d8; font-size: .9rem; }
+  .hud a { color: #9fd0ff; }
+  .checks { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; padding: 0; margin: 0; }
+  .checks li { background: #181631; border: 1px solid #2b2850; border-radius: .6rem; padding: .35rem .7rem;
+                 display: flex; gap: .5rem; font-size: .85rem; }
+  .checks b { color: #7ee2a8; }
+  .grid { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+  figure { margin: 0; background: #14122a; border: 1px solid #2b2850; border-radius: .9rem; overflow: hidden;
+            display: flex; flex-direction: column; }
+  figure img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: #000; }
+  figcaption { padding: .7rem .85rem .85rem; color: #cfcae8; font-size: .88rem; }
+  figcaption b { color: #ffffff; font-size: .8rem; letter-spacing: .02em; }
+  .meta { color: #8d88ab; }
+</style>
+</head>
+<body>
+  <h1>Beyond the Threshold &mdash; real in-client captures</h1>
+  <p class="lede">Every frame below was taken by the mod's own integration harness running a real
+     Minecraft client inside the GitHub Actions workflow (software GL, Xvfb). Nothing here is a
+     mockup or an offline render: the client walked the worlds, opened the lens, tore the membrane
+     and photographed what it saw.</p>
+  <div class="hud">
+    <span>12 captures</span>
+    <ul class="checks">
+        <li><span>junit_tests</span><b>30</b></li>
+        <li><span>junit_failures</span><b>0</b></li>
+        <li><span>server_realms_and_journey</span><b>True</b></li>
+        <li><span>client_native_glsl</span><b>True</b></li>
+        <li><span>client_in_world_integration</span><b>True</b></li>
+    </ul>
+    <span><a href="https://github.com/Loganwall111/dddddd/actions/runs/37465039463">workflow run</a> &middot; <code>5feb4ab977ff</code> &middot; jar sha256 <code>c211c1ec94f899e7...</code></span>
+  </div>
+  <div class="grid">
+      <figure>
+        <img src="beyond-01-witness.png" alt="First witnessed frame inside a Beyond world" loading="lazy">
+        <figcaption><b>beyond-01-witness.png</b><br>First witnessed frame inside a Beyond world<br><span class="meta">528 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-02-singularity.png" alt="Singularity core, up close" loading="lazy">
+        <figcaption><b>beyond-02-singularity.png</b><br>Singularity core, up close<br><span class="meta">492 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-03-membrane.png" alt="Reality membrane holding the surface together" loading="lazy">
+        <figcaption><b>beyond-03-membrane.png</b><br>Reality membrane holding the surface together<br><span class="meta">519 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-04-lens-0.png" alt="Reality lens 0 -- world seen through the lens post-process" loading="lazy">
+        <figcaption><b>beyond-04-lens-0.png</b><br>Reality lens 0 -- world seen through the lens post-process<br><span class="meta">546 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-04-lens-1.png" alt="Reality lens 1 -- world seen through the lens post-process" loading="lazy">
+        <figcaption><b>beyond-04-lens-1.png</b><br>Reality lens 1 -- world seen through the lens post-process<br><span class="meta">587 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-04-lens-2.png" alt="Reality lens 2 -- world seen through the lens post-process" loading="lazy">
+        <figcaption><b>beyond-04-lens-2.png</b><br>Reality lens 2 -- world seen through the lens post-process<br><span class="meta">512 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-04-lens-3.png" alt="Reality lens 3 -- world seen through the lens post-process" loading="lazy">
+        <figcaption><b>beyond-04-lens-3.png</b><br>Reality lens 3 -- world seen through the lens post-process<br><span class="meta">365 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-04-lens-4.png" alt="Reality lens 4 -- world seen through the lens post-process" loading="lazy">
+        <figcaption><b>beyond-04-lens-4.png</b><br>Reality lens 4 -- world seen through the lens post-process<br><span class="meta">557 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-04-lens-5.png" alt="Reality lens 5 -- world seen through the lens post-process" loading="lazy">
+        <figcaption><b>beyond-04-lens-5.png</b><br>Reality lens 5 -- world seen through the lens post-process<br><span class="meta">401 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-05-generated-realm.png" alt="A generated realm plate from the multiverse table" loading="lazy">
+        <figcaption><b>beyond-05-generated-realm.png</b><br>A generated realm plate from the multiverse table<br><span class="meta">618 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-06-field-guide.png" alt="Field guide open in the player&#x27;s hand" loading="lazy">
+        <figcaption><b>beyond-06-field-guide.png</b><br>Field guide open in the player's hand<br><span class="meta">71 kB</span></figcaption>
+      </figure>
+      <figure>
+        <img src="beyond-07-native-depth-occlusion.png" alt="Lens occlusion against real foreground geometry (native depth buffer)" loading="lazy">
+        <figcaption><b>beyond-07-native-depth-occlusion.png</b><br>Lens occlusion against real foreground geometry (native depth buffer)<br><span class="meta">35 kB</span></figcaption>
+      </figure>
+  </div>
+</body>
+</html>
