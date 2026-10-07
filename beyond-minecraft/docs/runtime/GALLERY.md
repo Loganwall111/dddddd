@@ -4,8 +4,8 @@ These frames were taken by the mod's own integration harness driving a real Mine
 inside the GitHub Actions workflow (Mesa software GL, Xvfb). Nothing here is a mockup: the
 client travelled the worlds, opened the lens, tore the membrane and photographed the result.
 
-**Workflow run:** https://github.com/Loganwall111/dddddd/actions/runs/37693027605
-**Verified source commit:** `67500697452b92703a18c8f342aa0fbcac8d9fd1`
+**Workflow run:** https://github.com/Loganwall111/dddddd/actions/runs/37694022603
+**Verified source commit:** `67eeb7983a119da91ec948330103c3ebafba38c1`
 **Checks:** junit_tests=30, junit_failures=0, server_realms_and_journey=True, client_native_glsl=True, client_in_world_integration=True
 **Installable alpha:** 478070 bytes, SHA-256 `c11fac12a9774fc40fa70d467097d903fab12012f7cce0aa6c9293e9476884d4`
 

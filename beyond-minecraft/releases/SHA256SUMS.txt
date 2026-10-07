@@ -1,1 +1,1 @@
-c11fac12a9774fc40fa70d467097d903fab12012f7cce0aa6c9293e9476884d4  releases/beyond-minecraft-0.1.0-alpha.jar
+c11fac12a9774fc40fa70d467097d903fab12012f7cce0aa6c9293e9476884d4  beyond-minecraft-0.1.0-alpha.jar
