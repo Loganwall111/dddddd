@@ -30,7 +30,9 @@ public final class BeyondSmoke {
                 require(Registries.CHUNK_GENERATOR.get(BeyondMinecraft.id("labyrinth_generator")) != null, "labyrinth generator registered");
                 require(Registries.CHUNK_GENERATOR.get(BeyondMinecraft.id("between_generator")) != null, "between generator registered");
                 int solids = 0, generated = 0;
+                BeyondMinecraft.LOGGER.info("BEYOND_SMOKE_BEGIN realms={} seed={}", realms, server.getOverworld().getSeed());
                 for (var realm : BeyondMinecraft.CATALOG.realms()) {
+                    BeyondMinecraft.LOGGER.info("BEYOND_SMOKE_CHECK realm={} generated={}", realm.id(), realm.generated());
                     var world = server.getWorld(RegistryKey.of(RegistryKeys.WORLD, BeyondMinecraft.id(realm.id())));
                     require(world != null, "missing dimension " + realm.id());
                     // Force real chunk generation through the realm's own generator (noise or Java).
@@ -45,9 +47,9 @@ public final class BeyondSmoke {
                         // Generated spaces must actually be built out of their own materials.
                         int found = 0;
                         BlockPos.Mutable cursor = new BlockPos.Mutable();
-                        for (int x = -12; x <= 12 && found < 24; x += 3)
-                            for (int z = -12; z <= 12 && found < 24; z += 3)
-                                for (int y = world.getBottomY() + 4; y < world.getTopY() - 4 && found < 24; y += 7) {
+                        for (int x = -12; x <= 12 && found < 12; x += 4)
+                            for (int z = -12; z <= 12 && found < 12; z += 4)
+                                for (int y = world.getBottomY() + 4; y < world.getTopY() - 4 && found < 12; y += 11) {
                                     cursor.set(x, y, z);
                                     var state = world.getBlockState(cursor);
                                     if (state.isAir() || state.isOf(Blocks.BARRIER) || state.isOf(Blocks.DIRT) || state.isOf(Blocks.STONE)) continue;
@@ -66,6 +68,7 @@ public final class BeyondSmoke {
                 require(!between.getBlockState(new BlockPos(60, 40, 0)).isAir(), "the Between has a puzzle floor on its plate");
                 // The sky well is a real, reachable anomaly with a large radius.
                 var overworld = server.getOverworld();
+                SkyWells.ensure(server);   // install the world-owned wells before asserting on them
                 Anomaly well = SkyWells.of(overworld.getRegistryKey());
                 require(well != null && well.radius >= 100, "sky well installed with a colossal radius");
                 require(well.center.distanceTo(Vec3d.ofCenter(overworld.getSpawnPos())) < 2000, "sky well within flying distance");

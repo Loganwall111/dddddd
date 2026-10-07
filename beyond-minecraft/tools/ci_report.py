@@ -46,6 +46,12 @@ def main():
             annotation("error", "Beyond " + name + " diagnostics", "\n".join(lines[start:start + 65])[:12000])
         if name == "client" and not checks["client_in_world_integration"]:
             annotation("warning", "Beyond incomplete client run", "\n".join(line[:550] for line in lines[-85:])[:18000])
+        # A harness that dies without printing its marker is the most common failure, and its reason
+        # is always in the log tail. Always publish that tail rather than only keyword matches.
+        healthy = {"build": checks["junit_failures"] == 0, "server": checks["server_realms_and_journey"],
+                   "client": checks["client_in_world_integration"]}.get(name, True)
+        if not healthy and not failure_lines:
+            annotation("error", "Beyond " + name + " log tail", "\n".join(line[:550] for line in lines[-90:])[:18000])
     return 0
 
 if __name__ == "__main__": main()
