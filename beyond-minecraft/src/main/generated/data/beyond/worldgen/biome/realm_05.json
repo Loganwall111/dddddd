@@ -17,7 +17,7 @@
     }
   },
   "spawners": {
-    "CREATURE": [
+    "creature": [
       {
         "type": "beyond:realm_critter",
         "weight": 8,
@@ -25,7 +25,7 @@
         "maxCount": 3
       }
     ],
-    "WATER_CREATURE": [
+    "water_creature": [
       {
         "type": "minecraft:glow_squid",
         "weight": 6,

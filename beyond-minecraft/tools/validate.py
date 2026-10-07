@@ -12,6 +12,7 @@ RES = ROOT / "src/main/resources"
 GEN = ROOT / "src/main/generated"
 TOOLS = ("reality_knife", "shattered_relic", "reality_tear", "radiate_reality_glasses", "field_guide", "scale_prism")
 CUSTOM = {"between", "labyrinth", "fractal"}
+SPAWN_GROUPS = {"monster", "creature", "ambient", "axolotls", "underground_water_creature", "water_creature", "water_ambient", "misc"}
 TOOLS_DIR = Path(__file__).resolve().parent
 
 
@@ -54,6 +55,7 @@ def validate():
                 assert (GEN / f"data/beyond/worldgen/noise/{key}{suffix}.json").is_file(), key
         biome = json.loads((GEN / f"data/beyond/worldgen/biome/{key}.json").read_text())
         assert biome["spawners"], "every realm declares its own creature roster"
+        assert set(biome["spawners"]).issubset(SPAWN_GROUPS), f"{key} uses invalid 1.21.1 spawn-group ids"
         for group in biome["spawners"].values():
             for entry in group:
                 assert entry["type"].startswith(("beyond:", "minecraft:"))

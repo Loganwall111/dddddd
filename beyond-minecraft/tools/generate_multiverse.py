@@ -474,7 +474,8 @@ def generate(seed=DEFAULT_SEED, count=DEFAULT_REALMS):
             slot = min(slot + 1, 10)
         spawners = {}
         for entity, weight in realm["spawns"]:
-            group = "WATER_CREATURE" if entity.endswith("squid") else ("AMBIENT" if entity.endswith("bat") else "CREATURE")
+            # 1.21.1's biome SpawnGroup codec uses the lower-case registry ids.
+            group = "water_creature" if entity.endswith("squid") else ("ambient" if entity.endswith("bat") else "creature")
             spawners.setdefault(group, []).append({"type": entity, "weight": weight, "minCount": 1, "maxCount": 3})
         put(f"data/beyond/worldgen/biome/{key}.json", {
             "has_precipitation": False, "temperature": .6, "downfall": 0.0,

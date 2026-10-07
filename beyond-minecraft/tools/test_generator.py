@@ -47,6 +47,16 @@ class GeneratorTests(unittest.TestCase):
         for terrain in ("between", "labyrinth", "fractal"):
             self.assertIn(terrain, by_terrain)
             self.assertEqual(f"beyond:{terrain}", by_terrain[terrain]["generator"])
+    def test_spawn_group_names_match_1_21_codec(self):
+        output = gen.generate(84921603, 12)
+        allowed = {"monster", "creature", "ambient", "axolotls", "underground_water_creature", "water_creature", "water_ambient", "misc"}
+        biome_paths = [path for path in output if path.startswith("data/beyond/worldgen/biome/")]
+        self.assertEqual(12, len(biome_paths))
+        for path in biome_paths:
+            biome = json.loads(output[path])
+            self.assertTrue(set(biome["spawners"]).issubset(allowed), path)
+            self.assertTrue(biome["spawners"], path)
+
     def test_creature_skins_exist_for_every_family(self):
         output = gen.generate(9, 12)
         for variant in range(4):
