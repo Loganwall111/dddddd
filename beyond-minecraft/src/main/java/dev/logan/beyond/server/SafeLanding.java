@@ -30,18 +30,25 @@ public final class SafeLanding {
         }
         if (!allowAirPad) return Optional.empty();
         int radius = Math.max(2, (int) Math.ceil(width / 2) + 1);
-        // A small, explicitly authored arrival plinth. Only empty space can be modified.
-        for (int y : new int[]{192, 224, 256, 288}) {
-            if (y + height + 2 >= world.getTopY()) continue;
-            BlockPos center = new BlockPos(base.getX(), y, base.getZ());
-            boolean clear = true;
-            for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, (int) Math.ceil(height), radius))) {
-                if (!world.getWorldBorder().contains(p) || !world.isAir(p)) { clear = false; break; }
+        // A small, explicitly authored arrival plinth. Only empty space can be modified, so this
+        // walks a handful of columns and a range of heights instead of giving up on a mountain.
+        int ceiling = world.getTopY() - (int) Math.ceil(height) - 3;
+        for (int[] offset : OFFSETS) {
+            BlockPos column = base.add(offset[0], 0, offset[1]);
+            if (!world.getWorldBorder().contains(column)) continue;
+            int surface = world.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, column).getY();
+            for (int y : new int[]{surface + 5, surface + 14, 192, 224, 256, 288, world.getBottomY() + 24}) {
+                if (y <= world.getBottomY() + 2 || y > ceiling) continue;
+                BlockPos center = new BlockPos(column.getX(), y, column.getZ());
+                boolean clear = true;
+                for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, (int) Math.ceil(height), radius))) {
+                    if (!world.getWorldBorder().contains(p) || !world.isAir(p)) { clear = false; break; }
+                }
+                if (!clear) continue;
+                for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, -1, radius)))
+                    if (world.isAir(p)) world.setBlockState(p, pad.getDefaultState(), Block.NOTIFY_ALL);
+                return Optional.of(center.toBottomCenterPos());
             }
-            if (!clear) continue;
-            for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, -1, radius)))
-                world.setBlockState(p, pad.getDefaultState(), Block.NOTIFY_ALL);
-            return Optional.of(center.toBottomCenterPos());
         }
         return Optional.empty();
     }
