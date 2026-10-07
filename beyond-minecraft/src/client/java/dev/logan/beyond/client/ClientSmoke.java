@@ -201,9 +201,13 @@ public final class ClientSmoke {
                         var well = SkyWells.of(p.getServerWorld().getRegistryKey());
                         require(well != null, "the root reality has a persistent sky well");
                         require(well.radius >= 100, "the sky well is colossal");
-                        require(ClientReality.nodes.stream().anyMatch(n -> n.persistent()) || true, "well snapshot pending");
-                        Vec3d view = well.center.add(0, 96, 236);
-                        p.teleport(p.getServerWorld(), view.x, view.y, view.z, 180, 22);
+                        require(well.center.y <= p.getServerWorld().getTopY() - 16, "the well is inside the build limit, so it is reachable");
+                        // Stand off the horizon and look straight at it: the disk fills most of the view,
+                        // so the lens has real terrain to bend.
+                        p.changeGameMode(GameMode.CREATIVE);
+                        p.getAbilities().flying = true; p.sendAbilitiesUpdate();
+                        Vec3d view = well.center.add(0, 40, 236);
+                        p.teleport(p.getServerWorld(), view.x, view.y, view.z, 180, 10);
                         p.setVelocity(Vec3d.ZERO);
                         Journey.of(p).travelCooldown = 0;
                     });
@@ -224,11 +228,15 @@ public final class ClientSmoke {
                     server(client, p -> {
                         RealityManager.clear(p);
                         Journey.of(p).travelCooldown = 0;
-                        require(RealityManager.spawn(p, Anomaly.Kind.SINGULARITY), "tidal singularity fixture");
+                        // A real mob, placed in front of the camera inside the colossal well's tidal
+                        // reach, so the render-side stretch has something to act on.
+                        Vec3d look = p.getRotationVec(1);
                         RealmCritter critter = new RealmCritter(BeyondEntities.REALM_CRITTER, p.getServerWorld());
                         critter.setVariant(1);
-                        critter.refreshPositionAndAngles(p.getX() + 1, p.getY() + 2, p.getZ() + 7, 0, 0);
-                        p.getServerWorld().spawnEntity(critter);
+                        critter.refreshPositionAndAngles(p.getX() + look.x * 5, p.getY() + look.y * 5, p.getZ() + look.z * 5, 180, 0);
+                        critter.setVelocity(Vec3d.ZERO);
+                        require(p.getServerWorld().spawnEntity(critter), "tidal critter fixture");
+                        require(Spaghettification.forEntity(critter) != null, "the well's tidal reach covers the fixture");
                     });
                 } }
                 case 18 -> { if (stageTicks > 45) {

@@ -101,7 +101,7 @@ public final class CosmicRenderer {
                 witnessAnchor.set((float) (node.x() - camera.x), (float) (node.y() + node.radius() * 6.0 - camera.y), (float) (node.z() - camera.z), node.radius());
                 break;
             }
-            cosmos.getUniformOrDefault("WitnessAnchor").set(witnessAnchor);
+            cosmos.getUniformOrDefault("WitnessAnchor").set(witnessAnchor.x, witnessAnchor.y, witnessAnchor.z, witnessAnchor.w);
             cosmos.getUniformOrDefault("CameraPosition").set((float) (camera.x % 8192), (float) (camera.y % 8192), (float) (camera.z % 8192));
             float time = ((ClientReality.ticks % 144000) + delta) / 20f;
             cosmos.getUniformOrDefault("Time").set(BeyondClient.CONFIG.reducedMotion ? 0 : time);

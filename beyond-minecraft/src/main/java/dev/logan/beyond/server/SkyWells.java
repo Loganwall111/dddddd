@@ -59,12 +59,12 @@ public final class SkyWells {
 
     /** Keeps the well fed by rarer, larger meals: the nebula thickens as the well grows. */
     public static void tick(ServerWorld world, Anomaly well) {
-        if (world.getTicks() % 4 != 0) return;
+        if (world.getTime() % 4 != 0) return;
         int points = 6 + (int) (well.radius / 24f);
-        double shell = well.radius * (2.4 + 0.5 * Math.sin(world.getTicks() * .01));
+        double shell = well.radius * (2.4 + 0.5 * Math.sin(world.getTime() * .01));
         for (int i = 0; i < points; i++) {
-            double t = (world.getTicks() * .013 + i * 0.37) % 1.0;
-            double angle = i * 2.399 + world.getTicks() * .004;
+            double t = (world.getTime() * .013 + i * 0.37) % 1.0;
+            double angle = i * 2.399 + world.getTime() * .004;
             double radius = well.radius * (1.25 + t * 2.6);
             double x = well.center.x + Math.cos(angle) * radius;
             double y = well.center.y + Math.sin(t * Math.PI) * shell * .35 - shell * .12;

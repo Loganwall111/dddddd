@@ -20,7 +20,6 @@ import net.minecraft.world.gen.chunk.VerticalBlockSample;
 import net.minecraft.world.gen.noise.NoiseConfig;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * The Between: the bubble hub the Tear opens onto. A cracked two-tone puzzle floor floats in a
@@ -60,10 +59,10 @@ public class BetweenGenerator extends ChunkGenerator {
         double r = 16 + Math.floorMod(BeyondWorldgen.hash(cx, 13, cz, 99), 14);
         return new double[]{x, r, z};
     }
-    @Override public CompletableFuture<Chunk> populateNoise(Executor executor, Blender blender, NoiseConfig noiseConfig,
+    @Override public CompletableFuture<Chunk> populateNoise(Blender blender, NoiseConfig noiseConfig,
                                                             StructureAccessor accessor, Chunk chunk) {
-        BlockState light = state(material, Blocks.WHITE_CONCRETE);
-        BlockState dark = state(accent, Blocks.BLACK_CONCRETE);
+        BlockState light = state(material, Blocks.WHITE_CONCRETE.getDefaultState());
+        BlockState dark = state(accent, Blocks.BLACK_CONCRETE.getDefaultState());
         BlockState glass = state(shell, Blocks.GLASS.getDefaultState());
         ChunkPos pos = chunk.getPos();
         int startX = pos.getStartX(), startZ = pos.getStartZ();
@@ -137,7 +136,7 @@ public class BetweenGenerator extends ChunkGenerator {
     }
     @Override public VerticalBlockSample getColumnSample(int x, int z, HeightLimitView world, NoiseConfig noiseConfig) {
         BlockState[] states = new BlockState[world.getHeight()];
-        BlockState light = state(material, Blocks.WHITE_CONCRETE);
+        BlockState light = state(material, Blocks.WHITE_CONCRETE.getDefaultState());
         double radius = Math.sqrt((double) x * x + (double) z * z);
         boolean plate = radius < FLOOR_EDGE && radius >= ABYSS;
         for (int y = 0; y < states.length; y++) {

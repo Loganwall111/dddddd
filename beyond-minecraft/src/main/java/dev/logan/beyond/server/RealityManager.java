@@ -100,12 +100,18 @@ public final class RealityManager {
         }
         Anomaly node = new Anomaly(player, center, kind, slot, BeyondMinecraft.CONFIG.lifetimeSeconds * 20);
         list.add(node);
-        world.playSound(null, center.x, center.y, center.z, switch (kind) {
-            case TEAR -> SoundEvents.ENTITY_WARDEN_SONIC_BOOM;
-            case WORMHOLE -> SoundEvents.BLOCK_PORTAL_TRIGGER;
-            case QUASAR -> SoundEvents.BLOCK_BEACON_ACTIVATE;
-            default -> membrane ? SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE : SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE;
-        }, SoundCategory.PLAYERS, .7f, membrane ? .7f : .55f);
+        // Sound fields are a mix of SoundEvent and RegistryEntry<SoundEvent>; call each one
+        // separately rather than building a conditional expression the compiler cannot type.
+        float volume = .7f, pitch = membrane ? .7f : .55f;
+        switch (kind) {
+            case TEAR -> world.playSound(null, center.x, center.y, center.z, SoundEvents.ENTITY_WARDEN_SONIC_BOOM, SoundCategory.PLAYERS, volume, pitch);
+            case WORMHOLE -> world.playSound(null, center.x, center.y, center.z, SoundEvents.BLOCK_PORTAL_TRIGGER, SoundCategory.PLAYERS, volume, pitch);
+            case QUASAR -> world.playSound(null, center.x, center.y, center.z, SoundEvents.BLOCK_BEACON_ACTIVATE, SoundCategory.PLAYERS, volume, pitch);
+            default -> {
+                if (membrane) world.playSound(null, center.x, center.y, center.z, SoundEvents.BLOCK_AMETHYST_BLOCK_RESONATE, SoundCategory.PLAYERS, volume, pitch);
+                else world.playSound(null, center.x, center.y, center.z, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.PLAYERS, volume, pitch);
+            }
+        }
         shockwave(world, center, kind);
         for (ServerPlayerEntity p : world.getPlayers()) sync(p, false);
         message(player, switch (kind) {
@@ -127,8 +133,9 @@ public final class RealityManager {
                 1, 0, 0, 0, 0);
         }
         world.spawnParticles(ParticleTypes.FLASH, center.x, center.y, center.z, 2, 0, 0, 0, 0);
-        world.playSound(null, center.x, center.y, center.z, tear ? SoundEvents.ENTITY_GENERIC_EXPLODE : SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER,
-            SoundCategory.PLAYERS, tear ? .6f : .35f, tear ? .8f : 1.6f);
+        // Separate calls: one of these two is a RegistryEntry and one is a SoundEvent.
+        if (tear) world.playSound(null, center.x, center.y, center.z, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, .6f, .8f);
+        else world.playSound(null, center.x, center.y, center.z, SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER.value(), SoundCategory.PLAYERS, .35f, 1.6f);
     }
     public static void tick(MinecraftServer server) {
         if (server.getTicks() % 40 == 0) SkyWells.ensure(server);

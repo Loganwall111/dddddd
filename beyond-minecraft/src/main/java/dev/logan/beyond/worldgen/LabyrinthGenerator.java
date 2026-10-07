@@ -20,7 +20,6 @@ import net.minecraft.world.gen.chunk.VerticalBlockSample;
 import net.minecraft.world.gen.noise.NoiseConfig;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * The endless white labyrinth. Layer after layer of walls and broken floor descend through the
@@ -68,10 +67,10 @@ public class LabyrinthGenerator extends ChunkGenerator {
         return Math.floorMod(BeyondWorldgen.hash(cx, level * 31, cz, seed), 5) == 0
             && Math.floorMod(x + z, 3) == 0;
     }
-    @Override public CompletableFuture<Chunk> populateNoise(Executor executor, Blender blender, NoiseConfig noiseConfig,
+    @Override public CompletableFuture<Chunk> populateNoise(Blender blender, NoiseConfig noiseConfig,
                                                             StructureAccessor accessor, Chunk chunk) {
-        BlockState body = state(material, Blocks.WHITE_CONCRETE);
-        BlockState line = state(accent, Blocks.BLACK_CONCRETE);
+        BlockState body = state(material, Blocks.WHITE_CONCRETE.getDefaultState());
+        BlockState line = state(accent, Blocks.BLACK_CONCRETE.getDefaultState());
         ChunkPos pos = chunk.getPos();
         int startX = pos.getStartX(), startZ = pos.getStartZ();
         int bottom = chunk.getBottomY(), top = chunk.getTopY();
@@ -107,7 +106,7 @@ public class LabyrinthGenerator extends ChunkGenerator {
     }
     @Override public VerticalBlockSample getColumnSample(int x, int z, HeightLimitView world, NoiseConfig noiseConfig) {
         BlockState[] states = new BlockState[world.getHeight()];
-        BlockState body = state(material, Blocks.WHITE_CONCRETE);
+        BlockState body = state(material, Blocks.WHITE_CONCRETE.getDefaultState());
         for (int y = 0; y < states.length; y++) {
             int gy = world.getBottomY() + y;
             int inLayer = Math.floorMod(gy, LAYER);

@@ -20,7 +20,6 @@ import net.minecraft.world.gen.chunk.VerticalBlockSample;
 import net.minecraft.world.gen.noise.NoiseConfig;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * The fractal world: an infinite Menger sponge built from the realm's own materials, threaded with
@@ -49,9 +48,9 @@ public class FractalGenerator extends ChunkGenerator {
         var block = Registries.BLOCK.get(BeyondMinecraft.id(id.contains(":") ? id.substring(id.indexOf(':') + 1) : id));
         return block == Blocks.AIR && !id.endsWith("air") ? fallback : block.getDefaultState();
     }
-    @Override public CompletableFuture<Chunk> populateNoise(Executor executor, Blender blender, NoiseConfig noiseConfig,
+    @Override public CompletableFuture<Chunk> populateNoise(Blender blender, NoiseConfig noiseConfig,
                                                             StructureAccessor accessor, Chunk chunk) {
-        BlockState body = state(material, Blocks.STONE);
+        BlockState body = state(material, Blocks.STONE.getDefaultState());
         BlockState glow = state(accent, body);
         ChunkPos pos = chunk.getPos();
         int startX = pos.getStartX(), startZ = pos.getStartZ();
@@ -81,7 +80,7 @@ public class FractalGenerator extends ChunkGenerator {
     }
     @Override public VerticalBlockSample getColumnSample(int x, int z, HeightLimitView world, NoiseConfig noiseConfig) {
         BlockState[] states = new BlockState[world.getHeight()];
-        BlockState body = state(material, Blocks.STONE);
+        BlockState body = state(material, Blocks.STONE.getDefaultState());
         for (int y = 0; y < states.length; y++)
             states[y] = BeyondWorldgen.menger(x, world.getBottomY() + y, z, cell, levels) ? body : Blocks.AIR.getDefaultState();
         return new VerticalBlockSample(world.getBottomY(), states);

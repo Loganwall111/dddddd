@@ -90,7 +90,7 @@ public final class Tunnels {
         double toward = session.exit.x - player.getX();
         if (toward > 0) player.setVelocity(Math.min(.28, Math.max(velocity.x, .16)), velocity.y, velocity.z * .6);
         player.velocityModified = true;
-        if (player.getWorld().getTicks() % 4 == 0)
+        if (player.getWorld().getTime() % 4 == 0)
             player.getServerWorld().spawnParticles(ParticleTypes.END_ROD, player.getX() - 1.5, player.getY() + 1.6, player.getZ(), 2, .2, .2, .2, .02);
         if (advanced.remaining > 0) return false;
         end(player, true);
