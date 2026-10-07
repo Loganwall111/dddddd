@@ -24,6 +24,7 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
@@ -382,6 +383,16 @@ public final class ClientSmoke {
             player.setPitch(0);
             if (RealityManager.spawn(player, kind)) return true;
         }
+        var world = player.getServerWorld();
+        Vec3d center = player.getEyePos().add(player.getRotationVec(1).multiply(6));
+        BlockPos pos = BlockPos.ofFloored(center);
+        boolean empty = world.isSpaceEmpty(new Box(center.x - .7, center.y - 1, center.z - .7,
+            center.x + .7, center.y + 1, center.z + .7));
+        BeyondMinecraft.LOGGER.info("BEYOND_SPAWN_DIAG kind={} world={} feet={} eye={} center={} cooldown={} vehicle={} spectator={} "
+            + "border={} loaded={} empty={} y={} bottom={} top={}",
+            kind, world.getRegistryKey().getValue(), player.getBlockPos(), player.getEyePos(), center,
+            Journey.of(player).travelCooldown, player.hasVehicle(), player.isSpectator(),
+            world.getWorldBorder().contains(pos), world.isChunkLoaded(pos), empty, center.y, world.getBottomY(), world.getTopY());
         return false;
     }
 
