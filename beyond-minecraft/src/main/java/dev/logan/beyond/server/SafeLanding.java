@@ -61,12 +61,15 @@ public final class SafeLanding {
         return Optional.empty();
     }
     private static boolean safe(ServerWorld world, BlockPos feet, double width, double height) {
-        if (feet.getY() <= world.getBottomY() || feet.getY() + height + 1 >= world.getTopY()) return false;
+        if (feet.getY() <= world.getBottomY() || feet.getY() + height + 2 >= world.getTopY()) return false;
         var floor = world.getBlockState(feet.down());
         if (!floor.isSideSolidFullSquare(world, feet.down(), Direction.UP) || floor.isOf(Blocks.MAGMA_BLOCK) ||
             floor.isOf(Blocks.CACTUS) || floor.isOf(Blocks.CAMPFIRE) || floor.isOf(Blocks.SOUL_CAMPFIRE)) return false;
         Vec3d point = feet.toBottomCenterPos();
-        Box box = new Box(point.x - width / 2, point.y, point.z - width / 2, point.x + width / 2, point.y + height, point.z + width / 2);
+        // One extra block of headroom on top of the body: an arrival must also leave room for a
+        // membrane or well to open in front of you, which is how Beyond spaces are meant to be
+        // entered. Without it, arrivals landed in the maze's two-high slots with nowhere to go.
+        Box box = new Box(point.x - width / 2, point.y, point.z - width / 2, point.x + width / 2, point.y + height + 1, point.z + width / 2);
         return world.isSpaceEmpty(box) && !world.containsFluid(box);
     }
 }
