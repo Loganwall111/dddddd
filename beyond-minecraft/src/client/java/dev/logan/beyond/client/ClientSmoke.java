@@ -282,6 +282,7 @@ public final class ClientSmoke {
                     server(client, p -> {
                         int hub = BeyondMinecraft.CATALOG.indexOf("realm_08");
                         require(hub >= 0, "catalog exposes the Between");
+                        Journey.of(p).travelCooldown = 0;
                         require(RealityManager.enter(p, hub), "travel into the Between");
                     });
                 } }
@@ -290,6 +291,7 @@ public final class ClientSmoke {
                     server(client, p -> {
                         int fractal = BeyondMinecraft.CATALOG.indexOf("realm_10");
                         require(fractal >= 0, "catalog exposes the fractal hollow");
+                        Journey.of(p).travelCooldown = 0;   // the previous arrival set it
                         require(RealityManager.enter(p, fractal), "travel into the fractal hollow");
                     });
                 } }
@@ -298,6 +300,7 @@ public final class ClientSmoke {
                     server(client, p -> {
                         int labyrinth = BeyondMinecraft.CATALOG.indexOf("realm_09");
                         require(labyrinth >= 0, "catalog exposes the labyrinth");
+                        Journey.of(p).travelCooldown = 0;   // the previous arrival set it
                         require(RealityManager.enter(p, labyrinth), "travel into the labyrinth");
                     });
                 } }
