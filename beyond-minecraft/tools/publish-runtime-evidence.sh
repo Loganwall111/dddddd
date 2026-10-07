@@ -38,6 +38,8 @@ if test "$EVALUATION" = success; then
   fi
   if test -f .ci-binary/beyond-minecraft-0.1.0-alpha.jar; then
     cp .ci-binary/beyond-minecraft-0.1.0-alpha.jar releases/
+    # Keep the checksum file describing the JAR that is actually in the repository.
+    ( cd releases && sha256sum beyond-minecraft-0.1.0-alpha.jar > SHA256SUMS.txt )
   else
     echo "::warning::this run did not pass a binary; keeping the previous verified JAR"
   fi
@@ -56,9 +58,10 @@ fi
 git config user.name 'github-actions[bot]'
 git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 git add docs/runtime
-# One small requested installable deliverable. Other build output remains ignored.
-if test -f releases/beyond-minecraft-0.1.0-alpha.jar; then
-  git add -f releases/beyond-minecraft-0.1.0-alpha.jar
+# One small requested installable deliverable. Other build output remains ignored, and a run that
+# did not pass never touches the binary or its checksums.
+if test "$EVALUATION" = success && test -f releases/beyond-minecraft-0.1.0-alpha.jar; then
+  git add -f releases/beyond-minecraft-0.1.0-alpha.jar releases/SHA256SUMS.txt
 fi
 if git diff --cached --quiet; then
   echo "Runtime evidence is unchanged; nothing to publish."
