@@ -1,8 +1,11 @@
 package dev.logan.beyond.client;
 
 import dev.logan.beyond.network.RealityPayload;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import java.util.IdentityHashMap;
 
 /**
  * Tidal stretching. The server pulls bodies in; the client renders what that does to a body that
@@ -16,6 +19,9 @@ public final class Spaghettification {
     /** Incremented by the render mixin. The CI client smoke asserts this actually ran. */
     public static volatile long applied;
     public static volatile float lastStretch = 1f;
+    private static final Vector3f UP = new Vector3f(0f, 1f, 0f);
+    private static final ThreadLocal<IdentityHashMap<Entity, Integer>> ACTIVE_RENDER_DEPTH =
+        ThreadLocal.withInitial(IdentityHashMap::new);
     public record Stretch(float amount, Vector3f direction) {}
     private Spaghettification() {}
 
@@ -36,6 +42,48 @@ public final class Spaghettification {
         }
         return best;
     }
+
+    /** Begin a renderer-specific matrix scope; nested superclass render calls do not double-stretch. */
+    public static void beginRender(Entity entity, float tickDelta, MatrixStack matrices) {
+        matrices.push();
+        var depths = ACTIVE_RENDER_DEPTH.get();
+        Integer depth = depths.get(entity);
+        if (depth != null) { depths.put(entity, depth + 1); return; }
+        depths.put(entity, 1);
+
+        var stretch = forEntity(entity);
+        if (stretch == null) return;
+        // Express the world-space pull in the entity's rotated frame before its renderer applies yaw.
+        Vector3f local = new Vector3f(stretch.direction()).rotateY((float) Math.toRadians(-entity.getYaw(tickDelta))).normalize();
+        Quaternionf tilt = rotationTowards(local);
+        Quaternionf untilt = tilt == null ? null : tilt.conjugate(new Quaternionf());
+        if (tilt != null) matrices.multiply(tilt);
+        float amount = stretch.amount();
+        float thin = 1f / (float) Math.sqrt(amount);
+        matrices.scale(thin, amount, thin);
+        if (untilt != null) matrices.multiply(untilt);
+        lastStretch = amount;
+        applied++;
+    }
+
+    public static void endRender(Entity entity, MatrixStack matrices) {
+        matrices.pop();
+        var depths = ACTIVE_RENDER_DEPTH.get();
+        Integer depth = depths.get(entity);
+        if (depth == null || depth <= 1) depths.remove(entity);
+        else depths.put(entity, depth - 1);
+        if (depths.isEmpty()) ACTIVE_RENDER_DEPTH.remove();
+    }
+
+    /** Shortest rotation taking +Y onto {@code direction}, or null when already aligned. */
+    private static Quaternionf rotationTowards(Vector3f direction) {
+        float dot = Math.clamp(UP.dot(direction), -1f, 1f);
+        if (dot > .9999f) return null;
+        Vector3f axis = new Vector3f(UP).cross(direction);
+        if (axis.lengthSquared() < 1e-7f) return new Quaternionf().rotationAxis((float) Math.PI, 1f, 0f, 0f);
+        return new Quaternionf().rotationAxis((float) Math.acos(dot), axis.normalize());
+    }
+
     /** How close the camera is to the nearest colossal well, 0..1. Drives the nebula shader term. */
     public static float nebulaProximity() {
         if (!BeyondClient.CONFIG.nebula || ClientReality.nodes.isEmpty()) return 0;
