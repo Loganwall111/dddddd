@@ -57,6 +57,15 @@ class GeneratorTests(unittest.TestCase):
             self.assertTrue(set(biome["spawners"]).issubset(allowed), path)
             self.assertTrue(biome["spawners"], path)
 
+    def test_plateau_density_leaves_air_above_its_crown(self):
+        output = gen.generate(84921603, 12)
+        settings = json.loads(output["data/beyond/worldgen/noise_settings/realm_03.json"])
+        density = settings["noise_router"]["final_density"]["argument"]["argument"]
+        self.assertEqual("minecraft:add", density["type"])
+        vertical_term = density["argument2"]
+        self.assertEqual("minecraft:mul", vertical_term["type"])
+        self.assertLess(vertical_term["argument1"], 0)
+
     def test_creature_skins_exist_for_every_family(self):
         output = gen.generate(9, 12)
         for variant in range(4):

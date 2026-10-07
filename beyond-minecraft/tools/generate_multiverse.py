@@ -256,7 +256,9 @@ def terrain_router(recipe, key, theme, rng):
             argument2=density("mul", argument1=-1.0, argument2=density("abs", argument=plateaus)))
     elif recipe == "plateau":
         stepped = density("clamp", input=density("mul", argument1=2.0, argument2=surface), min=-1.0, max=1.0)
-        quantized = density("mul", argument1=.5, argument2=density("add", argument1=stepped, argument2=density("squeeze", argument=stepped)))
+        # The gradient increases with Y: invert it so this plateau solidifies below its crown
+        # and reliably leaves open sky above, rather than filling the realm to the build limit.
+        quantized = density("mul", argument1=-.5, argument2=density("add", argument1=stepped, argument2=density("squeeze", argument=stepped)))
         final = density("add", argument1=density("mul", argument1=.9, argument2=primary), argument2=quantized)
     elif recipe == "bloom":
         bulbs = density("mul", argument1=primary, argument2=density("mul", argument1=secondary, argument2=2.2))

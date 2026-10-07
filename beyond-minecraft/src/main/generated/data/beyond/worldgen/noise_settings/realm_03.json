@@ -42,7 +42,7 @@
           },
           "argument2": {
             "type": "minecraft:mul",
-            "argument1": 0.5,
+            "argument1": -0.5,
             "argument2": {
               "type": "minecraft:add",
               "argument1": {
@@ -101,7 +101,7 @@
       },
       "argument2": {
         "type": "minecraft:mul",
-        "argument1": 0.5,
+        "argument1": -0.5,
         "argument2": {
           "type": "minecraft:add",
           "argument1": {
