@@ -7,6 +7,7 @@ import dev.logan.beyond.client.entity.RealmCritterModel;
 import dev.logan.beyond.client.entity.RealmCritterRenderer;
 import dev.logan.beyond.network.RealityPayload;
 import dev.logan.beyond.client.render.CosmicRenderer;
+import dev.logan.beyond.client.render.TitanWorld;
 import dev.logan.beyond.client.screen.FieldGuideScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
@@ -74,9 +75,11 @@ public final class BeyondClient implements ClientModInitializer {
             }
             // Dimension swaps are masked by the warp; only the full-screen interruption is removed.
             SeamlessTravel.tick(client);
+            TitanWorld.tick(client);
             ClientSmoke.tick(client);
         });
         CosmicRenderer.initialize();
+        TitanWorld.initialize();
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> CosmicRenderer.release());
     }
     private static KeyBinding key(String name, int code) {

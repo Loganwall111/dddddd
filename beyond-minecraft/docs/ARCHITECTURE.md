@@ -30,6 +30,7 @@ Subsystems, each with its own file and its own budget:
 | `Tunnels` | wormhole flight: the walker is carried along a curved path for a bounded run while the client paints the tunnel; **no blocks are placed at all** | fixed 52-block run, zero block writes, cancels on disconnect/shutdown |
 | `RiftVeins` | glowing fissure network run out across the ground under a newly torn opening, using the destination realm's emissive crystal | ≤220 blocks per opening, loaded chunks only, refuses bedrock/barriers/containers/fluids |
 | `Umbrella` | branch rewrite around a return point, deterministic from the era seed | 18 columns/tick, radius ≤40, refuses bedrock/barriers/fluids/block entities |
+| `TitanWorld` | the Overworld colossus: palette-samples the world's own blocks, voxelises a body, one static upload, all posing in `beyond:titan` on the GPU | one vertex buffer per session (re-uploaded, never leaked), ≤12 materials, ≤240,000 vertices, Overworld only, rebuilds at most 8 times per spot |
 | `SafeLanding` | bounded arrival search | 9 candidate columns + optional plinth in a Beyond space only |
 
 A membrane is a swept segment/plane intersection with a rounded-rectangle boundary; the GLSL uses
@@ -54,12 +55,14 @@ mod travel and external dimension changes.
 
 ## 4. Client rendering boundary
 
-Fabric's `CoreShaderRegistrationCallback` registers two GLSL 150 programs; the vanilla resource
+Fabric's `CoreShaderRegistrationCallback` registers three GLSL 150 programs; the vanilla resource
 loader owns shader-program lifetimes. `WorldRenderEvents.LAST` captures projection and view matrices
 and composites immediately — after world rendering, before the hand clears world depth, and before
 HUD/screens. A single owned scratch color framebuffer avoids read/write feedback: the scene is copied
 into it, the cosmos pass reads the scene color and vanilla depth, and a blit pass writes back. World
-depth is read, never replaced or written.
+depth is read, never replaced or written. The third program, `beyond:titan`, is drawn earlier, at
+`WorldRenderEvents.AFTER_TRANSLUCENT`, so the colossus is a depth-tested part of the world and the
+post pass sees the real thing rather than a painted shape.
 
 Uniforms: inverse projection/projection, camera-to-world/world-to-camera, resolution, camera
 position, Witness direction and anchor, time, motion, intro phase, effect strength, ray steps, lens

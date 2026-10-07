@@ -11,23 +11,44 @@ import re
 import sys
 
 CORE = Path(__file__).resolve().parents[1] / "src/main/resources/assets/beyond/shaders/core"
-MATRICES = {"InverseProjection", "Projection", "CameraToWorld", "WorldToCamera"}
+MATRICES = {"InverseProjection", "Projection", "CameraToWorld", "WorldToCamera", "TitanModel"}
 VECTORS = {"Resolution": 2, "CameraPosition": 3, "WitnessDirection": 3, "WitnessAnchor": 4,
            "Node0": 4, "Node1": 4, "Node2": 4, "Node3": 4, "Node4": 4, "Node5": 4,
-           "Style0": 4, "Style1": 4, "Style2": 4, "Style3": 4, "Style4": 4, "Style5": 4}
+           "Style0": 4, "Style1": 4, "Style2": 4, "Style3": 4, "Style4": 4, "Style5": 4,
+           "Bone0": 4, "Bone1": 4, "Bone2": 4, "Bone3": 4, "Bone4": 4, "Bone5": 4,
+           "Axis0": 3, "Axis1": 3, "Axis2": 3, "Axis3": 3, "Axis4": 3, "Axis5": 3}
 DEFAULTS = {"WitnessDirection": [0, 0.48, -1], "WitnessAnchor": [0, 0, 0, 0]}
+# Shaders that draw their own geometry declare their own vertex stage, attributes and uniforms.
+VERTICES = {
+    "titan": {"vertex": "beyond:titan", "attributes": ["Position", "UV0", "Color"]},
+}
+DEFAULT_VERTEX = {"vertex": "beyond:fullscreen", "attributes": ["Position", "UV0"]}
+# The engine always supplies these; a core-shader descriptor must never declare them.
+GLOBALS = {"ModelViewMat", "ProjMat", "ModelOffset", "TextureMat", "ColorModulator", "FogStart",
+           "FogEnd", "FogColor", "FogShape", "Light0_Direction", "Light1_Direction", "GlintAlpha",
+           "LineWidth", "ScreenSize", "GameTime"}
+
+
+def declared_in(source: str):
+    return re.findall(r"^uniform\s+(\w+)\s+(\w+)\s*;", source, flags=re.MULTILINE)
 
 
 def build(name: str):
-    source = (CORE / (name + ".fsh")).read_text()
-    uniforms = re.findall(r"^uniform\s+(\w+)\s+(\w+)\s*;", source, flags=re.MULTILINE)
+    fragment = (CORE / (name + ".fsh")).read_text()
+    vertex = VERTICES.get(name, DEFAULT_VERTEX)
+    uniforms = declared_in(fragment)
     samplers = [uniform for kind, uniform in uniforms if kind == "sampler2D"]
     declared = [(kind, uniform) for kind, uniform in uniforms if kind != "sampler2D"]
+    # The program is the vertex stage plus the fragment stage, so the descriptor must cover both.
+    for kind, uniform in declared_in((CORE / (vertex["vertex"].split(":")[1] + ".vsh")).read_text()):
+        if kind == "sampler2D" or uniform in GLOBALS or uniform in [name for _, name in declared]:
+            continue
+        declared.append((kind, uniform))
     descriptor = {
         "blend": {"func": "add", "srcrgb": "one", "dstrgb": "zero"},
-        "vertex": "beyond:fullscreen",
+        "vertex": vertex["vertex"],
         "fragment": "beyond:" + name,
-        "attributes": ["Position", "UV0"],
+        "attributes": list(vertex["attributes"]),
         "samplers": [{"name": sampler} for sampler in samplers],
         "uniforms": [],
     }
@@ -44,15 +65,16 @@ def build(name: str):
 
 def main() -> int:
     if len(sys.argv) > 1 and sys.argv[1] == "--check":
-        for path in sorted(CORE.glob("*.json")):
-            expected = build(path.stem)
-            if json.loads(path.read_text()) != expected:
+        for program in sorted(CORE.glob("*.fsh")):
+            path = program.with_suffix(".json")
+            if not path.is_file() or json.loads(path.read_text()) != build(program.stem):
                 print(f"{path.name} is out of date; run sync_shader_json.py", file=sys.stderr)
                 return 1
         print("PASS: shader descriptors match their GLSL sources.")
         return 0
-    for path in sorted(CORE.glob("*.json")):
-        path.write_text(json.dumps(build(path.stem), indent=2) + "\n")
+    for program in sorted(CORE.glob("*.fsh")):
+        path = program.with_suffix(".json")
+        path.write_text(json.dumps(build(program.stem), indent=2) + "\n")
         print(f"wrote {path.name}")
     return 0
 

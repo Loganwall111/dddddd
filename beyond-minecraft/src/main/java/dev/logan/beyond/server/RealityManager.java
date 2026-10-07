@@ -80,8 +80,13 @@ public final class RealityManager {
         if (journey.travelCooldown > 0) return false;
         ServerWorld world = player.getServerWorld();
         List<Anomaly> list = ANOMALIES.computeIfAbsent(world.getRegistryKey(), k -> new ArrayList<>());
+        long owned = list.stream().filter(a -> player.getUuid().equals(a.owner)).count();
         if (list.size() >= BeyondMinecraft.CONFIG.maxAnomaliesPerWorld ||
-            list.stream().filter(a -> player.getUuid().equals(a.owner)).count() >= BeyondMinecraft.CONFIG.maxAnomaliesPerPlayer) {
+            owned >= BeyondMinecraft.CONFIG.maxAnomaliesPerPlayer) {
+            // A refusal here is a design decision, not a bug: say exactly which budget ran out.
+            BeyondMinecraft.LOGGER.info("Beyond {} refused in {}: {} openings present (limit {}), {} owned by {} (limit {})",
+                kind, world.getRegistryKey().getValue(), list.size(), BeyondMinecraft.CONFIG.maxAnomaliesPerWorld,
+                owned, player.getName().getString(), BeyondMinecraft.CONFIG.maxAnomaliesPerPlayer);
             message(player, "Reality is already under strain. Wait for an opening to dissolve."); return false;
         }
         Vec3d look = player.getRotationVec(1);
@@ -91,6 +96,11 @@ public final class RealityManager {
         BlockPos pos = BlockPos.ofFloored(center);
         if (!world.getWorldBorder().contains(pos) || center.y < world.getBottomY() + 5 || center.y > world.getTopY() - 5 ||
             !world.isChunkLoaded(pos) || !world.isSpaceEmpty(new Box(center.x - .7, center.y - 1, center.z - .7, center.x + .7, center.y + 1, center.z + .7))) {
+            // Log which clause refused, so a stuck opening is diagnosable from a log alone.
+            BeyondMinecraft.LOGGER.info("Beyond {} refused at {} in {}: inside_border={} y={} bounds=[{},{}] loaded={} empty={}",
+                kind, pos, world.getRegistryKey().getValue(), world.getWorldBorder().contains(pos), center.y,
+                world.getBottomY(), world.getTopY(), world.isChunkLoaded(pos),
+                world.isSpaceEmpty(new Box(center.x - .7, center.y - 1, center.z - .7, center.x + .7, center.y + 1, center.z + .7)));
             message(player, "Aim at clear space. A " + (membrane ? "membrane" : "well") + " cannot open inside solid ground."); return false;
         }
         int slot = RealmSeed.slot(world.getSeed(), player.getUuid().getLeastSignificantBits(), journey.cursor++, BeyondMinecraft.CATALOG.realms().size());

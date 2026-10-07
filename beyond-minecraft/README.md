@@ -151,10 +151,18 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
   cloud deck, and **two eyes that burn red** and cast red beams down through the sky. It is animated,
   anchored to a real world position, and it behaves as a dynamic skybox behind the actual terrain
   rather than a fixed decal.
-- **The Titan**: the colossus is not painted a colour. Its silhouette samples the live scene twice
-  with parallax, so the terrain, trees, clouds and sky you are standing in flow into the shape of the
-  body and it really does read as the world wearing a humanoid form. Its eyes are the single element
-  in the whole shader allowed to be unshaded, unfogged, full-strength red. Toggle with `titanSky`.
+- **The Living World Titan** (`TitanWorld`): the colossus is real geometry standing in the Overworld,
+  cut out of the world it stands in. The client samples the blocks around its feet, keeps the dozen
+  materials the terrain is mostly made of, and voxelises a 112-block body from them — every face
+  textured with the block it came from, straight out of the block atlas. The mesh is uploaded once and
+  posed entirely on the GPU: each vertex carries its bone and its pull, so the head turns, the arms
+  swing and the legs shift weight in `titan.vsh` without a byte being re-uploaded — and the lighting
+  follows, because the fragment stage takes a real face normal from the deformed world position. The
+  eyes are full-strength `#FF0000` and exempt from lighting, fog and the world entirely. Where the
+  colossus stands, the shader's painted Titan stands down (`TitanMesh`), so there is only ever one.
+- **The sky Titan** remains the fallback for every other dimension: its silhouette samples the live
+  scene twice with parallax, so terrain, trees, clouds and sky flow into the shape of the body. Both
+  are gated by `titanSky`.
 - Fly up to the well and the figure **dissolves before you can reach it**, so it can never become a
   dark slab in front of your face; the only thing up there at close range is the black hole itself.
 - It never attacks and never moves the player. The first-join encounter dissolves into falling code.

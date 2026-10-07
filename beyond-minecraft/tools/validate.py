@@ -135,10 +135,20 @@ def validate():
         for item in data.get("ingredients", []) + list(data.get("key", {}).values()):
             if item.get("item", "").startswith("beyond:"): assert item["item"][7:] in all_items, path
     core = RES / "assets/beyond/shaders/core"
+    engine_globals = {"ModelViewMat", "ProjMat", "ModelOffset", "TextureMat", "ColorModulator", "FogStart",
+                      "FogEnd", "FogColor", "FogShape", "Light0_Direction", "Light1_Direction", "GlintAlpha",
+                      "LineWidth", "ScreenSize", "GameTime"}
     for path in core.glob("*.json"):
         desc = json.loads(path.read_text())
         source = (core / (desc["fragment"].split(":")[1] + ".fsh")).read_text()
+        vertex = (core / (desc["vertex"].split(":")[1] + ".vsh")).read_text()
         declarations = dict((name, kind) for kind, name in re.findall(r"uniform\s+(\w+)\s+(\w+)\s*;", source))
+        # A program is vertex stage plus fragment stage: every uniform either stage declares has to be
+        # in the descriptor, minus the ones the engine itself always supplies.
+        for kind, name in re.findall(r"uniform\s+(\w+)\s+(\w+)\s*;", vertex):
+            if kind == "sampler2D" or name in engine_globals:
+                continue
+            declarations.setdefault(name, kind)
         provided = {x["name"] for x in desc["uniforms"] + desc["samplers"]}
         assert provided == declarations.keys(), (path, provided ^ declarations.keys())
         for uniform in desc["uniforms"]:

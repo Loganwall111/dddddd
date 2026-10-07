@@ -21,6 +21,8 @@ uniform float Transition;
 uniform float RealmTheme;
 uniform float CosmicPresence;
 uniform float Titan;
+// 1 while the real voxel colossus is standing in this dimension; the painted stand-in steps aside.
+uniform float TitanMesh;
 uniform float NebulaProximity;
 uniform float Era;
 uniform float Tunnel;
@@ -288,7 +290,7 @@ vec3 witness(vec3 background, vec3 rd, vec2 uv) {
         eyeMask = max(eyeMask, mask);
         eye = max(eye, thisEye);
     }
-    if (Titan > .5) {
+    if (Titan > .5 && TitanMesh < .5) {
         // The colossus fills its silhouette with the live scene, so the world you are standing in
         // becomes the body. Two passes of parallax keep it from reading as a flat cut-out.
         float body2 = titanBody(q);

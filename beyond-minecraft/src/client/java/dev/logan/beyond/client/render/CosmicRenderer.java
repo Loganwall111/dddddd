@@ -121,6 +121,9 @@ public final class CosmicRenderer {
             cosmos.getUniformOrDefault("RealmTheme").set(realmTheme);
             cosmos.getUniformOrDefault("CosmicPresence").set(BeyondClient.CONFIG.cosmicSky && (beyond || client.world.getRegistryKey().equals(World.OVERWORLD)) ? 1f : 0f);
             cosmos.getUniformOrDefault("Titan").set(BeyondClient.CONFIG.titanSky ? 1f : 0f);
+            // When the real voxel colossus is standing in this world, the painted stand-in steps
+            // aside: one Titan, made of the world's own blocks, in front of you.
+            cosmos.getUniformOrDefault("TitanMesh").set(TitanWorld.drawn() ? 1f : 0f);
             int count = ClientReality.world != null && ClientReality.world.equals(client.world.getRegistryKey().getValue()) ? ClientReality.nodes.size() : 0;
             for (int i = 0; i < 6; i++) {
                 if (i >= count) {

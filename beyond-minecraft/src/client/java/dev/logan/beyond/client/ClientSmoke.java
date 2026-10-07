@@ -2,6 +2,7 @@ package dev.logan.beyond.client;
 
 import dev.logan.beyond.BeyondMinecraft;
 import dev.logan.beyond.client.render.CosmicRenderer;
+import dev.logan.beyond.client.render.TitanWorld;
 import dev.logan.beyond.content.BeyondContent;
 import dev.logan.beyond.content.BeyondEntities;
 import dev.logan.beyond.entity.RealmCritter;
@@ -50,6 +51,7 @@ public final class ClientSmoke {
     private static int[] lensingReference;
     private static int[] heightsBefore;
     private static Vec3d tunnelStart;
+    private static int wormholePhase, wormholeEra, wormholeSettle;
     // Software-GL CI is slow: building one of Beyond's Java-generated realms can take a minute or more on
     // the runner, so the budgets are wall-clock and generous rather than tick-counted. The stall detector
     // still fails fast when a stage genuinely never completes.
@@ -313,34 +315,35 @@ public final class ClientSmoke {
                         // needs open air for its mouth, and the labyrinth is walls and ceilings to the
                         // world limit. The labyrinth is still what stage 22 photographs.
                         require(RealityManager.enter(p, 0), "leave the labyrinth for the wormhole test");
-                        int before = Journey.of(p).era;
-                        float yaw = p.getYaw();
-                        var world = p.getServerWorld();
-                        // The mouth is opened at altitude: an arrival pad can sit under a canopy, and a
-                        // well refuses to open inside solid ground. Clear sky is also where a hole in
-                        // space belongs, and the corridor rises 22 blocks anyway.
-                        double altitude = Math.min(world.getTopY() - 48, p.getY() + 140);
-                        p.teleport(world, p.getX(), altitude, p.getZ(), yaw, 0f);
-                        Journey.of(p).travelCooldown = 0;   // the arrival teleport set it
-                        boolean opened = RealityManager.spawn(p, Anomaly.Kind.WORMHOLE);
-                        if (!opened) {
-                            BlockPos mouth = BlockPos.ofFloored(p.getEyePos().add(p.getRotationVec(1).multiply(6)));
-                            BeyondMinecraft.LOGGER.warn("BEYOND_WORMHOLE_PROBE world={} pos={} eye={} mouth={} state={} loaded={} cooldown={} spectator={} vehicle={}",
-                                world.getRegistryKey().getValue(), p.getPos(), p.getEyePos(), mouth, world.getBlockState(mouth),
-                                world.isChunkLoaded(mouth), Journey.of(p).travelCooldown, p.isSpectator(), p.hasVehicle());
-                        }
-                        require(opened, "wormhole creation");
-                        require(Journey.of(p).era == before, "plain travel does not shift the branch");
-                        tunnelStart = p.getPos();
-                        require(Tunnels.begin(p, p.getServerWorld()), "wormhole corridor opens");
-                        require(Tunnels.active(p), "corridor is armed");
+                        wormholeEra = Journey.of(p).era;
                     });
                 } }
-                case 23 -> { if (stageTicks > 20) {
-                    require(ClientReality.tunnelRemaining > 0, "the corridor walk reaches the client");
-                    capture(client, "14-time-tunnel");
-                    stage++;
-                } }
+                case 23 -> {
+                    // The mouth opens where the player actually stands. The arrival teleport lands a
+                    // tick or two after it is issued, so the fixture waits for the canopy to be the
+                    // client's world, opens, retries once aiming higher, and only then gates.
+                    if (wormholePhase == 0 && stageTicks > 40 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) server(client, p -> {
+                        RealityManager.clear(p);            // clear the field where the hole opens
+                        Journey.of(p).travelCooldown = 0;   // the arrival teleport set it
+                        if (RealityManager.spawn(p, Anomaly.Kind.WORMHOLE)) { armWormhole(p); wormholePhase = 2; }
+                        else {
+                            p.teleport(p.getServerWorld(), p.getX(), p.getY(), p.getZ(), p.getYaw(), -58f);
+                            p.setVelocity(Vec3d.ZERO);
+                            wormholePhase = 1;
+                        }
+                    });
+                    if (wormholePhase == 1 && stageTicks > 70) server(client, p -> {
+                        Journey.of(p).travelCooldown = 0;
+                        require(RealityManager.spawn(p, Anomaly.Kind.WORMHOLE), "wormhole creation at " + p.getPos());
+                        armWormhole(p);
+                        wormholePhase = 2;
+                    });
+                    if (wormholePhase == 2 && ++wormholeSettle > 10) {
+                        require(ClientReality.tunnelRemaining > 0, "the corridor walk reaches the client");
+                        capture(client, "14-time-tunnel");
+                        stage++; stageTicks = 0;
+                    }
+                }
                 case 24 -> { if (stageTicks > 20 && ClientReality.tunnelRemaining == 0) server(client, p -> {
                         require(!Tunnels.active(p), "corridor torn down after the walk");
                         require(Journey.of(p).era >= 1, "the branch shifted");
@@ -388,8 +391,27 @@ public final class ClientSmoke {
                     require(difference <= 3, "native foreground occlusion drift: " + difference);
                     BeyondMinecraft.LOGGER.info("BEYOND_NATIVE_OCCLUSION max_channel_difference={}", difference);
                     capture(client, "15-native-depth-occlusion");
+                    BeyondMinecraft.LOGGER.info("BEYOND_NATIVE_OCCLUSION_PASS max_channel_difference={}", difference);
+                    stage++; stageTicks = 0;
+                } }
+                case 30 -> { if (stageTicks > 20) server(client, p -> {
+                    // The colossus portrait: stand off from it and look up. This is the shot that proves
+                    // the Titan is the world's own blocks standing in the world, not a painted shape.
+                    Vec3d place = TitanWorld.standingPlace();
+                    require(place != null, "the voxel colossus found standing ground in the Overworld");
+                    double angle = .74, distance = 150;
+                    double x = place.x + Math.cos(angle) * distance, z = place.z + Math.sin(angle) * distance;
+                    float yaw = (float) Math.toDegrees(Math.atan2(Math.cos(angle), -Math.sin(angle)));
+                    p.teleport(p.getServerWorld(), x, place.y + 26, z, yaw, -8f);
+                    p.setVelocity(Vec3d.ZERO);
+                    BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VIEW anchor={} viewer={}", place, p.getPos());
+                }); }
+                case 31 -> { if (stageTicks > 90) {
+                    require(TitanWorld.drawn(), "the colossus is drawn as world geometry, not a painted shape");
+                    capture(client, "16-titan");
                     BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
-                        + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true realities={} screenshots=true",
+                        + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true "
+                        + "titan=true realities={} screenshots=true",
                         CosmicRenderer.renderedFrames(), VisualConfig.REALITIES.length);
                     complete = true; client.scheduleStop();
                 } }
@@ -457,6 +479,15 @@ public final class ClientSmoke {
         return samples;
     }
     private static void require(boolean value, String message) { if (!value) throw new AssertionError(message); }
+
+    /** Walk into the opening the fixture just made: same era, real flight, nothing built. */
+    private static void armWormhole(net.minecraft.server.network.ServerPlayerEntity p) {
+        require(Journey.of(p).era == wormholeEra, "plain travel does not shift the branch");
+        tunnelStart = p.getPos();
+        require(Tunnels.begin(p, p.getServerWorld()), "wormhole corridor opens");
+        require(Tunnels.active(p), "corridor is armed");
+        BeyondMinecraft.LOGGER.info("BEYOND_WORMHOLE_PASS world={} mouth_from={}", p.getServerWorld().getRegistryKey().getValue(), p.getPos());
+    }
     private static void fail(MinecraftClient client, Throwable error) {
         complete = true; BeyondMinecraft.LOGGER.error("BEYOND_CLIENT_INTEGRATION_FAIL stage=" + stage, error); client.scheduleStop();
     }
