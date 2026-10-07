@@ -32,17 +32,29 @@ jobs:
       - name: Install native shader and software-GL test tools
         shell: bash
         run: |
-          # The runner image is the only network dependency here; a stalled mirror must not eat
-          # the job's whole time budget, so every attempt is bounded and retried.
+          # Most of this is already on the runner image. Only reach for apt when something is
+          # genuinely absent, and bound every attempt: a stalled mirror must not eat the job.
+          missing=""
+          command -v glslangValidator >/dev/null || missing="$missing glslang-tools"
+          command -v xvfb-run >/dev/null || missing="$missing xvfb"
+          command -v xauth >/dev/null || missing="$missing xauth"
+          test -e /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so || missing="$missing libgl1-mesa-dri"
+          ldconfig -p | grep -q 'libopenal\.so\.1' || missing="$missing libopenal1"
+          ldconfig -p | grep -q 'libnss3\.so' || missing="$missing libnss3"
+          if [ -z "$missing" ]; then
+            echo "Native shader and software-GL test tools already present."
+            exit 0
+          fi
+          echo "Installing:$missing"
           for attempt in 1 2 3; do
-            if timeout 420 sudo apt-get update -qq -o Acquire::Retries=3 \
-               && timeout 420 sudo apt-get install -y -qq --no-install-recommends glslang-tools xvfb xauth libgl1-mesa-dri libopenal1 libflite1 libnss3; then
+            if timeout 300 sudo apt-get update -qq -o Acquire::Retries=3 \
+               && timeout 300 sudo apt-get install -y -qq --no-install-recommends $missing; then
               exit 0
             fi
             echo "::warning::native test tools attempt $attempt failed; retrying"
             sleep 10
           done
-          echo "::error::could not install glslang-tools/xvfb after three attempts"
+          echo "::error::could not install the native test tools after three attempts"
           exit 1
       - name: Verify generated resources and resource contracts
         run: |
