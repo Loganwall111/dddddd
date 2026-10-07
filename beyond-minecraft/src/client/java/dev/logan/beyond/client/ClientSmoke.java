@@ -339,6 +339,10 @@ public final class ClientSmoke {
                     require(Umbrella.Era.of(Journey.of(p).era) != Umbrella.Era.PRISTINE, "the era table advanced");
                     BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA_PASS era={} era_name={} columns_changed={} of={}", Journey.of(p).era,
                         Umbrella.Era.of(Journey.of(p).era).description, changed, after.length);
+                    // Isolate the depth check from the era grade: this fixture measures occlusion,
+                    // and every era treatment recolors the whole screen on purpose.
+                    Journey.of(p).era = 0;
+                    RealityManager.sync(p, false);
                     // CI fixture only: a real opaque wall between player and singularity.
                     p.teleport(p.getServerWorld(), .5, 120, .5, 180, 0);
                     p.setVelocity(Vec3d.ZERO);
