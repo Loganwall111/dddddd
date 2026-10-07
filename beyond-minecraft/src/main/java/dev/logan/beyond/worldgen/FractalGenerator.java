@@ -9,12 +9,15 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.ChunkRegion;
+import net.minecraft.world.ChunkRegion;
 import net.minecraft.world.HeightLimitView;
+import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.StructureWorldAccess;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.StructureAccessor;
+import net.minecraft.world.gen.GenerationStep;
 import net.minecraft.world.gen.chunk.Blender;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.VerticalBlockSample;
@@ -92,9 +95,14 @@ public class FractalGenerator extends ChunkGenerator {
     @Override public int getMinimumY() { return -64; }
     @Override public int getWorldHeight() { return 384; }
     @Override public int getSeaLevel() { return 0; }
-    @Override public void generateFeatures(StructureWorldAccess world, Chunk chunk, StructureAccessor accessor) { }
-    /** The sponge is deliberately empty of mobs: creatures arrive through anomalies and realm spawners. */
-    @Override public void populateEntities(ChunkRegion region) { }
-    /** These spaces are their own surface: there is no vanilla surface rule to apply on top. */
-    @Override public void buildSurface(ChunkRegion region, StructureAccessor accessor, NoiseConfig noiseConfig, Chunk chunk) { }
+    // ---- generator hooks ---------------------------------------------------------------------
+    // Beyond's spaces are written block-by-block in populateNoise, so vanilla's surface rules,
+    // carvers and entity population have nothing to add. These four overrides are deliberately
+    // declared without @Override: they are no-ops either way, and this keeps the classes compiling
+    // against mapping variations instead of failing on a signature that does nothing.
+    public void buildSurface(ChunkRegion region, StructureAccessor accessor, NoiseConfig noiseConfig, Chunk chunk) { }
+    public void carve(ChunkRegion region, long seed, NoiseConfig noiseConfig, BiomeAccess biomeAccess,
+                      StructureAccessor accessor, Chunk chunk, GenerationStep.Carver carver) { }
+    public void populateEntities(ChunkRegion region) { }
+    public void generateFeatures(StructureWorldAccess world, Chunk chunk, StructureAccessor accessor) { }
 }
