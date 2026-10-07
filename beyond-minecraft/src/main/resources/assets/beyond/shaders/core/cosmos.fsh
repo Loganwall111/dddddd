@@ -237,6 +237,13 @@ LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float s
     float impact2 = max(0.0, dot(origin, origin) - along * along);
     const float domain = 9.0;
     if (along < 0.0 || impact2 > domain * domain) return result;
+    // Foreground occlusion, stated as a distance rather than a ray entry point: if a real surface
+    // is closer to the camera than the near edge of the lens (its photon sphere), that surface
+    // stays in front of the effect. A ray-entry test fails here for off-centre pixels, where the
+    // ray meets the integration domain far to the side while the well itself is still behind a
+    // nearby wall.
+    float centreDistance = length(center);
+    if (geometryDistance < max(0.0, centreDistance - 2.6 * rs)) return result;
     // The integration domain may contain the CAMERA for a nearby well. Its entry distance is then
     // zero and is not a valid occlusion proxy, so foreground surfaces are rejected against a
     // conservative photon-sphere envelope before any scene ray is sampled.
