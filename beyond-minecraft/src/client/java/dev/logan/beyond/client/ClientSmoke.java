@@ -286,7 +286,7 @@ public final class ClientSmoke {
                         RealityManager.clear(p);
                         Journey.of(p).travelCooldown = 0;
                         int before = Journey.of(p).era;
-                        require(RealityManager.spawn(p, Anomaly.Kind.WORMHOLE), "wormhole creation");
+                        require(spawnAimed(p, Anomaly.Kind.WORMHOLE), "wormhole creation");
                         require(RealityManager.enter(p, 0), "leave the labyrinth for the wormhole test");
                         require(Journey.of(p).era == before, "plain travel does not shift the branch");
                         require(Tunnels.begin(p, p.getServerWorld()), "wormhole corridor opens");
@@ -370,6 +370,19 @@ public final class ClientSmoke {
             }
         }
         return heights;
+    }
+
+    /**
+     * Aim until an anomaly may legally open. A well cannot open inside solid ground — the maze and
+     * the fractal are mostly solid — so the fixture turns the player exactly as a player would.
+     */
+    private static boolean spawnAimed(ServerPlayerEntity player, Anomaly.Kind kind) {
+        for (int attempt = 0; attempt < 16; attempt++) {
+            player.setYaw(attempt * 22.5f);
+            player.setPitch(0);
+            if (RealityManager.spawn(player, kind)) return true;
+        }
+        return false;
     }
 
     /** One line of truth about the tidal fixture, so a failure names its own cause. */
