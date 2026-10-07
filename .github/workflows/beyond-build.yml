@@ -153,39 +153,9 @@ jobs:
         with:
           name: Beyond-verification
           path: beyond-minecraft/.ci-evidence
-      - name: Publish small verified deliverable and actual runtime evidence
+      - name: Publish this run's runtime evidence onto the session branch
         working-directory: beyond-minecraft
         shell: bash
-        run: |
-          # Refuse to attach an old binary to newly edited sources. Never force-push.
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          mkdir -p docs/runtime releases
-          if test -f .ci-evidence/build/verification.json; then
-            cp .ci-evidence/build/verification.json docs/runtime/verification.json
-          fi
-          # Replace the previous snapshot's frames instead of piling runs on top of each other, but
-          # only once this run actually brought captures of its own.
-          fresh=$(find .ci-evidence/run/screenshots -name 'beyond-*.png' 2>/dev/null | wc -l)
-          if test "$fresh" -gt 0; then
-            rm -f docs/runtime/beyond-*.png
-            find .ci-evidence/run/screenshots -name 'beyond-*.png' -exec cp {} docs/runtime/ \;
-          else
-            echo "::warning::this run produced no captures; keeping the previous snapshot's images"
-          fi
-          # A failed run publishes diagnostics, never an unverified replacement JAR.
-          if test -f .ci-evidence/client-smoke.log; then tail -100 .ci-evidence/client-smoke.log | cut -c1-700 > docs/runtime/latest-client-log.txt; fi
-          if test -f .ci-binary/beyond-minecraft-0.1.0-alpha.jar; then cp .ci-binary/beyond-minecraft-0.1.0-alpha.jar releases/; fi
-          if compgen -G 'docs/runtime/beyond-*.png' > /dev/null; then
-            python3 tools/make_gallery.py docs/runtime
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/runtime
-          # One small requested installable deliverable. Other build output remains ignored.
-          if test -f .ci-binary/beyond-minecraft-0.1.0-alpha.jar; then git add -f releases/beyond-minecraft-0.1.0-alpha.jar; fi
-          if git diff --cached --quiet; then
-            echo "Runtime evidence is unchanged; nothing to publish."
-          else
-            git commit -m 'Record Beyond runtime evidence and any verified deliverable [skip ci]'
-            git push origin HEAD:"$GITHUB_REF_NAME"
-          fi
+        env:
+          EVALUATION: ${{ needs.fabric.result }}
+        run: bash tools/publish-runtime-evidence.sh

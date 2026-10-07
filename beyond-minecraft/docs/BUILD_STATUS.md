@@ -9,7 +9,7 @@
 
 | Layer | Evidence |
 |---|---|
-| Generated resources | 530 generated resources reproduced byte-for-byte from seed 84921603; 19 Python tests passed; resource, shader, mixin and generator contracts validated |
+| Generated resources | 530 generated resources reproduced byte-for-byte from seed 84921603; 24 Python tests passed; resource, shader, mixin and generator contracts validated |
 | Native GLSL | Both GLSL 150 programs compiled **and linked** with glslangValidator, plus the structural shader lint |
 | Java | Common and client sources compiled for Java 21; **30 JUnit tests, zero failures** |
 | Real dedicated server | Actual Minecraft registry codecs loaded; every realm generated chunks and a safe landing; journey/root/realm NBT and scale checks passed |
@@ -22,11 +22,14 @@ SHA-256 `c11fac12a9774fc40fa70d467097d903fab12012f7cce0aa6c9293e9476884d4`
 (`-sources.jar` 403,559 bytes, SHA-256 `e197807199a872be4c02616105ee206fff23396176393713a4d97f21285819f8`).
 The JAR is built by CI; commit documentation edits only, so a later commit does not invalidate it.
 
-The publishing job now runs automatically after every push to a session branch (`arena/*`), so the
-captures and the verified JAR from a green run land in `docs/runtime/` and `releases/` on their own;
+The publishing job (`tools/publish-runtime-evidence.sh`) now runs automatically after every push to a
+session branch (`arena/*`), so the captures and the verified JAR from a green run land in
+`docs/runtime/` and `releases/` on their own;
 **Actions → Beyond the Threshold — build, playtest & capture → Run workflow** with **publish_snapshot**
 enabled remains as a manual path. Each publish replaces the previous snapshot's frames rather than
-accumulating them, refuses to attach an old binary to edited sources, and never force-pushes.
+accumulating them, refuses to attach an old binary to edited sources, skips itself when the branch has
+moved on from the commit it verified, and never force-pushes. A run that fails publishes its client
+log only; never images and never a binary.
 
 ## Defects found and corrected on the way to this record
 

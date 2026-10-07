@@ -1,5 +1,11 @@
+import os
+import subprocess
 import unittest
+from pathlib import Path
+
 import make_gallery as gal
+
+TOOLS = Path(__file__).resolve().parent
 
 
 class GalleryTests(unittest.TestCase):
@@ -46,6 +52,34 @@ class GalleryTests(unittest.TestCase):
 
     def test_unknown_capture_still_renders(self):
         self.assertEqual("A brand new thing", gal.caption("beyond-31-a-brand-new-thing.png"))
+
+
+class PublishScriptTests(unittest.TestCase):
+    """The publish step runs on a runner we cannot debug from logs, so check it here."""
+
+    script = TOOLS / "publish-runtime-evidence.sh"
+
+    def test_script_parses(self):
+        subprocess.run(["bash", "-n", str(self.script)], check=True)
+
+    def test_script_is_executable(self):
+        self.assertTrue(os.access(self.script, os.X_OK))
+        self.assertTrue(self.script.read_text().startswith("#!/usr/bin/env bash"))
+
+    def test_script_refuses_to_guess_its_context(self):
+        result = subprocess.run(
+            ["bash", str(self.script)],
+            capture_output=True,
+            text=True,
+            env={k: v for k, v in os.environ.items() if not k.startswith(("GITHUB_", "EVALUATION"))},
+        )
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("GITHUB_REF_NAME", result.stderr + result.stdout)
+
+    def test_script_only_publishes_after_a_green_run(self):
+        body = self.script.read_text()
+        self.assertIn('if test "$EVALUATION" = success', body)
+        self.assertIn("ls-remote", body)
 
 
 if __name__ == "__main__":
