@@ -48,6 +48,7 @@ public final class ClientSmoke {
     private static int observedStage = -99;
     private static long stageStarted;
     private static int[] occlusionReference;
+    private static int occlusionControl;
     private static int[] lensingReference;
     private static int[] heightsBefore;
     private static final int TICK_BUDGET = 9000;
@@ -348,13 +349,21 @@ public final class ClientSmoke {
                 }); }
                 case 27 -> { if (stageTicks > 50) { BeyondClient.CONFIG.enabled = false; stage++; stageTicks = 0; } }
                 case 28 -> { if (stageTicks > 15) {
-                    occlusionReference = sampleWorldPixels(client); BeyondClient.CONFIG.enabled = true; stage++; stageTicks = 0;
+                    occlusionReference = sampleWorldPixels(client); stage++; stageTicks = 0;
                 } }
                 case 29 -> { if (stageTicks > 15) {
+                    // Control, still with the effect off: how much does this scene drift by itself?
+                    // A live singularity keeps working (particles, gravity, its tornado), so the
+                    // renderer is only accused of the drift beyond what the world does on its own.
+                    occlusionControl = difference(occlusionReference, sampleWorldPixels(client));
+                    BeyondClient.CONFIG.enabled = true; stage++; stageTicks = 0;
+                } }
+                case 30 -> { if (stageTicks > 15) {
                     int difference = difference(occlusionReference, sampleWorldPixels(client));
                     require(CosmicRenderer.ready(), CosmicRenderer.status());
-                    require(difference <= 3, "native foreground occlusion drift: " + difference);
-                    BeyondMinecraft.LOGGER.info("BEYOND_NATIVE_OCCLUSION max_channel_difference={}", difference);
+                    require(difference <= Math.max(3, occlusionControl + 3),
+                        "native foreground occlusion drift: " + difference + " (scene control " + occlusionControl + ")");
+                    BeyondMinecraft.LOGGER.info("BEYOND_NATIVE_OCCLUSION max_channel_difference={} control={}", difference, occlusionControl);
                     capture(client, "15-native-depth-occlusion");
                     BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
                         + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true realities={} screenshots=true",
