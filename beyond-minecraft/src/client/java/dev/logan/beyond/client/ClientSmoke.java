@@ -328,7 +328,9 @@ public final class ClientSmoke {
                     Umbrella.queue(p.getServerWorld(), p.getBlockPos(), 6, Umbrella.Era.GIANT_WOOD, Journey.of(p).eraSeed);
                     BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA queued era={} columns={}", Umbrella.Era.GIANT_WOOD, heightsBefore.length);
                 }); }
-                case 26 -> server(client, p -> {
+                // The rewrite is budgeted per tick, so wait for the queue to drain before
+                // judging whether the branch really changed.
+                case 26 -> { if (stageTicks > 20 && !Umbrella.busy()) server(client, p -> {
                     int[] after = columnHeights(p, 6);
                     int changed = 0;
                     for (int i = 0; i < after.length; i++) if (after[i] != heightsBefore[i]) changed++;
@@ -343,7 +345,7 @@ public final class ClientSmoke {
                     for (int x = -6; x <= 6; x++) for (int y = 116; y <= 129; y++)
                         p.getServerWorld().setBlockState(new BlockPos(x, y, -3), Blocks.WHITE_CONCRETE.getDefaultState());
                     require(RealityManager.spawn(p, Anomaly.Kind.SINGULARITY), "occluded singularity fixture");
-                });
+                }); }
                 case 27 -> { if (stageTicks > 50) { BeyondClient.CONFIG.enabled = false; stage++; stageTicks = 0; } }
                 case 28 -> { if (stageTicks > 15) {
                     occlusionReference = sampleWorldPixels(client); BeyondClient.CONFIG.enabled = true; stage++; stageTicks = 0;

@@ -48,6 +48,8 @@ public final class Umbrella {
     private static final int COLUMNS_PER_TICK = 18;
     private Umbrella() {}
     public static void reset() { JOBS.clear(); }
+    /** True while any branch rewrite still has columns left to process. */
+    public static boolean busy() { return JOBS.values().stream().anyMatch(queue -> !queue.isEmpty()); }
 
     /** Records the branch shift and queues the rewrite. Called when a tunnel or wormhole completes. */
     public static void shift(ServerPlayerEntity player, ServerWorld world, Vec3d at) {
