@@ -88,7 +88,9 @@ public final class BeyondSmoke {
                 Journey copy = Journey.read(journey.write());
                 require(copy.witnessed && copy.origin.equals(journey.origin), "journey NBT round trip");
                 require(copy.era == 5 && copy.eraSeed == 424242L, "era persistence round trip");
-                require(Umbrella.Era.of(5) == Umbrella.Era.ALIEN, "era table");
+                require(Umbrella.Era.of(0) == Umbrella.Era.PRISTINE && Umbrella.Era.of(4) == Umbrella.Era.ALIEN
+                    && Umbrella.Era.of(5) == Umbrella.Era.VEINED, "era table");
+                require(Umbrella.Era.of(8) == Umbrella.Era.PRISTINE && Umbrella.Era.of(-1) == Umbrella.Era.ASHEN, "era table wraps");
                 require(copy.inventory.switchTo(InventoryLedger.ROOT, modified).getString("sentinel").equals("root"), "root inventory restore");
                 require(copy.inventory.switchTo("beyond:realm_00", root).getString("sentinel").equals("realm"), "realm inventory restore");
                 require(Registries.ENTITY_TYPE.getId(BeyondEntities.REALM_CRITTER).getPath().equals("realm_critter"), "critter id");
