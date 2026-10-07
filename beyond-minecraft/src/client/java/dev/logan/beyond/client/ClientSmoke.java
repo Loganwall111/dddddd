@@ -62,12 +62,13 @@ public final class ClientSmoke {
         try {
             if (observedStage != stage) {
                 observedStage = stage; stageStarted = System.currentTimeMillis();
-                if (stage == 0) runStarted = stageStarted;
-                BeyondMinecraft.LOGGER.info("BEYOND_INTEGRATION stage={} started", Math.max(0, stage));
+                // The run clock starts when the first real stage begins; negative stages are boot and loading.
+                if (stage >= 0 && runStarted == 0) runStarted = stageStarted;
+                BeyondMinecraft.LOGGER.info("BEYOND_INTEGRATION stage={} started", stage);
             }
             if (stage >= 0 && System.currentTimeMillis() - stageStarted > STAGE_BUDGET_MS)
                 throw new IllegalStateException("Stage stalled: " + stage);
-            if (stage >= 0 && System.currentTimeMillis() - runStarted > RUN_BUDGET_MS)
+            if (stage >= 0 && runStarted != 0 && System.currentTimeMillis() - runStarted > RUN_BUDGET_MS)
                 throw new IllegalStateException("Integration run exceeded its wall budget at stage " + stage);
             if (failure != null) throw new IllegalStateException("server-side integration assertion", failure);
             if (System.currentTimeMillis() - lastHeartbeat > 15000) {
