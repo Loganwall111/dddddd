@@ -41,7 +41,14 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew --no-daemon --console=plain build 2>&1 | tee build-smoke.log
+          # Maven Central and libraries.minecraft.net occasionally answer with a broken POM
+          # half-way through a resolve. Retry the build instead of failing the whole batch.
+          for attempt in 1 2 3; do
+            if ./gradlew --no-daemon --console=plain build 2>&1 | tee build-smoke.log; then ok=1; break; fi
+            echo "::warning::gradle build attempt $attempt failed; retrying in 30s"
+            sleep 30
+          done
+          test "${ok:-}" = 1
       - name: Load real Minecraft registries and generate every realm
         shell: bash
         run: |
@@ -93,14 +100,14 @@ jobs:
             beyond-minecraft/build/verification.json
   publish-session-snapshot:
     needs: fabric
-    if: always() && github.ref == 'refs/heads/arena/9f9c3178-dddddd' && github.event_name == 'workflow_dispatch' && inputs.publish_snapshot
+    if: always() && github.ref == 'refs/heads/arena/a5751068-dddddd' && github.event_name == 'workflow_dispatch' && inputs.publish_snapshot
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: arena/9f9c3178-dddddd
+          ref: arena/a5751068-dddddd
       - uses: actions/download-artifact@v4
         if: needs.fabric.result == 'success'
         with:
