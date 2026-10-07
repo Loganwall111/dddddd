@@ -395,6 +395,20 @@ public final class ClientSmoke {
         BlockPos pos = BlockPos.ofFloored(center);
         boolean empty = world.isSpaceEmpty(new Box(center.x - .7, center.y - 1, center.z - .7,
             center.x + .7, center.y + 1, center.z + .7));
+        StringBuilder solids = new StringBuilder();
+        for (int dy = -1; dy <= 1 && solids.length() < 220; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos sample = pos.add(dx, dy, dz);
+                    if (world.getBlockState(sample).isAir()) continue;
+                    solids.append(sample.getX()).append(',').append(sample.getY()).append(',').append(sample.getZ())
+                          .append('=').append(world.getBlockState(sample).getBlock().getTranslationKey()).append(' ');
+                }
+            }
+        }
+        BeyondMinecraft.LOGGER.info("BEYOND_SPAWN_BLOCKS [{}] head={} {}", solids.length() == 0 ? "all air" : solids.toString().trim(),
+            world.getBlockState(player.getBlockPos().up(2)).getBlock().getTranslationKey(),
+            world.getBlockState(player.getBlockPos().up(4)).getBlock().getTranslationKey());
         BeyondMinecraft.LOGGER.info("BEYOND_SPAWN_DIAG kind={} world={} feet={} eye={} center={} cooldown={} vehicle={} spectator={} "
             + "border={} loaded={} empty={} y={} bottom={} top={}",
             kind, world.getRegistryKey().getValue(), player.getBlockPos(), player.getEyePos(), center,
