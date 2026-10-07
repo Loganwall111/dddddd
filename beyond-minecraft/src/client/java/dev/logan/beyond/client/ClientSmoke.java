@@ -314,6 +314,9 @@ public final class ClientSmoke {
                         for (int x = -3; x <= 3; x++) for (int y = -2; y <= 5; y++) for (int z = -3; z <= 3; z++)
                             if (p.getServerWorld().getBlockState(p.getBlockPos().add(x, y, z)).isOf(Blocks.BARRIER)) barriers++;
                         require(barriers == 0, "no barrier blocks may be left behind");
+                        // The walk ends where it started — a realm. A player would now leave it,
+                        // so the fixture does the same before the root-reality checks.
+                        require(RealityManager.returnHome(p), "leave the realm after the corridor");
                     });
                 }
                 case 25 -> { if (stageTicks > 45 && client.world.getRegistryKey().equals(World.OVERWORLD)) server(client, p -> {
