@@ -120,7 +120,10 @@ public class BetweenGenerator extends ChunkGenerator {
             }
         }
         // An arrival ring floats over the abyss: it is the only safe floor near the centre, and it
-        // exists so stepping through a Tear does not drop you straight out of the world.
+        // exists so stepping through a Tear does not drop you straight out of the world. It is two
+        // blocks thick — a one-block slab bridging a drop into the labyrinth is a trap door, and the
+        // slab is the only realm material near the hub's centre, so it has to read as real floor
+        // from any angle and be found by the arrival search above it.
         int platformY = FLOOR + 9;
         for (int lx = 0; lx < 16; lx++) {
             for (int lz = 0; lz < 16; lz++) {
@@ -132,8 +135,11 @@ public class BetweenGenerator extends ChunkGenerator {
                 boolean puzzle = (Math.floorMod(x / 3 + z / 3, 2) == 0) || Math.abs(x) < 3 || Math.abs(z) < 3;
                 cursor.set(x, platformY, z);
                 chunk.setBlockState(cursor, puzzle ? light : dark, false);
+                cursor.set(x, platformY + 1, z);
+                chunk.setBlockState(cursor, puzzle ? light : dark, false);
+                // A sparse crown of lit tiles sits on the walkway so the ring reads as built, not poured.
                 if (ring && Math.floorMod(BeyondWorldgen.hash(x, 1, z, 7171), 19) == 0) {
-                    cursor.set(x, platformY + 1, z);
+                    cursor.set(x, platformY + 2, z);
                     chunk.setBlockState(cursor, light, false);
                 }
             }

@@ -309,9 +309,19 @@ public final class ClientSmoke {
                     server(client, p -> {
                         RealityManager.clear(p);
                         Journey.of(p).travelCooldown = 0;
-                        int before = Journey.of(p).era;
-                        require(RealityManager.spawn(p, Anomaly.Kind.WORMHOLE), "wormhole creation");
+                        // The corridor is opened from the canopy, not from inside the maze: a wormhole
+                        // needs open air for its mouth, and the labyrinth is walls and ceilings to the
+                        // world limit. The labyrinth is still what stage 22 photographs.
                         require(RealityManager.enter(p, 0), "leave the labyrinth for the wormhole test");
+                        int before = Journey.of(p).era;
+                        float yaw = p.getYaw();
+                        boolean opened = false;
+                        for (float pitch : new float[]{0f, -32f, -64f, 24f}) {
+                            Journey.of(p).travelCooldown = 0;   // arrival set it
+                            p.setRotation(yaw, pitch);
+                            if (RealityManager.spawn(p, Anomaly.Kind.WORMHOLE)) { opened = true; break; }
+                        }
+                        require(opened, "wormhole creation");
                         require(Journey.of(p).era == before, "plain travel does not shift the branch");
                         tunnelStart = p.getPos();
                         require(Tunnels.begin(p, p.getServerWorld()), "wormhole corridor opens");
