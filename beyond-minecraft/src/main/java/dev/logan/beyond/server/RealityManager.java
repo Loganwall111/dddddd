@@ -149,7 +149,15 @@ public final class RealityManager {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             Journey journey = Journey.of(player);
             if (journey.travelCooldown > 0) journey.travelCooldown--;
-            if (Tunnels.active(player)) { Tunnels.tick(player); PREVIOUS.remove(player.getUuid()); continue; }
+            if (Tunnels.active(player)) {
+                // The corridor walk needs its remaining length on the client, or the time-tunnel
+                // overlay never starts and the walk is invisible. Sync, then skip the rest of the
+                // per-player work for this tick (the walker is inside barriers, not in open space).
+                Tunnels.tick(player);
+                PREVIOUS.remove(player.getUuid());
+                sync(player, false);
+                continue;
+            }
             scalePhysics(player);
             Sample before = PREVIOUS.get(player.getUuid());
             if (Journey.inRealm(player.getWorld().getRegistryKey()) && player.getY() < player.getWorld().getBottomY() + 12 && journey.travelCooldown == 0) {
