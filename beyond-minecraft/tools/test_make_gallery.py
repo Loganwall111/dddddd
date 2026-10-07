@@ -36,6 +36,14 @@ class GalleryTests(unittest.TestCase):
         self.assertIn("junit_failures", page)
         self.assertIn("2 captures", page)
 
+    def test_markdown_twin_links_every_capture(self):
+        images = ["beyond-01-witness.png", "beyond-04-reality-10.png"]
+        page = gal.render_markdown("docs/runtime", images, {"checks": {"junit_failures": 0}, "artifacts": {}})
+        for name in images:
+            self.assertEqual(1, page.count(f"]({name})"))
+        self.assertEqual(len(images), page.count("### "))
+        self.assertIn("**2 captures**", page)
+
     def test_unknown_capture_still_renders(self):
         self.assertEqual("A brand new thing", gal.caption("beyond-31-a-brand-new-thing.png"))
 

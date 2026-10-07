@@ -158,11 +158,45 @@ def render(folder: Path, images: list[str], verification: dict) -> str:
 """
 
 
+def render_markdown(folder: Path, images: list[str], verification: dict) -> str:
+    """GitHub renders this one, so the captures are readable without leaving the repo."""
+    checks = verification.get("checks", {})
+    jar = verification.get("artifacts", {}).get("beyond-minecraft-0.1.0-alpha.jar", {})
+    lines = [
+        "# Beyond the Threshold — real in-client captures",
+        "",
+        "These frames were taken by the mod's own integration harness driving a real Minecraft client",
+        "inside the GitHub Actions workflow (Mesa software GL, Xvfb). Nothing here is a mockup: the",
+        "client travelled the worlds, opened the lens, tore the membrane and photographed the result.",
+        "",
+    ]
+    if verification.get("run_url"):
+        lines.append(f"**Workflow run:** {verification['run_url']}")
+    if verification.get("source_commit"):
+        lines.append(f"**Verified source commit:** `{verification['source_commit']}`")
+    if checks:
+        summary = ", ".join(f"{k}={v}" for k, v in checks.items())
+        lines.append(f"**Checks:** {summary}")
+    if jar.get("sha256"):
+        lines.append(f"**Installable alpha:** {jar.get('bytes', 0)} bytes, SHA-256 `{jar['sha256']}`")
+    lines += ["", f"**{len(images)} captures**, in playtest order.", ""]
+    for name in images:
+        lines.append(f"### {caption(name)}")
+        lines.append("")
+        lines.append(f"![{caption(name)}]({name})")
+        lines.append("")
+        lines.append(f"`{name}`")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("folder", nargs="?", default="docs/runtime", type=Path)
     ap.add_argument("--verification", type=Path, default=None)
-    ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--out", type=Path, default=None,
+                    help="HTML gallery path (default: <folder>/index.html); the Markdown twin is written next to it)")
+
     args = ap.parse_args()
 
     folder: Path = args.folder
@@ -178,10 +212,12 @@ def main() -> int:
     verification = load_verification(args.verification or folder / "verification.json")
     out = args.out or folder / "index.html"
     out.write_text(render(folder, images, verification))
+    markdown = out.with_name("GALLERY.md") if out.name == "index.html" else out.with_suffix(".md")
+    markdown.write_text(render_markdown(folder, images, verification))
 
     for name in images:
         print(f"  {name}  --  {caption(name)}")
-    print(f"wrote {out} ({len(images)} captures)")
+    print(f"wrote {out} and {markdown} ({len(images)} captures)")
     return 0
 
 

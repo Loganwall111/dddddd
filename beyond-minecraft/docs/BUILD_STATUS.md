@@ -15,7 +15,7 @@
 | Real dedicated server | Actual Minecraft registry codecs loaded; every realm generated chunks and a safe landing; journey/root/realm NBT and scale checks passed |
 | Real Minecraft client | Mesa/Xvfb software OpenGL, 960×540: native programs loaded, post-process frames rendered, and the in-world integration suite passed |
 | In-world integration | World travel (root → realm → nested realm → root), inventory clone/mutation/restore, player NBT persistence, keepInventory-OFF death and non-resurrection, scale extremes 1/1024× → 4096×, sky well as a persistent client node, measurable lensing, tidal stretch applied to a rendered creature, tear → hub → fractal → labyrinth travel, an armed and torn-down wormhole corridor, the Umbrella branch rewrite, and foreground depth occlusion |
-| Screenshots | 25 real client captures uploaded with the run (`Beyond-verification` artifact, `run/screenshots/beyond-*.png`) and rendered as a gallery at [`docs/runtime/index.html`](runtime/index.html) |
+| Screenshots | 25 real client captures uploaded with the run (`Beyond-verification` artifact, `run/screenshots/beyond-*.png`) and rendered as a gallery at [`docs/runtime/GALLERY.md`](runtime/GALLERY.md) |
 
 **Installable alpha from that run:** `beyond-minecraft-0.1.0-alpha.jar` — 478,070 bytes,
 SHA-256 `c11fac12a9774fc40fa70d467097d903fab12012f7cce0aa6c9293e9476884d4`
