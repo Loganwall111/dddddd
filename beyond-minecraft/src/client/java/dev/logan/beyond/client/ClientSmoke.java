@@ -175,6 +175,10 @@ public final class ClientSmoke {
                 }); }
                 case 12 -> { if (stageTicks > 30 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) server(client, p -> {
                     require(RealityManager.returnHome(p), "final safe return");
+                    // Stay airborne for the sky work: a survival fall from 250 would kill the body
+                    // mid-test and leave the camera behind at the death spot.
+                    p.changeGameMode(GameMode.CREATIVE);
+                    p.getAbilities().allowFlying = true; p.getAbilities().flying = true; p.sendAbilitiesUpdate();
                     // Unlimited scale, both directions: a thousandth of a player, then 4096 players
                     // tall. Clear sky is required for a body that wide, exactly as in play.
                     p.teleport(p.getServerWorld(), .5, 250, .5, 180, 0);
@@ -241,6 +245,7 @@ public final class ClientSmoke {
                     });
                 } }
                 case 18 -> { if (stageTicks > 45) {
+                    logTidalDiagnostics(client);
                     require(Spaghettification.applied > 0, "the tidal stretch must actually be applied to rendered entities");
                     require(Spaghettification.lastStretch > 1.05f, "stretch factor must be above neutral");
                     BeyondMinecraft.LOGGER.info("BEYOND_SPAGHETTIFICATION applied={} last_stretch={} noodle=true", Spaghettification.applied, Spaghettification.lastStretch);
@@ -365,6 +370,23 @@ public final class ClientSmoke {
             }
         }
         return heights;
+    }
+
+    /** One line of truth about the tidal fixture, so a failure names its own cause. */
+    private static void logTidalDiagnostics(MinecraftClient client) {
+        int clientCritters = 0;
+        boolean stretchable = false;
+        if (client.world != null) {
+            for (var entity : client.world.getEntities()) {
+                if (!(entity instanceof RealmCritter critter)) continue;
+                clientCritters++;
+                if (Spaghettification.forEntity(critter) != null) stretchable = true;
+            }
+        }
+        BeyondMinecraft.LOGGER.info("BEYOND_TIDAL_DIAG applied={} last_stretch={} nodes={} client_critters={} stretchable={} alive={} flying={} screen={}",
+            Spaghettification.applied, Spaghettification.lastStretch, ClientReality.nodes.size(), clientCritters, stretchable,
+            client.player != null && client.player.isAlive(), client.player != null && client.player.getAbilities().flying,
+            client.currentScreen == null ? "none" : client.currentScreen.getClass().getSimpleName());
     }
 
     private static int difference(int[] first, int[] second) {
