@@ -21,7 +21,9 @@ public final class SafeLanding {
             BlockPos p = base.add(offset[0], 0, offset[1]);
             if (!world.getWorldBorder().contains(p)) continue;
             world.getChunk(p); // synchronous but at most nine nearby chunks; never permanently force-loaded
-            for (int dy : new int[]{0, 1, 2, 3, -1}) {
+            // Prefer the highest valid spot in a window around the preferred height: arrivals inside a
+            // hollow (a maze corridor, a sponge cell) are far below the column's surface.
+            for (int dy = 8; dy >= -24; dy--) {
                 BlockPos feet = p.up(dy);
                 if (safe(world, feet, width, height)) return Optional.of(feet.toBottomCenterPos());
             }
@@ -29,25 +31,28 @@ public final class SafeLanding {
             if (safe(world, surface, width, height)) return Optional.of(surface.toBottomCenterPos());
         }
         if (!allowAirPad) return Optional.empty();
-        int radius = Math.max(2, (int) Math.ceil(width / 2) + 1);
-        // A small, explicitly authored arrival plinth. Only empty space can be modified, so this
-        // walks a handful of columns and a range of heights instead of giving up on a mountain.
+        // A small, explicitly authored arrival plinth. Only empty space can be modified, so this walks
+        // a handful of columns, a range of heights and a shrinking footprint instead of giving up.
         int ceiling = world.getTopY() - (int) Math.ceil(height) - 3;
+        int widest = Math.max(2, (int) Math.ceil(width / 2) + 1);
         for (int[] offset : OFFSETS) {
             BlockPos column = base.add(offset[0], 0, offset[1]);
             if (!world.getWorldBorder().contains(column)) continue;
             int surface = world.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, column).getY();
-            for (int y : new int[]{surface + 5, surface + 14, 192, 224, 256, 288, world.getBottomY() + 24}) {
+            for (int y : new int[]{surface + 5, surface + 9, surface + 14, surface + 21, surface + 30,
+                                   192, 224, 256, 288, world.getBottomY() + 24}) {
                 if (y <= world.getBottomY() + 2 || y > ceiling) continue;
                 BlockPos center = new BlockPos(column.getX(), y, column.getZ());
-                boolean clear = true;
-                for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, (int) Math.ceil(height), radius))) {
-                    if (!world.getWorldBorder().contains(p) || !world.isAir(p)) { clear = false; break; }
+                for (int radius = widest; radius >= 0; radius--) {
+                    boolean clear = true;
+                    for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, (int) Math.ceil(height), radius))) {
+                        if (!world.getWorldBorder().contains(p) || !world.isAir(p)) { clear = false; break; }
+                    }
+                    if (!clear) continue;
+                    for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, -1, radius)))
+                        if (world.isAir(p)) world.setBlockState(p, pad.getDefaultState(), Block.NOTIFY_ALL);
+                    return Optional.of(center.toBottomCenterPos());
                 }
-                if (!clear) continue;
-                for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, -1, radius)))
-                    if (world.isAir(p)) world.setBlockState(p, pad.getDefaultState(), Block.NOTIFY_ALL);
-                return Optional.of(center.toBottomCenterPos());
             }
         }
         return Optional.empty();
