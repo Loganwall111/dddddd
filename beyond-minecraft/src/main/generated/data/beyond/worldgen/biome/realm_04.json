@@ -8,9 +8,30 @@
     "water_color": 2787740,
     "water_fog_color": 1259333,
     "grass_color": 15899610,
-    "foliage_color": 15899610
+    "foliage_color": 15899610,
+    "mood_sound": {
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000,
+      "offset": 2.0,
+      "block_search_extent": 8
+    }
   },
-  "spawners": {},
+  "spawners": {
+    "CREATURE": [
+      {
+        "type": "beyond:realm_critter",
+        "weight": 14,
+        "minCount": 1,
+        "maxCount": 3
+      },
+      {
+        "type": "minecraft:bee",
+        "weight": 6,
+        "minCount": 1,
+        "maxCount": 3
+      }
+    ]
+  },
   "spawn_costs": {},
   "carvers": {},
   "features": [
@@ -21,13 +42,17 @@
     [
       "beyond:realm_04_pillars"
     ],
-    [],
-    [],
-    [],
-    [],
     [
-      "minecraft:trees_plains"
+      "beyond:realm_04_trees"
     ],
+    [
+      "beyond:realm_04_blob"
+    ],
+    [
+      "beyond:realm_04_geode"
+    ],
+    [],
+    [],
     []
   ]
 }

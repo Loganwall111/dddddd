@@ -20,10 +20,26 @@ public final class Journey {
     public Vec3d origin;
     public float originYaw, originPitch;
     public int travelCooldown;
+    /**
+     * The Umbrella Effect counter: every branch you displace through increments this, and the root
+     * reality you return to is rewritten to match the branch you came from. Old journeys load as 0.
+     */
+    public int era;
+    public long eraSeed;
     public final InventoryLedger<NbtCompound> inventory = new InventoryLedger<>(NbtCompound::copy);
     public static Journey of(ServerPlayerEntity player) { return ((Traveler) player).beyond$getJourney(); }
     public static boolean inRealm(RegistryKey<World> world) {
         return world.getValue().getNamespace().equals("beyond") && world.getValue().getPath().matches("realm_[0-9]{2}");
+    }
+    /** Generated spaces (bubble hub, labyrinth, fractal) are where the soundscape changes. */
+    public static boolean inGeneratedSpace(RegistryKey<World> world) {
+        var realm = BeyondMinecraft.CATALOG.realm(world.getValue().getPath());
+        return realm != null && realm.generated();
+    }
+    /** Realms that only exist as compiled noise terrain. */
+    public static boolean inNoiseRealm(RegistryKey<World> world) {
+        var realm = BeyondMinecraft.CATALOG.realm(world.getValue().getPath());
+        return realm != null && !realm.generated();
     }
     public static String scope(RegistryKey<World> world) { return inRealm(world) ? world.getValue().toString() : InventoryLedger.ROOT; }
     public NbtCompound write() {
@@ -33,6 +49,7 @@ public final class Journey {
         NbtCompound vault = new NbtCompound();
         inventory.snapshots().forEach(vault::put);
         tag.put("Vault", vault);
+        tag.putInt("Era", era); tag.putLong("EraSeed", eraSeed);
         if (originWorld != null && origin != null) {
             tag.putString("OriginWorld", originWorld.getValue().toString());
             tag.putDouble("OriginX", origin.x); tag.putDouble("OriginY", origin.y); tag.putDouble("OriginZ", origin.z);
@@ -47,6 +64,8 @@ public final class Journey {
         if (tag.getInt("Schema") != 1) throw new IllegalStateException("Unsupported Beyond journey schema. Restore a backup; do not downgrade this world.");
         result.witnessed = tag.getBoolean("Witnessed");
         result.cursor = Math.max(0, tag.getInt("Cursor"));
+        result.era = Math.clamp(tag.getInt("Era"), 0, 64);
+        result.eraSeed = tag.getLong("EraSeed");
         var vault = new LinkedHashMap<String, NbtCompound>();
         NbtCompound stored = tag.getCompound("Vault");
         for (String key : stored.getKeys()) {

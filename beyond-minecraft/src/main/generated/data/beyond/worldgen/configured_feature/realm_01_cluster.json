@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:block_blob",
+  "config": {
+    "state": {
+      "Name": "beyond:realm_01_crystal"
+    },
+    "radius": 2
+  }
+}

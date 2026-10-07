@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block_column",
+  "config": {
+    "layers": [
+      {
+        "height": {
+          "type": "minecraft:uniform",
+          "min_inclusive": 2,
+          "max_inclusive": 9
+        },
+        "provider": {
+          "type": "minecraft:simple_state_provider",
+          "state": {
+            "Name": "beyond:realm_10_crystal"
+          }
+        }
+      }
+    ],
+    "direction": "down",
+    "allowed_placement": {
+      "type": "minecraft:matching_blocks",
+      "blocks": [
+        "minecraft:air"
+      ]
+    },
+    "prioritize_tip": false
+  }
+}

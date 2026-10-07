@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:random_patch",
+  "config": {
+    "tries": 24,
+    "xz_spread": 6,
+    "y_spread": 3,
+    "feature": {
+      "type": "minecraft:simple_block",
+      "config": {
+        "to_place": {
+          "type": "minecraft:simple_state_provider",
+          "state": {
+            "Name": "beyond:realm_11_flora"
+          }
+        }
+      }
+    }
+  }
+}

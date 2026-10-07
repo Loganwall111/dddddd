@@ -1,6 +1,6 @@
 package dev.logan.beyond.content;
 
-import dev.logan.beyond.BeyondMinecraft;
+import dev.logan.beyond.server.Anomaly;
 import dev.logan.beyond.server.RealityManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -15,7 +15,7 @@ import net.minecraft.world.World;
 import java.util.List;
 
 public final class AbilityItem extends Item {
-    public enum Ability { KNIFE, RELIC, GUIDE, SCALE }
+    public enum Ability { KNIFE, RELIC, TEAR, GUIDE, SCALE }
     private final Ability ability;
     /** Installed by the client entrypoint. No net.minecraft.client reference on the dedicated server. */
     public static Runnable openGuide = () -> {};
@@ -28,13 +28,15 @@ public final class AbilityItem extends Item {
         }
         if (user instanceof ServerPlayerEntity player) {
             boolean success = switch (ability) {
-                case KNIFE -> player.isSneaking() ? RealityManager.returnHome(player) : RealityManager.spawn(player, false);
-                case RELIC -> RealityManager.spawn(player, true);
-                case SCALE -> RealityManager.cycleScale(player);
+                case KNIFE -> player.isSneaking() ? RealityManager.returnHome(player) : RealityManager.spawn(player, Anomaly.Kind.MEMBRANE);
+                case RELIC -> RealityManager.spawn(player, Anomaly.Kind.SINGULARITY);
+                case TEAR -> player.isSneaking() ? RealityManager.spawn(player, Anomaly.Kind.WORMHOLE)
+                    : RealityManager.spawn(player, Anomaly.Kind.TEAR);
+                case SCALE -> player.isSneaking() ? RealityManager.shrink(player) : RealityManager.grow(player);
                 default -> false;
             };
             if (!success) return TypedActionResult.fail(stack);
-            player.getItemCooldownManager().set(this, ability == Ability.SCALE ? 20 : 60);
+            player.getItemCooldownManager().set(this, ability == Ability.SCALE ? 8 : 60);
         }
         return TypedActionResult.success(stack, world.isClient);
     }
@@ -42,11 +44,18 @@ public final class AbilityItem extends Item {
         String line = switch (ability) {
             case KNIFE -> "Use: cut a membrane. Sneak-use: return home.";
             case RELIC -> "Use: open a singularity. Its horizon is a doorway.";
+            case TEAR -> "Use: tear the fabric. Sneak-use: open a wormhole.";
             case GUIDE -> "A field guide to the things between worlds.";
-            case SCALE -> "Use: cycle 1/8, 1/2, normal and 3x scale.";
+            case SCALE -> "Use: grow a step. Sneak-use: shrink a step.";
         };
         tooltip.add(Text.literal(line).formatted(Formatting.GRAY));
-        if (ability == Ability.KNIFE || ability == Ability.RELIC)
-            tooltip.add(Text.literal("Experimental: use a backed-up test world.").formatted(Formatting.DARK_AQUA));
+        switch (ability) {
+            case SCALE -> tooltip.add(Text.literal("Rungs 1/1024× to 4096×. Gigantic bodies need open sky.")
+                .formatted(Formatting.DARK_AQUA));
+            case TEAR -> tooltip.add(Text.literal("Tears open onto the Between; the horizon bubbles into other worlds.")
+                .formatted(Formatting.DARK_AQUA));
+            case KNIFE, RELIC -> tooltip.add(Text.literal("Experimental: use a backed-up test world.").formatted(Formatting.DARK_AQUA));
+            default -> { }
+        }
     }
 }

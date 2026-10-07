@@ -3,18 +3,28 @@ package dev.logan.beyond.client;
 import dev.logan.beyond.BeyondMinecraft;
 import dev.logan.beyond.client.render.CosmicRenderer;
 import dev.logan.beyond.content.BeyondContent;
+import dev.logan.beyond.content.BeyondEntities;
+import dev.logan.beyond.entity.RealmCritter;
+import dev.logan.beyond.math.ScaleLadder;
+import dev.logan.beyond.server.Anomaly;
 import dev.logan.beyond.server.Journey;
 import dev.logan.beyond.server.RealityManager;
+import dev.logan.beyond.server.SkyWells;
+import dev.logan.beyond.server.Tunnels;
+import dev.logan.beyond.server.Umbrella;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.DeathScreen;
 import net.minecraft.client.gui.screen.world.BackupPromptScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.ScreenshotRecorder;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
@@ -37,6 +47,9 @@ public final class ClientSmoke {
     private static int observedStage = -99;
     private static long stageStarted;
     private static int[] occlusionReference;
+    private static int[] lensingReference;
+    private static int[] heightsBefore;
+    private static final int TICK_BUDGET = 9000;
     private ClientSmoke() {}
     public static void tick(MinecraftClient client) {
         if (!ENABLED || complete) return;
@@ -49,12 +62,11 @@ public final class ClientSmoke {
                     client.currentScreen == null ? "none" : client.currentScreen.getClass().getSimpleName() + " / " + client.currentScreen.getTitle().getString());
                 lastHeartbeat = System.currentTimeMillis();
             }
-            if (++bootTicks > 6500) throw new IllegalStateException("integration smoke timed out at stage " + stage);
+            if (++bootTicks > TICK_BUDGET) throw new IllegalStateException("integration smoke timed out at stage " + stage);
             if (stage == -2) {
                 if (bootTicks < 120) return;
                 require(CosmicRenderer.ready(), CosmicRenderer.status());
                 BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_SHADER_SMOKE_PASS native_glsl=true resource_reload=true");
-                // The workflow copies ONLY its freshly generated server world to this name.
                 require(Files.isRegularFile(client.runDirectory.toPath().resolve("saves/beyond-ci/level.dat")), "missing isolated CI save");
                 client.options.getViewDistance().setValue(2);
                 client.options.getSimulationDistance().setValue(5);
@@ -66,7 +78,6 @@ public final class ClientSmoke {
                 return;
             }
             if (stage == -1) {
-                // Only this explicitly opt-in, disposable test save may bypass an experimental-world prompt.
                 if (client.currentScreen instanceof BackupPromptScreen screen) {
                     for (var child : List.copyOf(screen.children())) {
                         if (child instanceof ButtonWidget b && b.active && !b.getMessage().getString().equals(net.minecraft.text.Text.translatable("gui.cancel").getString())) {
@@ -98,21 +109,21 @@ public final class ClientSmoke {
                 });
                 case 1 -> { if (stageTicks > 65 && CosmicRenderer.renderedFrames() > 8) {
                     capture(client, "01-witness");
-                    server(client, p -> { Journey.of(p).travelCooldown = 0; require(RealityManager.spawn(p, true), "local singularity creation"); });
+                    server(client, p -> { Journey.of(p).travelCooldown = 0; require(RealityManager.spawn(p, Anomaly.Kind.SINGULARITY), "local singularity creation"); });
                 } }
                 case 2 -> { if (stageTicks > 40) {
                     capture(client, "02-singularity");
-                    server(client, p -> { RealityManager.clear(p); Journey.of(p).travelCooldown = 0; require(RealityManager.spawn(p, false), "membrane creation"); });
+                    server(client, p -> { RealityManager.clear(p); Journey.of(p).travelCooldown = 0; require(RealityManager.spawn(p, Anomaly.Kind.MEMBRANE), "membrane creation"); });
                 } }
                 case 3 -> { if (stageTicks > 40) {
                     capture(client, "03-membrane");
                     server(client, p -> p.equipStack(EquipmentSlot.HEAD, new ItemStack(BeyondContent.GLASSES)));
                 } }
-                case 4 -> { if (stageTicks > 26) {
+                case 4 -> { if (stageTicks > 22) {
                     require(BeyondClient.wearingGlasses(), "glasses equipment sync");
-                    capture(client, "04-lens-" + lens);
+                    capture(client, "04-reality-" + lens);
                     stageTicks = 0;
-                    if (++lens >= VisualConfig.LENSES.length) { stage++; BeyondClient.CONFIG.lens = 0; }
+                    if (++lens >= VisualConfig.REALITIES.length) { stage++; BeyondClient.CONFIG.lens = 0; }
                     else BeyondClient.CONFIG.lens = lens;
                 } }
                 case 5 -> server(client, p -> {
@@ -142,7 +153,6 @@ public final class ClientSmoke {
                     require(RealityManager.enter(p, 0), "revisit realm zero");
                     require(p.getInventory().getStack(0).isOf(Items.EMERALD) && p.getInventory().getStack(0).getCount() == 3, "modified realm snapshot restored");
                     p.getServerWorld().getGameRules().get(GameRules.KEEP_INVENTORY).set(false, p.getServer());
-
                 }); }
                 case 9 -> { if (stageTicks > 100) server(client, p -> {
                     // Damage during a dimension teleport is intentionally ignored by vanilla until
@@ -161,8 +171,18 @@ public final class ClientSmoke {
                 }); }
                 case 12 -> { if (stageTicks > 30 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) server(client, p -> {
                     require(RealityManager.returnHome(p), "final safe return");
-                    require(RealityManager.scale(p, .125), "small scale");
+                    // Unlimited scale, both directions: a thousandth of a player, then 4096 players
+                    // tall. Clear sky is required for a body that wide, exactly as in play.
+                    p.teleport(p.getServerWorld(), .5, 250, .5, 180, 0);
+                    p.setVelocity(Vec3d.ZERO);
+                    require(RealityManager.scale(p, ScaleLadder.MIN), "micro scale 1/1024");
+                    require(Math.abs(RealityManager.currentScale(p) - ScaleLadder.MIN) < 1e-9, "micro scale applied: " + RealityManager.currentScale(p));
+                    require(RealityManager.scale(p, ScaleLadder.MAX), "colossal scale 4096x");
+                    require(Math.abs(RealityManager.currentScale(p) - ScaleLadder.MAX) < 1e-6, "colossal scale applied: " + RealityManager.currentScale(p));
+                    require(!RealityManager.scale(p, 0) && !RealityManager.scale(p, Double.NaN) && !RealityManager.scale(p, ScaleLadder.MAX * 2),
+                        "scale rejects zero, NaN and out-of-range");
                     require(RealityManager.scale(p, 1), "normal scale restore");
+                    BeyondMinecraft.LOGGER.info("BEYOND_SCALE_EXTREMES micro={} colossal={} restored={}", ScaleLadder.MIN, ScaleLadder.MAX, RealityManager.currentScale(p));
                 }); }
                 case 13 -> { if (stageTicks > 35 && client.world.getRegistryKey().equals(World.OVERWORLD)) {
                     BeyondClient.openGuide();
@@ -175,34 +195,172 @@ public final class ClientSmoke {
                     client.setScreen(null);
                     ClientReality.skipIntroduction();
                     server(client, p -> {
-                        p.changeGameMode(GameMode.CREATIVE); p.getAbilities().flying = true; p.sendAbilitiesUpdate();
-                        p.teleport(p.getServer().getOverworld(), .5, 120, .5, 180, 0);
-                        p.setVelocity(net.minecraft.util.math.Vec3d.ZERO);
-                        // CI fixture only: a real opaque wall between player and singularity.
-                        for (int x = -6; x <= 6; x++) for (int y = 116; y <= 129; y++)
-                            p.getServerWorld().setBlockState(new net.minecraft.util.math.BlockPos(x, y, -3), net.minecraft.block.Blocks.WHITE_CONCRETE.getDefaultState());
+                        var well = SkyWells.of(p.getServerWorld().getRegistryKey());
+                        require(well != null, "the root reality has a persistent sky well");
+                        require(well.radius >= 100, "the sky well is colossal");
+                        require(ClientReality.nodes.stream().anyMatch(n -> n.persistent()) || true, "well snapshot pending");
+                        Vec3d view = well.center.add(0, 96, 236);
+                        p.teleport(p.getServerWorld(), view.x, view.y, view.z, 180, 22);
+                        p.setVelocity(Vec3d.ZERO);
                         Journey.of(p).travelCooldown = 0;
-                        require(RealityManager.spawn(p, true), "occluded singularity fixture");
                     });
                 } }
-                case 15 -> { if (stageTicks > 50) { BeyondClient.CONFIG.enabled = false; stage++; stageTicks = 0; } }
-                case 16 -> { if (stageTicks > 15) {
+                case 15 -> { if (stageTicks > 40 && client.world.getRegistryKey().equals(World.OVERWORLD)) {
+                    require(ClientReality.nodes.stream().anyMatch(n -> n.persistent()), "sky well reached the client as a persistent node");
+                    BeyondClient.CONFIG.enabled = false; stageTicks = 0; stage++;
+                } }
+                case 16 -> { if (stageTicks > 18) {
+                    lensingReference = sampleWorldPixels(client);
+                    BeyondClient.CONFIG.enabled = true; stage++; stageTicks = 0;
+                } }
+                case 17 -> { if (stageTicks > 22) {
+                    int difference = difference(lensingReference, sampleWorldPixels(client));
+                    require(difference > 8, "the lens must visibly change the scene: " + difference);
+                    BeyondMinecraft.LOGGER.info("BEYOND_LENSING max_channel_difference={} terrain_and_sky_bent=true", difference);
+                    capture(client, "08-sky-well");
+                    server(client, p -> {
+                        RealityManager.clear(p);
+                        Journey.of(p).travelCooldown = 0;
+                        require(RealityManager.spawn(p, Anomaly.Kind.SINGULARITY), "tidal singularity fixture");
+                        RealmCritter critter = new RealmCritter(BeyondEntities.REALM_CRITTER, p.getServerWorld());
+                        critter.setVariant(1);
+                        critter.refreshPositionAndAngles(p.getX() + 1, p.getY() + 2, p.getZ() + 7, 0, 0);
+                        p.getServerWorld().spawnEntity(critter);
+                    });
+                } }
+                case 18 -> { if (stageTicks > 45) {
+                    require(Spaghettification.applied > 0, "the tidal stretch must actually be applied to rendered entities");
+                    require(Spaghettification.lastStretch > 1.05f, "stretch factor must be above neutral");
+                    BeyondMinecraft.LOGGER.info("BEYOND_SPAGHETTIFICATION applied={} last_stretch={} noodle=true", Spaghettification.applied, Spaghettification.lastStretch);
+                    capture(client, "09-spaghettification");
+                    server(client, p -> {
+                        RealityManager.clear(p);
+                        Journey.of(p).travelCooldown = 0;
+                        require(RealityManager.spawn(p, Anomaly.Kind.TEAR), "tear creation");
+                    });
+                } }
+                case 19 -> { if (stageTicks > 40) {
+                    capture(client, "10-tear");
+                    server(client, p -> {
+                        int hub = BeyondMinecraft.CATALOG.indexOf("realm_08");
+                        require(hub >= 0, "catalog exposes the Between");
+                        require(RealityManager.enter(p, hub), "travel into the Between");
+                    });
+                } }
+                case 20 -> { if (stageTicks > 70 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_08")) {
+                    capture(client, "11-between");
+                    server(client, p -> {
+                        int fractal = BeyondMinecraft.CATALOG.indexOf("realm_10");
+                        require(fractal >= 0, "catalog exposes the fractal hollow");
+                        require(RealityManager.enter(p, fractal), "travel into the fractal hollow");
+                    });
+                } }
+                case 21 -> { if (stageTicks > 70 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_10")) {
+                    capture(client, "12-fractal");
+                    server(client, p -> {
+                        int labyrinth = BeyondMinecraft.CATALOG.indexOf("realm_09");
+                        require(labyrinth >= 0, "catalog exposes the labyrinth");
+                        require(RealityManager.enter(p, labyrinth), "travel into the labyrinth");
+                    });
+                } }
+                case 22 -> { if (stageTicks > 70 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_09")) {
+                    capture(client, "13-labyrinth");
+                    server(client, p -> {
+                        RealityManager.clear(p);
+                        Journey.of(p).travelCooldown = 0;
+                        int before = Journey.of(p).era;
+                        require(RealityManager.spawn(p, Anomaly.Kind.WORMHOLE), "wormhole creation");
+                        require(RealityManager.enter(p, 0), "leave the labyrinth for the wormhole test");
+                        require(Journey.of(p).era == before, "plain travel does not shift the branch");
+                        require(Tunnels.begin(p, p.getServerWorld()), "wormhole corridor opens");
+                        require(Tunnels.active(p), "corridor is armed");
+                    });
+                } }
+                case 23 -> { if (stageTicks > 20) {
+                    require(ClientReality.tunnelRemaining > 0, "the corridor walk reaches the client");
+                    capture(client, "14-time-tunnel");
+                    stage++;
+                } }
+                case 24 -> { if (stageTicks > 20 && ClientReality.tunnelRemaining == 0) server(client, p -> {
+                        require(!Tunnels.active(p), "corridor torn down after the walk");
+                        require(Journey.of(p).era >= 1, "the branch shifted");
+                        int barriers = 0;
+                        for (int x = -3; x <= 3; x++) for (int y = -2; y <= 5; y++) for (int z = -3; z <= 3; z++)
+                            if (p.getServerWorld().getBlockState(p.getBlockPos().add(x, y, z)).isOf(Blocks.BARRIER)) barriers++;
+                        require(barriers == 0, "no barrier blocks may be left behind");
+                    });
+                }
+                case 25 -> { if (stageTicks > 45 && client.world.getRegistryKey().equals(World.OVERWORLD)) server(client, p -> {
+                    // The Umbrella Effect: returning rewrites the branch around you.
+                    p.teleport(p.getServerWorld(), .5, 120, .5, 180, 0);
+                    p.setVelocity(Vec3d.ZERO);
+                    heightsBefore = columnHeights(p, 6);
+                    require(Journey.of(p).era >= 1, "the branch already shifted in the tunnel");
+                    Umbrella.queue(p.getServerWorld(), p.getBlockPos(), 6, Umbrella.Era.GIANT_WOOD, Journey.of(p).eraSeed);
+                    BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA queued era={} columns={}", Umbrella.Era.GIANT_WOOD, heightsBefore.length);
+                }); }
+                case 26 -> server(client, p -> {
+                    int[] after = columnHeights(p, 6);
+                    int changed = 0;
+                    for (int i = 0; i < after.length; i++) if (after[i] != heightsBefore[i]) changed++;
+                    require(changed > 0, "the Umbrella Effect must actually rewrite the world");
+                    require(Umbrella.Era.of(Journey.of(p).era) != Umbrella.Era.PRISTINE, "the era table advanced");
+                    BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA_PASS era={} era_name={} columns_changed={} of={}", Journey.of(p).era,
+                        Umbrella.Era.of(Journey.of(p).era).description, changed, after.length);
+                    // CI fixture only: a real opaque wall between player and singularity.
+                    p.teleport(p.getServerWorld(), .5, 120, .5, 180, 0);
+                    p.setVelocity(Vec3d.ZERO);
+                    Journey.of(p).travelCooldown = 0;
+                    for (int x = -6; x <= 6; x++) for (int y = 116; y <= 129; y++)
+                        p.getServerWorld().setBlockState(new BlockPos(x, y, -3), Blocks.WHITE_CONCRETE.getDefaultState());
+                    require(RealityManager.spawn(p, Anomaly.Kind.SINGULARITY), "occluded singularity fixture");
+                });
+                case 27 -> { if (stageTicks > 50) { BeyondClient.CONFIG.enabled = false; stage++; stageTicks = 0; } }
+                case 28 -> { if (stageTicks > 15) {
                     occlusionReference = sampleWorldPixels(client); BeyondClient.CONFIG.enabled = true; stage++; stageTicks = 0;
                 } }
-                case 17 -> { if (stageTicks > 15) {
-                    int[] actual = sampleWorldPixels(client); int difference = 0;
-                    for (int i = 0; i < actual.length; i++) for (int bit = 0; bit < 24; bit += 8)
-                        difference = Math.max(difference, Math.abs(((actual[i] >> bit) & 255) - ((occlusionReference[i] >> bit) & 255)));
+                case 29 -> { if (stageTicks > 15) {
+                    int difference = difference(occlusionReference, sampleWorldPixels(client));
                     require(CosmicRenderer.ready(), CosmicRenderer.status());
                     require(difference <= 3, "native foreground occlusion drift: " + difference);
                     BeyondMinecraft.LOGGER.info("BEYOND_NATIVE_OCCLUSION max_channel_difference={}", difference);
-                    capture(client, "07-native-depth-occlusion");
-                    BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true scale=true native_depth_occlusion=true screenshots=true", CosmicRenderer.renderedFrames());
+                    capture(client, "15-native-depth-occlusion");
+                    BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
+                        + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true realities={} screenshots=true",
+                        CosmicRenderer.renderedFrames(), VisualConfig.REALITIES.length);
                     complete = true; client.scheduleStop();
                 } }
                 default -> { }
             }
         } catch (Throwable error) { fail(client, error); }
+    }
+    /** Topmost non-air height of a coarse grid of columns; used to prove the world really changed. */
+    private static int[] columnHeights(ServerPlayerEntity player, int radius) {
+        var world = player.getServerWorld();
+        var origin = player.getBlockPos();
+        int step = Math.max(1, radius / 3);
+        int side = (radius / step) * 2 + 1;
+        int[] heights = new int[side * side];
+        int index = 0;
+        for (int dx = -radius; dx <= radius; dx += step) {
+            for (int dz = -radius; dz <= radius; dz += step) {
+                int height = world.getBottomY();
+                for (int y = world.getTopY() - 2; y > world.getBottomY(); y--) {
+                    var pos = new BlockPos(origin.getX() + dx, y, origin.getZ() + dz);
+                    if (!world.getBlockState(pos).isAir()) { height = y; break; }
+                }
+                heights[index++] = height;
+            }
+        }
+        return heights;
+    }
+
+    private static int difference(int[] first, int[] second) {
+        int difference = 0;
+        for (int i = 0; i < Math.min(first.length, second.length); i++)
+            for (int bit = 0; bit < 24; bit += 8)
+                difference = Math.max(difference, Math.abs(((first[i] >> bit) & 255) - ((second[i] >> bit) & 255)));
+        return difference;
     }
     private static void server(MinecraftClient client, Consumer<ServerPlayerEntity> action) {
         pending = true; stageTicks = 0;

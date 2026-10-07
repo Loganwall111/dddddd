@@ -15,7 +15,12 @@
     "size_vertical": 2
   },
   "noise_router": {
-    "barrier": 0.0,
+    "barrier": {
+      "type": "minecraft:noise",
+      "noise": "minecraft:aquifer_barrier",
+      "xz_scale": 1.0,
+      "y_scale": 0.5
+    },
     "continents": 0.0,
     "depth": 0.0,
     "erosion": 0.0,
@@ -26,29 +31,36 @@
         "argument": {
           "type": "minecraft:add",
           "argument1": {
-            "type": "minecraft:mul",
-            "argument1": 1.4,
+            "type": "minecraft:add",
+            "argument1": -0.35,
             "argument2": {
-              "type": "minecraft:noise",
-              "noise": "beyond:realm_06_terrain",
-              "xz_scale": 1.04,
-              "y_scale": 1.5099999999999998
+              "type": "minecraft:mul",
+              "argument1": 1.1,
+              "argument2": {
+                "type": "minecraft:noise",
+                "noise": "beyond:realm_06_terrain",
+                "xz_scale": 1.04,
+                "y_scale": 1.5099999999999998
+              }
             }
           },
           "argument2": {
-            "type": "minecraft:add",
-            "argument1": -0.06,
+            "type": "minecraft:mul",
+            "argument1": -2.2,
             "argument2": {
-              "type": "minecraft:mul",
-              "argument1": -1.0,
-              "argument2": {
-                "type": "minecraft:abs",
-                "argument": {
-                  "type": "minecraft:y_clamped_gradient",
-                  "from_y": -22,
-                  "to_y": 204,
-                  "from_value": -1.5,
-                  "to_value": 1.5
+              "type": "minecraft:abs",
+              "argument": {
+                "type": "minecraft:add",
+                "argument1": -6.0,
+                "argument2": {
+                  "type": "minecraft:mul",
+                  "argument1": 10.0,
+                  "argument2": {
+                    "type": "minecraft:noise",
+                    "noise": "beyond:realm_06_detail",
+                    "xz_scale": 2.36,
+                    "y_scale": 0.55
+                  }
                 }
               }
             }
@@ -61,29 +73,36 @@
     "initial_density_without_jaggedness": {
       "type": "minecraft:add",
       "argument1": {
-        "type": "minecraft:mul",
-        "argument1": 1.4,
+        "type": "minecraft:add",
+        "argument1": -0.35,
         "argument2": {
-          "type": "minecraft:noise",
-          "noise": "beyond:realm_06_terrain",
-          "xz_scale": 1.04,
-          "y_scale": 1.5099999999999998
+          "type": "minecraft:mul",
+          "argument1": 1.1,
+          "argument2": {
+            "type": "minecraft:noise",
+            "noise": "beyond:realm_06_terrain",
+            "xz_scale": 1.04,
+            "y_scale": 1.5099999999999998
+          }
         }
       },
       "argument2": {
-        "type": "minecraft:add",
-        "argument1": -0.06,
+        "type": "minecraft:mul",
+        "argument1": -2.2,
         "argument2": {
-          "type": "minecraft:mul",
-          "argument1": -1.0,
-          "argument2": {
-            "type": "minecraft:abs",
-            "argument": {
-              "type": "minecraft:y_clamped_gradient",
-              "from_y": -22,
-              "to_y": 204,
-              "from_value": -1.5,
-              "to_value": 1.5
+          "type": "minecraft:abs",
+          "argument": {
+            "type": "minecraft:add",
+            "argument1": -6.0,
+            "argument2": {
+              "type": "minecraft:mul",
+              "argument1": 10.0,
+              "argument2": {
+                "type": "minecraft:noise",
+                "noise": "beyond:realm_06_detail",
+                "xz_scale": 2.36,
+                "y_scale": 0.55
+              }
             }
           }
         }
@@ -116,6 +135,22 @@
           "type": "minecraft:block",
           "result_state": {
             "Name": "beyond:realm_06_surface"
+          }
+        }
+      },
+      {
+        "type": "minecraft:condition",
+        "if_true": {
+          "type": "minecraft:stone_depth",
+          "offset": 3,
+          "add_surface_depth": true,
+          "secondary_depth_range": 0,
+          "surface_type": "floor"
+        },
+        "then_run": {
+          "type": "minecraft:block",
+          "result_state": {
+            "Name": "beyond:realm_06_core"
           }
         }
       },

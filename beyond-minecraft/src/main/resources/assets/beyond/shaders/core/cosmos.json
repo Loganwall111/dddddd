@@ -131,6 +131,27 @@
       ]
     },
     {
+      "name": "WitnessDirection",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0,
+        0.48,
+        -1
+      ]
+    },
+    {
+      "name": "WitnessAnchor",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
       "name": "Time",
       "type": "float",
       "count": 1,
@@ -203,6 +224,38 @@
       ]
     },
     {
+      "name": "NebulaProximity",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "Era",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "Tunnel",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "TunnelPhase",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
       "name": "Node0",
       "type": "float",
       "count": 4,
@@ -237,6 +290,28 @@
     },
     {
       "name": "Node3",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Node4",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Node5",
       "type": "float",
       "count": 4,
       "values": [
@@ -291,13 +366,73 @@
       ]
     },
     {
-      "name": "WitnessDirection",
+      "name": "Style4",
       "type": "float",
-      "count": 3,
+      "count": 4,
       "values": [
         0,
-        0.48,
-        -1
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Style5",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Wave0",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "Wave1",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "Wave2",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "Wave3",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "Wave4",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "Wave5",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
       ]
     }
   ]

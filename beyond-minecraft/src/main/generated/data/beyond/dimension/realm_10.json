@@ -1,0 +1,12 @@
+{
+  "type": "beyond:void",
+  "generator": {
+    "type": "beyond:fractal_generator",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "beyond:realm_10"
+    },
+    "material": "beyond:realm_10_stratum",
+    "accent": "beyond:realm_10_surface"
+  }
+}

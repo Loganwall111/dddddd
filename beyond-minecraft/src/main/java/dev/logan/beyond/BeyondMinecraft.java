@@ -1,9 +1,11 @@
 package dev.logan.beyond;
 
 import dev.logan.beyond.content.BeyondContent;
+import dev.logan.beyond.content.BeyondEntities;
 import dev.logan.beyond.content.RealmCatalog;
 import dev.logan.beyond.network.RealityPayload;
 import dev.logan.beyond.server.*;
+import dev.logan.beyond.worldgen.BeyondWorldgen;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -24,16 +26,19 @@ public final class BeyondMinecraft implements ModInitializer {
     @Override public void onInitialize() {
         CONFIG = ServerConfig.load();
         BeyondContent.initialize();
+        BeyondEntities.initialize();
+        BeyondWorldgen.initialize();
         PayloadTypeRegistry.playS2C().register(RealityPayload.ID, RealityPayload.CODEC);
         BeyondCommands.register();
         ServerLifecycleEvents.SERVER_STARTING.register(server -> RealityManager.reset());
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> RealityManager.reset());
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { Tunnels.reset(server); RealityManager.reset(); });
         ServerTickEvents.END_SERVER_TICK.register(RealityManager::tick);
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> RealityManager.joined(handler.player));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> RealityManager.disconnect(handler.player));
         ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) -> RealityManager.changedWorld(player));
         ServerPlayerEvents.AFTER_RESPAWN.register(RealityManager::respawned);
         BeyondSmoke.register();
-        LOGGER.info("Beyond Minecraft 0.1 · {} seeded realms, built-in GLSL, bounded server physics", CATALOG.realms().size());
+        LOGGER.info("Beyond Minecraft 0.2 · {} seeded realms, {} blocks, built-in GLSL, bounded server physics",
+            CATALOG.realms().size(), BeyondContent.ALL.size() - 6);
     }
 }

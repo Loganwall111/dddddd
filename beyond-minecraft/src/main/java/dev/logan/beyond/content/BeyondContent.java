@@ -18,7 +18,7 @@ import java.util.Map;
 
 public final class BeyondContent {
     public static final List<Item> ALL = new ArrayList<>();
-    public static Item KNIFE, RELIC, GUIDE, GLASSES, SCALE;
+    public static Item KNIFE, RELIC, TEAR, GUIDE, GLASSES, SCALE;
     private BeyondContent() {}
     private static Item item(String id, Item item) {
         Registry.register(Registries.ITEM, BeyondMinecraft.id(id), item); ALL.add(item); return item;
@@ -26,6 +26,7 @@ public final class BeyondContent {
     public static void initialize() {
         KNIFE = item("reality_knife", new AbilityItem(AbilityItem.Ability.KNIFE));
         RELIC = item("shattered_relic", new AbilityItem(AbilityItem.Ability.RELIC));
+        TEAR = item("reality_tear", new AbilityItem(AbilityItem.Ability.TEAR));
         GUIDE = item("field_guide", new AbilityItem(AbilityItem.Ability.GUIDE));
         SCALE = item("scale_prism", new AbilityItem(AbilityItem.Ability.SCALE));
         RegistryEntry<ArmorMaterial> radiate = Registry.registerReference(Registries.ARMOR_MATERIAL, BeyondMinecraft.id("radiate"),
@@ -36,10 +37,7 @@ public final class BeyondContent {
             new Item.Settings().maxDamage(384).rarity(net.minecraft.util.Rarity.RARE)));
         for (RealmCatalog.Realm realm : BeyondMinecraft.CATALOG.realms()) {
             for (String blockId : realm.blocks()) {
-                boolean crystal = blockId.endsWith("crystal");
-                Block block = Registry.register(Registries.BLOCK, BeyondMinecraft.id(blockId),
-                    new Block(AbstractBlock.Settings.copy(crystal ? Blocks.AMETHYST_BLOCK : Blocks.STONE)
-                        .strength(crystal ? 1.5f : 2.2f).luminance(state -> crystal ? 9 : 0)));
+                Block block = Registry.register(Registries.BLOCK, BeyondMinecraft.id(blockId), new Block(settingsFor(blockId)));
                 item(blockId, new BlockItem(block, new Item.Settings()));
             }
             item(realm.id() + "_echo", new Item(new Item.Settings().rarity(net.minecraft.util.Rarity.UNCOMMON)));
@@ -47,5 +45,16 @@ public final class BeyondContent {
         Registry.register(Registries.ITEM_GROUP, BeyondMinecraft.id("beyond"), FabricItemGroup.builder()
             .displayName(Text.translatable("itemGroup.beyond")).icon(() -> new ItemStack(RELIC))
             .entries((context, entries) -> ALL.forEach(entries::add)).build());
+    }
+    /** Materials behave like their role: crystal glows, flora is soft, core is deep stone, surface is soil. */
+    private static AbstractBlock.Settings settingsFor(String blockId) {
+        String kind = blockId.substring(blockId.lastIndexOf('_') + 1);
+        return switch (kind) {
+            case "crystal" -> AbstractBlock.Settings.copy(Blocks.AMETHYST_BLOCK).strength(1.5f).luminance(state -> 12);
+            case "flora" -> AbstractBlock.Settings.copy(Blocks.MOSS_BLOCK).strength(0.6f).luminance(state -> 4);
+            case "core" -> AbstractBlock.Settings.copy(Blocks.DEEPSLATE).strength(3.6f);
+            case "surface" -> AbstractBlock.Settings.copy(Blocks.GRASS_BLOCK).strength(2.0f);
+            default -> AbstractBlock.Settings.copy(Blocks.STONE).strength(2.2f);
+        };
     }
 }

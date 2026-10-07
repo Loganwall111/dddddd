@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.logan.beyond.BeyondMinecraft;
 import dev.logan.beyond.client.BeyondClient;
 import dev.logan.beyond.client.ClientReality;
+import dev.logan.beyond.client.Spaghettification;
 import dev.logan.beyond.server.Journey;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
@@ -17,6 +18,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL11;
 import java.util.function.BooleanSupplier;
 
@@ -33,11 +35,12 @@ public final class CosmicRenderer {
     public static long renderedFrames() { return renderedFrames; }
     private static String failure = "";
     private static BooleanSupplier irisActive = () -> false;
+    private static final Vector4f witnessAnchor = new Vector4f();
     private CosmicRenderer() {}
     public static String status() {
         if (failed) return "Disabled safely: " + failure;
         if (irisActive.getAsBoolean()) return "Iris pack active: Beyond visuals suspended";
-        return cosmos == null || blit == null ? "Waiting for shader resources" : "GLSL ready · " + BeyondClient.CONFIG.raySteps() + " ray steps";
+        return cosmos == null || blit == null ? "Waiting for shader resources" : "GLSL ready · " + BeyondClient.CONFIG.raySteps() + " ray steps · " + BeyondClient.CONFIG.reality();
     }
     public static boolean ready() { return cosmos != null && blit != null && !failed; }
     public static void initialize() {
@@ -91,6 +94,14 @@ public final class CosmicRenderer {
             cosmos.getUniformOrDefault("Resolution").set((float) width, (float) height);
             var witness = ClientReality.witnessDirection;
             cosmos.getUniformOrDefault("WitnessDirection").set(witness.x, witness.y, witness.z);
+            witnessAnchor.set(0f, 0f, 0f, 0f);
+            for (var node : ClientReality.nodes) {
+                if (!node.persistent()) continue;
+                // The figure stands above and behind the colossal well: flying up to the nebula brings it closer.
+                witnessAnchor.set((float) (node.x() - camera.x), (float) (node.y() + node.radius() * 6.0 - camera.y), (float) (node.z() - camera.z), node.radius());
+                break;
+            }
+            cosmos.getUniformOrDefault("WitnessAnchor").set(witnessAnchor);
             cosmos.getUniformOrDefault("CameraPosition").set((float) (camera.x % 8192), (float) (camera.y % 8192), (float) (camera.z % 8192));
             float time = ((ClientReality.ticks % 144000) + delta) / 20f;
             cosmos.getUniformOrDefault("Time").set(BeyondClient.CONFIG.reducedMotion ? 0 : time);
@@ -100,13 +111,17 @@ public final class CosmicRenderer {
             cosmos.getUniformOrDefault("RaySteps").set((float) BeyondClient.CONFIG.raySteps());
             cosmos.getUniformOrDefault("LensMode").set(BeyondClient.wearingGlasses() ? (float) BeyondClient.CONFIG.lens : -1f);
             cosmos.getUniformOrDefault("Transition").set(ClientReality.transition());
+            cosmos.getUniformOrDefault("NebulaProximity").set(Spaghettification.nebulaProximity());
+            cosmos.getUniformOrDefault("Era").set((float) ClientReality.era);
+            cosmos.getUniformOrDefault("Tunnel").set(ClientReality.tunnelRemaining > 0 ? 1f : 0f);
+            cosmos.getUniformOrDefault("TunnelPhase").set(ClientReality.tunnelPhase());
             boolean beyond = Journey.inRealm(client.world.getRegistryKey());
             float realmTheme = -1;
             if (beyond) for (var realm : BeyondMinecraft.CATALOG.realms()) if (realm.id().equals(client.world.getRegistryKey().getValue().getPath())) realmTheme = realm.theme();
             cosmos.getUniformOrDefault("RealmTheme").set(realmTheme);
             cosmos.getUniformOrDefault("CosmicPresence").set(BeyondClient.CONFIG.cosmicSky && (beyond || client.world.getRegistryKey().equals(World.OVERWORLD)) ? 1f : 0f);
             int count = ClientReality.world != null && ClientReality.world.equals(client.world.getRegistryKey().getValue()) ? ClientReality.nodes.size() : 0;
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 6; i++) {
                 if (i >= count) {
                     cosmos.getUniformOrDefault("Node" + i).set(0f, 0f, 0f, 0f);
                     cosmos.getUniformOrDefault("Style" + i).set(0f, 0f, 0f, 0f);
@@ -114,7 +129,8 @@ public final class CosmicRenderer {
                 }
                 var node = ClientReality.nodes.get(i);
                 float age = node.age() + ClientReality.ticks - ClientReality.receivedAt + delta;
-                float envelope = Math.clamp(age / 24f, 0, 1) * Math.clamp((node.lifetime() - age) / 20f, 0, 1);
+                float envelope = node.persistent() ? Math.clamp(age / 40f, 0, 1)
+                    : Math.clamp(age / 24f, 0, 1) * Math.clamp((node.lifetime() - age) / 20f, 0, 1);
                 var realm = BeyondMinecraft.CATALOG.realms().get(Math.floorMod(node.realm(), BeyondMinecraft.CATALOG.realms().size()));
                 cosmos.getUniformOrDefault("Node" + i).set((float) (node.x() - camera.x), (float) (node.y() - camera.y), (float) (node.z() - camera.z), node.radius() * envelope);
                 cosmos.getUniformOrDefault("Style" + i).set(node.kind() + 1f, node.yaw(), (float) realm.seed(), (float) realm.theme());

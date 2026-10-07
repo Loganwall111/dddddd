@@ -11,15 +11,31 @@ public final class VisualConfig {
     public boolean cosmicSky = true;
     public boolean introduction = true;
     public boolean reducedMotion = false;
+    public boolean seamlessTravel = true;
+    public boolean ambience = true;
+    public boolean spaghettification = true;
+    public boolean nebula = true;
     public float intensity = .88f;
     public int quality = 1;
+    /** Index into {@link #REALITIES}: the whole screen is re-authored by the post-processor. */
     public int lens = 0;
-    public static final String[] LENSES = {"Lucid", "Aurora", "Prismatic", "Negative Space", "Living Membrane", "Echo Memory"};
+    /**
+     * The realities the glasses cycle through. Each one is a complete screen treatment, not a tint:
+     * a stylized city, the Backrooms, the Poolrooms, a cel-shaded animation look, an eighties CRT,
+     * a psychedelic fold, wet neon hyperreality and so on. Names are what the HUD reports.
+     */
+    public static final String[] REALITIES = {
+        "Lucid", "Aurora", "Prismatic", "Negative Space", "Living Membrane", "Echo Memory",
+        "Neon City", "Backrooms", "Poolrooms", "Cel Animation", "Eighties CRT", "Chromatic Fold",
+    };
+    /** @deprecated kept for the field guide and older configs; use REALITIES. */
+    public static final String[] LENSES = REALITIES;
     public int raySteps() { return new int[]{32, 48, 72}[Math.clamp(quality, 0, 2)]; }
     public void normalize() {
-        quality = Math.clamp(quality, 0, 2); lens = Math.floorMod(lens, LENSES.length);
+        quality = Math.clamp(quality, 0, 2); lens = Math.floorMod(lens, REALITIES.length);
         intensity = Float.isFinite(intensity) ? Math.clamp(intensity, 0, 1) : .88f;
     }
+    public String reality() { return REALITIES[Math.floorMod(lens, REALITIES.length)]; }
     public static VisualConfig load() {
         var path = FabricLoader.getInstance().getConfigDir().resolve("beyond-visuals.json");
         try {

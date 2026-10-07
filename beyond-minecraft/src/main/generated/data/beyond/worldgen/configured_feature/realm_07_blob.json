@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:block_blob",
+  "config": {
+    "state": {
+      "Name": "beyond:realm_07_flora"
+    },
+    "radius": 3
+  }
+}

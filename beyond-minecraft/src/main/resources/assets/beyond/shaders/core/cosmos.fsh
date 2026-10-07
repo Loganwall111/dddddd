@@ -10,6 +10,7 @@ uniform mat4 WorldToCamera;
 uniform vec2 Resolution;
 uniform vec3 CameraPosition;
 uniform vec3 WitnessDirection;
+uniform vec4 WitnessAnchor;
 uniform float Time;
 uniform float Motion;
 uniform float IntroPhase;
@@ -19,14 +20,28 @@ uniform float LensMode;
 uniform float Transition;
 uniform float RealmTheme;
 uniform float CosmicPresence;
+uniform float NebulaProximity;
+uniform float Era;
+uniform float Tunnel;
+uniform float TunnelPhase;
 uniform vec4 Node0;
 uniform vec4 Node1;
 uniform vec4 Node2;
 uniform vec4 Node3;
+uniform vec4 Node4;
+uniform vec4 Node5;
 uniform vec4 Style0;
 uniform vec4 Style1;
 uniform vec4 Style2;
 uniform vec4 Style3;
+uniform vec4 Style4;
+uniform vec4 Style5;
+uniform float Wave0;
+uniform float Wave1;
+uniform float Wave2;
+uniform float Wave3;
+uniform float Wave4;
+uniform float Wave5;
 in vec2 texCoord;
 out vec4 fragColor;
 
@@ -58,12 +73,17 @@ float fbm(vec3 p) {
 vec3 spectral(float theme, float x) {
     vec3 c = .5 + .5 * cos(6.28318 * (vec3(.02,.32,.65) + x * .15 + theme * .09));
     if (theme < .5 && theme > -.5) c = mix(vec3(.05,.55,.36), vec3(.52,1.0,.82), x);
+    if (theme > .5 && theme < 1.5) c = mix(vec3(.24,.10,.42), vec3(.78,.49,1.0), x);
     if (theme > 1.5 && theme < 2.5) c = mix(vec3(.85,.035,.07), vec3(1.0,.66,.15), x);
     if (theme > 2.5 && theme < 3.5) c = mix(vec3(.10,.28,.62), vec3(.75,.94,1.0), x);
     if (theme > 3.5 && theme < 4.5) c = mix(vec3(.5,.10,.47), vec3(1.0,.65,.90), x);
     if (theme > 4.5 && theme < 5.5) c = mix(vec3(.015,.20,.43), vec3(.16,.85,.91), x);
     if (theme > 5.5 && theme < 6.5) c = mix(vec3(.06,.055,.12), vec3(.5,.95,.81), x);
-    if (theme > 6.5) c = mix(vec3(.38,.25,.10), vec3(.91,.78,.44), x);
+    if (theme > 6.5 && theme < 7.5) c = mix(vec3(.38,.25,.10), vec3(.91,.78,.44), x);
+    if (theme > 7.5 && theme < 8.5) c = mix(vec3(.55,.60,.66), vec3(.99,.99,1.0), x);
+    if (theme > 8.5 && theme < 9.5) c = mix(vec3(.37,.51,.60), vec3(.24,.45,.72), x);
+    if (theme > 9.5 && theme < 10.5) c = mix(vec3(.72,.74,.78), vec3(1.0,.99,.96), x);
+    if (theme > 10.5) c = mix(vec3(.06,.05,.11), vec3(.70,.72,.86), x);
     return c;
 }
 vec3 compressLight(vec3 c) { return vec3(1.0) - exp(-max(c, vec3(0.0))); }
@@ -71,7 +91,11 @@ float capsule2(vec2 p, vec2 a, vec2 b, float r) {
     vec2 ap = p - a, ab = b - a;
     return length(ap - ab * clamp(dot(ap, ab) / max(dot(ab, ab), EPS), 0.0, 1.0)) - r;
 }
+float ellipse(vec2 p, vec2 c, vec2 r) { return length((p - c) / max(r, vec2(EPS))) - 1.0; }
 
+// ---------------------------------------------------------------------------------------------
+// Sky. The nebula thickens as you fly into it (NebulaProximity), which is what makes the well's
+// surroundings reachable rather than painted on.
 vec3 skyField(vec3 rd, float theme) {
     float horizon = pow(1.0 - abs(rd.y), 4.0);
     float n = fbm(rd * 3.8 + vec3(0.0, Time * .006, 0.0));
@@ -79,6 +103,11 @@ vec3 skyField(vec3 rd, float theme) {
     vec3 color = mix(vec3(.006,.009,.032), vec3(.11,.045,.19), horizon * .6);
     color += ribbon * mix(vec3(.04,.09,.24), vec3(.31,.055,.40), n) * (n * 1.5);
     color += spectral(theme, n) * pow(n, 4.0) * .23;
+    // Reachable nebula: dust and lit gas that grow from the horizon into the local sky.
+    float nebula = fbm(rd * 2.1 + vec3(Time * .004, 0.0, Time * .003));
+    float veil = smoothstep(.34, .78, nebula) * NebulaProximity;
+    color += veil * (spectral(theme, nebula * .8) * .55 + vec3(.16,.10,.28));
+    color += pow(veil, 3.0) * vec3(.30,.24,.52) * .6;
     vec3 starCell = rd * 490.0;
     vec3 cell = floor(starCell);
     vec3 point = fract(starCell) - .5;
@@ -93,48 +122,76 @@ vec3 skyField(vec3 rd, float theme) {
     return color;
 }
 
+// ---------------------------------------------------------------------------------------------
+// The Witness, as a person rather than an eye: a colossal figure in the sky that is anchored to a
+// real world position (WitnessAnchor), so flying toward the nebula brings you under its hand.
+float personBody(vec2 q, float presence) {
+    float breath = sin(Time * .14) * .012 * Motion;
+    float sway = sin(Time * .07) * .02 * Motion;
+    float body = ellipse(q, vec2(sway * .4, .62 + breath), vec2(.20, .25));                       // head
+    body = min(body, capsule2(q, vec2(0.0, .40), vec2(0.0, .44), .09));                            // neck
+    body = min(body, capsule2(q, vec2(-.44, .37), vec2(.44, .37), .16));                          // shoulders
+    body = min(body, capsule2(q, vec2(sway, .34), vec2(sway * .3, -.02 + breath), .35));          // torso
+    body = min(body, capsule2(q, vec2(sway * .5, -.02), vec2(sway * .2, -.92), .46));             // robe
+    body = min(body, capsule2(q, vec2(.40, .35), vec2(.58, .02 + breath * 2.0), .105));           // left arm
+    body = min(body, capsule2(q, vec2(-.40, .35), vec2(-.54, -.30 + breath * 2.0), .105));        // right arm
+    // The reaching hand, fingers spread, drifting as if it were about to close.
+    vec2 palm = vec2(-.56 + sway * .3, -.44 + breath * 2.5);
+    body = min(body, capsule2(q, vec2(-.54, -.30), palm, .085));
+    for (int finger = 0; finger < 5; finger++) {
+        float f = float(finger) - 2.0;
+        vec2 tip = palm + vec2(f * .075 + .02, -.12 - abs(f) * .022 + sin(Time * .3 + f) * .012 * Motion);
+        body = min(body, capsule2(q, palm, tip, .022));
+    }
+    return body * presence;
+}
 vec3 witness(vec3 background, vec3 rd) {
-    vec3 axis = normalize(WitnessDirection);
+    vec3 axis;
+    float angular = 1.0;
+    float anchored = 0.0;
+    if (WitnessAnchor.w > 0.5 && length(WitnessAnchor.xyz) > 1.0) {
+        float distance = length(WitnessAnchor.xyz);
+        axis = WitnessAnchor.xyz / distance;
+        angular = clamp(WitnessAnchor.w * 7.0 / distance, .04, 4.0);
+        anchored = 1.0;
+    } else {
+        axis = normalize(WitnessDirection);
+    }
     vec3 right = normalize(cross(axis, vec3(0,1,0)) + vec3(.00001,0,0));
     vec3 up = normalize(cross(right, axis));
     float facing = dot(rd, axis);
     if (facing <= .12) return background;
-    vec2 q = vec2(dot(rd, right), dot(rd, up)) / facing;
-    float presence = IntroPhase < 0.0 ? .12 : smoothstep(.2, 2.7, IntroPhase) * (1.0 - smoothstep(10.5, 14.0, IntroPhase));
+    vec2 q = vec2(dot(rd, right), dot(rd, up)) / (facing * max(angular, .04));
+    float presence = IntroPhase < 0.0 ? mix(.14, .95, anchored) : smoothstep(.2, 2.7, IntroPhase) * (1.0 - smoothstep(10.5, 14.0, IntroPhase));
     float dissolve = IntroPhase < 0.0 ? 0.0 : smoothstep(6.5, 12.5, IntroPhase);
-    // A celestial forearm, reaching fingers and a head-shaped silhouette sit BEHIND terrain.
-    float body = capsule2(q, vec2(-.85,-.75), vec2(-.28,-.26), .17);
-    body = min(body, capsule2(q, vec2(-.28,-.26), vec2(.43,-.39), .14));
-    for (int finger = 0; finger < 4; finger++) {
-        float f = float(finger);
-        body = min(body, capsule2(q, vec2(.28 + f * .07,-.38), vec2(.40 + f * .095,-.65 - f * .025), .035));
-    }
-    float skin = 1.0 - smoothstep(-.015, .025, body);
+    float body = personBody(q, max(presence, .35));
+    float skin = 1.0 - smoothstep(-.012, .02, body);
     float lines = pow(abs(sin(q.y * 64.0 + fbm(vec3(q * 6.0, 3.1)) * 8.0)), 26.0);
-    vec3 bodyColor = vec3(.018,.025,.059) + vec3(.10,.055,.19) * lines;
-    background = mix(background, bodyColor, skin * .66 * max(presence, .4));
-    vec2 e = q * mix(1.0, .91, IntroPhase < 0.0 ? 0.0 : smoothstep(1.0, 6.0, IntroPhase) * Motion);
-    float lidHeight = .22 * (1.0 - pow(clamp(abs(e.x) / .60, 0.0, 1.0), 1.7));
+    float veins = pow(abs(sin(q.x * 40.0 + q.y * 22.0 + fbm(vec3(q * 9.0, 5.0)) * 6.0)), 18.0);
+    vec3 bodyColor = vec3(.018,.025,.059) + vec3(.10,.055,.19) * lines + vec3(.05,.11,.16) * veins;
+    background = mix(background, bodyColor, skin * .70 * max(presence, .4));
+    // The eye sits in the head and blinks; the iris is the same procedural eye as before.
+    vec2 e = (q - vec2(sin(Time * .07) * .008, .62 + sin(Time * .14) * .012)) * mix(1.0, .91, Motion);
+    float blinkPhase = fract(Time * .11);
+    float blink = 1.0 - smoothstep(.0, .06, abs(blinkPhase - .5) * 2.0) * step(.485, blinkPhase) * step(blinkPhase, .515);
+    float lidHeight = .17 * (1.0 - pow(clamp(abs(e.x) / .21, 0.0, 1.0), 1.7)) * blink;
     float edge = abs(e.y) - lidHeight;
-    float eyeMask = (1.0 - smoothstep(-.005, .009, edge)) * (1.0 - smoothstep(.588, .607, abs(e.x)));
+    float eyeMask = (1.0 - smoothstep(-.004, .008, edge)) * (1.0 - smoothstep(.205, .218, abs(e.x)));
     float r = length(e), theta = atan(e.y, e.x);
-    vec3 sclera = mix(vec3(.20,.115,.16), vec3(.72,.72,.64), exp(-abs(e.x) * 1.6));
-    float veins = pow(abs(sin(theta * 22.0 + r * 39.0 + valueNoise(vec3(e * 32.0,2.0)) * 6.0)), 22.0) * smoothstep(.22,.51,r);
-    sclera = mix(sclera, vec3(.35,.065,.12), veins * .4);
-    float striation = .5 + .5 * sin(theta * 156.0 + sin(theta * 47.0) * 2.0 + r * 30.0);
-    float irisMask = 1.0 - smoothstep(.191, .207, r);
+    vec3 sclera = mix(vec3(.20,.115,.16), vec3(.72,.72,.64), exp(-abs(e.x) * 2.4));
+    float irisMask = 1.0 - smoothstep(.066, .074, r);
+    float striation = .5 + .5 * sin(theta * 156.0 + sin(theta * 47.0) * 2.0 + r * 190.0);
     vec3 iris = mix(vec3(.04,.14,.21), vec3(.24,.80,.71), striation * .73 + .2);
-    iris += vec3(.35,.16,.045) * exp(-abs(r - .105) * 38.0);
-    iris *= .40 + .65 * smoothstep(.070, .15, r);
+    iris += vec3(.35,.16,.045) * exp(-abs(r - .038) * 140.0);
     vec3 eye = mix(sclera, iris, irisMask);
-    eye = mix(eye, vec3(.001,.002,.006), 1.0 - smoothstep(.066,.079,r));
-    eye += vec3(.8,.91,1.0) * exp(-length((e - vec2(-.055,.061)) * vec2(1.0,1.7)) * 110.0);
-    eye *= .68 + .32 * smoothstep(-.24,.18,e.y);
-    float cells = hash12(floor(e * vec2(76,58)));
+    eye = mix(eye, vec3(.001,.002,.006), 1.0 - smoothstep(.023,.028,r));
+    eye += vec3(.8,.91,1.0) * exp(-length((e - vec2(-.019,.021)) * vec2(1.0,1.7)) * 320.0);
+    float cells = hash12(floor(q * vec2(76,58)));
     float pixelKeep = 1.0 - smoothstep(cells - .08, cells + .08, dissolve);
-    float aura = exp(-abs(edge) * 70.0) * (1.0 - smoothstep(.59,.68,abs(e.x)));
-    background += aura * vec3(.20,.31,.58) * presence * .5;
     background = mix(background, eye, eyeMask * presence * pixelKeep);
+    // Filaments instead of hair: the figure is stitched from the same code as the veil.
+    float halo = exp(-abs(body) * 34.0);
+    background += halo * vec3(.18,.26,.52) * presence * .5;
     if (IntroPhase >= 0.0) {
         vec2 grid = q * vec2(69,43);
         vec2 cell = floor(grid);
@@ -147,6 +204,7 @@ vec3 witness(vec3 background, vec3 rd) {
     return background;
 }
 
+// ---------------------------------------------------------------------------------------------
 vec3 directionFor(vec2 uv) {
     vec4 view = InverseProjection * vec4(uv * 2.0 - 1.0, 1.0, 1.0);
     return normalize((CameraToWorld * vec4(normalize(view.xyz / max(abs(view.w), EPS)), 0.0)).xyz);
@@ -172,16 +230,16 @@ struct LightRay { vec3 direction; vec3 emission; float transmission; float footp
 // d²p/dλ² = -(3/2) rs |p×v|² p / |p|^5. Coordinates are normalized to rs = 1.
 // Velocity-Verlet integration (32..72 adaptive steps) conserves angular momentum approximately.
 // This is a finite-budget lensing approximation, NOT Kerr spin, a GR renderer or path tracing.
-LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float seed) {
+LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float seed, float kind) {
     LightRay result = LightRay(rd, vec3(0), 1.0, 0.0);
     vec3 origin = -center / max(rs, .001);
     float along = dot(center, rd) / max(rs, .001);
     float impact2 = max(0.0, dot(origin, origin) - along * along);
     const float domain = 9.0;
     if (along < 0.0 || impact2 > domain * domain) return result;
-    // The integration domain may contain the CAMERA for a nearby well. Its entry distance
-    // is then zero and is not a valid occlusion proxy. Reject foreground surfaces against
-    // a conservative photon-sphere envelope before sampling or capturing any scene rays.
+    // The integration domain may contain the CAMERA for a nearby well. Its entry distance is then
+    // zero and is not a valid occlusion proxy, so foreground surfaces are rejected against a
+    // conservative photon-sphere envelope before any scene ray is sampled.
     if (geometryDistance < max(0.0, (along - 2.8) * rs)) return result;
     float nearT = max(0.0, along - sqrt(max(0.0, domain * domain - impact2)));
     if (nearT * rs > geometryDistance) return result;
@@ -192,6 +250,8 @@ LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float s
     vec3 radiance = vec3(0);
     bool captured = false, escaped = false;
     float budgetScale = 72.0 / max(RaySteps, 16.0);
+    bool quasar = kind > 4.5 && kind < 5.5;
+    bool wormhole = kind > 3.5 && kind < 4.5;
     for (int i = 0; i < 80; i++) {
         if (float(i) >= RaySteps) break;
         float r = length(p);
@@ -207,15 +267,16 @@ LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float s
         float diskHeight = dot(mid, diskNormal);
         vec3 diskPoint = mid - diskNormal * diskHeight;
         float diskRadius = length(diskPoint);
-        if (diskRadius > 1.8 && diskRadius < 6.8 && abs(diskHeight) < .48) {
+        if (diskRadius > (quasar ? 1.1 : 1.8) && diskRadius < 6.8 && abs(diskHeight) < .48) {
             float phi = atan(diskPoint.z, diskPoint.x);
             float bands = .64 + .36 * sin(diskRadius * 19.0 - phi * 3.0 + Time * .42);
             float turbulent = .55 + .45 * valueNoise(vec3(diskRadius * 4.0, phi * 6.0 + Time * .06, seed * .0001));
             float density = exp(-abs(diskHeight) * 18.0) * smoothstep(1.8,2.3,diskRadius) * (1.0 - smoothstep(5.5,6.8,diskRadius));
-            density *= bands * turbulent * ds * 2.6;
+            density *= bands * turbulent * ds * (quasar ? 4.2 : 2.6);
             float heat = pow(2.0 / diskRadius, .72);
             vec3 hot = mix(vec3(.82,.055,.14), vec3(1.0,.69,.30), heat);
             hot = mix(hot, vec3(.72,.83,1.0), pow(heat, 4.0) * .7);
+            if (quasar) hot = mix(hot, vec3(.55,.85,1.0), .55);
             vec3 tangent = normalize(cross(diskNormal, diskPoint) + vec3(EPS));
             float doppler = pow(clamp(1.0 - dot(normalize(v), tangent) * .42, .48, 1.6), 3.0);
             radiance += hot * density * doppler * exp(-opacity) * 2.3;
@@ -226,6 +287,15 @@ LightRay bendRay(vec3 rd, vec3 center, float rs, float geometryDistance, float s
     if (!escaped && length(p) < 5.0) captured = true;
     float impact = sqrt(impact2);
     float photon = exp(-abs(impact - 2.598) * 15.0) * .28;
+    // A wormhole is a lens with a rotating throat: it tints and twists what passes through it.
+    if (wormhole) {
+        float twist = sin(atan(origin.z, origin.x) * 3.0 + Time * .6);
+        result.direction = normalize(v + vec3(.06 * twist, .04 * twist, .06));
+        result.emission = radiance + vec3(.35,.75,.95) * photon * 1.4 + vec3(.10,.32,.55) * exp(-abs(impact - 1.6) * 6.0) * .5;
+        result.transmission = captured ? 0.0 : exp(-opacity) * .92;
+        result.footprint = 1.0 - smoothstep(7.6, 9.0, impact);
+        return result;
+    }
     result.direction = normalize(v);
     result.emission = radiance + vec3(.62,.28,.75) * photon;
     result.transmission = captured ? 0.0 : exp(-opacity);
@@ -289,8 +359,11 @@ vec3 realmVista(vec2 uv, float seed, float theme, float parallax) {
     vec3 color = albedo * (.25 + light * .83) + spectral(theme,.5) * .08;
     return mix(color, sky, 1.0 - exp(-travel * .027));
 }
-vec3 membrane(vec3 background, vec3 rd, float depth, vec4 node, vec4 style) {
+// Membranes (1) and tears (3). A tear is a ragged cut: finer filaments, lightning crawling along
+// the edge, and whole alternate worlds hanging inside it like bubbles.
+vec3 rift(vec3 background, vec3 rd, float depth, vec4 node, vec4 style, float wave) {
     if (node.w < .025) return background;
+    bool tear = style.x > 2.5 && style.x < 3.5;
     vec3 normal = vec3(-sin(style.y),0,cos(style.y));
     float denom = dot(rd, normal);
     if (abs(denom) < .0001) return background;
@@ -300,48 +373,74 @@ vec3 membrane(vec3 background, vec3 rd, float depth, vec4 node, vec4 style) {
     vec3 right = vec3(cos(style.y),0,sin(style.y));
     vec2 uv = vec2(dot(point,right) / node.w, point.y / (node.w * 1.35));
     float shape = pow(abs(uv.x),4.0) + pow(abs(uv.y),4.0);
-    if (shape > 2.6) return background;
-    float wave = sin(uv.y * 7.0 + Time * .75) * .009 * Motion;
-    float edge = shape - 1.0 + wave;
+    // Rags: the tear's silhouette bites inward with noise instead of a clean rounded rectangle.
+    float rag = tear ? (fbm(vec3(uv * 3.4, Time * .12)) - .5) * .5 : 0.0;
+    float wave2 = sin(uv.y * (tear ? 11.0 : 7.0) + Time * (tear ? 1.4 : .75)) * (tear ? .016 : .009) * Motion;
+    float edge = shape - 1.0 + wave2 + rag;
     float aa = max(fwidth(shape) * 1.2, .007);
     float inside = 1.0 - smoothstep(-aa, aa, edge);
     vec3 color = background;
     if (inside > 0.0) {
-        vec2 lensUv = uv + sin(uv.yx * 5.0 + Time * .16) * .008 * Motion;
+        vec2 lensUv = uv + sin(uv.yx * (tear ? 9.0 : 5.0) + Time * .16) * .008 * Motion;
         vec3 vista = realmVista(lensUv, style.z, style.w, dot(-node.xyz, right) / max(length(node.xyz), .1));
-        // Fresnel-like pearlescent skin over a destination-inspired procedural scene.
         float membraneSheen = pow(1.0 - abs(denom), 2.0);
         vista += spectral(style.w,.8) * membraneSheen * .12;
+        if (tear) {
+            // Bubbles: smaller worlds drifting inside the cut, each with its own palette.
+            for (int i = 0; i < 5; i++) {
+                float fi = float(i);
+                vec2 centre = vec2(sin(fi * 2.3 + Time * .05) * .55, cos(fi * 1.7 - Time * .04) * .45);
+                float radius = .12 + .05 * sin(fi * 3.1);
+                float bubble = length(uv - centre) - radius;
+                float skin = 1.0 - smoothstep(-.01, .01, bubble);
+                float rim = exp(-abs(bubble) * 30.0);
+                vec3 tint = .5 + .5 * cos(vec3(0.0, 2.1, 4.2) + fi * 1.7 + Time * .1);
+                vista = mix(vista, tint * (.35 + .3 * sin(uv.y * 12.0 + Time)), skin * .7);
+                vista += tint * rim * .6;
+            }
+            float lightning = pow(abs(sin(atan(uv.y, uv.x) * 47.0 + fbm(vec3(uv * 8.0, Time * .5)) * 14.0)), 30.0);
+            vista += vec3(.7,.85,1.0) * lightning * .8;
+        }
         color = mix(color, vista, inside);
     }
-    float rim = exp(-abs(edge) * 36.0);
+    float rim = exp(-abs(edge) * (tear ? 60.0 : 36.0));
     float halo = exp(-abs(edge) * 6.0) * .11;
     float filament = .65 + .35 * sin(atan(uv.y,uv.x) * 33.0 - Time * 1.1);
-    vec3 rimColor = mix(vec3(.33,.13,1.0), spectral(style.w,.85), .42);
+    vec3 rimColor = tear ? mix(vec3(1.0,.55,.15), vec3(.55,.85,1.0), .5) : mix(vec3(.33,.13,1.0), spectral(style.w,.85), .42);
     color += rimColor * (rim * (1.1 + filament) + halo);
     color += vec3(.56,.88,1.0) * exp(-abs(edge) * 125.0) * .55;
+    // Opening shockwave: a ring that expands once, timed from the node's birth, then settles.
+    float birth = 1.0 - saturate(wave);
+    if (birth > 0.0) {
+        float ringRadius = (1.0 - birth) * 3.4;
+        float ring = exp(-abs(length(uv) - ringRadius) * 9.0);
+        color += rimColor * ring * birth * 1.6;
+        color += vec3(1.0) * exp(-abs(length(uv) - ringRadius) * 40.0) * birth * .8;
+    }
     vec2 tile = floor(uv * 13.0), cell = fract(uv * 13.0) - .5;
     float shard = step(.89, hash12(tile + style.z * .001)) * (1.0 - smoothstep(.30,.34,max(abs(cell.x),abs(cell.y))));
     color += rimColor * shard * smoothstep(1.05,1.2,shape) * (1.0 - smoothstep(1.8,2.6,shape)) * .5;
     return color;
 }
 
-vec3 mandela(vec3 color, vec2 uv, vec3 rd, float depth) {
+// ---------------------------------------------------------------------------------------------
+// The glasses switch realities rather than tinting the screen: each branch re-authors the image.
+vec3 realityTreatment(vec3 color, vec2 uv, vec3 rd, float depth) {
     if (LensMode < -.5) return color;
     float luminance = dot(color, vec3(.2126,.7152,.0722));
-    if (LensMode < .5) {
+    if (LensMode < .5) {                                   // Lucid
         color = mix(vec3(luminance), color, 1.14);
         color *= vec3(.91,1.02,1.06);
-    } else if (LensMode < 1.5) {
+    } else if (LensMode < 1.5) {                           // Aurora
         color = mix(color, color * vec3(.72,1.13,1.10), .42);
-    } else if (LensMode < 2.5) {
+    } else if (LensMode < 2.5) {                           // Prismatic
         vec2 facet = floor(uv * vec2(63,37));
         vec3 prism = .78 + .22 * cos(vec3(.0,2.1,4.2) + hash12(facet) * 6.0);
         color = mix(color, color * prism + vec3(.03,.018,.07), .6);
-    } else if (LensMode < 3.5) {
+    } else if (LensMode < 3.5) {                           // Negative Space
         color = mix(vec3(.009,.018,.035), vec3(.68,.88,.88), pow(saturate(luminance), .64));
         color += vec3(.10,.04,.16) * (1.0 - luminance) * .26;
-    } else if (LensMode < 4.5) {
+    } else if (LensMode < 4.5) {                           // Living Membrane
         float ripple = fbm(rd * 4.0 + CameraPosition * .003 + vec3(Time * .027,0,0));
         if (depth > .9999999) {
             float blob = smoothstep(.56,.65,ripple);
@@ -349,12 +448,96 @@ vec3 mandela(vec3 color, vec2 uv, vec3 rd, float depth) {
             color = mix(color, membraneColor * (.27 + .5 * max(0.0,rd.y)), blob * .80);
             color += vec3(.2,.07,.3) * exp(-abs(ripple - .58) * 75.0);
         } else color = mix(color, color * (.9 + spectral(1.0,ripple) * .25), .45);
-    } else {
+    } else if (LensMode < 5.5) {                           // Echo Memory
         vec3 memory = vec3(luminance) * vec3(1.13,.94,.72);
         color = mix(color, memory, .6);
         vec2 shift = vec2(1.5 / max(Resolution.x,1.0), 0);
         color += texture(SceneSampler, clamp(uv + shift, 0.001, .999)).rgb * .035;
+    } else if (LensMode < 6.5) {                           // Neon City
+        float edges = 1.0 - smoothstep(.0, .34, abs(luminance - .34));
+        vec2 block = floor(uv * vec2(Resolution.y / 10.0, Resolution.y / 14.0));
+        float window = step(.62, hash12(block + floor(Time * 1.4)));
+        vec3 neon = .5 + .5 * cos(vec3(0.0, 2.4, 4.4) + hash12(block) * 7.0);
+        color *= vec3(.62,.66,.92);
+        color += neon * window * .22 * (1.0 - smoothstep(.05, .5, abs(rd.y + .15)));
+        color += vec3(.05,.02,.10) * edges;
+        color = mix(color, color * color * 1.25, .35);
+    } else if (LensMode < 7.5) {                           // Backrooms
+        vec3 mono = vec3(.86,.79,.52) * (.35 + .75 * pow(saturate(luminance), .8));
+        float tube = step(.86, sin(uv.y * Resolution.y * .09)) * .06;
+        float flicker = 1.0 - .12 * step(.985, hash12(vec2(floor(Time * 9.0), 3.0)));
+        color = mix(color, mono, .72) * flicker;
+        color += vec3(.9,.85,.5) * tube;
+        color *= .92 + .08 * (1.0 - length((uv - .5) * 1.35));
+    } else if (LensMode < 8.5) {                           // Poolrooms
+        float caustic = sin(uv.x * 26.0 + Time * .6 + sin(uv.y * 19.0 + Time * .4)) * .5 + .5;
+        color = mix(color, color * vec3(.72,.95,1.0), .55);
+        color += vec3(.35,.65,.75) * pow(caustic, 6.0) * .35;
+        color = mix(color, vec3(.82,.94,.97), pow(saturate(luminance), 3.0) * .5);
+    } else if (LensMode < 9.5) {                           // Cel Animation
+        float levels = 6.0;
+        vec3 cel = floor(color * levels + .5) / levels;
+        float edge = abs(luminance - floor(luminance * levels) / levels);
+        color = mix(cel, vec3(.04,.03,.06), smoothstep(.10, .16, edge) * .8);
+        color = mix(color, color * vec3(1.06,.98,.96), .3);
+    } else if (LensMode < 10.5) {                          // Eighties CRT
+        vec2 curved = (uv - .5) * (1.0 + .12 * dot(uv - .5, uv - .5));
+        vec2 cuv = clamp(curved + .5, .001, .999);
+        color = texture(SceneSampler, cuv).rgb;
+        float scan = .82 + .18 * sin(cuv.y * Resolution.y * 1.6);
+        float mask = .9 + .1 * sin(cuv.x * Resolution.x * 2.2);
+        vec3 shifted = texture(SceneSampler, clamp(cuv + vec2(.0022, 0), .001, .999)).rgb;
+        color = mix(color, color * vec3(1.1,.92,.86) + shifted * vec3(.18,.04,.10), .55);
+        color *= scan * mask;
+        color += vec3(.05,.02,.0) * fract(sin(Time * 12.0) * 43758.5453) * .3;
+    } else {                                               // Chromatic Fold
+        float angle = length(uv - .5) * 6.0 + Time * .2;
+        vec2 folded = vec2(cos(angle), sin(angle)) * length(uv - .5);
+        vec3 other = texture(SceneSampler, clamp(folded + .5, .001, .999)).rgb;
+        color = mix(color, other, .55);
+        color = .5 + .5 * cos(vec3(0.0, 2.1, 4.2) + color.rgb * 6.28318 + Time * .3);
+        color *= .8 + .4 * fbm(vec3(uv * 8.0, Time * .2));
     }
+    return color;
+}
+
+// ---------------------------------------------------------------------------------------------
+// The Umbrella Effect: the branch you return to has a different sky, so the era is visible.
+vec3 eraTreatment(vec3 color, vec2 uv, vec3 rd) {
+    int era = int(Era + .5);
+    if (era <= 0) return color;
+    if (era == 1) color = mix(color, color * vec3(.86,1.08,.86), .35);                                  // living wood
+    else if (era == 2) {                                                                                 // neon eighties
+        color = mix(color, color * vec3(1.06,.86,1.12), .38);
+        color += vec3(.35,.08,.45) * pow(max(0.0, 1.0 - abs(rd.y + .2)), 6.0) * .35;
+    } else if (era == 3) color = mix(color, color * vec3(1.10,.98,.78), .38);                            // primeval
+    else if (era == 4) color = mix(color, color * vec3(.92,.72,1.16), .42);                              // alien
+    else if (era == 5) color = mix(color, color * vec3(1.12,.80,.80), .36);                              // veined
+    else if (era == 6) {                                                                                 // bleached
+        float luminance = dot(color, vec3(.2126,.7152,.0722));
+        color = mix(color, vec3(luminance) * vec3(1.06,1.05,1.02) + vec3(.05), .62);
+    } else color = mix(color, color * vec3(.78,.76,.74), .45);                                           // ashen
+    return color;
+}
+
+// ---------------------------------------------------------------------------------------------
+// The wormhole corridor: a real, walkable tube of barrier blocks that the client paints as a
+// tunnel through space and time. It is an overlay, not a second world.
+vec3 tunnelOverlay(vec3 color, vec2 uv, vec3 rd) {
+    if (Tunnel < .5) return color;
+    float phase = TunnelPhase;
+    float radial = length(uv - .5);
+    float angle = atan(uv.y - .5, uv.x - .5);
+    float waves = sin(radial * 46.0 - phase * 26.0 + sin(angle * 7.0 + phase * 9.0) * 2.2);
+    float streaks = pow(abs(sin(angle * 90.0 + phase * 34.0 + radial * 6.0)), 26.0);
+    vec3 tunnelColor = mix(vec3(.02,.03,.09), vec3(.35,.55,1.0), saturate(waves * .5 + .5));
+    tunnelColor += vec3(.85,.95,1.0) * streaks * (1.0 - radial);
+    float aperture = smoothstep(.10, .34, radial) * (1.0 - smoothstep(.72, .98, radial));
+    color = mix(color, tunnelColor, aperture * .88);
+    color += vec3(.55,.85,1.0) * exp(-abs(radial - .38) * 22.0) * .6;
+    color *= .55 + .45 * (1.0 - radial);
+    float burst = smoothstep(.85, 1.0, abs(sin(phase * PI)));
+    color += vec3(.9,.95,1.0) * burst * .18;
     return color;
 }
 
@@ -368,34 +551,46 @@ void main() {
     bool isSky = depth > .9999999;
     if (CosmicPresence > .5 && isSky) {
         vec3 cosmic = skyField(rd, RealmTheme);
-        // Distant sky singularity is visual only. The relic's local singularities below have server gravity.
-        vec3 center = normalize(vec3(-.58,.42,-.87)) * 1200.0;
-        LightRay skyRay = bendRay(rd, center, 112.0, 1e8, 931.0);
+        // The distant sky singularity is a real anomaly now: it is also delivered as Node0..5 with
+        // a colossal radius, so the loop below bends actual terrain through it. This pre-pass keeps
+        // the painted disk for worlds where no snapshot has arrived yet.
+        vec3 centre = normalize(WitnessDirection) * 900.0;
+        LightRay skyRay = bendRay(rd, centre, 90.0, 1e8, 931.0, 2.0);
         if (skyRay.footprint > 0.0) {
             vec3 skyBehind = skyField(skyRay.direction, RealmTheme);
             vec3 hole = skyBehind * skyRay.transmission + compressLight(skyRay.emission);
             cosmic = mix(cosmic, hole, skyRay.footprint);
         }
-        // The Witness is nearer than the distant sky lens: do not let its broad integration
-        // footprint erase the iris, leaving only the corner of an eye visible.
         cosmic = witness(cosmic, rd);
         color = mix(color, cosmic, RealmTheme < -.5 ? .88 : .96);
     }
-    for (int i = 3; i >= 0; i--) {
-        vec4 node = i == 0 ? Node0 : (i == 1 ? Node1 : (i == 2 ? Node2 : Node3));
-        vec4 style = i == 0 ? Style0 : (i == 1 ? Style1 : (i == 2 ? Style2 : Style3));
+    for (int i = 5; i >= 0; i--) {
+        vec4 node = i == 0 ? Node0 : (i == 1 ? Node1 : (i == 2 ? Node2 : (i == 3 ? Node3 : (i == 4 ? Node4 : Node5))));
+        vec4 style = i == 0 ? Style0 : (i == 1 ? Style1 : (i == 2 ? Style2 : (i == 3 ? Style3 : (i == 4 ? Style4 : Style5))));
+        float wave = i == 0 ? Wave0 : (i == 1 ? Wave1 : (i == 2 ? Wave2 : (i == 3 ? Wave3 : (i == 4 ? Wave4 : Wave5))));
         if (node.w < .025 || style.x < .5) continue;
-        if (style.x < 1.5) color = membrane(color, rd, distance, node, style);
-        else {
-            LightRay ray = bendRay(rd, node.xyz, node.w, distance, style.z);
+        if (style.x < 1.5 || (style.x > 2.5 && style.x < 3.5)) {
+            color = rift(color, rd, distance, node, style, wave);
+        } else {
+            // Kinds 2/4/5/6 lens the REAL scene: distant terrain inside the well's reach is bent,
+            // which is what makes the black hole read as gravity rather than a sticker.
+            LightRay ray = bendRay(rd, node.xyz, node.w, distance, style.z, style.x);
             if (ray.footprint > 0.0) {
                 vec3 behind = sampleBentScene(ray.direction, color);
                 vec3 warped = behind * ray.transmission + compressLight(ray.emission);
+                float birth = 1.0 - saturate(wave);
+                if (birth > 0.0) {
+                    // The shockwave from a newly opened well, expanding across the lens footprint.
+                    float ring = exp(-abs(length(node.xyz) - (1.0 - birth) * node.w * 7.0) / max(node.w, .5));
+                    warped += vec3(.75,.85,1.0) * ring * birth * .5;
+                }
                 color = mix(color, warped, ray.footprint);
             }
         }
     }
-    color = mandela(color, uv, rd, depth);
+    color = realityTreatment(color, uv, rd, depth);
+    color = tunnelOverlay(color, uv, rd);
+    color = eraTreatment(color, uv, rd);
     if (IntroPhase > 6.0 && IntroPhase < 13.0 && Motion > .5) {
         float dissolve = sin((IntroPhase - 6.0) / 7.0 * PI);
         vec2 grid = vec2(Resolution.x / 6.0, Resolution.y / 6.0);

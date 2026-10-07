@@ -1,0 +1,13 @@
+{
+  "type": "beyond:void",
+  "generator": {
+    "type": "beyond:between_generator",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "beyond:realm_08"
+    },
+    "material": "beyond:realm_08_stratum",
+    "accent": "beyond:realm_08_surface",
+    "shell": "beyond:realm_08_crystal"
+  }
+}
