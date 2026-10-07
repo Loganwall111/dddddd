@@ -15,6 +15,8 @@ public final class VisualConfig {
     public boolean ambience = true;
     public boolean spaghettification = true;
     public boolean nebula = true;
+    /** The Overworld colossus: the sky figure is filled with the live world instead of a colour. */
+    public boolean titanSky = true;
     public float intensity = .88f;
     public int quality = 1;
     /** Index into {@link #REALITIES}: the whole screen is re-authored by the post-processor. */
@@ -28,6 +30,7 @@ public final class VisualConfig {
         "Lucid", "Aurora", "Prismatic", "Negative Space", "Living Membrane", "Echo Memory",
         "Neon City", "Backrooms", "Poolrooms", "Cel Animation", "Eighties CRT", "Chromatic Fold",
         "Monolith City", "Deep Void", "Solar Bloom", "Interference",
+        "Photoreal", "Shaded Grid", "Ultra-Vivid", "Between Space",
     };
     /** @deprecated kept for the field guide and older configs; use REALITIES. */
     public static final String[] LENSES = REALITIES;

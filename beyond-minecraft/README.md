@@ -35,6 +35,9 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
 
 ### Spaghettification, tornado gravity, and things with mass
 
+- The lens is **localised, never viewport-bound**: the warp fades out when the hole is off-axis or
+  behind the camera, and geometry close to the eye — your hand, the block you are standing on —
+  stays perfectly undistorted, so there is no screen-wide smearing of the world around you.
 - Gravity pulls **every** living entity, item and falling block — not just the player. Anything that
   reaches the horizon is consumed and the well swells.
 - Entities inside a tidal reach are drawn **stretched along the pull axis** and thinned out, in the
@@ -52,8 +55,13 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
   different gameplay object.
 - The **wormhole corridor builds nothing at all**: no barrier cage, no blocks, no geometry of any
   kind. The server carries the walker along a curved path for a bounded number of ticks while the
-  client paints the time-wave tunnel as a screen treatment, then the branch breaks underneath you.
-  There is nothing left in the world afterwards, and nothing to be trapped inside.
+  client intersects the view ray with a **real 3D tube** around the direction of travel, so looking
+  around inside the throat gives true parallax and the tunnel recedes to a point instead of sliding
+  across the screen. There is nothing left in the world afterwards, and nothing to be trapped in.
+- **Rift fissures**: when an opening is torn, glowing cracks run out across the ground from beneath
+  it, made of the destination realm's own emissive crystal. They are real terrain, so the purple
+  glow sits in the land itself rather than being painted over it, and the network is bounded
+  (≤220 blocks), only touches loaded chunks, and refuses bedrock, barriers, containers and fluids.
 
 ### The Tear, the bubble cluster and the abyss
 
@@ -71,6 +79,11 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
   into the layer below. Dig down, and it keeps going.
 - The **fractal hollow** is a Menger-sponge world threaded with a helical staircase: recursive
   chambers, tunnels that feed into more tunnels, and the same structure repeating deeper and deeper.
+- The Between is drawn as a **fluid multiverse continuum**, not a room: eleven iridescent bubbles per
+  view, each one a ray-sphere intersection carrying its own miniature world (ridges and seas below,
+  cloud bands and a sun above), joined by noise filaments that are not geometry. Thin-film
+  interference gives every membrane its shifting spectrum. The old blocky glass domes are gone — each
+  bubble keeps only a crystal heart you can actually fly to, so the void stays somewhere you can go.
 
 ### Twelve realms, not twelve colours
 
@@ -88,15 +101,23 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
   name and behaviour — grazers, stalkers, runners and huge void drifters that watch you and flee
   rather than force a fight.
 
-### Sixteen realities behind one pair of glasses
+### Twenty realities behind one pair of glasses
 
 - The **Radiate Reality Glasses** (head slot) switch the whole screen, not a tint: Lucid, Aurora,
   Prismatic, Negative Space, Living Membrane, Echo Memory, **Neon City** (colossal city blocks and
   traffic light streaks), **Backrooms**, **Poolrooms**, **Cel Animation**, **Eighties CRT**,
   **Chromatic Fold**, **Monolith City** (a dusk skyline of slab towers with lit windows and a sun
   burning through smog), **Deep Void** (only edges and lights survive), **Solar Bloom** (golden-hour
-  flare and drifting seed light) and **Interference** (analogue RGB tear, roll bar and snow).
-  Press **V** to cycle, or use the Field Guide.
+  flare and drifting seed light), **Interference** (analogue RGB tear, roll bar and snow),
+  **Photoreal**, **Shaded Grid**, **Ultra-Vivid** and **Between Space**. Press **V** to cycle, or
+  use the Field Guide.
+- The last four stop treating the frame as a picture. **Photoreal** rebuilds every pixel's eye-space
+  position and surface normal from the depth buffer, then relights the frame with a directional sun,
+  wrapped diffuse, ambient occlusion probed from the depth neighbourhood and screen-space
+  reflections marched through the depth buffer. **Shaded Grid** projects a depth-aware structural
+  grid onto real surfaces with fresnel edges. **Ultra-Vivid** is a graded, edge-aware chroma push.
+  **Between Space** folds the live world toward the bubble continuum. The expensive paths (AO and
+  reflections) run at quality 1 and 2; the software-GL profile used by CI stays on the cheap layer.
 - The same program also drives the era treatments, the tunnel overlay and the rift, so the visor
   and the world always agree about which reality you are standing in.
 
@@ -130,6 +151,10 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
   cloud deck, and **two eyes that burn red** and cast red beams down through the sky. It is animated,
   anchored to a real world position, and it behaves as a dynamic skybox behind the actual terrain
   rather than a fixed decal.
+- **The Titan**: the colossus is not painted a colour. Its silhouette samples the live scene twice
+  with parallax, so the terrain, trees, clouds and sky you are standing in flow into the shape of the
+  body and it really does read as the world wearing a humanoid form. Its eyes are the single element
+  in the whole shader allowed to be unshaded, unfogged, full-strength red. Toggle with `titanSky`.
 - Fly up to the well and the figure **dissolves before you can reach it**, so it can never become a
   dark slab in front of your face; the only thing up there at close range is the black hole itself.
 - It never attacks and never moves the player. The first-join encounter dissolves into falling code.

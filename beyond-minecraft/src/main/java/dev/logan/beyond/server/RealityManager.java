@@ -8,6 +8,7 @@ import dev.logan.beyond.math.ScaleLadder;
 import dev.logan.beyond.math.Vec;
 import dev.logan.beyond.network.RealityPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
@@ -113,6 +114,13 @@ public final class RealityManager {
             }
         }
         shockwave(world, center, kind);
+        // The ground answers: glowing fissures of the destination's own material run out from under
+        // the opening. The vein is real terrain, so the glow survives without any post-processing.
+        BlockState vein = Registries.BLOCK.get(BeyondMinecraft.id(
+            BeyondMinecraft.CATALOG.realms().get(Math.floorMod(slot, BeyondMinecraft.CATALOG.realms().size())).blocks().get(2)))
+            .getDefaultState();
+        RiftVeins.open(world, center, world.getSeed() ^ (center.x * 31.0) ^ (center.z * 17.0) ^ player.getUuid().getLeastSignificantBits(),
+            vein, kind);
         for (ServerPlayerEntity p : world.getPlayers()) sync(p, false);
         message(player, switch (kind) {
             case TEAR -> "The fabric tears open onto " + BeyondMinecraft.CATALOG.realms().get(slot).name() + ".";

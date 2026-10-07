@@ -20,6 +20,7 @@ uniform float LensMode;
 uniform float Transition;
 uniform float RealmTheme;
 uniform float CosmicPresence;
+uniform float Titan;
 uniform float NebulaProximity;
 uniform float Era;
 uniform float Tunnel;
@@ -123,6 +124,71 @@ vec3 skyField(vec3 rd, float theme) {
 }
 
 // ---------------------------------------------------------------------------------------------
+// The Between, as a fluid multiverse continuum rather than a room. Every bubble is a ray-sphere
+// intersection carrying a miniature world; thin-film interference gives the membranes their
+// shifting iridescence, and the filaments between them are noise, not geometry. Nothing here is a
+// texture or a block: it is evaluated per pixel, so it has no resolution limit and never repeats.
+vec3 miniWorld(vec3 d, float seed, float parallax) {
+    float shade = hash12(vec2(seed, 1.7));
+    vec3 low = .5 + .5 * cos(vec3(0.0, 2.1, 4.2) + seed * 1.3);
+    float horizon = .04 + .16 * (shade - .5);
+    if (d.y < horizon) {
+        float ridges = fbm(vec3(d.xz * 3.1 + seed, 0.0));
+        float land = smoothstep(horizon - .17, horizon + .03, d.y + ridges * .13);
+        vec3 rock = mix(low * .30, low * .92, ridges);
+        vec3 sea = mix(low * .10, vec3(.04,.10,.26), .65);
+        vec3 ground = mix(sea, rock, land);
+        ground += vec3(.95,.78,.50) * pow(saturate(ridges), 5.0) * .30;
+        return ground * (.45 + .75 * saturate(1.0 + d.y * 3.0));
+    }
+    float clouds = fbm(vec3(d.xz * 2.3 + seed * 2.0 + vec2(parallax * .12, 0.0), d.y * 3.0));
+    vec3 sky = mix(low * .55, vec3(.86,.87,.96), saturate(clouds * 1.35 - .22));
+    sky += low * pow(saturate(1.0 - d.y), 6.0) * .55;
+    vec3 sun = normalize(vec3(sin(seed * 2.3), .30, cos(seed * 1.7)));
+    sky += mix(vec3(1.0,.86,.58), low, .35) * pow(saturate(dot(d, sun)), 110.0) * 2.6;
+    sky += vec3(.72,.80,1.0) * pow(saturate(dot(d, sun)), 9.0) * .13;
+    sky += vec3(1.0) * step(.996, hash13(floor(d * 260.0) + seed));
+    return sky;
+}
+/** Golden-angle spiral: a bubble lattice that never repeats and never lines up. */
+vec3 bubbleCentre(float i, float drift) {
+    float a = i * 2.39996 + drift * .01;
+    float ring = 1.15 + 1.70 * fract(i * .61803);
+    return vec3(cos(a) * ring, (fract(i * .371) - .5) * 2.7 + sin(drift * .07 + i) * .13, sin(a) * ring);
+}
+vec3 betweenVoid(vec3 rd) {
+    vec3 colour = vec3(.004,.005,.014);
+    float web = fbm(rd * 3.2 + vec3(0.0, Time * .012, Time * .008));
+    colour += mix(vec3(.05,.02,.10), vec3(.19,.10,.35), web) * pow(web, 3.0) * .55;
+    colour += vec3(.36,.18,.62) * pow(saturate(web * 1.6 - .35), 8.0) * .40;
+    float bestDepth = 1e9;
+    vec3 bestShade = vec3(0.0);
+    float found = 0.0;
+    for (int i = 0; i < 11; i++) {
+        float fi = float(i);
+        vec3 centre = bubbleCentre(fi, Time);
+        float radius = .62 + .36 * hash12(vec2(fi, .37));
+        float b = dot(rd, centre);
+        float disc = b * b - dot(centre, centre) + radius * radius;
+        if (disc <= 0.0) continue;
+        float t = b - sqrt(disc);
+        if (t <= 0.0 || t > bestDepth) continue;
+        vec3 hit = rd * t;
+        vec3 normal = normalize(hit - centre);
+        float facing = saturate(dot(normal, -rd));
+        float film = .5 + .5 * sin(fi * 2.1 + Time * .35 + facing * 5.0);
+        vec3 irid = .5 + .5 * cos(vec3(0.0, 2.1, 4.2) + facing * 6.0 + film * 5.0 + fi);
+        vec3 inner = miniWorld(normal, fi * 1.7, hit.x + hit.z);
+        vec3 skin = mix(inner, irid, pow(1.0 - facing, 1.7) * .85);
+        skin += irid * pow(1.0 - facing, 6.0) * 1.5;
+        skin += vec3(1.0) * pow(facing, 42.0) * .55;
+        bestDepth = t; bestShade = skin; found = 1.0;
+    }
+    if (found > 0.0) colour = mix(colour, bestShade, .95);
+    return colour;
+}
+
+// ---------------------------------------------------------------------------------------------
 // The Witness, as a person rather than an eye: a colossal figure in the sky that is anchored to a
 // real world position (WitnessAnchor), so flying toward the nebula brings you under its hand.
 float personBody(vec2 q, float presence) {
@@ -145,7 +211,26 @@ float personBody(vec2 q, float presence) {
     }
     return body * presence;
 }
-vec3 witness(vec3 background, vec3 rd) {
+/**
+ * The Living Titan. Its silhouette is not drawn with colour: the body samples the live scene, so the
+ * terrain, trees and sky around you flow into the shape of a colossus. The eyes are the one part
+ * that ignores shading entirely, exactly as specified: full-strength emissive red.
+ */
+float titanBody(vec2 q) {
+    float breathe = sin(Time * .12) * .015 * Motion;
+    float sway = sin(Time * .055) * .03 * Motion;
+    float reach = sin(Time * .18) * .07 * Motion;
+    float body = ellipse(q, vec2(sway * .3, .58 + breathe), vec2(.15, .18));
+    body = min(body, capsule2(q, vec2(sway * .3, .40), vec2(sway * .4, .16), .11));
+    body = min(body, capsule2(q, vec2(-.32, .13), vec2(.32, .13), .14));
+    body = min(body, capsule2(q, vec2(sway * .4, .09), vec2(sway * .2, -.92), .31));
+    body = min(body, capsule2(q, vec2(-.29, .11), vec2(-.54, .60 + reach), .09));
+    body = min(body, capsule2(q, vec2(.29, .11), vec2(.54, .60 - reach), .09));
+    body = min(body, capsule2(q, vec2(-.54, .60 + reach), vec2(-.63, .86 + reach), .065));
+    body = min(body, capsule2(q, vec2(.54, .60 - reach), vec2(.63, .86 - reach), .065));
+    return body;
+}
+vec3 witness(vec3 background, vec3 rd, vec2 uv) {
     vec3 axis;
     float angular = 1.0;
     float anchored = 0.0;
@@ -202,6 +287,45 @@ vec3 witness(vec3 background, vec3 rd) {
         thisEye += vec3(1.0,.08,.05) * exp(-r * 26.0) * .55;
         eyeMask = max(eyeMask, mask);
         eye = max(eye, thisEye);
+    }
+    if (Titan > .5) {
+        // The colossus fills its silhouette with the live scene, so the world you are standing in
+        // becomes the body. Two passes of parallax keep it from reading as a flat cut-out.
+        float body2 = titanBody(q);
+        float skin2 = 1.0 - smoothstep(-.010, .016, body2);
+        vec3 fill = texture(SceneSampler, clamp(uv + q * .16, .002, .998)).rgb;
+        fill = mix(fill, texture(SceneSampler, clamp(uv + q * .30, .002, .998)).rgb, .45);
+        float grain = fbm(vec3(q * vec2(34.0, 26.0), Time * .05));
+        fill *= .48 + .42 * grain;
+        fill += vec3(.04,.05,.12);
+        fill += vec3(.30,.34,.58) * exp(-abs(body2) * 16.0) * .5;
+        background = mix(background, fill, skin2 * presence);
+        // The eyes: unshaded, unfogged, full-strength red. Nothing else in this shader is allowed
+        // to be this bright.
+        for (int side = 0; side < 2; side++) {
+            float sgn = side == 0 ? -1.0 : 1.0;
+            vec2 e = (q - gaze - vec2(sgn * .074, .0)) * 3.4;
+            float lid = .085 * blink;
+            float socket = (1.0 - smoothstep(-.006, .010, abs(e.y) - lid)) * (1.0 - smoothstep(.085, .10, abs(e.x)));
+            float core = 1.0 - smoothstep(.016, .040, length(e));
+            float glow = exp(-length(e) * 7.0);
+            vec3 red = vec3(1.0, 0.0, 0.0);
+            background += red * (core * 1.6 + glow * .55) * socket;
+            background += red * socket * .25;
+        }
+        // Beams: the gaze leaving both eyes and cutting down through the world below.
+        for (int beam = 0; beam < 2; beam++) {
+            float sgn = beam == 0 ? -1.0 : 1.0;
+            vec2 from = gaze + vec2(sgn * .074, 0.0);
+            vec2 dir = normalize(vec2(sgn * .30, -1.0));
+            vec2 rel = q - from;
+            float along = dot(rel, dir);
+            float across = abs(rel.x * dir.y - rel.y * dir.x);
+            float core = exp(-across * 60.0) * smoothstep(-.02, .10, along) * exp(-along * .75);
+            float bloom = exp(-across * 14.0) * smoothstep(-.02, .16, along) * exp(-along * 1.4) * .45;
+            background += vec3(1.0, .02, .02) * (core + bloom) * presence * 1.7;
+        }
+        return background;
     }
     float cells = hash12(floor(q * vec2(76,58)));
     float pixelKeep = 1.0 - smoothstep(cells - .08, cells + .08, dissolve);
@@ -482,10 +606,117 @@ vec3 rift(vec3 background, vec3 rd, float depth, vec4 node, vec4 style, float wa
 }
 
 // ---------------------------------------------------------------------------------------------
+// Depth reconstruction. These realities stop treating the image as a picture: they rebuild the eye-
+// space position and surface normal of every pixel out of the depth buffer, then relight it. The
+// expensive paths are gated on the ray-step budget so the software-GL CI profile stays cheap.
+vec3 eyeFromDepth(vec2 uv, float depth) {
+    vec4 clip = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec4 eye = InverseProjection * clip;
+    return eye.xyz / max(abs(eye.w), EPS) * sign(eye.w);
+}
+vec3 normalFromDepth(vec2 uv, float depth, vec3 eye) {
+    vec2 texel = 1.0 / max(Resolution, vec2(1.0));
+    vec2 right = clamp(uv + vec2(texel.x, 0.0), .001, .999);
+    vec2 up = clamp(uv + vec2(0.0, texel.y), .001, .999);
+    vec3 alongX = eyeFromDepth(right, texture(DepthSampler, right).r) - eye;
+    vec3 alongY = eyeFromDepth(up, texture(DepthSampler, up).r) - eye;
+    vec3 normal = normalize(cross(alongX, alongY));
+    // Two-sided: flip toward the eye so back faces of thin geometry still shade sensibly.
+    return dot(normal, -normalize(eye)) < 0.0 ? -normal : normal;
+}
+/** A cheap horizon-free occlusion term: how many neighbours sit in front of this pixel. */
+float screenOcclusion(vec2 uv, vec3 eye) {
+    vec2 texel = 2.6 / max(Resolution, vec2(1.0));
+    float occlusion = 0.0;
+    for (int i = 0; i < 6; i++) {
+        float fi = float(i);
+        vec2 offset = texel * vec2(cos(fi * 2.39996), sin(fi * 2.39996)) * (0.6 + fi * .35);
+        vec2 at = clamp(uv + offset, .002, .998);
+        float probeDepth = texture(DepthSampler, at).r;
+        vec3 probe = eyeFromDepth(at, probeDepth);
+        occlusion += step(probe.z, eye.z - .35) * saturate(1.0 - abs(probe.z - eye.z) / 8.0);
+    }
+    return saturate(occlusion / 6.0);
+}
+/** Screen-space reflection: march the reflected view ray through the depth buffer. */
+vec3 screenReflection(vec2 uv, vec3 eye, vec3 normal) {
+    vec3 view = normalize(eye);
+    vec3 reflected = reflect(view, normal);
+    if (dot(reflected, -view) < .0) return vec3(0.0);
+    vec3 walk = eye + reflected * .55;
+    for (int i = 0; i < 9; i++) {
+        vec4 clip = Projection * vec4(walk, 1.0);
+        if (clip.w <= 0.0) break;
+        vec2 at = (clip.xy / clip.w) * .5 + .5;
+        if (at.x < .002 || at.x > .998 || at.y < .002 || at.y > .998) break;
+        float hitDepth = texture(DepthSampler, at).r;
+        vec3 target = eyeFromDepth(at, hitDepth);
+        if (target.z >= walk.z && walk.z - target.z < 1.2) return texture(SceneSampler, at).rgb * (1.0 - float(i) / 11.0);
+        walk += reflected * (.42 + float(i) * .22);
+    }
+    return vec3(0.0);
+}
+// ---------------------------------------------------------------------------------------------
 // The glasses switch realities rather than tinting the screen: each branch re-authors the image.
 vec3 realityTreatment(vec3 color, vec2 uv, vec3 rd, float depth) {
     if (LensMode < -.5) return color;
     float luminance = dot(color, vec3(.2126,.7152,.0722));
+    bool solid = depth < .9999999;
+    if (LensMode > 15.5) {
+        // The four relighting realities below rebuild the scene instead of filtering it.
+        bool heavy = RaySteps > 40.5 && solid;
+        vec3 eye = heavy ? eyeFromDepth(uv, depth) : vec3(0.0);
+        vec3 normal = heavy ? normalFromDepth(uv, depth, eye) : vec3(0.0, 1.0, 0.0);
+        if (LensMode < 16.5) {                                 // Photoreal
+            vec3 sun = normalize(vec3(.38,.74,-.42));
+            float lambert = saturate(dot(normal, sun));
+            float wrapped = saturate((dot(normal, sun) + .42) / 1.42);
+            float ao = heavy ? screenOcclusion(uv, eye) : 0.0;
+            vec3 ambient = vec3(.30,.36,.52) * (.34 + .30 * saturate(normal.y + .35));
+            vec3 albedo = color;
+            vec3 lit = albedo * ((lambert * 1.30 + wrapped * .25) * mix(1.0, .45, ao) + ambient);
+            if (heavy) {
+                vec3 gloss = screenReflection(uv, eye, normal) * pow(1.0 - saturate(dot(normal, -normalize(eye))), 3.0);
+                lit += gloss * .55 * vec3(.9,.95,1.0);
+            }
+            // Filmic shoulder so the relit highlights roll off instead of clipping.
+            lit = lit / (lit + vec3(.85));
+            lit = pow(lit, vec3(1.0 / 1.25)) * 1.18;
+            color = mix(albedo, lit * 1.35, heavy ? .78 : .55);
+        } else if (LensMode < 17.5) {                          // Shaded Grid
+            vec3 grid = vec3(.02,.05,.08);
+            if (heavy) {
+                vec3 axis = abs(normalize(eye)) * 3.0;
+                vec2 plan = uv * Resolution / 6.0;
+                vec2 cellLine = abs(fract(plan) - .5);
+                float line = 1.0 - smoothstep(.44, .495, max(cellLine.x, cellLine.y));
+                float depthFade = 1.0 - saturate(-eye.z / 90.0);
+                grid = mix(vec3(.03,.10,.16), vec3(.22,.62,.78), line * depthFade);
+                float rim = pow(1.0 - saturate(dot(normal, -normalize(eye))), 4.0);
+                grid += vec3(.35,.85,1.0) * rim * .55;
+                float height = saturate(normal.y);
+                grid *= .35 + .65 * height;
+            }
+            color = mix(color * vec3(.30,.36,.44), grid, .72);
+            color += vec3(.10,.30,.40) * pow(saturate(luminance), 4.0) * .5;
+        } else if (LensMode < 18.5) {                          // Ultra-Vivid
+            vec3 vivid = color;
+            vivid = mix(vec3(luminance), vivid, 1.55);
+            vivid *= vec3(1.06,1.0,1.10);
+            vivid = vivid / (vivid + vec3(.62)) * 1.62;
+            vivid += vec3(.06,.02,.10) * (1.0 - smoothstep(.15,.6,luminance));
+            float edge = heavy ? saturate(length(normal.xy) * .5) : 0.0;
+            color = mix(vivid, vivid * 1.2, edge * .3);
+        } else {                                              // Between Space
+            // The world folds toward the continuum: bubbles drift over the terrain and hollow it out.
+            vec3 void3 = betweenVoid(rd);
+            float holes = saturate(1.0 - length(void3) * 1.35);
+            color = mix(color, void3, .78);
+            color = mix(color, void3 * 1.35, holes);
+            color += vec3(.35,.16,.55) * pow(saturate(luminance), 3.0) * .35;
+        }
+        return color;
+    }
     if (LensMode < .5) {                                   // Lucid
         color = mix(vec3(luminance), color, 1.14);
         color *= vec3(.91,1.02,1.06);
@@ -620,21 +851,43 @@ vec3 eraTreatment(vec3 color, vec2 uv, vec3 rd) {
 // ---------------------------------------------------------------------------------------------
 // The wormhole corridor: a real, walkable tube of barrier blocks that the client paints as a
 // tunnel through space and time. It is an overlay, not a second world.
+/**
+ * The wormhole is a real tube in space, found by intersecting the view ray with a cylinder around
+ * the direction you are travelling. Because it is geometry rather than an overlay, looking around
+ * inside it gives true perspective, and the throat recedes to a point instead of sliding across the
+ * screen. No blocks are involved anywhere: the corridor exists only in this intersection.
+ */
 vec3 tunnelOverlay(vec3 color, vec2 uv, vec3 rd) {
     if (Tunnel < .5) return color;
-    float phase = TunnelPhase;
-    float radial = length(uv - .5);
-    float angle = atan(uv.y - .5, uv.x - .5);
-    float waves = sin(radial * 46.0 - phase * 26.0 + sin(angle * 7.0 + phase * 9.0) * 2.2);
-    float streaks = pow(abs(sin(angle * 90.0 + phase * 34.0 + radial * 6.0)), 26.0);
-    vec3 tunnelColor = mix(vec3(.02,.03,.09), vec3(.35,.55,1.0), saturate(waves * .5 + .5));
-    tunnelColor += vec3(.85,.95,1.0) * streaks * (1.0 - radial);
-    float aperture = smoothstep(.10, .34, radial) * (1.0 - smoothstep(.72, .98, radial));
-    color = mix(color, tunnelColor, aperture * .88);
-    color += vec3(.55,.85,1.0) * exp(-abs(radial - .38) * 22.0) * .6;
-    color *= .55 + .45 * (1.0 - radial);
-    float burst = smoothstep(.85, 1.0, abs(sin(phase * PI)));
-    color += vec3(.9,.95,1.0) * burst * .18;
+    vec3 axis = normalize(directionFor(vec2(.5)));
+    vec3 perpendicular = rd - axis * dot(rd, axis);
+    float plen = length(perpendicular);
+    float radius = .34 + .05 * sin(TunnelPhase * 1.7);
+    if (plen < .03) {
+        // Straight down the throat: the far end of the tunnel, blown out to white.
+        return mix(color, vec3(.72,.86,1.0), .82);
+    }
+    vec3 side = perpendicular / plen;
+    vec3 up = normalize(cross(axis, side));
+    float travel = radius / plen;
+    vec3 hit = rd * travel;
+    float along = dot(hit, axis);
+    float angle = atan(dot(hit, up), dot(hit, side));
+    // Compress the far distance so the swirling pattern converges instead of aliasing.
+    float compressed = along / (1.0 + abs(along) * .10);
+    float swirl = angle * 2.4 + compressed * .55 - TunnelPhase * 7.5;
+    float ribs = pow(abs(sin(swirl)), 5.0);
+    vec3 surface = mix(vec3(.015,.025,.085), vec3(.30,.52,1.0), .5 + .5 * sin(swirl * 1.3 + 1.2));
+    surface += vec3(.86,.94,1.0) * ribs * .55;
+    float streaks = pow(abs(sin(angle * 22.0 + fbm(vec3(compressed * .3, angle * 2.0, TunnelPhase)) * 5.0)), 14.0);
+    surface += vec3(.72,.90,1.0) * streaks * .55;
+    surface += vec3(1.0) * exp(-abs(swirl) * 9.0) * .12;
+    float distanceFade = saturate(1.0 - travel / 26.0);
+    surface *= .30 + .70 * (1.0 - distanceFade);
+    color = mix(color, surface, saturate(.80 + .20 * distanceFade));
+    // A travelling pressure ring, so the ride reads as motion through a throat.
+    float ring = exp(-abs(compressed - mod(TunnelPhase * 12.0, 18.0)) * 1.6);
+    color += vec3(.60,.85,1.0) * ring * .22;
     return color;
 }
 
@@ -647,7 +900,8 @@ void main() {
     vec3 color = original;
     bool isSky = depth > .9999999;
     if (CosmicPresence > .5 && isSky) {
-        vec3 cosmic = skyField(rd, RealmTheme);
+        // The Between is a continuum of bubble-worlds rather than a dark box with a floor.
+        vec3 cosmic = abs(RealmTheme - 8.0) < .5 ? betweenVoid(rd) : skyField(rd, RealmTheme);
         // The distant sky singularity is a real anomaly now: it is also delivered as Node0..5 with
         // a colossal radius, so the loop below bends actual terrain through it. This pre-pass keeps
         // the painted disk for worlds where no snapshot has arrived yet.
@@ -658,7 +912,7 @@ void main() {
             vec3 hole = skyBehind * skyRay.transmission + compressLight(skyRay.emission);
             cosmic = mix(cosmic, hole, skyRay.footprint);
         }
-        cosmic = witness(cosmic, rd);
+        cosmic = witness(cosmic, rd, uv);
         color = mix(color, cosmic, RealmTheme < -.5 ? .88 : .96);
     }
     for (int i = 5; i >= 0; i--) {
@@ -672,7 +926,16 @@ void main() {
             // Kinds 2/4/5/6 lens the REAL scene: distant terrain inside the well's reach is bent,
             // which is what makes the black hole read as gravity rather than a sticker.
             LightRay ray = bendRay(rd, node.xyz, node.w, distance, style.z, style.x);
-            if (ray.footprint > 0.0) {
+            // Localised, not viewport-bound. Three fades keep the warp where the black hole actually
+            // is: it must be inside the view cone, it must not be behind the camera, and fragments
+            // close to the eye (the hand, the block under your feet) stay perfectly undistorted.
+            vec3 toNode = normalize(node.xyz);
+            float onAxis = saturate(dot(rd, toNode));
+            float nearFade = smoothstep(1.6, 7.0, distance);
+            float behind = smoothstep(.04, .42, onAxis);
+            float sphereFade = 1.0 - smoothstep(.85, 1.0, distance / max(node.w * 2.6, .001));
+            ray.footprint *= nearFade * behind * max(sphereFade, .15);
+            if (ray.footprint > 0.001) {
                 vec3 behind = sampleBentScene(ray.direction, color);
                 vec3 warped = behind * ray.transmission + compressLight(ray.emission);
                 float birth = 1.0 - saturate(wave);

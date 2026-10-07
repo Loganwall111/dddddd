@@ -27,7 +27,8 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * The Between: the bubble hub the Tear opens onto. A cracked two-tone puzzle floor floats in a
- * white void, ringed by shells of other worlds' materials — you can see through their glass into
+ * void of drifting worlds; the bubbles themselves are drawn by the continuum shader, and each one
+ * has a crystal heart you can fly to. The shell material appears here
  * lit pocket biomes. The centre is a genuine abyss: no floor at all, so falling there drops you
  * into the labyrinth rather than a void death.
  */
@@ -99,15 +100,20 @@ public class BetweenGenerator extends ChunkGenerator {
                         double radial = Math.sqrt(dx * dx + dz * dz);
                         if (radial > bubble[1] + 2) continue;
                         int centreY = FLOOR + 22 + (int) (bubble[1] * .9);
-                        for (int y = centreY - (int) bubble[1] - 2; y <= centreY + (int) bubble[1] + 2; y++) {
+                        // The bubbles themselves are drawn by the continuum shader, not carved out of
+                        // blocks: a shell of glass here would read as a dome sitting inside the real
+                        // thing. What stays physical is the heart of each bubble — a small crystal
+                        // seed you can fly to, and shards drifting inside it — so the void is still
+                        // somewhere you can go rather than a picture.
+                        for (int y = centreY - 4; y <= centreY + 4; y++) {
                             double distance = Math.sqrt(radial * radial + (double) (y - centreY) * (y - centreY));
-                            if (distance > bubble[1] + 1.6 || y <= FLOOR) continue;
-                            boolean inShell = distance > bubble[1] - 1.6;
-                            boolean balcony = Math.abs(y - centreY) < 2 && radial < bubble[1] - 6
-                                && Math.floorMod(BeyondWorldgen.hash(x, y, z, 6060), 17) == 0;
-                            if (!inShell && !balcony) continue;
+                            if (y <= FLOOR) continue;
+                            boolean seed = distance < 2.6;
+                            boolean shard = !seed && distance < bubble[1] - 4
+                                && Math.floorMod(BeyondWorldgen.hash(x, y, z, 6060), 41) == 0;
+                            if (!seed && !shard) continue;
                             cursor.set(x, y, z);
-                            chunk.setBlockState(cursor, inShell ? glass : light, false);
+                            chunk.setBlockState(cursor, seed ? light : glass, false);
                         }
                     }
                 }

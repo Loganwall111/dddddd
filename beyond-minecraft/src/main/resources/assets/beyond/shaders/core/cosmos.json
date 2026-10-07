@@ -224,6 +224,14 @@
       ]
     },
     {
+      "name": "Titan",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
       "name": "NebulaProximity",
       "type": "float",
       "count": 1,

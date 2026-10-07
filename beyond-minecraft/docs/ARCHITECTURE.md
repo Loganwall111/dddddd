@@ -28,6 +28,7 @@ Subsystems, each with its own file and its own budget:
 | `SkyWells` | one persistent **prime** well per root world (and per realm if enabled), anchored to spawn at build-limit height, fed by particles | 1 well per world, radius ≤ `maxNodeRadius` |
 | `Suction` | softened inverse-square pull on living entities, items and falling blocks; tidal damage inside the inner reach; horizon consumption; tornado of real blocks; horizon devouring (the sky well included) | ≤128 entities/well/tick, ≤4000 torn blocks (×4 for the prime well), ≤24 blocks/tick, no block entities/fluids/bedrock/barriers |
 | `Tunnels` | wormhole flight: the walker is carried along a curved path for a bounded run while the client paints the tunnel; **no blocks are placed at all** | fixed 52-block run, zero block writes, cancels on disconnect/shutdown |
+| `RiftVeins` | glowing fissure network run out across the ground under a newly torn opening, using the destination realm's emissive crystal | ≤220 blocks per opening, loaded chunks only, refuses bedrock/barriers/containers/fluids |
 | `Umbrella` | branch rewrite around a return point, deterministic from the era seed | 18 columns/tick, radius ≤40, refuses bedrock/barriers/fluids/block entities |
 | `SafeLanding` | bounded arrival search | 9 candidate columns + optional plinth in a Beyond space only |
 

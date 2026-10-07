@@ -120,6 +120,7 @@ public final class CosmicRenderer {
             if (beyond) for (var realm : BeyondMinecraft.CATALOG.realms()) if (realm.id().equals(client.world.getRegistryKey().getValue().getPath())) realmTheme = realm.theme();
             cosmos.getUniformOrDefault("RealmTheme").set(realmTheme);
             cosmos.getUniformOrDefault("CosmicPresence").set(BeyondClient.CONFIG.cosmicSky && (beyond || client.world.getRegistryKey().equals(World.OVERWORLD)) ? 1f : 0f);
+            cosmos.getUniformOrDefault("Titan").set(BeyondClient.CONFIG.titanSky ? 1f : 0f);
             int count = ClientReality.world != null && ClientReality.world.equals(client.world.getRegistryKey().getValue()) ? ClientReality.nodes.size() : 0;
             for (int i = 0; i < 6; i++) {
                 if (i >= count) {
