@@ -30,12 +30,27 @@ public final class SafeLanding {
         }
         if (!allowAirPad) return Optional.empty();
         int radius = Math.max(2, (int) Math.ceil(width / 2) + 1);
-        // A small, explicitly authored arrival plinth. Only empty space can be modified.
-        for (int y : new int[]{192, 224, 256, 288}) {
-            if (y + height + 2 >= world.getTopY()) continue;
-            BlockPos center = new BlockPos(base.getX(), y, base.getZ());
+        int clearance = (int) Math.ceil(height);
+        // Put an explicitly authored arrival plinth just above the local terrain. Fixed altitudes
+        // fail in tall noise realms; sample the whole footprint and only modify air blocks.
+        for (int[] offset : OFFSETS) {
+            BlockPos centerColumn = base.add(offset[0], 0, offset[1]);
+            int highestSurface = world.getBottomY() + 1;
+            boolean insideBorder = true;
+            for (int dx = -radius; dx <= radius && insideBorder; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    BlockPos sample = centerColumn.add(dx, 0, dz);
+                    if (!world.getWorldBorder().contains(sample)) { insideBorder = false; break; }
+                    highestSurface = Math.max(highestSurface,
+                        world.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, sample).getY());
+                }
+            }
+            if (!insideBorder) continue;
+            int y = Math.max(base.getY(), highestSurface + 1);
+            if (y + clearance + 1 >= world.getTopY()) continue;
+            BlockPos center = new BlockPos(centerColumn.getX(), y, centerColumn.getZ());
             boolean clear = true;
-            for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, (int) Math.ceil(height), radius))) {
+            for (BlockPos p : BlockPos.iterate(center.add(-radius, -1, -radius), center.add(radius, clearance, radius))) {
                 if (!world.getWorldBorder().contains(p) || !world.isAir(p)) { clear = false; break; }
             }
             if (!clear) continue;
