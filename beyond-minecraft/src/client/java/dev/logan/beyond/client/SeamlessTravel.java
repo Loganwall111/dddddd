@@ -1,5 +1,6 @@
 package dev.logan.beyond.client;
 
+import dev.logan.beyond.server.Journey;
 import net.minecraft.client.MinecraftClient;
 
 /**
@@ -17,7 +18,11 @@ public final class SeamlessTravel {
     public static void tick(MinecraftClient client) {
         if (!BeyondClient.CONFIG.seamlessTravel || !BeyondClient.CONFIG.enabled) return;
         var screen = client.currentScreen;
-        if (screen == null || !ClientReality.travelling()) return;
+        if (screen == null) return;
+        // Suppress for a real transition, and anywhere beyond the root reality: every Beyond space is
+        // entered on foot and must never interrupt the walk with a full-screen loader.
+        boolean beyondSpace = client.world != null && Journey.inRealm(client.world.getRegistryKey());
+        if (!ClientReality.travelling() && !beyondSpace) return;
         String name = screen.getClass().getName();
         if (name.endsWith("DownloadingTerrainScreen") || name.endsWith("LevelLoadingScreen")
             || name.endsWith("ReceivingLevelScreen") || name.endsWith("ProgressScreen")) {

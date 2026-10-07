@@ -60,10 +60,10 @@ public class RealmCritter extends PathAwareEntity {
         return random.nextInt(4) == 0 ? random.nextInt(4) : base;
     }
     @Override public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason reason,
-                                           @Nullable EntityData data, @Nullable NbtCompound nbt) {
-        if (nbt == null || !nbt.contains("Variant")) setVariant(variantFor(world.toServerWorld(), getRandom()));
-        else setVariant(nbt.getInt("Variant"));
-        return super.initialize(world, difficulty, reason, data, nbt);
+                                           @Nullable EntityData data) {
+        // Persisted variants are restored by readCustomDataFromNbt; fresh spawns pick a family skin.
+        setVariant(variantFor(world.toServerWorld(), getRandom()));
+        return super.initialize(world, difficulty, reason, data);
     }
     @Override public void writeCustomDataToNbt(NbtCompound nbt) { super.writeCustomDataToNbt(nbt); nbt.putInt("Variant", getVariant()); }
     @Override public void readCustomDataFromNbt(NbtCompound nbt) { super.readCustomDataFromNbt(nbt); if (nbt.contains("Variant")) setVariant(nbt.getInt("Variant")); }
