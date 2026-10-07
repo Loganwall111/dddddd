@@ -305,7 +305,7 @@ def decoration(feature_lists, realm, key, blocks, theme):
             "trunk_placer": {"type": "minecraft:straight_trunk_placer", "base_height": 5, "height_rand_a": 3, "height_rand_b": 2},
             "foliage_placer": {"type": "minecraft:blob_foliage_placer", "radius": 2, "offset": 0, "height": 3},
             "minimum_size": {"type": "minecraft:two_layers_feature_size", "limit": 1, "lower_size": 0, "upper_size": 1},
-            "ignore_vines": True, "force_dirt": True}),
+            "decorators": [], "ignore_vines": True, "force_dirt": True}),
             placement=[{"type": "minecraft:count", "count": 6}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:heightmap", "heightmap": "WORLD_SURFACE_WG"}, {"type": "minecraft:biome"}])
     if "crystal_cluster" in realm["decor"]:
@@ -350,9 +350,12 @@ def decoration(feature_lists, realm, key, blocks, theme):
                         "min_inclusive": {"absolute": 0}, "max_inclusive": {"absolute": 90}}},
                        {"type": "minecraft:biome"}])
     if "ice_spikes" in realm["decor"]:
-        placed[f"{key}_spikes"] = dict(configured=("minecraft:spike", {
-            "state": {"Name": f"beyond:{crystal}"}, "height": {"type": "minecraft:uniform", "min_inclusive": 3, "max_inclusive": 11},
-            "can_place_on": {"type": "minecraft:matching_blocks", "blocks": [f"beyond:{surface}", f"beyond:{blocks[0]}"]}}),
+        placed[f"{key}_spikes"] = dict(configured=("minecraft:block_column", {
+            "layers": [{"height": {"type": "minecraft:uniform", "min_inclusive": 3, "max_inclusive": 11},
+                        "provider": {"type": "minecraft:simple_state_provider", "state": {"Name": f"beyond:{crystal}"}}}],
+            "direction": "up", "allowed_placement": {"type": "minecraft:matching_blocks",
+                                                     "blocks": [f"beyond:{surface}", f"beyond:{blocks[0]}"]},
+            "prioritize_tip": False}),
             placement=[{"type": "minecraft:count", "count": 12}, {"type": "minecraft:in_square"},
                        {"type": "minecraft:heightmap", "heightmap": "WORLD_SURFACE_WG"}, {"type": "minecraft:biome"}])
     if "ruin" in realm["decor"]:

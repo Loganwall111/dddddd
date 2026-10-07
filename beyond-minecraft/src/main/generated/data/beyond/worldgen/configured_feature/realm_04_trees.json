@@ -37,6 +37,7 @@
       "lower_size": 0,
       "upper_size": 1
     },
+    "decorators": [],
     "ignore_vines": true,
     "force_dirt": true
   }
