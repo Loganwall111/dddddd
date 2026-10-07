@@ -135,7 +135,7 @@ cd beyond-minecraft
 ./gradlew build             # Windows: gradlew.bat build
 ```
 
-The installable file is `build/libs/beyond-minecraft-0.1.0-alpha.jar`; put it in the client's `mods`
+The installable file is `build/libs/beyond-minecraft-0.2.0-alpha.jar`; put it in the client's `mods`
 directory (and the server's). **Do not install the `-sources.jar`.** No external shader pack is
 required.
 

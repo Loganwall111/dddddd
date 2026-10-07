@@ -1,11 +1,11 @@
-# Install Beyond Minecraft 0.1.0-alpha
+# Install Beyond Minecraft 0.2.0-alpha
 
 This is a **Minecraft Java mod**, not a standalone executable or a browser app.
 
 1. Make a **separate Minecraft Java 1.21.1** profile using **Java 21** and **Fabric Loader
    0.16.9 or later**. This JAR intentionally rejects other Minecraft versions.
 2. Install **Fabric API for 1.21.1**. The tested build used **0.102.1+1.21.1**.
-3. Put `beyond-minecraft-0.1.0-alpha.jar` from `releases/` into that profile's **mods** folder.
+3. Put `beyond-minecraft-0.2.0-alpha.jar` from `releases/` into that profile's **mods** folder.
    Do not double-click the JAR. Do not install a `-sources.jar` or ZIP as a mod.
 4. Start a **new Creative test world with cheats enabled**, initially without Iris, Sodium or
    other renderer mods. No separate shader pack or Python installation is required.
