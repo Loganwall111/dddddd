@@ -4,8 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "EntityRendererStretchMixin",
-    "LivingEntityRendererStretchMixin",
-    "MobEntityRendererStretchMixin"
+    "LivingEntityRendererStretchMixin"
   ],
   "injectors": {
     "defaultRequire": 1
