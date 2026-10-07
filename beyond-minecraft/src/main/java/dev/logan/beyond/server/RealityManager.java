@@ -135,7 +135,7 @@ public final class RealityManager {
         world.spawnParticles(ParticleTypes.FLASH, center.x, center.y, center.z, 2, 0, 0, 0, 0);
         // Separate calls: one of these two is a RegistryEntry and one is a SoundEvent.
         if (tear) world.playSound(null, center.x, center.y, center.z, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, .6f, .8f);
-        else world.playSound(null, center.x, center.y, center.z, SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER.value(), SoundCategory.PLAYERS, .35f, 1.6f);
+        else world.playSound(null, center.x, center.y, center.z, SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.PLAYERS, .35f, 1.6f);
     }
     public static void tick(MinecraftServer server) {
         if (server.getTicks() % 40 == 0) SkyWells.ensure(server);

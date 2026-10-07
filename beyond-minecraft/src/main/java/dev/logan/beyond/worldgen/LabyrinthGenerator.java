@@ -8,6 +8,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.ChunkRegion;
 import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.StructureWorldAccess;
@@ -122,4 +123,6 @@ public class LabyrinthGenerator extends ChunkGenerator {
     @Override public int getWorldHeight() { return 384; }
     @Override public int getSeaLevel() { return 0; }
     @Override public void generateFeatures(StructureWorldAccess world, Chunk chunk, StructureAccessor accessor) { }
+    /** The maze is unlit and unbounded; vanilla spawning stays off, creatures arrive through anomalies. */
+    @Override public void populateEntities(ChunkRegion region) { }
 }
