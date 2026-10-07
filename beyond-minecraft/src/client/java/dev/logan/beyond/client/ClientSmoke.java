@@ -318,7 +318,10 @@ public final class ClientSmoke {
                         boolean opened = false;
                         for (float pitch : new float[]{0f, -32f, -64f, 24f}) {
                             Journey.of(p).travelCooldown = 0;   // arrival set it
-                            p.setRotation(yaw, pitch);
+                            // Entity#setRotation is protected, so the fixture turns the body the way the
+                            // server itself does: a real teleport with the candidate heading.
+                            Vec3d spot = p.getPos();
+                            p.teleport(p.getServerWorld(), spot.x, spot.y, spot.z, yaw, pitch);
                             if (RealityManager.spawn(p, Anomaly.Kind.WORMHOLE)) { opened = true; break; }
                         }
                         require(opened, "wormhole creation");
