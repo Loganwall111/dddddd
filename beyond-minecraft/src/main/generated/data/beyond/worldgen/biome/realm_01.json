@@ -17,7 +17,7 @@
     }
   },
   "spawners": {
-    "CREATURE": [
+    "creature": [
       {
         "type": "beyond:realm_critter",
         "weight": 12,
