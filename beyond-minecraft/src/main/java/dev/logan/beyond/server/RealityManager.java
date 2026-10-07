@@ -195,7 +195,12 @@ public final class RealityManager {
         }
         for (ServerWorld world : server.getWorlds()) {
             Anomaly prime = SkyWells.of(world.getRegistryKey());
-            if (prime != null && prime.active()) Suction.attract(world, prime);
+            if (prime == null || !prime.active()) continue;
+            // The sky well is a black hole, not a painting: it drags bodies, tears blocks loose and
+            // eats its own horizon open, exactly like the local singularities do.
+            Suction.attract(world, prime);
+            Suction.tornado(world, prime);
+            Suction.devour(world, prime);
         }
     }
     /** A restrained geometry fallback remains visible if shaders are disabled. */

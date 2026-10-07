@@ -27,6 +27,7 @@ public final class VisualConfig {
     public static final String[] REALITIES = {
         "Lucid", "Aurora", "Prismatic", "Negative Space", "Living Membrane", "Echo Memory",
         "Neon City", "Backrooms", "Poolrooms", "Cel Animation", "Eighties CRT", "Chromatic Fold",
+        "Monolith City", "Deep Void", "Solar Bloom", "Interference",
     };
     /** @deprecated kept for the field guide and older configs; use REALITIES. */
     public static final String[] LENSES = REALITIES;

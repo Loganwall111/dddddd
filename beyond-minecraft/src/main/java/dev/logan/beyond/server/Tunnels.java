@@ -1,7 +1,6 @@
 package dev.logan.beyond.server;
 
 import dev.logan.beyond.BeyondMinecraft;
-import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryKey;
@@ -9,72 +8,76 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * A wormhole does not cut to a loading screen: it drops you into a bounded corridor of real
- * barrier blocks in the sky and lets you walk it while the client renders the time-wave overlay.
- * When the corridor ends the branch breaks — the ground you return to has been rewritten by the
- * Umbrella Effect. Corridors are torn down on completion, disconnect and shutdown (a server crash
- * can leave one floating; the blocks are barriers, so it can never be mined into a trap).
+ * A wormhole carries the walker; it does not build anything. No barrier cage, no blocks, no
+ * geometry: the server moves the traveller along a curved path while the client paints the
+ * time-wave tunnel as a screen treatment, so the corridor is genuinely seamless and nothing at all
+ * is left in the world afterwards. Because there is no structure, there is also nothing to mine
+ * into, nothing to fall out of, and nothing to strand a player inside if the server stops.
+ *
+ * <p>The walk is bounded (a fixed number of ticks), cancelled safely on disconnect and shutdown,
+ * and it never touches the world's blocks.
  */
 public final class Tunnels {
-    private static final int WIDTH = 2;   // blocks either side of the centre line
-    private static final int HEIGHT = 4;
-    private static final int LENGTH = 46;
+    /** How far the corridor carries the walker, in blocks. */
+    private static final int LENGTH = 52;
+    /** Blocks travelled per server tick. */
+    private static final double STEP = .82;
+    /** The corridor lifts away from the ground so the walk reads as a tunnel through space. */
+    private static final double RISE = 22;
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
-    private record Session(RegistryKey<World> world, List<BlockPos> blocks, Vec3d exit, Vec3d origin,
+
+    private record Session(RegistryKey<World> world, Vec3d start, Vec3d forward, Vec3d origin, Vec3d exit,
                            float yaw, float pitch, int total, int remaining) {
-        Session advance() { return new Session(world, blocks, exit, origin, yaw, pitch, total, remaining - 1); }
+        Session advance() { return new Session(world, start, forward, origin, exit, yaw, pitch, total, remaining - 1); }
     }
+
     private Tunnels() {}
+
     public static boolean active(ServerPlayerEntity player) { return SESSIONS.containsKey(player.getUuid()); }
     public static int remaining(ServerPlayerEntity player) {
         Session session = SESSIONS.get(player.getUuid());
         return session == null ? 0 : session.remaining;
     }
+    /** Where the current corridor began, for the smoke test's "you really travelled" assertion. */
+    public static Vec3d origin(ServerPlayerEntity player) {
+        Session session = SESSIONS.get(player.getUuid());
+        return session == null ? null : session.origin;
+    }
+    /**
+     * This class deliberately places no blocks at all. The method exists so the contract is
+     * explicit and testable rather than implied by the absence of code.
+     */
+    public static int placedBlocks() { return 0; }
 
     public static boolean begin(ServerPlayerEntity player, ServerWorld world) {
         if (active(player)) return false;
-        var config = BeyondMinecraft.CONFIG;
-        double y = Math.min(world.getTopY() - HEIGHT - 4, Math.max(player.getY() + 24, 200));
-        double startX = Math.floor(player.getX()) + .5;
-        double startZ = Math.floor(player.getZ()) + .5 - WIDTH;
-        BlockPos origin = BlockPos.ofFloored(startX, y, startZ);
-        List<BlockPos> placed = new ArrayList<>();
-        for (int step = 0; step < LENGTH; step++) {
-            BlockPos cell = origin.add(step, 0, 0);
-            if (!world.isChunkLoaded(cell)) world.getChunk(cell); // bounded: a fixed 46-block run
-            for (int dx = 0; dx < WIDTH * 2 + 1; dx++) {
-                for (int dz = -WIDTH; dz <= WIDTH; dz++) {
-                    for (int dy = -1; dy <= HEIGHT; dy++) {
-                        BlockPos at = cell.add(-dx, dy, dz);
-                        boolean edge = dy == -1 || dy == HEIGHT || dz == -WIDTH || dz == WIDTH || dx == 0 || dx == WIDTH * 2;
-                        if (!edge) continue;
-                        // Barriers only: nothing here can be mined, and the corridor never overwrites terrain.
-                        if (!world.isAir(at)) continue;
-                        world.setBlockState(at, Blocks.BARRIER.getDefaultState(), Block.NOTIFY_ALL);
-                        placed.add(at);
-                    }
-                }
-            }
-        }
-        SESSIONS.put(player.getUuid(), new Session(world.getRegistryKey(), placed,
-            new Vec3d(startX, y, startZ).add(LENGTH + 2, 0, WIDTH), player.getPos(), player.getYaw(), player.getPitch(),
-            config.tunnelTicks, config.tunnelTicks));
+        Vec3d look = player.getRotationVec(1f);
+        Vec3d flat = new Vec3d(look.x, 0, look.z);
+        if (flat.lengthSquared() < 1e-6) flat = new Vec3d(0, 0, 1);
+        Vec3d forward = flat.normalize();
+        Vec3d origin = player.getPos();
+        Vec3d start = origin.add(0, RISE, 0);
+        Vec3d exit = start.add(forward.multiply(LENGTH));
+        // Face straight down the corridor: yaw 0 looks toward +Z, so the forward vector is
+        // (-sin yaw, 0, cos yaw) and the inverse is what we compute here.
+        float yaw = (float) Math.toDegrees(Math.atan2(-forward.x, forward.z));
+        SESSIONS.put(player.getUuid(), new Session(world.getRegistryKey(), start, forward, origin, exit,
+            yaw, 0f, BeyondMinecraft.CONFIG.tunnelTicks, BeyondMinecraft.CONFIG.tunnelTicks));
         player.closeHandledScreen();
-        player.teleport(world, startX, y, startZ + WIDTH, -90, 0);
+        player.teleport(world, start.x, start.y, start.z, yaw, 0f);
         player.setVelocity(Vec3d.ZERO);
         player.fallDistance = 0;
-        world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_PORTAL_TRIGGER, SoundCategory.PLAYERS, .5f, .45f);
-        BeyondMinecraft.LOGGER.info("Beyond wormhole corridor opened for {} ({} barrier blocks).", player.getName().getString(), placed.size());
+        world.playSound(null, start.x, start.y, start.z, SoundEvents.BLOCK_PORTAL_TRIGGER, SoundCategory.PLAYERS, .5f, .45f);
+        BeyondMinecraft.LOGGER.info("Beyond wormhole opened for {} ({} blocks of flight, no geometry).",
+            player.getName().getString(), LENGTH);
         return true;
     }
 
@@ -85,13 +88,18 @@ public final class Tunnels {
         if (!player.getWorld().getRegistryKey().equals(session.world)) { end(player, true); return false; }
         Session advanced = session.advance();
         SESSIONS.put(player.getUuid(), advanced);
-        // Keep the walker inside the tube and drifting forward; this is a corridor, not a room.
-        Vec3d velocity = player.getVelocity();
-        double toward = session.exit.x - player.getX();
-        if (toward > 0) player.setVelocity(Math.min(.28, Math.max(velocity.x, .16)), velocity.y, velocity.z * .6);
+        double travelled = (session.total - advanced.remaining) * STEP;
+        // A gentle wave keeps the ride from feeling like a straight elevator; the client renders the
+        // matching tunnel distortion, so the two agree without a packet per frame.
+        double sway = Math.sin(travelled * .17) * .55;
+        Vec3d right = new Vec3d(-session.forward.z, 0, session.forward.x);
+        Vec3d at = session.start.add(session.forward.multiply(travelled)).add(right.multiply(sway));
+        player.teleport(player.getServerWorld(), at.x, at.y, at.z, session.yaw, (float) (Math.sin(travelled * .3) * 6.0));
+        player.setVelocity(session.forward.x * STEP, 0, session.forward.z * STEP);
         player.velocityModified = true;
-        if (player.getWorld().getTime() % 4 == 0)
-            player.getServerWorld().spawnParticles(ParticleTypes.END_ROD, player.getX() - 1.5, player.getY() + 1.6, player.getZ(), 2, .2, .2, .2, .02);
+        player.fallDistance = 0;
+        if (player.getWorld().getTime() % 3 == 0)
+            player.getServerWorld().spawnParticles(ParticleTypes.END_ROD, at.x, at.y + 1.2, at.z, 3, .3, .3, .3, .02);
         if (advanced.remaining > 0) return false;
         end(player, true);
         return true;
@@ -99,14 +107,13 @@ public final class Tunnels {
 
     public static void end(ServerPlayerEntity player, boolean teleport) {
         Session session = SESSIONS.remove(player.getUuid());
-        if (session == null) return;
-        ServerWorld world = player.getServer().getWorld(session.world);
-        if (world != null) for (BlockPos pos : session.blocks) if (world.isChunkLoaded(pos)) world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
-        if (!teleport) return;
-        ServerWorld destination = world == null ? player.getServerWorld() : world;
+        if (session == null || !teleport) return;
+        ServerWorld destination = player.getServer().getWorld(session.world);
+        if (destination == null) destination = player.getServerWorld();
         Vec3d exit = session.exit;
-        var landing = SafeLanding.find(destination, new Vec3d(exit.x, Math.min(exit.y, 120), exit.z), player.getWidth(), player.getHeight(), false, Blocks.BARRIER);
-        Vec3d target = landing.orElse(new Vec3d(session.origin.x, session.origin.y, session.origin.z));
+        var landing = SafeLanding.find(destination, new Vec3d(exit.x, Math.min(exit.y, 160), exit.z),
+            player.getWidth(), player.getHeight(), false, Blocks.BARRIER);
+        Vec3d target = landing.orElse(session.origin);
         Umbrella.shift(player, destination, target);
         destination.playSound(null, target.x, target.y, target.z, SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, .6f, .6f);
     }

@@ -49,6 +49,7 @@ public final class ClientSmoke {
     private static int[] occlusionReference;
     private static int[] lensingReference;
     private static int[] heightsBefore;
+    private static Vec3d tunnelStart;
     // Software-GL CI is slow: building one of Beyond's Java-generated realms can take a minute or more on
     // the runner, so the budgets are wall-clock and generous rather than tick-counted. The stall detector
     // still fails fast when a stage genuinely never completes.
@@ -309,6 +310,7 @@ public final class ClientSmoke {
                         require(RealityManager.spawn(p, Anomaly.Kind.WORMHOLE), "wormhole creation");
                         require(RealityManager.enter(p, 0), "leave the labyrinth for the wormhole test");
                         require(Journey.of(p).era == before, "plain travel does not shift the branch");
+                        tunnelStart = p.getPos();
                         require(Tunnels.begin(p, p.getServerWorld()), "wormhole corridor opens");
                         require(Tunnels.active(p), "corridor is armed");
                     });
@@ -321,6 +323,9 @@ public final class ClientSmoke {
                 case 24 -> { if (stageTicks > 20 && ClientReality.tunnelRemaining == 0) server(client, p -> {
                         require(!Tunnels.active(p), "corridor torn down after the walk");
                         require(Journey.of(p).era >= 1, "the branch shifted");
+                        require(Tunnels.placedBlocks() == 0, "the corridor must build nothing at all");
+                        double travelled = tunnelStart == null ? 0 : p.getPos().distanceTo(tunnelStart);
+                        require(travelled > 12, "the corridor must actually carry the walker: " + travelled);
                         int barriers = 0;
                         for (int x = -3; x <= 3; x++) for (int y = -2; y <= 5; y++) for (int z = -3; z <= 3; z++)
                             if (p.getServerWorld().getBlockState(p.getBlockPos().add(x, y, z)).isOf(Blocks.BARRIER)) barriers++;

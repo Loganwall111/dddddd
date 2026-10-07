@@ -43,9 +43,17 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
 - A feeding well runs a **tornado**: bounded numbers of real blocks and whole tree columns are
   detached as falling blocks, spiral, and are eaten. Never bedrock, barriers, command blocks,
   containers or fluids; the whole thing is budgeted per tick and per well.
+- Anything inside the **event horizon** is simply gone: the well eats its own way through terrain,
+  trees and buildings at the mouth, and the colossal sky well now does this too. Living creatures
+  held in the inner reach take tidal damage on the way in — they are spaghettified before they are
+  swallowed, not merely teleported away.
 - Six anomaly kinds exist: membrane, singularity, **tear**, **wormhole**, **quasar** (which pushes
   instead of pulling) and the world-owned **prime** well. Each is a different shader treatment and a
   different gameplay object.
+- The **wormhole corridor builds nothing at all**: no barrier cage, no blocks, no geometry of any
+  kind. The server carries the walker along a curved path for a bounded number of ticks while the
+  client paints the time-wave tunnel as a screen treatment, then the branch breaks underneath you.
+  There is nothing left in the world afterwards, and nothing to be trapped inside.
 
 ### The Tear, the bubble cluster and the abyss
 
@@ -80,12 +88,15 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
   name and behaviour — grazers, stalkers, runners and huge void drifters that watch you and flee
   rather than force a fight.
 
-### Twelve realities behind one pair of glasses
+### Sixteen realities behind one pair of glasses
 
 - The **Radiate Reality Glasses** (head slot) switch the whole screen, not a tint: Lucid, Aurora,
   Prismatic, Negative Space, Living Membrane, Echo Memory, **Neon City** (colossal city blocks and
-  traffic light streaks), **Backrooms**, **Poolrooms**, **Cel Animation**, **Eighties CRT** and
-  **Chromatic Fold**. Press **V** to cycle, or use the Field Guide.
+  traffic light streaks), **Backrooms**, **Poolrooms**, **Cel Animation**, **Eighties CRT**,
+  **Chromatic Fold**, **Monolith City** (a dusk skyline of slab towers with lit windows and a sun
+  burning through smog), **Deep Void** (only edges and lights survive), **Solar Bloom** (golden-hour
+  flare and drifting seed light) and **Interference** (analogue RGB tear, roll bar and snow).
+  Press **V** to cycle, or use the Field Guide.
 - The same program also drives the era treatments, the tunnel overlay and the rift, so the visor
   and the world always agree about which reality you are standing in.
 
@@ -97,6 +108,8 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
   shrinking at block size.
 - Growing is refused when the new body would intersect terrain (a full volume test up to 16×, a
   sampled occupancy scan above that, because a 4096× body is millions of blocks).
+- Beyond hand scale the **first-person hand and held item are hidden** rather than drawn at body
+  size: at 4096× a vanilla-style hand is a slab across the whole view, so Beyond stops drawing it.
 - Sub-quarter-scale bodies get a **per-tick travel cap** proportional to their own height, so a
   1/1024× player cannot tunnel through a block in one gravity step.
 
@@ -114,8 +127,11 @@ bounded alpha, not production-certified: use a disposable, backed-up world.
 ### The Presence in the sky
 
 - The Overworld figure reads as a **person**: a head, shoulders, an arm reaching up through the
-  cloud deck, and an eye that opens and tracks you. It is animated, anchored to a real world
-  position, and it behaves as a dynamic skybox behind the actual terrain rather than a fixed decal.
+  cloud deck, and **two eyes that burn red** and cast red beams down through the sky. It is animated,
+  anchored to a real world position, and it behaves as a dynamic skybox behind the actual terrain
+  rather than a fixed decal.
+- Fly up to the well and the figure **dissolves before you can reach it**, so it can never become a
+  dark slab in front of your face; the only thing up there at close range is the black hole itself.
 - It never attacks and never moves the player. The first-join encounter dissolves into falling code.
 
 ### Sound
@@ -239,7 +255,7 @@ active in normal installations. The client harness asserts, against real objects
 reachable and reversible, the sky well exists and reaches the client as a persistent node, the lens
 measurably changes the scene, spaghettification is actually applied to a rendered entity, a tear
 leads to the bubble hub and from there to the fractal hollow and the white maze, a wormhole corridor
-arms and tears itself down without leaving barriers, the Umbrella Effect really rewrites the world
+arms and finishes without building a single block, the Umbrella Effect really rewrites the world
 around you, and native foreground occlusion still has zero drift with effects on. Screenshots from
 the run are uploaded as CI artifacts.
 

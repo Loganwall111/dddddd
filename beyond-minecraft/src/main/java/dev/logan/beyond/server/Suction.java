@@ -57,7 +57,15 @@ public final class Suction {
             entity.velocityModified = true;
             entity.fallDistance = 0;
             double horizon = node.radius * 1.06;
-            if (distance < horizon) consume(world, node, entity);
+            if (distance < horizon) { consume(world, node, entity); continue; }
+            // Spaghettification: a body held in the inner reach is stretched past what it survives.
+            // Mobs die on the way in; players are carried by the well instead (see consumedByWell).
+            if (entity instanceof LivingEntity living && !(entity instanceof ServerPlayerEntity)
+                && distance < node.radius * 2.4 && world.getTime() % 20 == 0) {
+                living.damage(world.getDamageSources().generic(), (float) (2.0 + node.radius * .03));
+                world.spawnParticles(ParticleTypes.CRIT, living.getX(), living.getY() + living.getHeight() * .6, living.getZ(),
+                    4, .2, .3, .2, .12);
+            }
         }
     }
 
@@ -82,10 +90,11 @@ public final class Suction {
     public static void tornado(ServerWorld world, Anomaly node) {
         var config = BeyondMinecraft.CONFIG;
         if (!config.tornadoBlocks || config.tornadoBlocksPerTick <= 0) return;
-        if (node.torn >= config.tornadoBlockBudget) return;
+        int budget = budgetFor(config, node);
+        if (node.torn >= budget) return;
         int radius = Math.min(config.tornadoRadiusBlocks, Math.max(6, (int) (node.radius * 2.2)));
         BlockPos center = BlockPos.ofFloored(node.center);
-        for (int attempt = 0; attempt < config.tornadoBlocksPerTick * 3 && node.torn < config.tornadoBlockBudget; attempt++) {
+        for (int attempt = 0; attempt < config.tornadoBlocksPerTick * 3 && node.torn < budget; attempt++) {
             int dx = RANDOM.nextInt(radius * 2 + 1) - radius;
             int dz = RANDOM.nextInt(radius * 2 + 1) - radius;
             int dy = RANDOM.nextInt(24) - 16;
@@ -97,7 +106,7 @@ public final class Suction {
                 detach(world, node, pos, state, config);
             } else {
                 // A tree: take the column above a trunk so wood and leaves go up together.
-                for (int i = 0; i < TREE_COLUMN && node.torn < config.tornadoBlockBudget; i++) {
+                for (int i = 0; i < TREE_COLUMN && node.torn < budget; i++) {
                     BlockPos next = pos.up(i);
                     BlockState above = world.getBlockState(next);
                     if (!tearable(world, next, above)) break;
@@ -107,12 +116,45 @@ public final class Suction {
         }
     }
 
+    /**
+     * The mouth of a well. Blocks inside the horizon are not pushed around, they are gone: the well
+     * visibly eats terrain, trees and structures as it grows, which is what you see from the air.
+     * Budgeted per node exactly like the tornado, and it refuses the same protected blocks.
+     */
+    public static void devour(ServerWorld world, Anomaly node) {
+        var config = BeyondMinecraft.CONFIG;
+        if (!config.tornadoBlocks || config.tornadoBlocksPerTick <= 0) return;
+        int budget = budgetFor(config, node);
+        if (node.torn >= budget) return;
+        double radius = Math.max(4, node.radius * 1.35);
+        BlockPos center = BlockPos.ofFloored(node.center);
+        for (int attempt = 0; attempt < config.tornadoBlocksPerTick * 3 && node.torn < budget; attempt++) {
+            double dx = (RANDOM.nextDouble() * 2 - 1) * radius;
+            double dy = (RANDOM.nextDouble() * 2 - 1) * radius;
+            double dz = (RANDOM.nextDouble() * 2 - 1) * radius;
+            if (dx * dx + dy * dy + dz * dz > radius * radius) continue;
+            BlockPos pos = center.add((int) dx, (int) dy, (int) dz);
+            if (!world.isChunkLoaded(pos)) continue;
+            BlockState state = world.getBlockState(pos);
+            if (!tearable(world, pos, state)) continue;
+            world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+            world.spawnParticles(ParticleTypes.REVERSE_PORTAL, pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5,
+                3, .2, .2, .2, .06);
+            node.absorbBlock(.03, config.maxNodeRadius, budget);
+        }
+    }
+
+    /** A persistent sky well is allowed a far larger appetite than a hand-placed local singularity. */
+    private static int budgetFor(ServerConfig config, Anomaly node) {
+        return node.kind == Anomaly.Kind.PRIME ? config.tornadoBlockBudget * 4 : config.tornadoBlockBudget;
+    }
+
     private static void detach(ServerWorld world, Anomaly node, BlockPos pos, BlockState state, ServerConfig config) {
         world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
         FallingBlockEntity falling = FallingBlockEntity.spawnFromBlock(world, pos, state);
         falling.setVelocity((RANDOM.nextDouble() - .5) * .35, .32 + RANDOM.nextDouble() * .25, (RANDOM.nextDouble() - .5) * .35);
         falling.velocityModified = true;
-        node.absorbBlock(.035, config.maxNodeRadius, config.tornadoBlockBudget);
+        node.absorbBlock(.035, config.maxNodeRadius, budgetFor(config, node));
     }
 
     private static boolean tearable(ServerWorld world, BlockPos pos, BlockState state) {

@@ -149,11 +149,17 @@ vec3 witness(vec3 background, vec3 rd) {
     vec3 axis;
     float angular = 1.0;
     float anchored = 0.0;
+    float nearFade = 1.0;
     if (WitnessAnchor.w > 0.5 && length(WitnessAnchor.xyz) > 1.0) {
         float distance = length(WitnessAnchor.xyz);
         axis = WitnessAnchor.xyz / distance;
-        angular = clamp(WitnessAnchor.w * 7.0 / distance, .04, 4.0);
+        // Capped hard: the figure may fill the sky, never the screen.
+        angular = clamp(WitnessAnchor.w * 7.0 / distance, .04, 1.6);
         anchored = 1.0;
+        // Flying up to the well brings its anchored figure with you. Without this it becomes a dark
+        // slab across the view, which is the "box in front of your face". It dissolves well before
+        // you can reach its body, so the only thing up there is the black hole itself.
+        nearFade = smoothstep(WitnessAnchor.w * 1.4, WitnessAnchor.w * 4.5, distance);
     } else {
         axis = normalize(WitnessDirection);
     }
@@ -162,7 +168,8 @@ vec3 witness(vec3 background, vec3 rd) {
     float facing = dot(rd, axis);
     if (facing <= .12) return background;
     vec2 q = vec2(dot(rd, right), dot(rd, up)) / (facing * max(angular, .04));
-    float presence = IntroPhase < 0.0 ? mix(.14, .95, anchored) : smoothstep(.2, 2.7, IntroPhase) * (1.0 - smoothstep(10.5, 14.0, IntroPhase));
+    float presence = (IntroPhase < 0.0 ? mix(.14, .95, anchored)
+        : smoothstep(.2, 2.7, IntroPhase) * (1.0 - smoothstep(10.5, 14.0, IntroPhase))) * nearFade;
     float dissolve = IntroPhase < 0.0 ? 0.0 : smoothstep(6.5, 12.5, IntroPhase);
     float body = personBody(q, max(presence, .35));
     float skin = 1.0 - smoothstep(-.012, .02, body);
@@ -170,25 +177,48 @@ vec3 witness(vec3 background, vec3 rd) {
     float veins = pow(abs(sin(q.x * 40.0 + q.y * 22.0 + fbm(vec3(q * 9.0, 5.0)) * 6.0)), 18.0);
     vec3 bodyColor = vec3(.018,.025,.059) + vec3(.10,.055,.19) * lines + vec3(.05,.11,.16) * veins;
     background = mix(background, bodyColor, skin * .70 * max(presence, .4));
-    // The eye sits in the head and blinks; the iris is the same procedural eye as before.
-    vec2 e = (q - vec2(sin(Time * .07) * .008, .62 + sin(Time * .14) * .012)) * mix(1.0, .91, Motion);
+    // Two eyes now, both burning red: the face of the figure you can fly up to.
+    vec2 gaze = vec2(sin(Time * .07) * .008, .62 + sin(Time * .14) * .012);
     float blinkPhase = fract(Time * .11);
     float blink = 1.0 - smoothstep(.0, .06, abs(blinkPhase - .5) * 2.0) * step(.485, blinkPhase) * step(blinkPhase, .515);
-    float lidHeight = .17 * (1.0 - pow(clamp(abs(e.x) / .21, 0.0, 1.0), 1.7)) * blink;
-    float edge = abs(e.y) - lidHeight;
-    float eyeMask = (1.0 - smoothstep(-.004, .008, edge)) * (1.0 - smoothstep(.205, .218, abs(e.x)));
-    float r = length(e), theta = atan(e.y, e.x);
-    vec3 sclera = mix(vec3(.20,.115,.16), vec3(.72,.72,.64), exp(-abs(e.x) * 2.4));
-    float irisMask = 1.0 - smoothstep(.066, .074, r);
-    float striation = .5 + .5 * sin(theta * 156.0 + sin(theta * 47.0) * 2.0 + r * 190.0);
-    vec3 iris = mix(vec3(.04,.14,.21), vec3(.24,.80,.71), striation * .73 + .2);
-    iris += vec3(.35,.16,.045) * exp(-abs(r - .038) * 140.0);
-    vec3 eye = mix(sclera, iris, irisMask);
-    eye = mix(eye, vec3(.001,.002,.006), 1.0 - smoothstep(.023,.028,r));
-    eye += vec3(.8,.91,1.0) * exp(-length((e - vec2(-.019,.021)) * vec2(1.0,1.7)) * 320.0);
+    float eyeMask = 0.0;
+    vec3 eye = vec3(0.0);
+    for (int side = 0; side < 2; side++) {
+        float sgn = side == 0 ? -1.0 : 1.0;
+        vec2 e = (q - gaze - vec2(sgn * .072, 0.0)) * mix(1.0, .91, Motion);
+        float lidHeight = .075 * (1.0 - pow(clamp(abs(e.x) / .085, 0.0, 1.0), 1.7)) * blink;
+        float edge = abs(e.y) - lidHeight;
+        float mask = (1.0 - smoothstep(-.004, .008, edge)) * (1.0 - smoothstep(.082, .094, abs(e.x)));
+        float r = length(e), theta = atan(e.y, e.x);
+        vec3 sclera = mix(vec3(.17,.06,.06), vec3(.58,.30,.26), exp(-abs(e.x) * 3.0));
+        float irisMask = 1.0 - smoothstep(.030, .036, r);
+        float striation = .5 + .5 * sin(theta * 156.0 + sin(theta * 47.0) * 2.0 + r * 190.0);
+        vec3 iris = mix(vec3(.22,.01,.01), vec3(1.0,.13,.07), striation * .73 + .2);
+        iris += vec3(.95,.30,.05) * exp(-abs(r - .020) * 190.0);
+        vec3 thisEye = mix(sclera, iris, irisMask);
+        thisEye = mix(thisEye, vec3(.02,.0,.0), 1.0 - smoothstep(.010,.014,r));
+        thisEye += vec3(1.0,.55,.45) * exp(-length((e - vec2(-.009,.010)) * vec2(1.0,1.7)) * 420.0);
+        // Beaming: a red glow that leaks out of the socket and stains the face around it.
+        thisEye += vec3(1.0,.08,.05) * exp(-r * 26.0) * .55;
+        eyeMask = max(eyeMask, mask);
+        eye = max(eye, thisEye);
+    }
     float cells = hash12(floor(q * vec2(76,58)));
     float pixelKeep = 1.0 - smoothstep(cells - .08, cells + .08, dissolve);
     background = mix(background, eye, eyeMask * presence * pixelKeep);
+    // The gaze: two hard red beams leaving the eyes and cutting down through the sky, wide enough
+    // to be seen from the ground and always aimed away from the figure's face.
+    for (int beam = 0; beam < 2; beam++) {
+        float sgn = beam == 0 ? -1.0 : 1.0;
+        vec2 from = gaze + vec2(sgn * .072, 0.0);
+        vec2 dir = normalize(vec2(sgn * .42, -1.0));
+        vec2 rel = q - from;
+        float along = dot(rel, dir);
+        float across = abs(rel.x * dir.y - rel.y * dir.x);
+        float core = exp(-across * 46.0) * smoothstep(-.02, .12, along) * exp(-along * .85);
+        float bloom = exp(-across * 11.0) * smoothstep(-.02, .18, along) * exp(-along * 1.5) * .4;
+        background += vec3(1.0, .09, .05) * (core + bloom) * presence * pixelKeep * 1.5;
+    }
     // Filaments instead of hair: the figure is stitched from the same code as the veil.
     float halo = exp(-abs(body) * 34.0);
     background += halo * vec3(.18,.26,.52) * presence * .5;
@@ -398,15 +428,43 @@ vec3 rift(vec3 background, vec3 rd, float depth, vec4 node, vec4 style, float wa
                 vista = mix(vista, tint * (.35 + .3 * sin(uv.y * 12.0 + Time)), skin * .7);
                 vista += tint * rim * .6;
             }
+            // A hot violet core, so the cut has depth instead of reading as a flat sheet.
+            vista += vec3(.62,.34,1.0) * exp(-length(uv * vec2(1.5, .5)) * 3.2) * .85;
+            // Whole islands hang inside the rift, pulled apart block by block, lit from behind.
+            for (int isl = 0; isl < 7; isl++) {
+                float fi = float(isl);
+                vec2 islandCentre = vec2(sin(fi * 1.7 + Time * .06) * .62, cos(fi * 2.1 - Time * .05) * .5);
+                vec2 d = abs(uv - islandCentre);
+                float isize = .045 + .035 * hash12(vec2(fi, 3.0));
+                float shape2 = step(d.x, isize * 1.7) * step(d.y, isize);
+                float shade = .45 + .5 * hash12(vec2(fi, 7.0));
+                vec3 rock = mix(vec3(.19,.09,.33), spectral(style.w, fi * .31), shade) * shade;
+                vista = mix(vista, rock, shape2 * .85);
+                vista += vec3(.60,.40,1.0) * exp(-max(d.x - isize * 1.7, d.y - isize) * 26.0) * .3;
+            }
             float lightning = pow(abs(sin(atan(uv.y, uv.x) * 47.0 + fbm(vec3(uv * 8.0, Time * .5)) * 14.0)), 30.0);
             vista += vec3(.7,.85,1.0) * lightning * .8;
+            // Arcs that cross the whole cut, the way the reference art throws bolts from rim to rim.
+            for (int arc = 0; arc < 3; arc++) {
+                float fi = float(arc);
+                float phase = fi * 2.1 + Time * (.24 + fi * .07);
+                vec2 a = vec2(sin(phase) * 1.15, -1.25 + .22 * fi);
+                vec2 b = vec2(cos(phase * .7) * 1.2, 1.25 - .25 * fi);
+                vec2 seg = b - a;
+                float t = clamp(dot(uv - a, seg) / max(dot(seg, seg), EPS), 0.0, 1.0);
+                vec2 closest = a + seg * t;
+                float jag = (fbm(vec3(uv * 6.0, Time * .45 + fi)) - .5) * .17;
+                float bolt = exp(-abs(length(uv - closest) + jag) * 20.0)
+                           + exp(-abs(length(uv - closest) + jag) * 95.0) * 1.5;
+                vista += mix(vec3(.78,.58,1.0), vec3(.50,.88,1.0), fract(fi * .37)) * bolt * .6;
+            }
         }
         color = mix(color, vista, inside);
     }
     float rim = exp(-abs(edge) * (tear ? 60.0 : 36.0));
     float halo = exp(-abs(edge) * 6.0) * .11;
     float filament = .65 + .35 * sin(atan(uv.y,uv.x) * 33.0 - Time * 1.1);
-    vec3 rimColor = tear ? mix(vec3(1.0,.55,.15), vec3(.55,.85,1.0), .5) : mix(vec3(.33,.13,1.0), spectral(style.w,.85), .42);
+    vec3 rimColor = tear ? mix(vec3(.62,.24,1.0), vec3(.72,.86,1.0), .35) : mix(vec3(.33,.13,1.0), spectral(style.w,.85), .42);
     color += rimColor * (rim * (1.1 + filament) + halo);
     color += vec3(.56,.88,1.0) * exp(-abs(edge) * 125.0) * .55;
     // Opening shockwave: a ring that expands once, timed from the node's birth, then settles.
@@ -490,13 +548,52 @@ vec3 realityTreatment(vec3 color, vec2 uv, vec3 rd, float depth) {
         color = mix(color, color * vec3(1.1,.92,.86) + shifted * vec3(.18,.04,.10), .55);
         color *= scan * mask;
         color += vec3(.05,.02,.0) * fract(sin(Time * 12.0) * 43758.5453) * .3;
-    } else {                                               // Chromatic Fold
+    } else if (LensMode < 11.5) {                          // Chromatic Fold
         float angle = length(uv - .5) * 6.0 + Time * .2;
         vec2 folded = vec2(cos(angle), sin(angle)) * length(uv - .5);
         vec3 other = texture(SceneSampler, clamp(folded + .5, .001, .999)).rgb;
         color = mix(color, other, .55);
         color = .5 + .5 * cos(vec3(0.0, 2.1, 4.2) + color.rgb * 6.28318 + Time * .3);
         color *= .8 + .4 * fbm(vec3(uv * 8.0, Time * .2));
+    } else if (LensMode < 12.5) {                          // Monolith City
+        // A dusk skyline: slab towers behind smog, lit windows, a low sun burning through.
+        float haze = pow(max(0.0, 1.0 - abs(rd.y + .05)), 6.0);
+        color = mix(color, color * vec3(.84,.88,1.08) + vec3(.06,.05,.11) * haze, .5);
+        float columns = max(Resolution.x / 22.0, 1.0);
+        float column = floor(uv.x * columns);
+        float top = .32 + .52 * hash12(vec2(column, 11.0));
+        float bodyMask = step(uv.y, top);
+        float windows = step(.55, hash12(vec2(floor(uv.x * columns * 2.0), floor(uv.y * Resolution.y / 9.0)) + floor(Time * .4)));
+        vec3 skyline = mix(vec3(.05,.06,.12), vec3(.12,.12,.20), hash12(vec2(column, 3.0)));
+        color = mix(color, skyline, bodyMask * .72);
+        color += vec3(.95,.72,.35) * windows * bodyMask * .22;
+        color += vec3(1.0,.55,.25) * pow(max(0.0, 1.0 - abs(rd.y + .02)), 18.0) * .45;
+        color = mix(color, color * color * 1.2, .25);
+    } else if (LensMode < 13.5) {                          // Deep Void
+        // Only edges and lights survive; everything else falls into black.
+        vec2 pixel = 1.0 / max(Resolution, vec2(1.0));
+        float neighbourX = dot(texture(SceneSampler, clamp(uv + vec2(pixel.x, 0), .001, .999)).rgb, vec3(.2126,.7152,.0722));
+        float neighbourY = dot(texture(SceneSampler, clamp(uv + vec2(0, pixel.y), .001, .999)).rgb, vec3(.2126,.7152,.0722));
+        float edge = abs(luminance - neighbourX) + abs(luminance - neighbourY);
+        color = vec3(.004,.006,.012) + vec3(.55,.72,1.0) * smoothstep(.02, .22, edge);
+        color += vec3(.9,.8,1.0) * pow(saturate(luminance), 6.0) * .5;
+        color += vec3(1.0) * step(.9955, hash12(floor(uv * Resolution / 3.0) + floor(Time * 2.0))) * .5;
+    } else if (LensMode < 14.5) {                          // Solar Bloom
+        vec3 warm = color * vec3(1.18,1.02,.78);
+        warm += vec3(1.0,.72,.32) * pow(saturate(luminance), 2.0) * .55;
+        color = mix(color, warm, .62);
+        color += vec3(1.0,.78,.42) * exp(-length((uv - .5) * vec2(1.0,1.6)) * 5.0) * (.25 + .07 * sin(Time * .7));
+        color += vec3(1.0,.94,.70) * step(.9975, hash12(floor(uv * Resolution / 4.0) + floor(Time * 3.0))) * .4;
+    } else {                                               // Interference
+        vec2 tear = vec2(hash12(vec2(floor(Time * 6.0), 3.0)) * .012, 0);
+        vec3 split = color;
+        split.r = texture(SceneSampler, clamp(uv + tear, .001, .999)).r;
+        split.b = texture(SceneSampler, clamp(uv - tear, .001, .999)).b;
+        color = mix(color, split, .8);
+        float bar = smoothstep(.75, 1.0, sin((uv.y + Time * .12) * 9.0) * .5 + .5);
+        float snow = hash12(uv * Resolution * .5 + floor(Time * 24.0));
+        color += vec3(.5) * bar * .08 + vec3(snow) * .06;
+        color *= .92 + .08 * step(.4, hash12(vec2(floor(Time * 15.0), 9.0)));
     }
     return color;
 }
