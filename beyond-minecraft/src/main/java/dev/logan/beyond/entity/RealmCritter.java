@@ -11,6 +11,7 @@ import net.minecraft.entity.ai.goal.LookAtEntityGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -54,6 +55,18 @@ public class RealmCritter extends PathAwareEntity {
     public int getVariant() { return dataTracker.get(VARIANT); }
     public void setVariant(int variant) { dataTracker.set(VARIANT, Math.floorMod(variant, 4)); }
     public String family() { return FAMILY[Math.floorMod(getVariant(), FAMILY.length)]; }
+    /** Each family is a different animal, not a recolour: canopy grazers, fold stalkers, cinder
+     *  runners and the huge void drifters. Size is a real attribute, so it changes reach and hitbox. */
+    public float familyScale() { return FAMILY_SCALE[Math.floorMod(getVariant(), FAMILY_SCALE.length)]; }
+    private static final float[] FAMILY_SCALE = {1.0f, 1.25f, .75f, 1.6f};
+    private void applyFamilyScale() {
+        var attribute = getAttributeInstance(EntityAttributes.GENERIC_SCALE);
+        if (attribute == null) return;
+        attribute.removeModifier(BeyondMinecraft.id("family_scale"));
+        float scale = familyScale();
+        if (scale != 1f) attribute.addPersistentModifier(new EntityAttributeModifier(
+            BeyondMinecraft.id("family_scale"), scale - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    }
     /** Realm-derived skin plus a small local jitter, so a crowd is not a clone army. */
     public static int variantFor(World world, Random random) {
         int base = Math.floorMod(world.getRegistryKey().getValue().hashCode(), 4);
@@ -63,10 +76,15 @@ public class RealmCritter extends PathAwareEntity {
                                            @Nullable EntityData data) {
         // Persisted variants are restored by readCustomDataFromNbt; fresh spawns pick a family skin.
         setVariant(variantFor(world.toServerWorld(), getRandom()));
+        applyFamilyScale();
         return super.initialize(world, difficulty, reason, data);
     }
     @Override public void writeCustomDataToNbt(NbtCompound nbt) { super.writeCustomDataToNbt(nbt); nbt.putInt("Variant", getVariant()); }
-    @Override public void readCustomDataFromNbt(NbtCompound nbt) { super.readCustomDataFromNbt(nbt); if (nbt.contains("Variant")) setVariant(nbt.getInt("Variant")); }
+    @Override public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        if (nbt.contains("Variant")) setVariant(nbt.getInt("Variant"));
+        applyFamilyScale();
+    }
     /** Critters survive the generated spaces: they are the only warm bodies in the white void. */
     public static boolean canSpawnIn(ServerWorld world, BlockPos pos) {
         return world.getBlockState(pos.down()).isSolidBlock(world, pos.down())

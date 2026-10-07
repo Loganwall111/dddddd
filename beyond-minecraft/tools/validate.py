@@ -12,6 +12,7 @@ RES = ROOT / "src/main/resources"
 GEN = ROOT / "src/main/generated"
 TOOLS = ("reality_knife", "shattered_relic", "reality_tear", "radiate_reality_glasses", "field_guide", "scale_prism")
 CUSTOM = {"between", "labyrinth", "fractal"}
+TOOLS_DIR = Path(__file__).resolve().parent
 
 
 def validate():
@@ -101,8 +102,34 @@ def validate():
     actual = {p.relative_to(GEN).as_posix() for p in GEN.rglob("*") if p.is_file()}
     assert actual == expected.keys(), "untracked/stale generated assets"
     for key, value in expected.items(): assert (GEN / key).read_bytes() == value, f"non-reproducible: {key}"
+    mixin_contracts()
+    shader_lint()
     print(f"PASS: {count} JSON/metadata documents, {len(realms)} realms, {len(all_blocks)} blocks, {len(all_items)} items; "
           f"texture, decoration, spawner, shader, mixin and generator contracts.")
+
+
+def shader_lint() -> None:
+    """Structural GLSL check that runs even where glslangValidator is unavailable."""
+    import subprocess
+    result = subprocess.run([sys.executable, str(TOOLS_DIR / "lint_shader.py")], capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def mixin_contracts() -> None:
+    """Every declared mixin must exist in the source set that owns its config, client or main."""
+    metadata = json.loads((RES / "fabric.mod.json").read_text())
+    for entry in metadata["mixins"]:
+        client = not isinstance(entry, str) and entry.get("environment") == "client"
+        name = entry["config"] if client else entry
+        location = (ROOT / "src/client/resources" / name) if client else (RES / name)
+        config = json.loads(location.read_text())
+        base = (ROOT / "src/client/java") if client else (ROOT / "src/main/java")
+        directory = base / config["package"].replace(".", "/")
+        classes = list(config.get("mixins", [])) + list(config.get("client", []))
+        assert classes, f"{name} declares no mixins"
+        for mixin in classes:
+            assert (directory / (mixin + ".java")).is_file(), f"{name}: missing {mixin}"
+        assert config["compatibilityLevel"] == "JAVA_21", name
 
 
 if __name__ == "__main__":

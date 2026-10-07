@@ -145,8 +145,13 @@ public final class RealityManager {
             if (Tunnels.active(player)) { Tunnels.tick(player); PREVIOUS.remove(player.getUuid()); continue; }
             scalePhysics(player);
             Sample before = PREVIOUS.get(player.getUuid());
-            if (Journey.inRealm(player.getWorld().getRegistryKey()) && player.getY() < player.getWorld().getBottomY() + 12 && journey.travelCooldown == 0)
-                returnHome(player);
+            if (Journey.inRealm(player.getWorld().getRegistryKey()) && player.getY() < player.getWorld().getBottomY() + 12 && journey.travelCooldown == 0) {
+                // Falling through the hub's abyss is the way down into the white maze: the Labyrinth
+                // is the layer under the bubble cluster, exactly like the ground under the plate.
+                int labyrinth = BeyondMinecraft.CATALOG.indexOf("realm_09");
+                boolean hub = player.getWorld().getRegistryKey().getValue().getPath().equals("realm_08");
+                if (!hub || labyrinth < 0 || !enter(player, labyrinth)) returnHome(player);
+            }
             List<Anomaly> nodes = new ArrayList<>(ANOMALIES.getOrDefault(player.getWorld().getRegistryKey(), List.of()));
             Anomaly prime = SkyWells.of(player.getWorld().getRegistryKey());
             if (prime != null) nodes.add(prime);
