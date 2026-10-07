@@ -125,4 +125,6 @@ public class LabyrinthGenerator extends ChunkGenerator {
     @Override public void generateFeatures(StructureWorldAccess world, Chunk chunk, StructureAccessor accessor) { }
     /** The maze is unlit and unbounded; vanilla spawning stays off, creatures arrive through anomalies. */
     @Override public void populateEntities(ChunkRegion region) { }
+    /** These spaces are their own surface: there is no vanilla surface rule to apply on top. */
+    @Override public void buildSurface(ChunkRegion region, StructureAccessor accessor, NoiseConfig noiseConfig, Chunk chunk) { }
 }

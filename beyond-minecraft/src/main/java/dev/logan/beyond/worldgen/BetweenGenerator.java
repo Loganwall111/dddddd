@@ -155,4 +155,6 @@ public class BetweenGenerator extends ChunkGenerator {
     @Override public void generateFeatures(StructureWorldAccess world, Chunk chunk, StructureAccessor accessor) { }
     /** The hub is a void plate; nothing spawns naturally here by design. */
     @Override public void populateEntities(ChunkRegion region) { }
+    /** These spaces are their own surface: there is no vanilla surface rule to apply on top. */
+    @Override public void buildSurface(ChunkRegion region, StructureAccessor accessor, NoiseConfig noiseConfig, Chunk chunk) { }
 }

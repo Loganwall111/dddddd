@@ -95,4 +95,6 @@ public class FractalGenerator extends ChunkGenerator {
     @Override public void generateFeatures(StructureWorldAccess world, Chunk chunk, StructureAccessor accessor) { }
     /** The sponge is deliberately empty of mobs: creatures arrive through anomalies and realm spawners. */
     @Override public void populateEntities(ChunkRegion region) { }
+    /** These spaces are their own surface: there is no vanilla surface rule to apply on top. */
+    @Override public void buildSurface(ChunkRegion region, StructureAccessor accessor, NoiseConfig noiseConfig, Chunk chunk) { }
 }

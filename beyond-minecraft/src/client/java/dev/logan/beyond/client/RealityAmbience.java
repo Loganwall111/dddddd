@@ -3,6 +3,7 @@ package dev.logan.beyond.client;
 import dev.logan.beyond.server.Journey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import java.util.Random;
@@ -31,21 +32,21 @@ public final class RealityAmbience {
             if (between) {
                 // Hum first, vacuum second, whisper only sometimes and never clearly.
                 if (choice < 3) play(SoundEvents.BLOCK_BEACON_AMBIENT, .28f, .20f);
-                else if (choice == 3) play(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.value(), .34f, .16f);
+                else if (choice == 3) play(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD, .34f, .16f);
                 else if (choice == 4) play(SoundEvents.BLOCK_PORTAL_AMBIENT, .22f, .12f);
-                else play(SoundEvents.AMBIENT_CAVE.value(), .40f, .10f);
+                else play(SoundEvents.AMBIENT_CAVE, .40f, .10f);
             } else if (labyrinth) {
-                if (choice < 3) play(SoundEvents.AMBIENT_CAVE.value(), .46f, .13f);
+                if (choice < 3) play(SoundEvents.AMBIENT_CAVE, .46f, .13f);
                 else if (choice == 3) play(SoundEvents.BLOCK_BEACON_AMBIENT, .33f, .12f);
                 else if (choice == 4) play(SoundEvents.ENTITY_ENDERMAN_AMBIENT, .30f, .07f);
                 else play(SoundEvents.BLOCK_SCULK_SENSOR_CLICKING, .35f, .08f);
             } else if (fractal) {
                 if (choice < 3) play(SoundEvents.BLOCK_PORTAL_AMBIENT, .26f, .12f);
                 else if (choice == 3) play(SoundEvents.BLOCK_BEACON_AMBIENT, .31f, .16f);
-                else if (choice == 4) play(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD.value(), .30f, .12f);
-                else play(SoundEvents.AMBIENT_CAVE.value(), .42f, .09f);
+                else if (choice == 4) play(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD, .30f, .12f);
+                else play(SoundEvents.AMBIENT_CAVE, .42f, .09f);
             } else {
-                play(SoundEvents.AMBIENT_CAVE.value(), .5f, .10f);
+                play(SoundEvents.AMBIENT_CAVE, .5f, .10f);
             }
             cooldown = 44 + RANDOM.nextInt(70);
             return;
@@ -56,7 +57,20 @@ public final class RealityAmbience {
             cooldown = (int) (70 - well * 40);
         }
     }
-    private static void play(SoundEvent event, float pitch, float volume) {
+    /**
+     * Vanilla sound fields are a mix of {@code SoundEvent} and {@code RegistryEntry<SoundEvent>}.
+     * Taking the value as {@code Object} keeps this layer compiling against either declaration
+     * instead of quietly depending on how one field happens to be typed in this Minecraft version.
+     */
+    private static SoundEvent event(Object holder) {
+        if (holder instanceof SoundEvent sound) return sound;
+        if (holder instanceof RegistryEntry<?> entry && entry.value() instanceof SoundEvent sound) return sound;
+        return null;
+    }
+
+    private static void play(Object holder, float pitch, float volume) {
+        SoundEvent event = event(holder);
+        if (event == null) return;
         MinecraftClient client = MinecraftClient.getInstance();
         client.getSoundManager().play(PositionedSoundInstance.master(event, pitch, volume));
     }
