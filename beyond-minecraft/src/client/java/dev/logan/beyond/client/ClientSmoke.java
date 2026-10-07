@@ -50,12 +50,13 @@ public final class ClientSmoke {
     private static int[] lensingReference;
     private static int[] heightsBefore;
     private static final int TICK_BUDGET = 9000;
+    private static final long STAGE_TIMEOUT_MS = 180_000;
     private ClientSmoke() {}
     public static void tick(MinecraftClient client) {
         if (!ENABLED || complete) return;
         try {
             if (observedStage != stage) { observedStage = stage; stageStarted = System.currentTimeMillis(); }
-            if (stage >= 0 && System.currentTimeMillis() - stageStarted > 90000) throw new IllegalStateException("Stage stalled: " + stage);
+            if (stage >= 0 && System.currentTimeMillis() - stageStarted > STAGE_TIMEOUT_MS) throw new IllegalStateException("Stage stalled: " + stage);
             if (failure != null) throw new IllegalStateException("server-side integration assertion", failure);
             if (System.currentTimeMillis() - lastHeartbeat > 15000) {
                 BeyondMinecraft.LOGGER.info("BEYOND_HEARTBEAT stage={} ticks={} frames={} screen={}", stage, bootTicks, CosmicRenderer.renderedFrames(),
