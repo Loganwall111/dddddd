@@ -4,12 +4,12 @@
 
 ## Current verified record
 
-**Verified source commit:** `91856160e8e9f68790e3a9046823d379fb8524c8`
-**Evidence:** [build & in-world checks, run 37688578746](https://github.com/Loganwall111/dddddd/actions/runs/37688578746) — **all checks green**.
+**Verified source commit:** `617eff0299f0956e5f3c1ebb2c5b6032ea40befa`
+**Evidence:** [build, in-world playtest and captures, run 37691437469](https://github.com/Loganwall111/dddddd/actions/runs/37691437469) — **all checks green**, and this run published its own evidence to [`docs/runtime/`](runtime/index.html).
 
 | Layer | Evidence |
 |---|---|
-| Generated resources | 530 generated resources reproduced byte-for-byte from seed 84921603; 15 Python tests passed; resource, shader, mixin and generator contracts validated |
+| Generated resources | 530 generated resources reproduced byte-for-byte from seed 84921603; 19 Python tests passed; resource, shader, mixin and generator contracts validated |
 | Native GLSL | Both GLSL 150 programs compiled **and linked** with glslangValidator, plus the structural shader lint |
 | Java | Common and client sources compiled for Java 21; **30 JUnit tests, zero failures** |
 | Real dedicated server | Actual Minecraft registry codecs loaded; every realm generated chunks and a safe landing; journey/root/realm NBT and scale checks passed |

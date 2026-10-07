@@ -56,11 +56,20 @@ def caption(name: str) -> str:
     return slug.replace("-", " ").capitalize()
 
 
+def _natural(text: str):
+    """Split a slug into text/number runs so reality-10 sorts after reality-9."""
+    return tuple(
+        (0, int(part)) if part.isdigit() else (1, part)
+        for part in re.split(r"(\d+)", text)
+        if part != ""
+    )
+
+
 def order_key(name: str):
     m = PREFIX.match(name)
     if not m:
-        return (1, 0, name)
-    return (0, int(m.group(1)), m.group(2))
+        return (1, 0, ((1, name),))
+    return (0, int(m.group(1)), _natural(m.group(2)))
 
 
 def load_verification(path: Path) -> dict:
