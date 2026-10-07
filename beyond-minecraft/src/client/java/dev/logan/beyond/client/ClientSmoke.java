@@ -189,7 +189,11 @@ public final class ClientSmoke {
                 case 12 -> { if (stageTicks > 30 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) server(client, p -> {
                     require(RealityManager.returnHome(p), "final safe return");
                     // Unlimited scale, both directions: a thousandth of a player, then 4096 players
-                    // tall. Clear sky is required for a body that wide, exactly as in play.
+                    // tall. Clear sky is required for a body that wide, exactly as in play — and the
+                    // subject has to survive it, so the ascent is made in creative flight.
+                    p.changeGameMode(GameMode.CREATIVE);
+                    p.getAbilities().flying = true; p.sendAbilitiesUpdate();
+                    p.setHealth(p.getMaxHealth());
                     p.teleport(p.getServerWorld(), .5, 250, .5, 180, 0);
                     p.setVelocity(Vec3d.ZERO);
                     require(RealityManager.scale(p, ScaleLadder.MIN), "micro scale 1/1024");
@@ -218,8 +222,11 @@ public final class ClientSmoke {
                         require(well.center.y <= p.getServerWorld().getTopY() - 16, "the well is inside the build limit, so it is reachable");
                         // Stand off the horizon and look straight at it: the disk fills most of the view,
                         // so the lens has real terrain to bend.
+                        require(p.isAlive(), "the sky well fixture needs a living observer");
                         p.changeGameMode(GameMode.CREATIVE);
                         p.getAbilities().flying = true; p.sendAbilitiesUpdate();
+                        p.setHealth(p.getMaxHealth());
+                        p.fallDistance = 0;
                         Vec3d view = well.center.add(0, 40, 236);
                         p.teleport(p.getServerWorld(), view.x, view.y, view.z, 180, 10);
                         p.setVelocity(Vec3d.ZERO);
