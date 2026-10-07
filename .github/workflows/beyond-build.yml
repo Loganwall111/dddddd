@@ -98,9 +98,14 @@ jobs:
             beyond-minecraft/run/crash-reports/
             beyond-minecraft/run/screenshots/beyond-*.png
             beyond-minecraft/build/verification.json
+  # The verified JAR and its runtime evidence are recorded on this session branch automatically once
+  # every gate is green, so the installed deliverable is always the exact artifact the checks passed on.
+  # A manual dispatch can still request the same publish explicitly.
   publish-session-snapshot:
     needs: fabric
-    if: always() && github.ref == 'refs/heads/arena/a5751068-dddddd' && github.event_name == 'workflow_dispatch' && inputs.publish_snapshot
+    if: >
+      always() && github.ref == 'refs/heads/arena/a5751068-dddddd' &&
+      (needs.fabric.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.publish_snapshot))
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -114,6 +119,7 @@ jobs:
           name: Beyond-Minecraft-1.21.1-alpha
           path: beyond-minecraft/.ci-binary
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: Beyond-verification
           path: beyond-minecraft/.ci-evidence
@@ -121,18 +127,26 @@ jobs:
         working-directory: beyond-minecraft
         shell: bash
         run: |
-          # Refuse to attach an old binary to newly edited sources. Never force-push.
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          # Never attach an old binary to newly edited sources: if the branch moved on while the build
+          # ran, skip the recording step instead of turning an otherwise green run red. Never force-push.
+          if test "$(git rev-parse HEAD)" != "$GITHUB_SHA"; then
+            echo "::warning::branch moved on during the build; skipping deliverable recording"
+            exit 0
+          fi
           mkdir -p docs/runtime releases
           cp .ci-evidence/build/verification.json docs/runtime/verification.json
           find .ci-evidence/run/screenshots -name 'beyond-*.png' -exec cp {} docs/runtime/ \; 2>/dev/null || true
           # A failed run publishes diagnostics, never an unverified replacement JAR.
           if test -f .ci-evidence/client-smoke.log; then tail -100 .ci-evidence/client-smoke.log | cut -c1-700 > docs/runtime/latest-client-log.txt; fi
-          if test -f .ci-binary/beyond-minecraft-0.1.0-alpha.jar; then cp .ci-binary/beyond-minecraft-0.1.0-alpha.jar releases/; fi
+          # The verified deliverable keeps whatever name the build gave it; nothing here is version-pinned.
+          for jar in .ci-binary/*.jar; do
+            test -f "$jar" || continue
+            cp "$jar" releases/
+            git add -f "releases/$(basename "$jar")"
+          done
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/runtime
           # One small requested installable deliverable. Other build output remains ignored.
-          if test -f .ci-binary/beyond-minecraft-0.1.0-alpha.jar; then git add -f releases/beyond-minecraft-0.1.0-alpha.jar; fi
           git commit -m 'Record Beyond runtime evidence and any verified deliverable [skip ci]'
-          git push origin HEAD:arena/9f9c3178-dddddd
+          git push origin HEAD:arena/a5751068-dddddd

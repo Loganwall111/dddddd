@@ -256,7 +256,9 @@ public final class ClientSmoke {
                         require(Spaghettification.forEntity(critter) != null, "the well's tidal reach covers the fixture");
                     });
                 } }
-                case 18 -> { if (stageTicks > 45) {
+                case 18 -> { if (stageTicks > 240 || (stageTicks > 30 && Spaghettification.applied > 0)) {
+                    // The fixture is a real mob a few blocks in front of the camera, so the render hook
+                    // fires on the first frames that draw it; wait for that rather than assuming a delay.
                     require(Spaghettification.applied > 0, "the tidal stretch must actually be applied to rendered entities");
                     require(Spaghettification.lastStretch > 1.05f, "stretch factor must be above neutral");
                     BeyondMinecraft.LOGGER.info("BEYOND_SPAGHETTIFICATION applied={} last_stretch={} noodle=true", Spaghettification.applied, Spaghettification.lastStretch);
