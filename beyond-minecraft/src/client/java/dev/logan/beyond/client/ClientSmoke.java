@@ -315,14 +315,19 @@ public final class ClientSmoke {
                         require(RealityManager.enter(p, 0), "leave the labyrinth for the wormhole test");
                         int before = Journey.of(p).era;
                         float yaw = p.getYaw();
-                        boolean opened = false;
-                        for (float pitch : new float[]{0f, -32f, -64f, 24f}) {
-                            Journey.of(p).travelCooldown = 0;   // arrival set it
-                            // Entity#setRotation is protected, so the fixture turns the body the way the
-                            // server itself does: a real teleport with the candidate heading.
-                            Vec3d spot = p.getPos();
-                            p.teleport(p.getServerWorld(), spot.x, spot.y, spot.z, yaw, pitch);
-                            if (RealityManager.spawn(p, Anomaly.Kind.WORMHOLE)) { opened = true; break; }
+                        var world = p.getServerWorld();
+                        // The mouth is opened at altitude: an arrival pad can sit under a canopy, and a
+                        // well refuses to open inside solid ground. Clear sky is also where a hole in
+                        // space belongs, and the corridor rises 22 blocks anyway.
+                        double altitude = Math.min(world.getTopY() - 48, p.getY() + 140);
+                        p.teleport(world, p.getX(), altitude, p.getZ(), yaw, 0f);
+                        Journey.of(p).travelCooldown = 0;   // the arrival teleport set it
+                        boolean opened = RealityManager.spawn(p, Anomaly.Kind.WORMHOLE);
+                        if (!opened) {
+                            BlockPos mouth = BlockPos.ofFloored(p.getEyePos().add(p.getRotationVec(1).multiply(6)));
+                            BeyondMinecraft.LOGGER.warn("BEYOND_WORMHOLE_PROBE world={} pos={} eye={} mouth={} state={} loaded={} cooldown={} spectator={} vehicle={}",
+                                world.getRegistryKey().getValue(), p.getPos(), p.getEyePos(), mouth, world.getBlockState(mouth),
+                                world.isChunkLoaded(mouth), Journey.of(p).travelCooldown, p.isSpectator(), p.hasVehicle());
                         }
                         require(opened, "wormhole creation");
                         require(Journey.of(p).era == before, "plain travel does not shift the branch");
