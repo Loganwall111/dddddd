@@ -49,13 +49,26 @@ public final class ClientSmoke {
     private static int[] occlusionReference;
     private static int[] lensingReference;
     private static int[] heightsBefore;
-    private static final int TICK_BUDGET = 9000;
+    // Software-GL CI is slow: building one of Beyond's Java-generated realms can take a minute or more on
+    // the runner, so the budgets are wall-clock and generous rather than tick-counted. The stall detector
+    // still fails fast when a stage genuinely never completes.
+    private static final int TICK_BUDGET = 30000;
+    private static final long STAGE_BUDGET_MS = 240000;
+    private static final long RUN_BUDGET_MS = 1500000;
+    private static long runStarted;
     private ClientSmoke() {}
     public static void tick(MinecraftClient client) {
         if (!ENABLED || complete) return;
         try {
-            if (observedStage != stage) { observedStage = stage; stageStarted = System.currentTimeMillis(); }
-            if (stage >= 0 && System.currentTimeMillis() - stageStarted > 90000) throw new IllegalStateException("Stage stalled: " + stage);
+            if (observedStage != stage) {
+                observedStage = stage; stageStarted = System.currentTimeMillis();
+                if (stage == 0) runStarted = stageStarted;
+                BeyondMinecraft.LOGGER.info("BEYOND_INTEGRATION stage={} started", Math.max(0, stage));
+            }
+            if (stage >= 0 && System.currentTimeMillis() - stageStarted > STAGE_BUDGET_MS)
+                throw new IllegalStateException("Stage stalled: " + stage);
+            if (stage >= 0 && System.currentTimeMillis() - runStarted > RUN_BUDGET_MS)
+                throw new IllegalStateException("Integration run exceeded its wall budget at stage " + stage);
             if (failure != null) throw new IllegalStateException("server-side integration assertion", failure);
             if (System.currentTimeMillis() - lastHeartbeat > 15000) {
                 BeyondMinecraft.LOGGER.info("BEYOND_HEARTBEAT stage={} ticks={} frames={} screen={}", stage, bootTicks, CosmicRenderer.renderedFrames(),
@@ -213,6 +226,9 @@ public final class ClientSmoke {
                     });
                 } }
                 case 15 -> { if (stageTicks > 40 && client.world.getRegistryKey().equals(World.OVERWORLD)) {
+                    // The snapshot is sent on the server's own cadence and the packet has to survive a
+                    // software-GL frame; give it a few seconds before treating a missing well as a failure.
+                    if (ClientReality.nodes.stream().noneMatch(n -> n.persistent()) && stageTicks < 400) return;
                     require(ClientReality.nodes.stream().anyMatch(n -> n.persistent()), "sky well reached the client as a persistent node");
                     BeyondClient.CONFIG.enabled = false; stageTicks = 0; stage++;
                 } }
