@@ -170,8 +170,8 @@ def main() -> int:
     if "gradle-8.7-bin.zip" not in wrapper_props:
         fail("wrapper should be pinned to Gradle 8.7")
     gradle_properties = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-    if "loom_version=1.6" not in gradle_properties:
-        fail("Loom should be pinned to the 1.6 release line for the Minecraft 1.20.1 target")
+    if "loom_version=1.7.4" not in gradle_properties:
+        fail("Loom should be pinned to the published 1.7.4 version")
 
     if errors:
         print(f"FAIL — {len(errors)} issue(s), {checked_json} JSON files inspected")
