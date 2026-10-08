@@ -244,7 +244,7 @@ void main() {
         float panels = (step(0.80, fract(dir.x * 5.0)) + step(0.80, fract(dir.z * 5.0))) * 0.5;
         float buzz = 0.92 + 0.08 * sin(Time * 6.0 + hash11(floor(dir.x * 5.0) + floor(dir.z * 5.0)) * 9.0);
         colour = ceiling * buzz + vec3(1.0, 0.96, 0.80) * panels * 0.55;
-        colour *= mix(1.0, 0.55, smoothstep(0.3, -0.4, dir.y));
+        colour *= mix(0.55, 1.0, smoothstep(-0.4, 0.3, dir.y));
     } else if (Mode > 8.5 && Mode < 9.5) {
         // 9 — THE MIRROR WORLD. The sky is the same sky, reflected, and slightly late.
         vec3 flipped = vec3(dir.x, -dir.y, -dir.z);

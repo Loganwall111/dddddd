@@ -79,10 +79,10 @@ modpack without a resource pack:
 
 | Program | Source | What it does |
 |---|---|---|
-| `beyondthelimits:core/rift` | `rift.fsh` | The tear: polar-space noise, per-variant palettes, a rim that dissolves so there is never a quad edge |
-| `beyondthelimits:core/sky_warp` | `sky_warp.fsh` | The whole sky, procedural, with eleven modes and gravitational lensing |
-| `beyondthelimits:core/screen_glitch` | `screen_glitch.fsh` | Ten interference modes plus the always-on reality damage |
-| `beyondthelimits:core/scan` | `scan.fsh` | The scanner's grid and sweep, and the Void Lens's colder version of it |
+| `beyondthelimits:rift` | `rift.fsh` | The tear: polar-space noise, per-variant palettes, a rim that dissolves so there is never a quad edge |
+| `beyondthelimits:sky_warp` | `sky_warp.fsh` | The whole sky, procedural, with eleven modes and gravitational lensing |
+| `beyondthelimits:screen_glitch` | `screen_glitch.fsh` | Ten interference modes plus the always-on reality damage |
+| `beyondthelimits:scan` | `scan.fsh` | The scanner's grid and sweep, and the Void Lens's colder version of it |
 
 The shaders are self-contained: no `#moj_import`, no extensions, no framebuffer reads. Every uniform
 is declared with a default in the program's JSON, so a shader that fails to load degrades to

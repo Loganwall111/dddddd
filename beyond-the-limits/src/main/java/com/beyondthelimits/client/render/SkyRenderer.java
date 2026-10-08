@@ -96,6 +96,12 @@ public final class SkyRenderer {
 			return false;
 		}
 
+		// If a resource reload or another shader pack prevents our core program from loading, leave
+		// vanilla in charge instead of cancelling its sky pass and showing a blank frame.
+		if (BtlShaders.skyWarpProgram() == null) {
+			return false;
+		}
+
 		if (ClientState.skyIsActive()) {
 			return true;
 		}

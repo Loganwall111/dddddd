@@ -2,11 +2,12 @@
 """Static checks for gameplay invariants that are easy to violate while wiring features.
 
 The compiler cannot tell that a Fabric initializer forgot to register a command tree, that
-S2C payload codecs were never registered, or that there are four entrances to a dimension
-whose design explicitly allows three. This catches those integration mistakes without a
-Minecraft runtime.
+S2C payload codecs were never registered, that there are four entrances to a dimension whose design
+explicitly allows three, or that a core shader ID resolves to a doubled/missing resource path. This
+catches those integration mistakes without a Minecraft runtime.
 """
 from pathlib import Path
+import json
 import re
 import sys
 
@@ -23,7 +24,49 @@ def fail(message):
     return 1
 
 
+def check_core_shaders():
+    """Ensure Fabric's core-shader IDs map to complete, non-duplicated resource paths."""
+    declarations = read("src/main/java/com/beyondthelimits/client/shader/BtlShaders.java")
+    resource_root = ROOT / "src/main/resources/assets/beyondthelimits/shaders/core"
+    shaders = {
+        "RIFT_ID": "rift",
+        "SKY_WARP_ID": "sky_warp",
+        "GLITCH_ID": "screen_glitch",
+        "SCAN_ID": "scan",
+    }
+
+    for constant, name in shaders.items():
+        if f'{constant} = BeyondTheLimits.id("{name}")' not in declarations:
+            return f"{constant} must use the shader path '{name}' (without a duplicate core/ prefix)"
+        if declarations.count(f"context.register({constant},") != 1:
+            return f"{constant} must be registered exactly once"
+
+        descriptor_path = resource_root / f"{name}.json"
+        if not descriptor_path.is_file():
+            return f"missing core shader descriptor {descriptor_path.name}"
+        descriptor = json.loads(descriptor_path.read_text())
+
+        for stage in ("vertex", "fragment"):
+            expected = f"beyondthelimits:core/{name}"
+            if descriptor.get(stage) != expected:
+                return f"{descriptor_path.name} {stage} must reference the core shader source {expected}"
+
+        for extension in ("vsh", "fsh"):
+            if not (resource_root / f"{name}.{extension}").is_file():
+                return f"missing core shader source {name}.{extension}"
+
+    return None
+
+
 def main():
+    shader_error = check_core_shaders()
+    if shader_error:
+        return fail(shader_error)
+
+    sky_renderer = read("src/main/java/com/beyondthelimits/client/render/SkyRenderer.java")
+    if "if (BtlShaders.skyWarpProgram() == null)" not in sky_renderer:
+        return fail("SkyRenderer must preserve vanilla sky rendering while its shader is unavailable")
+
     main_initializer = read("src/main/java/com/beyondthelimits/BeyondTheLimits.java")
     events = read("src/main/java/com/beyondthelimits/world/BtlWorldEvents.java")
     commands = read("src/main/java/com/beyondthelimits/command/BtlCommands.java")
@@ -66,7 +109,7 @@ def main():
     if "VARIANT_BACKROOMS" in commands:
         return fail("a mod command exposes the Backrooms as a free-form dimension destination")
 
-    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes")
+    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes; 4 core shaders resolve")
     return 0
 
 

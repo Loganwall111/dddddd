@@ -28,7 +28,7 @@ import net.minecraft.world.World;
  * A rift in the fabric of space and time.
  *
  * <p>A rift is <b>not a block</b>. It is an entity whose entire purpose is to be looked at: the
- * client renders it with the custom GLSL core shader {@code beyondthelimits:core/rift}, which
+ * client renders it with the custom GLSL core shader {@code beyondthelimits:rift}, which
  * composes an animated, warped window into another world with gravitational lensing around its
  * edge. That is why rifts can grow, drift, rotate to face the player, fold light, and pull things
  * through them — none of which is possible with a cube.</p>

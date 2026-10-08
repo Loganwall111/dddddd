@@ -34,10 +34,10 @@ public final class BtlShaders {
 	private BtlShaders() {
 	}
 
-	public static final Identifier RIFT_ID = BeyondTheLimits.id("core/rift");
-	public static final Identifier SKY_WARP_ID = BeyondTheLimits.id("core/sky_warp");
-	public static final Identifier GLITCH_ID = BeyondTheLimits.id("core/screen_glitch");
-	public static final Identifier SCAN_ID = BeyondTheLimits.id("core/scan");
+	public static final Identifier RIFT_ID = BeyondTheLimits.id("rift");
+	public static final Identifier SKY_WARP_ID = BeyondTheLimits.id("sky_warp");
+	public static final Identifier GLITCH_ID = BeyondTheLimits.id("screen_glitch");
+	public static final Identifier SCAN_ID = BeyondTheLimits.id("scan");
 
 	/** Procedural noise fields the shaders sample, shipped as textures so they cost nothing to build. */
 	public static final Identifier RIFT_NOISE = BeyondTheLimits.id("textures/effect/rift_noise.png");
@@ -125,7 +125,7 @@ public final class BtlShaders {
 
 	/** True once the GL programs exist; the renderers fall back to vanilla layers until then. */
 	public static boolean ready() {
-		return rift != null;
+		return rift != null && skyWarp != null && glitch != null && scan != null;
 	}
 
 	/** Throws rather than rendering a broken layer, so failures are obvious in a crash report. */
