@@ -164,7 +164,7 @@ DIMENSION_TYPES = {
 # dimensions
 # ---------------------------------------------------------------------------------------
 
-def flat(layers, biome_id, features=False, lakes=False, structure_overrides=None):
+def flat(dimension_type, layers, biome_id, features=False, lakes=False, structure_overrides=None):
     settings = {
         "layers": layers,
         "biome": biome_id,
@@ -173,7 +173,13 @@ def flat(layers, biome_id, features=False, lakes=False, structure_overrides=None
     }
     if structure_overrides is not None:
         settings["structure_overrides"] = structure_overrides
-    return {"type": "minecraft:flat", "settings": settings}
+    return {
+        "type": f"beyondthelimits:{dimension_type}",
+        "generator": {
+            "type": "minecraft:flat",
+            "settings": settings,
+        },
+    }
 
 
 def layer(block, height):
@@ -182,7 +188,7 @@ def layer(block, height):
 
 DIMENSIONS = {
     # A floor, a ceiling of fog, and shapes crossing the gap.
-    "the_foglands": flat([
+    "the_foglands": flat("foglands", [
         layer("minecraft:bedrock", 1),
         layer("beyondthelimits:fog_stone", 28),
         layer("beyondthelimits:fog_moss", 2),
@@ -208,7 +214,7 @@ DIMENSIONS = {
     },
 
     # Six layers under the bedrock, stacked as a single tall column of everything that leaked down.
-    "substrata": flat([
+    "substrata": flat("substrata", [
         layer("minecraft:bedrock", 1),
         layer("minecraft:deepslate", 24),
         layer("beyondthelimits:corrupted_stone", 12),
@@ -219,17 +225,17 @@ DIMENSIONS = {
     ], "beyondthelimits:substrata"),
 
     # The overworld's shape, one shade colder, with its own villages to find.
-    "mirrorworld": flat([
+    "mirrorworld": flat("mirrorworld", [
         layer("minecraft:bedrock", 1),
         layer("minecraft:deepslate", 24),
         layer("minecraft:stone", 60),
         layer("minecraft:dirt", 3),
         layer("beyondthelimits:mirror_block", 1),
-    ], "minecraft:plains", features=True,
-       structure_overrides=["minecraft:villages", "minecraft:ruined_portal"]),
+    ], "beyondthelimits:mirrorworld", features=True,
+       structure_overrides=["minecraft:village_plains", "minecraft:ruined_portal"]),
 
     # Recognisable Minecraft, built wrong: stone above the dirt, grass under the grass.
-    "wrongworld": flat([
+    "wrongworld": flat("wrongworld", [
         layer("minecraft:bedrock", 1),
         layer("minecraft:dirt", 4),
         layer("minecraft:stone", 40),
@@ -237,10 +243,10 @@ DIMENSIONS = {
         layer("minecraft:stone", 8),
         layer("minecraft:grass_block", 1),
     ], "beyondthelimits:wrongworld", features=True,
-       structure_overrides=["minecraft:villages"]),
+       structure_overrides=["minecraft:village_plains"]),
 
     # Black grass, white leaves, and a floor that keeps its own counsel about which way is down.
-    "the_impossible": flat([
+    "the_impossible": flat("the_impossible", [
         layer("minecraft:bedrock", 1),
         layer("minecraft:deepslate", 16),
         layer("beyondthelimits:impossible_grass", 24),

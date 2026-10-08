@@ -1,30 +1,33 @@
 {
-  "type": "minecraft:flat",
-  "settings": {
-    "layers": [
-      {
-        "block": "minecraft:bedrock",
-        "height": 1
-      },
-      {
-        "block": "minecraft:deepslate",
-        "height": 16
-      },
-      {
-        "block": "beyondthelimits:impossible_grass",
-        "height": 24
-      },
-      {
-        "block": "minecraft:white_concrete",
-        "height": 3
-      },
-      {
-        "block": "beyondthelimits:impossible_grass",
-        "height": 1
-      }
-    ],
-    "biome": "beyondthelimits:the_impossible",
-    "features": false,
-    "lakes": false
+  "type": "beyondthelimits:the_impossible",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "layers": [
+        {
+          "block": "minecraft:bedrock",
+          "height": 1
+        },
+        {
+          "block": "minecraft:deepslate",
+          "height": 16
+        },
+        {
+          "block": "beyondthelimits:impossible_grass",
+          "height": 24
+        },
+        {
+          "block": "minecraft:white_concrete",
+          "height": 3
+        },
+        {
+          "block": "beyondthelimits:impossible_grass",
+          "height": 1
+        }
+      ],
+      "biome": "beyondthelimits:the_impossible",
+      "features": false,
+      "lakes": false
+    }
   }
 }

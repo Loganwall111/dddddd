@@ -3,8 +3,9 @@
 
 The compiler cannot tell that a Fabric initializer forgot to register a command tree, that
 S2C payload codecs were never registered, that there are four entrances to a dimension whose design
-explicitly allows three, or that a core shader ID resolves to a doubled/missing resource path. This
-catches those integration mistakes without a Minecraft runtime.
+explicitly allows three, or that a core shader ID resolves to a doubled/missing resource path. It also verifies that
+all seven dimension datapacks have registry-shaped type/generator entries before Minecraft opens
+its Create World screen. This catches those integration mistakes without a Minecraft runtime.
 """
 from pathlib import Path
 import json
@@ -58,10 +59,71 @@ def check_core_shaders():
     return None
 
 
+def check_dimensions():
+    """Validate the registry shape Minecraft expects before a world can be created."""
+    data_root = ROOT / "src/main/resources/data/beyondthelimits"
+    dimension_root = data_root / "dimension"
+    type_root = data_root / "dimension_type"
+    biome_root = data_root / "worldgen/biome"
+    expected_dimensions = {
+        "backrooms", "codescape", "mirrorworld", "substrata",
+        "the_foglands", "the_impossible", "wrongworld",
+    }
+    dimensions = {path.stem: json.loads(path.read_text()) for path in dimension_root.glob("*.json")}
+    dimension_types = {path.stem for path in type_root.glob("*.json")}
+
+    if set(dimensions) != expected_dimensions:
+        return f"expected 7 dimension entries, found {sorted(dimensions)}"
+    if dimension_types != {"backrooms", "codescape", "foglands", "mirrorworld", "substrata", "the_impossible", "wrongworld"}:
+        return f"dimension_type entries do not match Chapter One's seven worlds: {sorted(dimension_types)}"
+
+    registered_custom_generators = {"beyondthelimits:backrooms", "beyondthelimits:codescape_shell"}
+
+    for name, entry in dimensions.items():
+        type_id = entry.get("type")
+        generator = entry.get("generator")
+        if not isinstance(type_id, str) or not type_id.startswith("beyondthelimits:"):
+            return f"dimension/{name}.json must reference a mod dimension_type, not a chunk generator"
+        if type_id.split(":", 1)[1] not in dimension_types:
+            return f"dimension/{name}.json references missing dimension_type {type_id}"
+        if not isinstance(generator, dict) or not isinstance(generator.get("type"), str):
+            return f"dimension/{name}.json must contain a generator object"
+
+        generator_type = generator["type"]
+        if generator_type == "minecraft:flat":
+            settings = generator.get("settings")
+            if not isinstance(settings, dict) or not isinstance(settings.get("layers"), list) or not settings["layers"]:
+                return f"dimension/{name}.json has invalid flat-generator settings"
+            biome = settings.get("biome")
+            if not isinstance(biome, str):
+                return f"dimension/{name}.json flat generator is missing its biome"
+            if biome.startswith("beyondthelimits:"):
+                biome_name = biome.split(":", 1)[1]
+                if not (biome_root / f"{biome_name}.json").is_file():
+                    return f"dimension/{name}.json references missing biome {biome}"
+            if "minecraft:villages" in settings.get("structure_overrides", []):
+                return f"dimension/{name}.json uses the nonexistent plural structure key minecraft:villages"
+        elif generator_type not in registered_custom_generators:
+            return f"dimension/{name}.json uses unregistered chunk generator {generator_type}"
+        else:
+            source = generator.get("biome_source")
+            biome = source.get("biome") if isinstance(source, dict) else None
+            if not isinstance(biome, str) or not biome.startswith("beyondthelimits:"):
+                return f"dimension/{name}.json custom generator needs a fixed mod biome source"
+            if not (biome_root / f"{biome.split(':', 1)[1]}.json").is_file():
+                return f"dimension/{name}.json references missing biome {biome}"
+
+    return None
+
+
 def main():
     shader_error = check_core_shaders()
     if shader_error:
         return fail(shader_error)
+
+    dimension_error = check_dimensions()
+    if dimension_error:
+        return fail(dimension_error)
 
     sky_renderer = read("src/main/java/com/beyondthelimits/client/render/SkyRenderer.java")
     if "if (BtlShaders.skyWarpProgram() == null)" not in sky_renderer:
@@ -109,7 +171,7 @@ def main():
     if "VARIANT_BACKROOMS" in commands:
         return fail("a mod command exposes the Backrooms as a free-form dimension destination")
 
-    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes; 4 core shaders resolve")
+    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes; 4 core shaders and 7 dimensions resolve")
     return 0
 
 

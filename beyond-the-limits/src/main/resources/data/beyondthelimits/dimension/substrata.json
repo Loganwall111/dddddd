@@ -1,38 +1,41 @@
 {
-  "type": "minecraft:flat",
-  "settings": {
-    "layers": [
-      {
-        "block": "minecraft:bedrock",
-        "height": 1
-      },
-      {
-        "block": "minecraft:deepslate",
-        "height": 24
-      },
-      {
-        "block": "beyondthelimits:corrupted_stone",
-        "height": 12
-      },
-      {
-        "block": "minecraft:blackstone",
-        "height": 10
-      },
-      {
-        "block": "beyondthelimits:memory_stone",
-        "height": 8
-      },
-      {
-        "block": "minecraft:white_concrete",
-        "height": 6
-      },
-      {
-        "block": "minecraft:bedrock",
-        "height": 2
-      }
-    ],
-    "biome": "beyondthelimits:substrata",
-    "features": false,
-    "lakes": false
+  "type": "beyondthelimits:substrata",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "layers": [
+        {
+          "block": "minecraft:bedrock",
+          "height": 1
+        },
+        {
+          "block": "minecraft:deepslate",
+          "height": 24
+        },
+        {
+          "block": "beyondthelimits:corrupted_stone",
+          "height": 12
+        },
+        {
+          "block": "minecraft:blackstone",
+          "height": 10
+        },
+        {
+          "block": "beyondthelimits:memory_stone",
+          "height": 8
+        },
+        {
+          "block": "minecraft:white_concrete",
+          "height": 6
+        },
+        {
+          "block": "minecraft:bedrock",
+          "height": 2
+        }
+      ],
+      "biome": "beyondthelimits:substrata",
+      "features": false,
+      "lakes": false
+    }
   }
 }

@@ -57,6 +57,42 @@ jobs:
           set -o pipefail
           ./gradlew build --no-daemon --console=plain --warning-mode all 2>&1 | tee build-output.txt
 
+      - name: Smoke-test dimension registries on a headless server
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p run/registry-smoke build
+          printf 'eula=true\n' > run/registry-smoke/eula.txt
+          printf 'online-mode=false\nserver-port=0\n' > run/registry-smoke/server.properties
+          input_pipe=run/registry-smoke/server.stdin
+          server_log=build/registry-smoke.log
+          rm -f "$input_pipe"
+          mkfifo "$input_pipe"
+          timeout 180s ./gradlew runServer --no-daemon --console=plain --args=--nogui < "$input_pipe" > "$server_log" 2>&1 &
+          server_pid=$!
+          exec 3>"$input_pipe"
+          ready=false
+          for attempt in $(seq 1 90); do
+            if grep -Fq 'Done (' "$server_log"; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat "$server_log" | tee -a build-output.txt
+              exit 1
+            fi
+            sleep 2
+          done
+          if [[ "$ready" != true ]]; then
+            cat "$server_log" | tee -a build-output.txt
+            kill "$server_pid" 2>/dev/null || true
+            exit 1
+          fi
+          printf 'stop\n' >&3
+          exec 3>&-
+          wait "$server_pid"
+          tail -80 "$server_log" | tee -a build-output.txt
+
       - name: Extract the errors
         if: failure()
         run: |

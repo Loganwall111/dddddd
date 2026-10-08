@@ -29,6 +29,16 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 
+loom {
+	runs {
+		server {
+			server()
+			name "Registry smoke test"
+			runDir "run/registry-smoke"
+		}
+	}
+}
+
 processResources {
 	inputs.property "version", project.version
 

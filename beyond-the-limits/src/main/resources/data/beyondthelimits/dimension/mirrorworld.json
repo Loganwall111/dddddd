@@ -1,34 +1,37 @@
 {
-  "type": "minecraft:flat",
-  "settings": {
-    "layers": [
-      {
-        "block": "minecraft:bedrock",
-        "height": 1
-      },
-      {
-        "block": "minecraft:deepslate",
-        "height": 24
-      },
-      {
-        "block": "minecraft:stone",
-        "height": 60
-      },
-      {
-        "block": "minecraft:dirt",
-        "height": 3
-      },
-      {
-        "block": "beyondthelimits:mirror_block",
-        "height": 1
-      }
-    ],
-    "biome": "minecraft:plains",
-    "features": true,
-    "lakes": false,
-    "structure_overrides": [
-      "minecraft:villages",
-      "minecraft:ruined_portal"
-    ]
+  "type": "beyondthelimits:mirrorworld",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "layers": [
+        {
+          "block": "minecraft:bedrock",
+          "height": 1
+        },
+        {
+          "block": "minecraft:deepslate",
+          "height": 24
+        },
+        {
+          "block": "minecraft:stone",
+          "height": 60
+        },
+        {
+          "block": "minecraft:dirt",
+          "height": 3
+        },
+        {
+          "block": "beyondthelimits:mirror_block",
+          "height": 1
+        }
+      ],
+      "biome": "beyondthelimits:mirrorworld",
+      "features": true,
+      "lakes": false,
+      "structure_overrides": [
+        "minecraft:village_plains",
+        "minecraft:ruined_portal"
+      ]
+    }
   }
 }

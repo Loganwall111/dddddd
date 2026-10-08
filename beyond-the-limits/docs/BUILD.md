@@ -27,8 +27,9 @@ most common way to break the build:
 
 ## Continuous integration
 
-`.github/workflows/build.yml` compiles every push on Java 21 with the same versions, and uploads the
-jar as a build artifact. It is the project's official compile check.
+`.github/workflows/build.yml` runs the static resource invariants, compiles every push on Java 21,
+boots a headless dedicated server to smoke-test datapack/registry loading, and uploads the jar as a
+build artifact. It is the project's official compile and registry-load check.
 
 ```bash
 gh run list --branch <branch>
@@ -94,13 +95,16 @@ checked against the Fabric source.
 
 ## Troubleshooting
 
-**The game crashes on startup with a missing dimension.**
-A datapack file is missing or malformed: `python3 -c "import json;json.load(open('<file>'))"` to find
-it. Dimensions, dimension types and biomes must all be present and agree on ids.
+**Create World crashes with `Failed to load registries`.**
+Check `logs/latest.log` for the registry decode errors immediately before the crash report. Dimension
+data entries need both a registered dimension-type `type` and a nested `generator`; flat generator
+settings belong under `generator.settings`, not at the dimension root. Run
+`python3 tools/check_mod_invariants.py` to check all seven dimension entries and their biome references.
 
-**Nothing renders — the game is black except the HUD.**
-A core shader failed to compile. Check `logs/latest.log` for the shader name; the mod treats a missing
-program as "effect absent" everywhere else, so the world itself is fine.
+**The game is black except the HUD.**
+Check `logs/latest.log` for the first core-shader `FileNotFoundException` or GLSL compile error. Fabric's
+core shader registration ID and the JSON vertex/fragment IDs are relative to `shaders/core`; don't add
+an extra `core/` segment. The mod falls back to the vanilla sky if its sky program is unavailable.
 
 **The build fails with `Could not resolve net.fabricmc:fabric-loom`.**
 Check the Loom version against `https://maven.fabricmc.net/net/fabricmc/fabric-loom/maven-metadata.xml`;
