@@ -42,7 +42,7 @@ public final class ObserverModel extends EntityModel<ObserverEntity> {
         root.pitch = headPitch * MathHelper.RADIANS_PER_DEGREE * 0.18F;
         float drift = MathHelper.sin(animationProgress * 0.045F) * 0.14F;
         veil.roll = drift;
-        eye.originY = MathHelper.sin(animationProgress * 0.08F) * 0.18F;
+        eye.pivotY = MathHelper.sin(animationProgress * 0.08F) * 0.18F;
     }
 
     @Override
