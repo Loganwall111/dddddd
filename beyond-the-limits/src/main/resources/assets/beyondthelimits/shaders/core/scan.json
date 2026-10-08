@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "beyondthelimits:core/scan",
-  "fragment": "beyondthelimits:core/scan",
+  "vertex": "beyondthelimits:scan",
+  "fragment": "beyondthelimits:scan",
   "attributes": [],
   "samplers": [],
   "uniforms": [

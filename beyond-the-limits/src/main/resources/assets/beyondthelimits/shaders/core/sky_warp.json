@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "beyondthelimits:core/sky_warp",
-  "fragment": "beyondthelimits:core/sky_warp",
+  "vertex": "beyondthelimits:sky_warp",
+  "fragment": "beyondthelimits:sky_warp",
   "attributes": [],
   "samplers": [],
   "uniforms": [

@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "beyondthelimits:core/screen_glitch",
-  "fragment": "beyondthelimits:core/screen_glitch",
+  "vertex": "beyondthelimits:screen_glitch",
+  "fragment": "beyondthelimits:screen_glitch",
   "attributes": [],
   "samplers": [],
   "uniforms": [

@@ -47,9 +47,9 @@ def check_core_shaders():
         descriptor = json.loads(descriptor_path.read_text())
 
         for stage in ("vertex", "fragment"):
-            expected = f"beyondthelimits:core/{name}"
+            expected = f"beyondthelimits:{name}"
             if descriptor.get(stage) != expected:
-                return f"{descriptor_path.name} {stage} must reference the core shader source {expected}"
+                return f"{descriptor_path.name} {stage} must reference {expected} without repeating the core/ directory"
 
         for extension in ("vsh", "fsh"):
             if not (resource_root / f"{name}.{extension}").is_file():

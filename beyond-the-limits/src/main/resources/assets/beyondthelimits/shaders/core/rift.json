@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "beyondthelimits:core/rift",
-  "fragment": "beyondthelimits:core/rift",
+  "vertex": "beyondthelimits:rift",
+  "fragment": "beyondthelimits:rift",
   "attributes": [],
   "samplers": [],
   "uniforms": [
