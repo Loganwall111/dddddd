@@ -403,7 +403,10 @@ public final class ClientSmoke {
                     Umbrella.queue(p.getServerWorld(), p.getBlockPos(), 6, Umbrella.Era.GIANT_WOOD, Journey.of(p).eraSeed);
                     BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA queued era={} columns={}", Umbrella.Era.GIANT_WOOD, heightsBefore.length);
                 }); }
-                case 26 -> server(client, p -> {
+                case 26 -> { if (stageTicks > 60) server(client, p -> {
+                    // The rewrite is a tick job: eighteen columns per tick across the whole disc, so it
+                    // finishes in about half a second for this radius. Measuring on the first tick after
+                    // queueing it would report the world unchanged however well the effect worked.
                     int[] after = columnHeights(p, 6);
                     int changed = 0;
                     for (int i = 0; i < after.length; i++) if (after[i] != heightsBefore[i]) changed++;
@@ -418,7 +421,7 @@ public final class ClientSmoke {
                     for (int x = -6; x <= 6; x++) for (int y = 116; y <= 129; y++)
                         p.getServerWorld().setBlockState(new BlockPos(x, y, -3), Blocks.WHITE_CONCRETE.getDefaultState());
                     require(RealityManager.spawn(p, Anomaly.Kind.SINGULARITY), "occluded singularity fixture");
-                });
+                }); }
                 case 27 -> { if (stageTicks > 50) { BeyondClient.CONFIG.enabled = false; stage++; stageTicks = 0; } }
                 case 28 -> { if (stageTicks > 15) {
                     occlusionReference = sampleWorldPixels(client); BeyondClient.CONFIG.enabled = true; stage++; stageTicks = 0;
@@ -463,7 +466,7 @@ public final class ClientSmoke {
                             double x = place.x + Math.cos(angle) * distance, z = place.z + Math.sin(angle) * distance;
                             float yaw = (float) Math.toDegrees(Math.atan2(Math.cos(angle), -Math.sin(angle)));
                             onServer(client, p -> {
-                                p.teleport(p.getServerWorld(), x, place.y + 26, z, yaw, -8f);
+                                p.teleport(p.getServerWorld(), x, place.y + 26, z, yaw, 5f);
                                 p.setVelocity(Vec3d.ZERO);
                                 BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VIEW anchor={} viewer={}", place, p.getPos());
                             });

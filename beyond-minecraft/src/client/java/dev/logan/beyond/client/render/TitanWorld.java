@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallbac
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gl.VertexBuffer;
@@ -57,7 +58,7 @@ public final class TitanWorld {
     private static final float BODY_HEIGHT = 112f;
     private static final float BODY_SPAN = 40f;
     private static final int MAX_VERTICES = 240_000;
-    private static final double SEARCH_START = 64, SEARCH_STEP = 24;
+    private static final double SEARCH_START = 64, SEARCH_STEP = 16;
     private static final int SEARCH_STEPS = 96;
 
     private static final Vector4f[] bones = new Vector4f[BONES];
@@ -142,7 +143,7 @@ public final class TitanWorld {
     private static void build(MinecraftClient client, ClientWorld world) {
         if (builtWorld != null && !builtWorld.equals(world.getRegistryKey())) attempts = 0;
         builtWorld = world.getRegistryKey();
-        Vec3d ground = chooseAnchor(world);
+        Vec3d ground = chooseAnchor(world, client.player.getPos());
         if (ground == null) {
             BeyondMinecraft.LOGGER.warn("Beyond titan found no solid ground nearby; the sky figure keeps the horizon");
             return;
@@ -164,19 +165,34 @@ public final class TitanWorld {
     }
 
     /** A standing place that is real ground: loaded, dry, and above the waterline. */
-    private static Vec3d chooseAnchor(ClientWorld world) {
-        BlockPos spawn = world.getSpawnPos();
+    private static Vec3d chooseAnchor(ClientWorld world, Vec3d origin) {
+        // The colossus rises out of the ground the walker is actually standing on, so the search starts
+        // where they are rather than at the world spawn. Where a player stands is ground they can see:
+        // the rings stay inside the streamed chunks instead of asking for terrain nobody has loaded,
+        // and the figure stands in the world the walker is in rather than an ocean away from it.
+        BlockPos centre = BlockPos.ofFloored(origin);
+        Vec3d dry = search(world, centre, true);
+        return dry != null ? dry : search(world, centre, false);
+    }
+
+    /**
+     * Golden-angle rings outward from the centre. {@code dry} asks for open land above the waterline,
+     * which makes the richest body; the second pass settles for any solid, unfrozen footing, so a
+     * shoreline or a sandbar world still gets its colossus.
+     */
+    private static Vec3d search(ClientWorld world, BlockPos centre, boolean dry) {
         for (int step = 0; step < SEARCH_STEPS; step++) {
             double angle = step * 2.399963229728653;
             double radius = SEARCH_START + (step % 6) * SEARCH_STEP;
-            int x = spawn.getX() + (int) Math.round(Math.cos(angle) * radius);
-            int z = spawn.getZ() + (int) Math.round(Math.sin(angle) * radius);
-            if (!world.isChunkLoaded(new BlockPos(x, spawn.getY(), z))) continue;
+            int x = centre.getX() + (int) Math.round(Math.cos(angle) * radius);
+            int z = centre.getZ() + (int) Math.round(Math.sin(angle) * radius);
+            if (!world.isChunkLoaded(new BlockPos(x, centre.getY(), z))) continue;
             int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
-            if (top <= world.getSeaLevel() + 2) continue;
+            if (top <= world.getBottomY() + 2) continue;
+            if (dry && top <= world.getSeaLevel() + 2) continue;
             BlockPos ground = new BlockPos(x, top - 1, z);
             BlockState state = world.getBlockState(ground);
-            if (state.isAir() || !state.getFluidState().isEmpty()) continue;
+            if (state.isAir() || !state.getFluidState().isEmpty() || state.isOf(Blocks.ICE)) continue;
             return new Vec3d(x + .5, top, z + .5);
         }
         return null;
