@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "charged=false": {
+      "model": "beyondlimits:block/resonant_core"
+    },
+    "charged=true": {
+      "model": "beyondlimits:block/resonant_core_active"
+    }
+  }
+}

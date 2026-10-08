@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RTR",
+    "TET",
+    "RTR"
+  ],
+  "key": {
+    "R": {
+      "item": "beyondlimits:rift_shard"
+    },
+    "T": {
+      "item": "minecraft:tnt"
+    },
+    "E": {
+      "item": "minecraft:echo_shard"
+    }
+  },
+  "result": {
+    "item": "beyondlimits:resonant_core",
+    "count": 1
+  }
+}

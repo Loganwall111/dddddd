@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " A ",
+    "ARA",
+    " A "
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "R": {
+      "item": "beyondlimits:rift_shard"
+    }
+  },
+  "result": {
+    "item": "beyondlimits:rift_compass",
+    "count": 1
+  }
+}

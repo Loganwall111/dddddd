@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "beyondlimits",
+  "version": "${version}",
+  "name": "Beyond the Limits: Chapter One",
+  "description": "The Neverending World — reality fractures, watches, bleeds, and opens into the Codeverse.",
+  "authors": ["Beyond the Limits"],
+  "license": "MIT",
+  "icon": "assets/beyondlimits/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.beyondlimits.BeyondLimits"],
+    "client": ["dev.beyondlimits.client.BeyondLimitsClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "fabric-api": "*",
+    "minecraft": "~1.20.1",
+    "java": ">=17"
+  },
+  "suggests": {
+    "iris": "*",
+    "sodium": "*"
+  }
+}

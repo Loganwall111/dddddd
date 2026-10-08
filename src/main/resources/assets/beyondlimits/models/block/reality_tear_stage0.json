@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "beyondlimits:block/reality_tear_stage0"
+  }
+}

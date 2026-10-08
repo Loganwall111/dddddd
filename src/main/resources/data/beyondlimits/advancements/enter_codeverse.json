@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "beyondlimits:rift_shard"
+    },
+    "title": {
+      "text": "Past the Seam"
+    },
+    "description": {
+      "text": "Cross the edge of the world and enter the Codeverse."
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cross_the_seam": {
+      "trigger": "minecraft:changed_dimension",
+      "conditions": {
+        "from": "minecraft:overworld",
+        "to": "beyondlimits:codeverse"
+      }
+    }
+  }
+}

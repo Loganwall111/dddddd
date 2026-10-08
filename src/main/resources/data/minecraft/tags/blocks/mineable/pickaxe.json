@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "beyondlimits:fractured_stone",
+    "beyondlimits:nullstone",
+    "beyondlimits:codeglass",
+    "beyondlimits:memory_crystal",
+    "beyondlimits:reality_anchor",
+    "beyondlimits:resonant_core"
+  ]
+}

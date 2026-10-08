@@ -1,0 +1,57 @@
+name: Beyond the Limits — Fabric build
+
+on:
+  push:
+    branches:
+      - arena/65382ddb-dddddd
+    paths:
+      - '.github/workflows/mod-build.yml'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
+      - 'src/**'
+      - 'scripts/**'
+  pull_request:
+    paths:
+      - '.github/workflows/mod-build.yml'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'settings.gradle'
+      - 'src/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: beyond-limits-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fabric:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify generated assets are reproducible
+        run: |
+          python3 scripts/generate_assets.py
+          git diff --exit-code -- src/main/resources
+      - name: Validate metadata, JSON, models, textures, and shader resources
+        run: python3 scripts/verify_mod.py
+      - name: Compile Fabric mod and package optional GLSL shader pack
+        run: ./gradlew --no-daemon --console=plain build shaderpackZip
+      - name: Upload installable mod and optional shader pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: beyond-the-limits-minecraft-1.20.1
+          if-no-files-found: error
+          path: |
+            build/libs/*.jar
+            build/distributions/BeyondTheLimits-Iris.zip

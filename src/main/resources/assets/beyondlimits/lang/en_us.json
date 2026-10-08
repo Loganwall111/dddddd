@@ -1,0 +1,17 @@
+{
+  "block.beyondlimits.fractured_stone": "Fractured Stone",
+  "block.beyondlimits.nullstone": "Nullstone",
+  "block.beyondlimits.codeglass": "Codeglass",
+  "block.beyondlimits.memory_crystal": "Memory Crystal",
+  "block.beyondlimits.reality_anchor": "Reality Anchor",
+  "block.beyondlimits.resonant_core": "Resonant Core",
+  "block.beyondlimits.reality_tear": "Reality Tear",
+  "item.beyondlimits.rift_shard": "Rift Shard",
+  "item.beyondlimits.fracture_key": "Fracture Key",
+  "item.beyondlimits.rift_compass": "Rift Compass",
+  "entity.beyondlimits.observer": "The Observer",
+  "entity.beyondlimits.mirror_echo": "Mirror Echo",
+  "entity.beyondlimits.frayling": "Frayling",
+  "dimension.beyondlimits.codeverse": "The Codeverse",
+  "death.attack.outOfWorld": "%1$s fell out of the world"
+}

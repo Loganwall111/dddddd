@@ -1,0 +1,13 @@
+{
+  "type": "beyondlimits:codeverse",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "beyondlimits:codeverse",
+      "lakes": false,
+      "features": false,
+      "layers": [],
+      "structure_overrides": []
+    }
+  }
+}

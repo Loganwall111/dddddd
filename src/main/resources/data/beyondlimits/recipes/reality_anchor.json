@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "NAN",
+    "ACA",
+    "NAN"
+  ],
+  "key": {
+    "N": {
+      "item": "beyondlimits:nullstone"
+    },
+    "A": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "C": {
+      "item": "beyondlimits:rift_shard"
+    }
+  },
+  "result": {
+    "item": "beyondlimits:reality_anchor",
+    "count": 1
+  }
+}

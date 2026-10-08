@@ -1,0 +1,16 @@
+# Gradle / Fabric outputs
+.gradle/
+build/
+run/
+logs/
+crash-reports/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Local runtime data
+options.txt
+saves/
+shaderpacks/
