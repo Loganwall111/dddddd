@@ -67,7 +67,7 @@ public final class TitanWorld {
     private static ShaderProgram program;
     private static VertexBuffer mesh;
     private static boolean failed, drawn;
-    private static RegistryKey<World> builtWorld;
+    private static RegistryKey<World> builtWorld, lastWorld;
     private static Vec3d anchor;
     private static int voxelCount, faceCount, attempts;
     private static long nextAttempt;
@@ -99,8 +99,13 @@ public final class TitanWorld {
 
     public static String status() {
         if (failed) return "Titan unavailable (shader)";
-        if (anchor == null) return "Titan awaiting solid ground";
+        if (anchor == null) return "Titan awaiting solid ground after " + attempts + " searches";
         return "Titan standing at " + (int) anchor.x + ", " + (int) anchor.y + ", " + (int) anchor.z;
+    }
+
+    /** Look for standing ground again now: a new reality deserves a fresh search, not a spent budget. */
+    public static void retry() {
+        attempts = 0; nextAttempt = 0; lastAttempt = null;
     }
 
     public static void initialize() {
@@ -121,6 +126,9 @@ public final class TitanWorld {
         drawn = false;
         if (!BeyondClient.CONFIG.enabled || !BeyondClient.CONFIG.titanSky) return;
         ClientWorld world = client.world;
+        // Arriving somewhere new — stepping out of a realm, coming back through a corridor, waking up —
+        // earns the search a fresh budget, so a spent one is never the reason the horizon stays empty.
+        if (!world.getRegistryKey().equals(lastWorld)) { lastWorld = world.getRegistryKey(); retry(); }
         // The colossus belongs to the Overworld: it is built out of the root reality's own blocks.
         if (!world.getRegistryKey().equals(World.OVERWORLD)) return;
         if (anchor != null && builtWorld != null && builtWorld.equals(world.getRegistryKey())) return;

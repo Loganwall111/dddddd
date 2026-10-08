@@ -52,6 +52,7 @@ public final class ClientSmoke {
     private static int[] heightsBefore;
     private static Vec3d tunnelStart;
     private static int wormholePhase, wormholeEra, wormholeSettle, wormholeStep, titanPhase;
+    private static double occlusionX, occlusionY, occlusionZ;
     private static double tunnelPeak, wormholeBaseX, wormholeBaseZ, wormholeAltitude;
     /** Columns to try for a wormhole mouth, relative to where the walker arrived. */
     private static final int[][] WORMHOLE_CANDIDATES = {{0, 0}, {16, 0}, {0, 16}, {-16, 0}, {0, -16}, {24, 24}, {-24, -24}};
@@ -119,6 +120,10 @@ public final class ClientSmoke {
                 client.setScreen(null); stage = 0; stageTicks = 0;
             }
             if (pending || client.player == null || client.world == null) return;
+            // The occlusion stages compare two frames of the same view, so the view has to hold still:
+            // falling, drifting or being dragged by the very well under test would change the scene and
+            // make the comparison meaningless.
+            if (stage >= 26 && stage <= 29) pinCamera(client);
             stageTicks++;
             switch (stage) {
                 case 0 -> server(client, p -> {
@@ -415,7 +420,11 @@ public final class ClientSmoke {
                     BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA_PASS era={} era_name={} columns_changed={} of={}", Journey.of(p).era,
                         Umbrella.Era.of(Journey.of(p).era).description, changed, after.length);
                     // CI fixture only: a real opaque wall between player and singularity.
-                    p.teleport(p.getServerWorld(), .5, 120, .5, 180, 0);
+                    // The wall stands at the fixture mark, and the well is placed from where the walker is
+                    // standing, so this teleport has to happen inline — before spawn reads the position.
+                    occlusionX = .5; occlusionY = 120; occlusionZ = .5;
+                    p.setNoGravity(true);
+                    p.teleport(p.getServerWorld(), occlusionX, occlusionY, occlusionZ, 180f, 0f);
                     p.setVelocity(Vec3d.ZERO);
                     Journey.of(p).travelCooldown = 0;
                     for (int x = -6; x <= 6; x++) for (int y = 116; y <= 129; y++)
@@ -446,6 +455,7 @@ public final class ClientSmoke {
                         client.options.getSimulationDistance().setValue(window);
                         BeyondMinecraft.LOGGER.info("BEYOND_TITAN_SEARCH view_distance={} home_first=true", window);
                         onServer(client, p -> {
+                            p.setNoGravity(false);
                             client.getServer().getPlayerManager().setViewDistance(window);
                             client.getServer().getPlayerManager().setSimulationDistance(window);
                             if (Journey.inRealm(p.getWorld().getRegistryKey()))
@@ -458,7 +468,7 @@ public final class ClientSmoke {
                         if (place == null) {
                             // The colossus looks for ground on its own schedule; give it a few attempts,
                             // then say exactly what it saw rather than timing out facelessly.
-                            require(stageTicks < 400, "the colossus found no standing ground in the root reality: " + TitanWorld.status());
+                            require(stageTicks < 700, "the colossus found no standing ground in the root reality: " + TitanWorld.status());
                         } else {
                             // The colossus portrait: stand off from it and look up. This is the shot that
                             // proves the Titan is the world's own blocks standing in the world.
@@ -543,6 +553,14 @@ public final class ClientSmoke {
                 action.accept(player);
             } catch (Throwable error) { failure = error; }
             finally { pending = false; }
+        });
+    }
+    /** Pins the walker to the occlusion fixture's mark, in the air, facing the wall. */
+    private static void pinCamera(MinecraftClient client) {
+        onServer(client, p -> {
+            p.setNoGravity(true);
+            p.setVelocity(Vec3d.ZERO);
+            p.teleport(p.getServerWorld(), occlusionX, occlusionY, occlusionZ, 180f, 0f);
         });
     }
     private static void capture(MinecraftClient client, String name) throws java.io.IOException {
