@@ -74,7 +74,7 @@ public final class ObserverEngine {
 	}
 
 	private static void spawnObserver(BtlState state, ServerWorld world, ServerPlayerEntity player, int level) {
-		ObserverEntity observer = BtlEntities.OBSERVER.create(world, SpawnReason.EVENT);
+		ObserverEntity observer = BtlEntities.OBSERVER.create(world);
 
 		if (observer == null) {
 			return;

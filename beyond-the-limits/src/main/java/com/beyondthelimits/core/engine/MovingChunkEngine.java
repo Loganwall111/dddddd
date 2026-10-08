@@ -166,7 +166,7 @@ public final class MovingChunkEngine {
 
 		// Its inhabitants come with it: echoes of whoever used to live here.
 		for (int i = 0; i < 2 + random.nextInt(3); i++) {
-			MobEntity echo = BtlEntities.MEMORY_ECHO.create(world, SpawnReason.STRUCTURE);
+			MobEntity echo = BtlEntities.MEMORY_ECHO.create(world);
 
 			if (echo != null) {
 				echo.refreshPositionAndAngles(centre.getX() + random.nextInt(16), centre.getY() + 1, centre.getZ() + random.nextInt(16),

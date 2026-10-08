@@ -175,7 +175,7 @@ public final class SignalEngine {
 
 			// The Code Verse notices being noticed.
 			for (int i = 0; i < 3; i++) {
-				var wraith = BtlEntities.CODE_WRAITH.create(world, SpawnReason.EVENT);
+				var wraith = BtlEntities.CODE_WRAITH.create(world);
 
 				if (wraith != null) {
 					wraith.refreshPositionAndAngles(player.getX() + world.getRandom().nextInt(8) - 4,

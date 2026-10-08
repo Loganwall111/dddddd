@@ -287,7 +287,7 @@ public class RiftEntity extends Entity {
 
 	@Override
 	public Packet<ClientPlayPacketListener> createSpawnPacket(net.minecraft.server.network.EntityTrackerEntry entry) {
-		return new EntitySpawnS2CPacket(this);
+		return new EntitySpawnS2CPacket(this, 0, this.getBlockPos());
 	}
 
 	@Override
@@ -314,7 +314,7 @@ public class RiftEntity extends Entity {
 		rift.setRadius(3.2F);
 		rift.setPermanent(true);
 		rift.setInvading(false);
-		BackroomsEngine.registerGate(world, pos);
+		BackroomsEngine.registerGate(world, BlockPos.ofFloored(pos));
 		world.spawnEntity(rift);
 		return rift;
 	}

@@ -122,7 +122,7 @@ public final class BackroomsEngine {
 	/** Entrance 1: the warehouse gate. Called by the city generator once the warehouse exists. */
 	public static void registerGate(ServerWorld world, BlockPos pos) {
 		BtlSafe.guard("backrooms.register_gate", () -> {
-			RiftEntity gate = BtlEntities.RIFT.create(world, SpawnReason.STRUCTURE);
+			RiftEntity gate = BtlEntities.RIFT.create(world);
 
 			if (gate == null) {
 				return;
@@ -403,7 +403,7 @@ public final class BackroomsEngine {
 				default -> BtlEntities.FACELING;
 			};
 
-			MobEntity mob = type.create(world, SpawnReason.STRUCTURE);
+			MobEntity mob = type.create(world);
 
 			if (mob == null) {
 				continue;
@@ -467,7 +467,7 @@ public final class BackroomsEngine {
 				return;
 			}
 
-			FacelingEntity faceling = BtlEntities.FACELING.create(world, SpawnReason.EVENT);
+			FacelingEntity faceling = BtlEntities.FACELING.create(world);
 
 			if (faceling == null) {
 				return;

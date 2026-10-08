@@ -88,7 +88,7 @@ public final class MirrorEngine {
 	/** Seeds a reflection standing behind the player, already looking at them. */
 	public static void spawnReflection(ServerPlayerEntity player, ServerWorld world, BlockPos mirrorPos) {
 		BtlSafe.guard("mirror.reflection", () -> {
-			MirrorDoubleEntity reflection = BtlEntities.MIRROR_DOUBLE.create(world, SpawnReason.EVENT);
+			MirrorDoubleEntity reflection = BtlEntities.MIRROR_DOUBLE.create(world);
 
 			if (reflection == null) {
 				return;

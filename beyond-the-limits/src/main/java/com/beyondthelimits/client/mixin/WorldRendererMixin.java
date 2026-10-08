@@ -1,6 +1,7 @@
 package com.beyondthelimits.client.mixin;
 
 import com.beyondthelimits.client.ClientState;
+import com.beyondthelimits.client.render.BtlSkyRenderer;
 import com.beyondthelimits.client.render.SkyRenderer;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.WorldRenderer;

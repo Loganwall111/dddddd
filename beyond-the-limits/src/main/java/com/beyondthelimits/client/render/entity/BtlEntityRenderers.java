@@ -19,6 +19,9 @@ public final class BtlEntityRenderers {
 	}
 
 	public static void register() {
+		// Baked model layers first: the renderers below ask the context for them.
+		BtlQuadrupedRenderer.registerModelLayer();
+
 		// ---- rifts -------------------------------------------------------------------------------
 		// Drawn as a lens by RiftRenderer; the entity renderer exists only to claim the entity type.
 		EntityRendererRegistry.register(BtlEntities.RIFT, RiftPlaceholderRenderer::new);

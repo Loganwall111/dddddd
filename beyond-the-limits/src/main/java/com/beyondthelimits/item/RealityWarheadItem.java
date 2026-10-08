@@ -35,7 +35,7 @@ public class RealityWarheadItem extends Item {
 		ServerWorld serverWorld = (ServerWorld) world;
 		BlockPos target = user.getBlockPos().add(user.getHorizontalFacing().getVector().multiply(4));
 
-		RealityWarheadEntity warhead = BtlEntities.WARHEAD.create(serverWorld, SpawnReason.TRIGGERED);
+		RealityWarheadEntity warhead = BtlEntities.WARHEAD.create(serverWorld);
 
 		if (warhead == null) {
 			return TypedActionResult.fail(user.getStackInHand(hand));

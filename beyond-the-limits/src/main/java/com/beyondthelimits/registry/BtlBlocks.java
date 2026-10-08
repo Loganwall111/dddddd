@@ -81,7 +81,7 @@ public final class BtlBlocks {
 	public static final Block CODE_BRICK = register("code_brick",
 			new Block(settings(MapColor.GREEN).strength(1.8F, 20.0F).sounds(BlockSoundGroup.DEEPSLATE_BRICKS)));
 	public static final Block CODE_PANEL = register("code_panel",
-			new Block(settings(MapColor.EMERALD).strength(0.9F).luminance(state -> 13).sounds(BlockSoundGroup.COPPER)));
+			new Block(settings(MapColor.EMERALD_GREEN).strength(0.9F).luminance(state -> 13).sounds(BlockSoundGroup.COPPER)));
 
 	// --- The Backrooms --------------------------------------------------------------------------
 
@@ -113,7 +113,7 @@ public final class BtlBlocks {
 	public static final Block IMPOSSIBLE_LEAVES = register("impossible_leaves",
 			new Block(settings(MapColor.WHITE).strength(0.3F).nonOpaque().sounds(BlockSoundGroup.AZALEA_LEAVES)));
 	public static final Block IMPOSSIBLE_LOG = register("impossible_log",
-			new PillarBlock(settings(MapColor.WHITE_TERRACOTTA).strength(2.0F).sounds(BlockSoundGroup.WOOD)));
+			new PillarBlock(settings(MapColor.TERRACOTTA_WHITE).strength(2.0F).sounds(BlockSoundGroup.WOOD)));
 
 	// --- The civilization that was not there ----------------------------------------------------
 
@@ -124,7 +124,7 @@ public final class BtlBlocks {
 			new PillarBlock(settings(MapColor.TERRACOTTA_LIGHT_GRAY).strength(2.2F, 20.0F)
 					.sounds(BlockSoundGroup.DEEPSLATE_BRICKS)));
 	public static final Block ANCIENT_STATUE = register("ancient_statue",
-			new AncientStatueBlock(settings(MapColor.QUARTZ).strength(2.0F, 20.0F).sounds(BlockSoundGroup.STONE)));
+			new AncientStatueBlock(settings(MapColor.OFF_WHITE).strength(2.0F, 20.0F).sounds(BlockSoundGroup.STONE)));
 
 	// --- The Signal -----------------------------------------------------------------------------
 

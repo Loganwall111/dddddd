@@ -142,7 +142,7 @@ public final class RiftEngine {
 
 	public static boolean spawnRiftAt(ServerWorld world, BlockPos pos, int variant, boolean permanent) {
 		return BtlSafe.supply("rift.spawn", () -> {
-			RiftEntity rift = BtlEntities.RIFT.create(world, SpawnReason.STRUCTURE);
+			RiftEntity rift = BtlEntities.RIFT.create(world);
 
 			if (rift == null) {
 				return false;
@@ -182,7 +182,7 @@ public final class RiftEngine {
 				default -> world.getRandom().nextBoolean() ? BtlEntities.AMBUSH_SPIDER : BtlEntities.HIDING_CREEPER;
 			};
 
-			Entity entity = type.create(world, SpawnReason.STRUCTURE);
+			Entity entity = type.create(world);
 
 			if (entity == null) {
 				return;

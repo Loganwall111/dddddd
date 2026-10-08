@@ -127,7 +127,7 @@ public final class LastChunkEngine {
 			}
 
 			// The copy of the player, standing at the centre, waiting.
-			var copy = BtlEntities.MEMORY_ECHO.create(world, SpawnReason.STRUCTURE);
+			var copy = BtlEntities.MEMORY_ECHO.create(world);
 
 			if (copy != null) {
 				copy.refreshPositionAndAngles(ground.getX() + 0.5D, ground.getY(), ground.getZ() + 0.5D, 180.0F, 0.0F);

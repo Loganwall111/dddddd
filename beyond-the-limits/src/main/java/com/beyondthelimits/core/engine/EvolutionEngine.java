@@ -108,7 +108,7 @@ public final class EvolutionEngine {
 			default -> BtlEntities.HIDING_CREEPER;
 		};
 
-		MobEntity mob = type.create(world, SpawnReason.EVENT);
+		MobEntity mob = type.create(world);
 
 		if (mob == null) {
 			return;

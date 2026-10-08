@@ -206,7 +206,7 @@ public final class SkyRenderer {
 		}
 
 		Camera camera = client.gameRenderer.getCamera();
-		double fov = client.gameRenderer.getFov(client.gameRenderer.getCamera(), tickDelta, true);
+		double fov = client.options.getFov().getValue();
 		float aspect = (float) client.getWindow().getFramebufferWidth()
 				/ Math.max(1.0F, (float) client.getWindow().getFramebufferHeight());
 

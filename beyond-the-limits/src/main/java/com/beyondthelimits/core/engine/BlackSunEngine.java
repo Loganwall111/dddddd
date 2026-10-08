@@ -98,7 +98,7 @@ public final class BlackSunEngine {
 				player.getBoundingBox().expand(1024.0D), entity -> true).stream().findFirst().orElse(null);
 
 		if (sun == null) {
-			sun = BtlEntities.BLACK_SUN.create(world, SpawnReason.EVENT);
+			sun = BtlEntities.BLACK_SUN.create(world);
 
 			if (sun != null) {
 				sun.refreshPositionAndAngles(player.getX(), player.getY() + 220.0D, player.getZ(), 0.0F, 0.0F);

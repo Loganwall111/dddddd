@@ -215,7 +215,7 @@ public final class StormEngine {
 		BlockPos target = player.getBlockPos().add(random.nextInt(48) - 24, 0, random.nextInt(48) - 24);
 		BlockPos ground = world.getTopPosition(Heightmap.Type.MOTION_BLOCKING, target);
 
-		net.minecraft.entity.LightningEntity bolt = EntityType.LIGHTNING_BOLT.create(world, SpawnReason.EVENT);
+		net.minecraft.entity.LightningEntity bolt = EntityType.LIGHTNING_BOLT.create(world);
 
 		if (bolt != null) {
 			bolt.refreshPositionAfterTeleport(ground.getX() + 0.5D, ground.getY(), ground.getZ() + 0.5D);
@@ -245,7 +245,7 @@ public final class StormEngine {
 			};
 
 			for (int i = 0; i < 1 + random.nextInt(3); i++) {
-				MobEntity mob = type.create(world, SpawnReason.EVENT);
+				MobEntity mob = type.create(world);
 
 				if (mob == null) {
 					continue;

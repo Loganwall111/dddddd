@@ -185,7 +185,7 @@ public final class ImpossibleEngine {
 
 	private static void insects(ServerWorld world, Random random, BlockPos ground) {
 		for (int i = 0; i < 2 + random.nextInt(5); i++) {
-			MobEntity insect = BtlEntities.GIANT_INSECT.create(world, SpawnReason.STRUCTURE);
+			MobEntity insect = BtlEntities.GIANT_INSECT.create(world);
 
 			if (insect == null) {
 				continue;
@@ -219,7 +219,7 @@ public final class ImpossibleEngine {
 			player.sendMessage(Text.translatable("message.beyondthelimits.impossible.noticed").formatted(Formatting.DARK_GREEN), true);
 
 			// Something the size of a building takes offence.
-			MobEntity insect = BtlEntities.GIANT_INSECT.create(world, SpawnReason.EVENT);
+			MobEntity insect = BtlEntities.GIANT_INSECT.create(world);
 
 			if (insect != null) {
 				insect.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,

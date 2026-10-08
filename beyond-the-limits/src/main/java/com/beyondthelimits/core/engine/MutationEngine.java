@@ -288,7 +288,7 @@ public final class MutationEngine {
 		int count = 4 + random.nextInt(6);
 
 		for (int i = 0; i < count; i++) {
-			FacelingEntity figure = BtlEntities.FACELING.create(world, SpawnReason.EVENT);
+			FacelingEntity figure = BtlEntities.FACELING.create(world);
 
 			if (figure == null) {
 				continue;
@@ -374,7 +374,7 @@ public final class MutationEngine {
 
 			BlockPos pos = villager.getBlockPos();
 			villager.discard();
-			MobEntity skinStealer = BtlEntities.SKIN_STEALER.create(world, SpawnReason.EVENT);
+			MobEntity skinStealer = BtlEntities.SKIN_STEALER.create(world);
 
 			if (skinStealer != null) {
 				skinStealer.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, random.nextFloat() * 360.0F, 0.0F);

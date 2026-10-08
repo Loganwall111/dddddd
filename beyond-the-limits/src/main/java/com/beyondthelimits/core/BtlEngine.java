@@ -4,6 +4,7 @@ import com.beyondthelimits.core.engine.BackroomsEngine;
 import com.beyondthelimits.core.engine.BlackSunEngine;
 import com.beyondthelimits.core.engine.CollisionEngine;
 import com.beyondthelimits.core.engine.DementiaEngine;
+import com.beyondthelimits.core.engine.ExplosionEngine;
 import com.beyondthelimits.core.engine.EvolutionEngine;
 import com.beyondthelimits.core.engine.GravityEngine;
 import com.beyondthelimits.core.engine.ImpossibleEngine;

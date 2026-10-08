@@ -8,7 +8,7 @@ import net.minecraft.entity.ai.goal.LookAtEntityGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
@@ -29,12 +29,12 @@ import net.minecraft.world.World;
  * occasionally" — it is a single continuous stalker that simply refuses to be looked at, which is
  * exactly what players report as the creepiest thing in the mod.</p>
  */
-public class ObserverEntity extends MobEntity {
+public class ObserverEntity extends PathAwareEntity {
 	private PlayerEntity target;
 	private int stareTicks;
 	private int relocateTicks = 200;
 
-	public ObserverEntity(EntityType<? extends ObserverEntity> type, World world) {
+	public ObserverEntity(EntityType<? extends PathAwareEntity> type, World world) {
 		super(type, world);
 		this.setNoGravity(false);
 	}

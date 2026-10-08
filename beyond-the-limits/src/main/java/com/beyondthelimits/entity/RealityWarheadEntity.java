@@ -124,6 +124,6 @@ public class RealityWarheadEntity extends Entity {
 
 	@Override
 	public Packet<ClientPlayPacketListener> createSpawnPacket(net.minecraft.server.network.EntityTrackerEntry entry) {
-		return new EntitySpawnS2CPacket(this);
+		return new EntitySpawnS2CPacket(this, 0, this.getBlockPos());
 	}
 }

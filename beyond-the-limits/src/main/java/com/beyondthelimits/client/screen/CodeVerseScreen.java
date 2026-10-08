@@ -19,6 +19,8 @@ import net.minecraft.text.Text;
  * itself and carries on, as if something were reading the same file at the same time.</p>
  */
 public class CodeVerseScreen extends Screen {
+	private final net.minecraft.util.math.random.Random random = net.minecraft.util.math.random.Random.create();
+
 	/** Real 1.21.1 yarn class names. The readout is the truth about the game, which is the point. */
 	private static final List<String> SOURCE = List.of(
 			"package net.minecraft.world;",

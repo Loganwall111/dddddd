@@ -153,7 +153,7 @@ public final class BtlWorldEvents {
 			if (family != null && EvolutionEngine.shouldUpgrade(BtlState.get(), family, world.getRandom())) {
 				BtlSafe.guard("events.evolve", () -> {
 					MobEntity evolved = EvolutionEngine.evolvedType(family, world.getRandom())
-							.create(world, net.minecraft.entity.SpawnReason.EVENT);
+							.create(world);
 
 					if (evolved == null) {
 						return;

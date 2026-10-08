@@ -32,11 +32,11 @@ public class WrongGrassBlock extends Block {
 	}
 
 	@Override
-	public void onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
-		super.onBreak(world, pos, state, player);
-
+	public BlockState onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
 		if (!world.isClient() && world.getRandom().nextInt(6) == 0) {
 			com.beyondthelimits.core.engine.EvolutionEngine.onSuspiciousBreak(player);
 		}
+
+		return super.onBreak(world, pos, state, player);
 	}
 }

@@ -102,7 +102,8 @@ public class BtlShadowRenderer<T extends LivingEntity> extends EntityRenderer<T>
 			// The other two planes are the same quad rotated around the entity's vertical axis, so the
 			// figure has volume from every angle without ever being a solid object.
 			if (plane > 0) {
-				matrices.multiply(org.joml.RotationAxis.POSITIVE_Y.rotationDegrees(plane * 60.0F));
+				matrices.multiply(new org.joml.Quaternionf()
+						.rotationAxis((float) Math.toRadians(plane * 60.0F), 0.0F, 1.0F, 0.0F));
 			}
 
 			quad(buffer, matrices.peek().getPositionMatrix(), this.width, this.height, color);

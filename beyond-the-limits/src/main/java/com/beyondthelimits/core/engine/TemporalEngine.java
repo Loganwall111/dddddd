@@ -121,7 +121,7 @@ public final class TemporalEngine {
 				if (entity instanceof net.minecraft.entity.mob.ZombieEntity zombie && random.nextInt(40) == 0) {
 					BlockPos pos = zombie.getBlockPos();
 					zombie.discard();
-					MobEntity evolved = BtlEntities.EVOLVED_ZOMBIE.create(world, SpawnReason.EVENT);
+					MobEntity evolved = BtlEntities.EVOLVED_ZOMBIE.create(world);
 
 					if (evolved != null) {
 						evolved.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, zombie.getYaw(), 0.0F);
@@ -136,13 +136,12 @@ public final class TemporalEngine {
 				// Remembering its own death.
 				BlockPos pos = mob.getBlockPos();
 
-				if (mob.discard()) {
-					var echo = BtlEntities.MEMORY_ECHO.create(world, SpawnReason.EVENT);
+				mob.discard();
+				var echo = BtlEntities.MEMORY_ECHO.create(world);
 
-					if (echo != null) {
-						echo.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, mob.getYaw(), 0.0F);
-						world.spawnEntity(echo);
-					}
+				if (echo != null) {
+					echo.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, mob.getYaw(), 0.0F);
+					world.spawnEntity(echo);
 				}
 			}
 		}
