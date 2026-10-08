@@ -59,6 +59,53 @@ def check_core_shaders():
     return None
 
 
+def check_block_item_resources():
+    """Keep registered BlockItems, their models, and block loot tables in sync."""
+    block_source = read("src/main/java/com/beyondthelimits/registry/BtlBlocks.java")
+    item_source = read("src/main/java/com/beyondthelimits/registry/BtlItems.java")
+    if "new BlockItem(registered, new Item.Settings())" not in block_source:
+        return "every registered block must also register its BlockItem"
+
+    block_ids = set(re.findall(r'register[(]"([a-z0-9_]+)"', block_source))
+    item_ids = set(re.findall(r'register[(]"([a-z0-9_]+)"', item_source))
+    item_ids.discard("path")
+    model_root = ROOT / "src/main/resources/assets/beyondthelimits/models/item"
+    loot_root = ROOT / "src/main/resources/data/beyondthelimits/loot_table/blocks"
+
+    for name in sorted(block_ids):
+        model = model_root / f"{name}.json"
+        if not model.is_file():
+            return f"missing item model for registered block {name}"
+        model_data = json.loads(model.read_text())
+        if model_data.get("parent") != f"beyondthelimits:block/{name}":
+            return f"item model for block {name} must inherit its block model"
+
+        loot_table = loot_root / f"{name}.json"
+        if not loot_table.is_file():
+            return f"missing block loot table for registered block {name}"
+        table_data = json.loads(loot_table.read_text())
+        item_refs = []
+
+        def collect_items(value):
+            if isinstance(value, dict):
+                if value.get("type") == "minecraft:item" and isinstance(value.get("name"), str):
+                    item_refs.append(value["name"])
+                for child in value.values():
+                    collect_items(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect_items(child)
+
+        collect_items(table_data)
+        if f"beyondthelimits:{name}" not in item_refs:
+            return f"loot table for block {name} must drop its registered BlockItem"
+        for item_id in item_refs:
+            if item_id.startswith("beyondthelimits:") and item_id.split(":", 1)[1] not in item_ids | block_ids:
+                return f"loot table for block {name} references unregistered item {item_id}"
+
+    return None
+
+
 def check_dimensions():
     """Validate the registry shape Minecraft expects before a world can be created."""
     data_root = ROOT / "src/main/resources/data/beyondthelimits"
@@ -121,6 +168,10 @@ def main():
     if shader_error:
         return fail(shader_error)
 
+    block_item_error = check_block_item_resources()
+    if block_item_error:
+        return fail(block_item_error)
+
     dimension_error = check_dimensions()
     if dimension_error:
         return fail(dimension_error)
@@ -171,7 +222,7 @@ def main():
     if "VARIANT_BACKROOMS" in commands:
         return fail("a mod command exposes the Backrooms as a free-form dimension destination")
 
-    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes; 4 core shaders and 7 dimensions resolve")
+    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes; 4 core shaders, 36 BlockItems/loot tables, and 7 dimensions resolve")
     return 0
 
 

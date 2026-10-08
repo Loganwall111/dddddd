@@ -17,6 +17,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.PillarBlock;
 import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.BlockSoundGroup;
@@ -147,7 +149,9 @@ public final class BtlBlocks {
 	}
 
 	private static Block register(String path, Block block) {
-		return Registry.register(Registries.BLOCK, BeyondTheLimits.id(path), block);
+		Block registered = Registry.register(Registries.BLOCK, BeyondTheLimits.id(path), block);
+		Registry.register(Registries.ITEM, BeyondTheLimits.id(path), new BlockItem(registered, new Item.Settings()));
+		return registered;
 	}
 
 	/** Blocks Corrupted Land is allowed to eat. */

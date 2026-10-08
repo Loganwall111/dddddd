@@ -127,6 +127,10 @@ def item_model(name):
             "textures": {"layer0": f"beyondthelimits:item/{name}"}}
 
 
+def block_item_model(name):
+    return {"parent": f"beyondthelimits:block/{name}"}
+
+
 # ---------------------------------------------------------------------------------------
 # effect textures (used by the GLSL programs, not by any block)
 # ---------------------------------------------------------------------------------------
@@ -229,6 +233,8 @@ def main():
         write_json(os.path.join(ASSETS, "blockstates", f"{name}.json"),
                    blockstate(name, name in PILLARS))
         write_json(os.path.join(ASSETS, "models", "block", f"{name}.json"), block_model(name, spec))
+    for name in BLOCKS:
+        write_json(os.path.join(ASSETS, "models", "item", f"{name}.json"), block_item_model(name))
     for name in ITEMS:
         write_json(os.path.join(ASSETS, "models", "item", f"{name}.json"), item_model(name))
     effects = effect_textures()
