@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:glass",
+    "minecraft:glass_pane",
+    "minecraft:ice",
+    "minecraft:water",
+    {
+      "id": "beyondthelimits:void_glass",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:mirror_block",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:sky_shard",
+      "required": false
+    }
+  ]
+}

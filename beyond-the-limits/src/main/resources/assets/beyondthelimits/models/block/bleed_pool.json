@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "beyondthelimits:block/bleed_pool"
+  },
+  "render_type": "minecraft:translucent"
+}

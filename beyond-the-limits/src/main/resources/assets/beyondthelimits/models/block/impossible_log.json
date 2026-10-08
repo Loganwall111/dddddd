@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "beyondthelimits:block/impossible_log",
+    "end": "beyondthelimits:block/impossible_log_top"
+  }
+}

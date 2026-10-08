@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:flat",
+  "settings": {
+    "layers": [
+      {
+        "block": "minecraft:bedrock",
+        "height": 1
+      },
+      {
+        "block": "beyondthelimits:fog_stone",
+        "height": 28
+      },
+      {
+        "block": "beyondthelimits:fog_moss",
+        "height": 2
+      }
+    ],
+    "biome": "beyondthelimits:foglands",
+    "features": true,
+    "lakes": false
+  }
+}

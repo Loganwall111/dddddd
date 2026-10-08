@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "beyondthelimits:rift_frame",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "beyondthelimits:rift_frame",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:code_monolith",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:signal_machine",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:gravity_core",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:warehouse_concrete",
+      "required": false
+    }
+  ]
+}

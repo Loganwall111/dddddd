@@ -1,0 +1,10 @@
+{
+  "type": "beyondthelimits:backrooms",
+  "generator": {
+    "type": "beyondthelimits:backrooms",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "beyondthelimits:backrooms"
+    }
+  }
+}

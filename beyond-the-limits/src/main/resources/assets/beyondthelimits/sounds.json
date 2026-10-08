@@ -1,0 +1,232 @@
+{
+  "rift_open": {
+    "subtitle": "subtitles.beyondthelimits.rift_open",
+    "sounds": [
+      {
+        "name": "beyondthelimits:rift_open",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "rift_ambient": {
+    "subtitle": "subtitles.beyondthelimits.rift_ambient",
+    "sounds": [
+      {
+        "name": "beyondthelimits:rift_ambient",
+        "stream": false,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "reality_tear": {
+    "subtitle": "subtitles.beyondthelimits.reality_tear",
+    "sounds": [
+      {
+        "name": "beyondthelimits:reality_tear",
+        "stream": false,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "storm_start": {
+    "subtitle": "subtitles.beyondthelimits.storm_start",
+    "sounds": [
+      {
+        "name": "beyondthelimits:storm_start",
+        "stream": false,
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "storm_thunder": {
+    "subtitle": "subtitles.beyondthelimits.storm_thunder",
+    "sounds": [
+      {
+        "name": "beyondthelimits:storm_thunder",
+        "stream": false,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "backrooms_hum": {
+    "subtitle": "subtitles.beyondthelimits.backrooms_hum",
+    "sounds": [
+      {
+        "name": "beyondthelimits:backrooms_hum",
+        "stream": false,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "backrooms_drone": {
+    "subtitle": "subtitles.beyondthelimits.backrooms_drone",
+    "sounds": [
+      {
+        "name": "beyondthelimits:backrooms_drone",
+        "stream": false,
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "backrooms_step": {
+    "subtitle": "subtitles.beyondthelimits.backrooms_step",
+    "sounds": [
+      {
+        "name": "beyondthelimits:backrooms_step",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "backrooms_chase": {
+    "subtitle": "subtitles.beyondthelimits.backrooms_chase",
+    "sounds": [
+      {
+        "name": "beyondthelimits:backrooms_chase",
+        "stream": false,
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "observer_whisper": {
+    "subtitle": "subtitles.beyondthelimits.observer_whisper",
+    "sounds": [
+      {
+        "name": "beyondthelimits:observer_whisper",
+        "stream": false,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "corruption_whisper": {
+    "subtitle": "subtitles.beyondthelimits.corruption_whisper",
+    "sounds": [
+      {
+        "name": "beyondthelimits:corruption_whisper",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "signal_loop": {
+    "subtitle": "subtitles.beyondthelimits.signal_loop",
+    "sounds": [
+      {
+        "name": "beyondthelimits:signal_loop",
+        "stream": false,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "signal_static": {
+    "subtitle": "subtitles.beyondthelimits.signal_static",
+    "sounds": [
+      {
+        "name": "beyondthelimits:signal_static",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "black_sun_arrival": {
+    "subtitle": "subtitles.beyondthelimits.black_sun_arrival",
+    "sounds": [
+      {
+        "name": "beyondthelimits:black_sun_arrival",
+        "stream": false,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "codescape_glitch": {
+    "subtitle": "subtitles.beyondthelimits.codescape_glitch",
+    "sounds": [
+      {
+        "name": "beyondthelimits:codescape_glitch",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "memory_chime": {
+    "subtitle": "subtitles.beyondthelimits.memory_chime",
+    "sounds": [
+      {
+        "name": "beyondthelimits:memory_chime",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "guide_open": {
+    "subtitle": "subtitles.beyondthelimits.guide_open",
+    "sounds": [
+      {
+        "name": "beyondthelimits:guide_open",
+        "stream": false,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "mirror_whisper": {
+    "subtitle": "subtitles.beyondthelimits.mirror_whisper",
+    "sounds": [
+      {
+        "name": "beyondthelimits:mirror_whisper",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "mirror_crack": {
+    "subtitle": "subtitles.beyondthelimits.mirror_crack",
+    "sounds": [
+      {
+        "name": "beyondthelimits:mirror_crack",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "signal_found": {
+    "subtitle": "subtitles.beyondthelimits.signal_found",
+    "sounds": [
+      {
+        "name": "beyondthelimits:signal_found",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "noclip_whoosh": {
+    "subtitle": "subtitles.beyondthelimits.noclip_whoosh",
+    "sounds": [
+      {
+        "name": "beyondthelimits:noclip_whoosh",
+        "stream": false,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "evolution_growl": {
+    "subtitle": "subtitles.beyondthelimits.evolution_growl",
+    "sounds": [
+      {
+        "name": "beyondthelimits:evolution_growl",
+        "stream": false,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "explosion_fallout": {
+    "subtitle": "subtitles.beyondthelimits.explosion_fallout",
+    "sounds": [
+      {
+        "name": "beyondthelimits:explosion_fallout",
+        "stream": false,
+        "attenuation_distance": 64
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:dirt",
+    "#minecraft:stone_bricks",
+    "#minecraft:base_stone_overworld",
+    {
+      "id": "beyondthelimits:corrupted_stone",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:corrupted_soil",
+      "required": false
+    },
+    "#minecraft:leaves"
+  ]
+}

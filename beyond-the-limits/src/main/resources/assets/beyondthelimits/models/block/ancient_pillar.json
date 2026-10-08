@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "beyondthelimits:block/ancient_pillar_side",
+    "end": "beyondthelimits:block/ancient_pillar_top"
+  }
+}

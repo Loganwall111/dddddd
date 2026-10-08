@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "com.beyondthelimits.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"MinecraftServerMixin",
+		"ServerWorldMixin",
+		"TeleportCommandMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

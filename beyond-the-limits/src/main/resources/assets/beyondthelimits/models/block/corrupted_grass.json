@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "beyondthelimits:block/corrupted_grass_top",
+    "side": "beyondthelimits:block/corrupted_grass_side",
+    "bottom": "beyondthelimits:block/corrupted_soil"
+  }
+}

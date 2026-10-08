@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "beyondthelimits:backrooms_wall",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:backrooms_ceiling",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:backrooms_light",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:backrooms_carpet",
+      "required": false
+    }
+  ]
+}

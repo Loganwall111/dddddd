@@ -1,0 +1,10 @@
+{
+  "type": "beyondthelimits:codescape",
+  "generator": {
+    "type": "beyondthelimits:codescape_shell",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "beyondthelimits:codescape"
+    }
+  }
+}

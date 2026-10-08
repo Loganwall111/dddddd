@@ -1,0 +1,43 @@
+{
+	"schemaVersion": 1,
+	"id": "beyondthelimits",
+	"version": "${version}",
+	"name": "Beyond the Limits: Chapter One — The Neverending World",
+	"description": "Minecraft stops being Minecraft. Rifts tear open in the fabric of space and time, the Overworld bleeds into other realities, an Observer follows you from the fog, the sky is a lie, and everything you build is remembered by the world itself. Chapter One of Beyond the Limits: a reality-collapse survival experience with custom dimensions, procedural real-world mutation, GLSL-driven rifts, dimensional storms, evolutionary mobs and a seamless gate into the Backrooms.",
+	"authors": [
+		"Beyond the Limits"
+	],
+	"contact": {
+		"homepage": "https://github.com/Loganwall111/dddddd",
+		"sources": "https://github.com/Loganwall111/dddddd",
+		"issues": "https://github.com/Loganwall111/dddddd/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/beyondthelimits/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.beyondthelimits.BeyondTheLimits"
+		],
+		"client": [
+			"com.beyondthelimits.client.BeyondTheLimitsClient"
+		]
+	},
+	"mixins": [
+		"beyondthelimits.mixins.json",
+		{
+			"config": "beyondthelimits.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"iris": "*",
+		"sodium": "*"
+	}
+}

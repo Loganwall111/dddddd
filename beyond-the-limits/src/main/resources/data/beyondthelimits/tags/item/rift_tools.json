@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "beyondthelimits:rift_stabilizer",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:void_lens",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:reality_scanner",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:noclip_device",
+      "required": false
+    }
+  ]
+}

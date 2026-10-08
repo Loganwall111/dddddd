@@ -1,0 +1,15 @@
+# The generated texture/sound/model scripts are the source of truth for assets, so nothing here
+# needs ignoring beyond build output and IDE state.
+**/build/
+**/.gradle/
+**/out/
+**/classes/
+*.iml
+.idea/
+.vscode/
+.settings/
+bin/
+.classpath
+.project
+**/tools/node_modules/
+**/tools/package-lock.json

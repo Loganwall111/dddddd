@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "beyondthelimits:block/impossible_log"
+    },
+    "axis=z": {
+      "model": "beyondthelimits:block/impossible_log",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "beyondthelimits:block/impossible_log",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

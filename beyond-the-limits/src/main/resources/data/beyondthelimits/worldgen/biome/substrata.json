@@ -1,0 +1,43 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.1,
+  "downfall": 0.0,
+  "spawners": {
+    "monster": [
+      {
+        "type": "beyondthelimits:faceling",
+        "weight": 20,
+        "minCount": 1,
+        "maxCount": 2
+      },
+      {
+        "type": "beyondthelimits:memory_echo",
+        "weight": 10,
+        "minCount": 1,
+        "maxCount": 1
+      }
+    ],
+    "creature": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "effects": {
+    "sky_color": 0,
+    "fog_color": 262915,
+    "water_color": 1780282,
+    "water_fog_color": 329999
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ]
+}

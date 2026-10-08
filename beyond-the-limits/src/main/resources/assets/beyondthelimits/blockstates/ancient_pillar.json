@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "beyondthelimits:block/ancient_pillar"
+    },
+    "axis=z": {
+      "model": "beyondthelimits:block/ancient_pillar",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "beyondthelimits:block/ancient_pillar",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

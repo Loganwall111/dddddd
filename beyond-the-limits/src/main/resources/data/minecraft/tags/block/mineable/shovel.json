@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "beyondthelimits:corrupted_grass",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:corrupted_soil",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:backrooms_carpet",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:wrong_grass",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:impossible_grass",
+      "required": false
+    },
+    {
+      "id": "beyondthelimits:fog_moss",
+      "required": false
+    }
+  ]
+}
