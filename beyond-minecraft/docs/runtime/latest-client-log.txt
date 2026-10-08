@@ -1,53 +1,36 @@
-[15:49:31] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 10-tear colors=2037
-[15:49:31] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=20
-[15:49:31] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=20 started
-[15:49:31] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=20 ticks=3534 frames=866 screen=none
-[15:49:34] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 11-between colors=2131
-[15:49:34] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=21
-[15:49:34] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=21 started
-[15:49:36] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 12-fractal colors=1686
-[15:49:36] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=22
-[15:49:36] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=22 started
-[15:49:39] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 13-labyrinth colors=1786
-[15:49:39] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=23
-[15:49:39] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=23 started
-[15:49:41] [Server thread/INFO] (Beyond Minecraft) Beyond WORMHOLE refused at BlockPos{x=0, y=107, z=-6} in beyond:realm_00: inside_border=true y=107.62000000476837 bounds=[-64,320] loaded=true empty=false
-[15:49:43] [Server thread/INFO] (Beyond Minecraft) Beyond WORMHOLE refused at BlockPos{x=0, y=203, z=-6} in beyond:realm_00: inside_border=true y=203.62000000476837 bounds=[-64,320] loaded=true empty=false
-[15:49:44] [Server thread/INFO] (Beyond Minecraft) Beyond WORMHOLE refused at BlockPos{x=16, y=203, z=-6} in beyond:realm_00: inside_border=true y=203.62000000476837 bounds=[-64,320] loaded=true empty=false
-[15:49:45] [Server thread/INFO] (Beyond Minecraft) Beyond rift fissure opened: 197 blocks changed near 0, 170, 10
-[15:49:45] [Server thread/INFO] (Beyond Minecraft) Beyond wormhole opened for Player124 (52 blocks of flight, no geometry).
-[15:49:45] [Server thread/INFO] (Beyond Minecraft) BEYOND_WORMHOLE_PASS world=beyond:realm_00 mouth_from=(0.5, 224.0, 16.5)
-[15:49:46] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 14-time-tunnel colors=1861
-[15:49:46] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=24 started
-[15:49:47] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=24 ticks=3845 frames=1092 screen=none
-[15:49:52] [Server thread/INFO] (Beyond Minecraft) Beyond wormhole carried Player124 106.6 blocks along its corridor
-[15:49:52] [Server thread/INFO] (Beyond Minecraft) Beyond Umbrella: Player124 arrived in era 3 (PRIMEVAL)
-[15:49:52] [Render thread/INFO] (Minecraft) [System] [CHAT] Umbrella Effect · you returned to a branch from before the continents split.
-[15:49:52] [Server thread/INFO] (Beyond Minecraft) BEYOND_TUNNEL_RIDE peak=22.741043612535243 end_of_ride=108.9450494135604
-[15:49:52] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=25
-[15:49:52] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=25 started
-[15:50:02] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=4146 frames=1437 screen=none
-[15:50:17] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=4447 frames=1863 screen=none
-[15:50:32] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=4748 frames=2290 screen=none
-[15:50:47] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=5049 frames=2729 screen=none
-[15:51:02] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=5350 frames=3168 screen=none
-[15:51:17] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=5650 frames=3606 screen=none
-[15:51:32] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=5951 frames=4050 screen=none
-[15:51:47] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=6251 frames=4494 screen=none
-[15:52:02] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=6552 frames=4938 screen=none
-[15:52:17] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=6852 frames=5379 screen=none
-[15:52:32] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=7153 frames=5825 screen=none
-[15:52:47] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=7454 frames=6271 screen=none
-[15:53:02] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=7754 frames=6712 screen=none
-[15:53:17] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=8054 frames=7156 screen=none
-[15:53:32] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=8355 frames=7602 screen=none
-[15:53:47] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=25 ticks=8656 frames=8050 screen=none
-[15:53:52] [Render thread/ERROR] (Beyond Minecraft) BEYOND_CLIENT_INTEGRATION_FAIL stage=25
-java.lang.IllegalStateException: Stage stalled: 25
-	at knot/dev.logan.beyond.client.ClientSmoke.tick(ClientSmoke.java:76) ~[client/:?]
+[16:02:50] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=21
+[16:02:50] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=21 started
+[16:02:52] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 12-fractal colors=2087
+[16:02:52] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=22
+[16:02:52] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=22 started
+[16:02:55] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 13-labyrinth colors=1796
+[16:02:55] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=23
+[16:02:55] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=23 started
+[16:02:57] [Server thread/INFO] (Beyond Minecraft) Beyond WORMHOLE refused at BlockPos{x=0, y=107, z=-6} in beyond:realm_00: inside_border=true y=107.62000000476837 bounds=[-64,320] loaded=true empty=false
+[16:02:58] [Server thread/INFO] (Beyond Minecraft) Beyond WORMHOLE refused at BlockPos{x=0, y=203, z=-6} in beyond:realm_00: inside_border=true y=203.62000000476837 bounds=[-64,320] loaded=true empty=false
+[16:03:00] [Server thread/INFO] (Beyond Minecraft) Beyond WORMHOLE refused at BlockPos{x=16, y=203, z=-6} in beyond:realm_00: inside_border=true y=203.62000000476837 bounds=[-64,320] loaded=true empty=false
+[16:03:01] [Server thread/INFO] (Beyond Minecraft) Beyond rift fissure opened: 159 blocks changed near 0, 170, 10
+[16:03:01] [Server thread/INFO] (Beyond Minecraft) Beyond wormhole opened for Player577 (52 blocks of flight, no geometry).
+[16:03:01] [Server thread/INFO] (Beyond Minecraft) BEYOND_WORMHOLE_PASS world=beyond:realm_00 mouth_from=(0.5, 224.0, 16.5)
+[16:03:01] [Render thread/INFO] (Beyond Minecraft) BEYOND_HEARTBEAT stage=23 ticks=3185 frames=1336 screen=none
+[16:03:02] [Render thread/INFO] (Beyond Minecraft) BEYOND_SCREENSHOT 14-time-tunnel colors=1923
+[16:03:02] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=24 started
+[16:03:07] [Server thread/INFO] (Beyond Minecraft) Beyond wormhole carried Player577 106.6 blocks along its corridor
+[16:03:07] [Server thread/INFO] (Beyond Minecraft) Beyond Umbrella: Player577 arrived in era 3 (PRIMEVAL)
+[16:03:07] [Render thread/INFO] (Minecraft) [System] [CHAT] Umbrella Effect · you returned to a branch from before the continents split.
+[16:03:07] [Server thread/INFO] (Beyond Minecraft) BEYOND_TUNNEL_RIDE peak=22.741043612535243 end_of_ride=108.9450494135604
+[16:03:07] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=25
+[16:03:07] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=25 started
+[16:03:10] [Server thread/INFO] (Beyond Minecraft) BEYOND_UMBRELLA world=beyond:realm_00 era=3
+[16:03:10] [Server thread/INFO] (Beyond Minecraft) BEYOND_UMBRELLA queued era=GIANT_WOOD columns=49
+[16:03:10] [Server thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=26
+[16:03:10] [Render thread/INFO] (Beyond Minecraft) BEYOND_INTEGRATION stage=26 started
+[16:03:10] [Render thread/ERROR] (Beyond Minecraft) BEYOND_CLIENT_INTEGRATION_FAIL stage=26
+java.lang.IllegalStateException: server-side integration assertion
+	at knot/dev.logan.beyond.client.ClientSmoke.tick(ClientSmoke.java:79) ~[client/:?]
 	at knot/dev.logan.beyond.client.BeyondClient.lambda$onInitializeClient$4(BeyondClient.java:79) ~[client/:?]
 	at knot/net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.lambda$static$2(ClientTickEvents.java:43) ~[fabric-lifecycle-events-v1-client-2.3.12+6c1df3606a.jar:?]
-	at knot/net.minecraft.client.MinecraftClient.handler$zdf000$fabric-lifecycle-events-v1$onEndTick(MinecraftClient.java:3183) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.client.MinecraftClient.handler$zig000$fabric-lifecycle-events-v1$onEndTick(MinecraftClient.java:4183) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at knot/net.minecraft.client.MinecraftClient.tick(MinecraftClient.java:2012) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at knot/net.minecraft.client.MinecraftClient.render(MinecraftClient.java:1246) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
 	at knot/net.minecraft.client.MinecraftClient.run(MinecraftClient.java:882) [minecraft-clientOnly-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
@@ -56,45 +39,62 @@ java.lang.IllegalStateException: Stage stalled: 25
 	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:74) [fabric-loader-0.16.9.jar:?]
 	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.16.9.jar:?]
 	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
-[15:53:52] [Render thread/INFO] (Minecraft) Stopping!
-[15:53:52] [Server thread/INFO] (Minecraft) Player124 lost connection: Disconnected
-[15:53:52] [Server thread/INFO] (Minecraft) Player124 left the game
-[15:53:52] [Server thread/INFO] (Minecraft) Stopping singleplayer server as player logged out
-[15:53:52] [Server thread/INFO] (Minecraft) Stopping server
-[15:53:52] [Server thread/INFO] (Minecraft) Saving players
-[15:53:52] [Server thread/INFO] (Minecraft) Saving worlds
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_09
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_06
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_08
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_01
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_10
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_07
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_05
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_11
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_03
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_00
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_02
-[15:53:53] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_04
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (beyond-ci): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_09): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_06): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_08): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_01): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_10): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_07): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_05): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_11): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_03): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_00): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_02): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_04): All chunks are saved
-[15:53:53] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/client-1791474339940.json
+Caused by: java.lang.AssertionError: the Umbrella Effect must actually rewrite the world
+	at knot/dev.logan.beyond.client.ClientSmoke.require(ClientSmoke.java:564) ~[client/:?]
+	at knot/dev.logan.beyond.client.ClientSmoke.lambda$tick$26(ClientSmoke.java:410) ~[client/:?]
+	at knot/dev.logan.beyond.client.ClientSmoke.lambda$server$29(ClientSmoke.java:521) ~[client/:?]
+	at knot/net.minecraft.server.ServerTask.run(ServerTask.java:18) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ThreadExecutor.executeTask(ThreadExecutor.java:162) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ReentrantThreadExecutor.executeTask(ReentrantThreadExecutor.java:23) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.executeTask(MinecraftServer.java:864) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.executeTask(MinecraftServer.java:173) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ThreadExecutor.runTask(ThreadExecutor.java:136) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runOneTask(MinecraftServer.java:846) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runTask(MinecraftServer.java:840) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.util.thread.ThreadExecutor.runTasks(ThreadExecutor.java:121) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runTasksTillTickEnd(MinecraftServer.java:814) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:702) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at knot/net.minecraft.server.MinecraftServer.method_29739(MinecraftServer.java:281) ~[minecraft-common-c2b31d572c-1.21.1-net.fabricmc.yarn.1_21_1.1.21.1+build.3-v2.jar:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[?:?]
+[16:03:10] [Render thread/INFO] (Minecraft) Stopping!
+[16:03:10] [Server thread/INFO] (Minecraft) Player577 lost connection: Disconnected
+[16:03:10] [Server thread/INFO] (Minecraft) Player577 left the game
+[16:03:10] [Server thread/INFO] (Minecraft) Stopping singleplayer server as player logged out
+[16:03:10] [Server thread/INFO] (Minecraft) Stopping server
+[16:03:10] [Server thread/INFO] (Minecraft) Saving players
+[16:03:10] [Server thread/INFO] (Minecraft) Saving worlds
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_01
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_07
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_04
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_08
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_10
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_05
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_09
+[16:03:11] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_00
+[16:03:12] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_11
+[16:03:12] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[16:03:12] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_06
+[16:03:12] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_02
+[16:03:12] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyond:realm_03
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (beyond-ci): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_01): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_07): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_04): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_08): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_10): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_05): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_09): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_00): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_11): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_06): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_02): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (realm_03): All chunks are saved
+[16:03:12] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/client-1791475178040.json
 
-BUILD SUCCESSFUL in 8m 18s
+BUILD SUCCESSFUL in 3m 37s
 9 actionable tasks: 2 executed, 7 up-to-date
