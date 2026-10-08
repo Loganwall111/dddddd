@@ -12,10 +12,6 @@
     {
       "id": "beyondthelimits:reality_scanner",
       "required": false
-    },
-    {
-      "id": "beyondthelimits:noclip_device",
-      "required": false
     }
   ]
 }

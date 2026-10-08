@@ -47,11 +47,9 @@ import net.minecraft.world.World;
 /**
  * The mod's command surface.
  *
- * <p>Everything the mod can do to a world can be done from here, because a survival experience this
- * strange has to be inspectable: the commands exist so that a player (or a streamer, or a server
- * operator) can look at the machinery rather than guess at it. All of them require operator
- * permissions except {@code /beyondthelimits where}, which only tells the player what they can already
- * see if they read the guide.</p>
+ * <p>Every world-changing/testing command requires operator permission. Read-only status, location and
+ * anomaly-list commands remain available to players; {@code /beyondthelimits where} only reports what
+ * the player can already learn from the guide.</p>
  */
 public final class BtlCommands {
 	private BtlCommands() {
@@ -60,13 +58,11 @@ public final class BtlCommands {
 	public static void register() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			LiteralArgumentBuilder<ServerCommandSource> root = CommandManager.literal("beyondthelimits")
-					.executes(BtlCommands::status)
 					.then(CommandManager.literal("status").executes(BtlCommands::status))
 					.then(CommandManager.literal("where").executes(BtlCommands::where))
-					.then(CommandManager.literal("backrooms").executes(context -> enterBackrooms(context.getSource())))
-					.then(CommandManager.literal("city").executes(BtlCommands::city))
-					.then(CommandManager.literal("lastchunk").executes(BtlCommands::lastChunk))
-					.then(CommandManager.literal("storm")
+					.then(CommandManager.literal("city").requires(source -> source.hasPermissionLevel(2)).executes(BtlCommands::city))
+					.then(CommandManager.literal("lastchunk").requires(source -> source.hasPermissionLevel(2)).executes(BtlCommands::lastChunk))
+					.then(CommandManager.literal("storm").requires(source -> source.hasPermissionLevel(2))
 							.executes(context -> storm(context, 2, 2400))
 							.then(CommandManager.argument("intensity", IntegerArgumentType.integer(1, 3))
 									.executes(context -> storm(context, IntegerArgumentType.getInteger(context, "intensity"), 2400))
@@ -74,24 +70,24 @@ public final class BtlCommands {
 											.executes(context -> storm(context,
 													IntegerArgumentType.getInteger(context, "intensity"),
 													IntegerArgumentType.getInteger(context, "duration"))))))
-					.then(CommandManager.literal("blacksun")
+					.then(CommandManager.literal("blacksun").requires(source -> source.hasPermissionLevel(2))
 							.executes(context -> blackSun(context, -1))
 							.then(CommandManager.argument("stage", IntegerArgumentType.integer(1, BtlConfig.BLACK_SUN_MAX_STAGE))
 									.executes(context -> blackSun(context, IntegerArgumentType.getInteger(context, "stage")))))
-					.then(CommandManager.literal("reality")
+					.then(CommandManager.literal("reality").requires(source -> source.hasPermissionLevel(2))
 							.then(CommandManager.argument("value", IntegerArgumentType.integer(0, 100))
 									.executes(context -> reality(context, IntegerArgumentType.getInteger(context, "value")))))
-					.then(CommandManager.literal("dementia")
+					.then(CommandManager.literal("dementia").requires(source -> source.hasPermissionLevel(2))
 							.then(CommandManager.argument("value", IntegerArgumentType.integer(0, BtlConfig.DEMENTIA_MAX))
 									.executes(context -> dementia(context, IntegerArgumentType.getInteger(context, "value")))))
-					.then(CommandManager.literal("signal").executes(BtlCommands::signal))
-					.then(CommandManager.literal("dimension")
+					.then(CommandManager.literal("signal").requires(source -> source.hasPermissionLevel(2)).executes(BtlCommands::signal))
+					.then(CommandManager.literal("dimension").requires(source -> source.hasPermissionLevel(2))
 							.then(CommandManager.argument("key", StringArgumentType.word())
 									.executes(context -> dimension(context, StringArgumentType.getString(context, "key")))))
-					.then(CommandManager.literal("guide").executes(BtlCommands::guide))
-					.then(CommandManager.literal("rift").executes(BtlCommands::rift))
+					.then(CommandManager.literal("guide").requires(source -> source.hasPermissionLevel(2)).executes(BtlCommands::guide))
+					.then(CommandManager.literal("rift").requires(source -> source.hasPermissionLevel(2)).executes(BtlCommands::rift))
 					.then(CommandManager.literal("anomalies").executes(BtlCommands::anomalies))
-					.then(CommandManager.literal("evolve")
+					.then(CommandManager.literal("evolve").requires(source -> source.hasPermissionLevel(2))
 							.then(CommandManager.argument("family", StringArgumentType.word())
 									.then(CommandManager.argument("stage", IntegerArgumentType.integer(1, 5))
 											.executes(context -> evolve(context,
@@ -100,10 +96,6 @@ public final class BtlCommands {
 
 			CommandNode<ServerCommandSource> rootNode = dispatcher.register(root);
 
-			// /backrooms: the shorthand players will actually type.
-			dispatcher.register(CommandManager.literal("backrooms")
-					.requires(source -> source.hasPermissionLevel(2))
-					.executes(context -> enterBackrooms(context.getSource())));
 			// /btl is the alias streamers actually read out loud.
 			dispatcher.register(CommandManager.literal("btl").redirect(rootNode));
 		});
@@ -145,7 +137,7 @@ public final class BtlCommands {
 		return 1;
 	}
 
-	/** The command implementation of {@code /teleport backrooms} and {@code /backrooms}. */
+	/** The sole command implementation of {@code /teleport backrooms}. */
 	public static int enterBackrooms(ServerCommandSource source) {
 		ServerPlayerEntity player = source.getPlayer();
 
@@ -153,7 +145,7 @@ public final class BtlCommands {
 			return 0;
 		}
 
-		BackroomsEngine.enterViaNoclipDevice(player);
+		BackroomsEngine.enterViaTeleportCommand(player);
 		source.sendFeedback(() -> Text.translatable("command.beyondthelimits.backrooms").formatted(Formatting.YELLOW), false);
 		return 1;
 	}
@@ -267,7 +259,6 @@ public final class BtlCommands {
 			case "overworld" -> World.OVERWORLD;
 			case "nether" -> World.NETHER;
 			case "end" -> World.END;
-			case "backrooms" -> BtlDimensions.BACKROOMS;
 			case "foglands", "fog" -> BtlDimensions.FOGLANDS;
 			case "codescape", "codeverse", "code" -> BtlDimensions.CODESCAPE;
 			case "mirrorworld", "mirror" -> BtlDimensions.MIRRORWORLD;

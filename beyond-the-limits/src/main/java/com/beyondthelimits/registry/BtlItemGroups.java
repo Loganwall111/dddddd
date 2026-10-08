@@ -22,7 +22,6 @@ public final class BtlItemGroups {
 						entries.add(BtlItems.GUIDEBOOK);
 						entries.add(BtlItems.REALITY_SCANNER);
 						entries.add(BtlItems.DIMENSIONAL_GAUGE);
-						entries.add(BtlItems.NOCLIP_DEVICE);
 
 						entries.add(BtlBlocks.CORRUPTED_GRASS);
 						entries.add(BtlBlocks.CORRUPTED_SOIL);

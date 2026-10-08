@@ -52,9 +52,9 @@ The fastest way to see everything is to run these in order:
 /beyondthelimits rift              # a rift at your feet; walk into it
 /beyondthelimits city              # coordinates of the City and its warehouse
 /beyondthelimits blacksun 5        # the sun is replaced, and it is approaching
-/beyondthelimits storm 1.0        # everything the weather can do, permanently
+/beyondthelimits storm 1          # everything the weather can do, permanently
 /beyondthelimits reality 20        # band 4: sky cracks, impossible geometry, journal damage
-/backrooms                         # the gate, and a way out you have to find
+/teleport backrooms                # the sole command route; the warehouse gate and dementia fall remain in-world routes
 ```
 
 The journal (`G`) tracks what you have witnessed and gates its own pages accordingly, so a fresh
@@ -78,6 +78,9 @@ The texture, model and datapack generators need nothing but the Python standard 
 ## Static checks available without a JDK
 
 ```bash
+python3 tools/check_imports.py
+python3 tools/check_lang.py
+python3 tools/check_mod_invariants.py
 cd tools
 node syn.js ../src/main/java      # parses every Java file, reports files/failed
 python3 yarn_index.py audit ../src/main/java

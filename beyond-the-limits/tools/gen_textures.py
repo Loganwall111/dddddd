@@ -647,15 +647,6 @@ def _(c):
     c.set(10, 2, rgba("6E7377"))
 
 
-@item("noclip_device")
-def _(c):
-    c.rect(4, 1, 11, 14, rgba("383E45"))
-    c.rect(5, 2, 10, 9, rgba("0E1114"))
-    c.line(6, 8, 9, 3, rgba("A855F7", 230), 1)
-    c.line(6, 3, 9, 8, rgba("E9D5FF", 200), 1)
-    c.rect(6, 11, 9, 13, rgba("22C55E", 200))
-
-
 @item("memory_shard")
 def _(c):
     c.line(8, 1, 3, 9, rgba("BFE6FF", 240), 1)

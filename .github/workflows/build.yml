@@ -38,6 +38,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Static checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/check_imports.py 2>&1 | tee build-output.txt
+          python3 tools/check_lang.py 2>&1 | tee -a build-output.txt
+          python3 tools/check_mod_invariants.py 2>&1 | tee -a build-output.txt
+
       - name: Make the wrapper executable
         run: chmod +x gradlew
 
@@ -55,7 +63,7 @@ jobs:
           {
             echo "### javac / Gradle errors"
             echo '```'
-            grep -nE "error:|FAILED|Execution failed|What went wrong|Caused by|Could not|Unresolved" build-output.txt | head -200
+            grep -nEi "error:|failed|Execution failed|What went wrong|Caused by|Could not|Unresolved|missing lang|unimported vanilla|invariant failed" build-output.txt | head -200 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

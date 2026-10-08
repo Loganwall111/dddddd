@@ -68,7 +68,7 @@ BLOCKS = {
 }
 
 ITEMS = [
-    "guidebook", "reality_scanner", "dimensional_gauge", "noclip_device", "memory_shard",
+    "guidebook", "reality_scanner", "dimensional_gauge", "memory_shard",
     "signal_receiver", "rift_stabilizer", "void_lens", "storm_beacon", "ancient_tablet",
     "reality_warhead", "reality_fragment", "black_sun_fragment", "code_key",
 ]

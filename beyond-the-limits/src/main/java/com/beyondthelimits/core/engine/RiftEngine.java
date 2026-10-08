@@ -57,25 +57,24 @@ public final class RiftEngine {
 		int roll = random.nextInt(100);
 
 		if (reality > 80) {
-			return roll < 55 ? RiftEntity.VARIANT_OVERWORLD_SHARD : RiftEntity.VARIANT_BACKROOMS;
+			return roll < 55 ? RiftEntity.VARIANT_OVERWORLD_SHARD : RiftEntity.VARIANT_FOGLANDS;
 		}
 
 		if (reality > 55) {
 			return roll < 30 ? RiftEntity.VARIANT_OVERWORLD_SHARD
-					: roll < 60 ? RiftEntity.VARIANT_BACKROOMS : RiftEntity.VARIANT_FOGLANDS;
+					: roll < 60 ? RiftEntity.VARIANT_FOGLANDS : RiftEntity.VARIANT_CODESCAPE;
 		}
 
 		if (reality > 30) {
 			return roll < 20 ? RiftEntity.VARIANT_OVERWORLD_SHARD
-					: roll < 45 ? RiftEntity.VARIANT_BACKROOMS
-					: roll < 70 ? RiftEntity.VARIANT_FOGLANDS : RiftEntity.VARIANT_CODESCAPE;
+					: roll < 45 ? RiftEntity.VARIANT_FOGLANDS
+					: roll < 70 ? RiftEntity.VARIANT_CODESCAPE : RiftEntity.VARIANT_MIRROR;
 		}
 
 		return roll < 15 ? RiftEntity.VARIANT_OVERWORLD_SHARD
-				: roll < 35 ? RiftEntity.VARIANT_BACKROOMS
-				: roll < 55 ? RiftEntity.VARIANT_FOGLANDS
-				: roll < 75 ? RiftEntity.VARIANT_CODESCAPE
-				: roll < 90 ? RiftEntity.VARIANT_MIRROR : RiftEntity.VARIANT_COLLISION;
+				: roll < 35 ? RiftEntity.VARIANT_FOGLANDS
+				: roll < 55 ? RiftEntity.VARIANT_CODESCAPE
+				: roll < 75 ? RiftEntity.VARIANT_MIRROR : RiftEntity.VARIANT_COLLISION;
 	}
 
 	public static void tick(MinecraftServer server, int ticks) {

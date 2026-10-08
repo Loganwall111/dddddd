@@ -1,7 +1,6 @@
 package com.beyondthelimits.entity;
 
 import com.beyondthelimits.core.BtlState;
-import com.beyondthelimits.core.engine.BackroomsEngine;
 import com.beyondthelimits.core.engine.RiftEngine;
 import com.beyondthelimits.registry.BtlDimensions;
 import com.beyondthelimits.registry.BtlParticles;
@@ -20,10 +19,8 @@ import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 /**
@@ -306,17 +303,4 @@ public class RiftEntity extends Entity {
 		return distance < 64.0D * 64.0D;
 	}
 
-	/** The Backrooms gate uses this: a rift that is really a floor. */
-	public static RiftEntity createBackroomsGate(ServerWorld world, Vec3d pos) {
-		RiftEntity rift = new RiftEntity(com.beyondthelimits.registry.BtlEntities.RIFT, world);
-		rift.setPosition(pos);
-		rift.setVariant(VARIANT_BACKROOMS);
-		rift.setMode(MODE_SEAMLESS);
-		rift.setRadius(3.2F);
-		rift.setPermanent(true);
-		rift.setInvading(false);
-		BackroomsEngine.registerGate(world, BlockPos.ofFloored(pos));
-		world.spawnEntity(rift);
-		return rift;
-	}
 }

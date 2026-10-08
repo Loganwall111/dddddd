@@ -5,7 +5,6 @@ import com.beyondthelimits.item.AncientTabletItem;
 import com.beyondthelimits.item.DimensionalGaugeItem;
 import com.beyondthelimits.item.GuidebookItem;
 import com.beyondthelimits.item.MemoryShardItem;
-import com.beyondthelimits.item.NoclipDeviceItem;
 import com.beyondthelimits.item.RealityScannerItem;
 import com.beyondthelimits.item.RealityWarheadItem;
 import com.beyondthelimits.item.RiftStabilizerItem;
@@ -34,8 +33,6 @@ public final class BtlItems {
 			new RealityScannerItem(new Item.Settings().maxCount(1).rarity(Rarity.UNCOMMON)));
 	public static final Item DIMENSIONAL_GAUGE = register("dimensional_gauge",
 			new DimensionalGaugeItem(new Item.Settings().maxCount(1).rarity(Rarity.UNCOMMON)));
-	public static final Item NOCLIP_DEVICE = register("noclip_device",
-			new NoclipDeviceItem(new Item.Settings().maxCount(16).rarity(Rarity.RARE)));
 	public static final Item MEMORY_SHARD = register("memory_shard",
 			new MemoryShardItem(new Item.Settings().maxCount(64).rarity(Rarity.UNCOMMON)));
 	public static final Item SIGNAL_RECEIVER = register("signal_receiver",
@@ -62,7 +59,7 @@ public final class BtlItems {
 	}
 
 	public static void register() {
-		BeyondTheLimits.LOGGER.debug("[Beyond the Limits] Items registered: guide, scanners, noclip device, "
+		BeyondTheLimits.LOGGER.debug("[Beyond the Limits] Items registered: guide, scanners, "
 				+ "memory shard, signal receiver, stabilizer, lens, beacon, tablet, warhead, fragments, code key");
 	}
 }

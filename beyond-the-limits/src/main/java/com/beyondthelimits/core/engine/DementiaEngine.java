@@ -25,7 +25,7 @@ import net.minecraft.text.Text;
  *     disagreeing with the world;</li>
  *     <li>{@link BtlConfig#DEMENTIA_FALL_THROUGH}: Corrupted Land stops being solid under you;</li>
  *     <li>{@link BtlConfig#DEMENTIA_NOCLIP}: the moment you next touch corruption you are pulled
- *     out of the world entirely and dropped into the Backrooms — the mod's canonical third entrance,
+ *     out of the world entirely and dropped into the Backrooms — the mod's second entrance,
  *     and the only one that happens to you instead of you doing it.</li>
  * </ul>
  *

@@ -1,6 +1,7 @@
 package com.beyondthelimits;
 
-import com.beyondthelimits.core.BtlEngine;
+import com.beyondthelimits.command.BtlCommands;
+import com.beyondthelimits.network.BtlNetworking;
 import com.beyondthelimits.registry.BtlBlockEntities;
 import com.beyondthelimits.registry.BtlBlocks;
 import com.beyondthelimits.registry.BtlChunkGenerators;
@@ -13,8 +14,6 @@ import com.beyondthelimits.registry.BtlSounds;
 import com.beyondthelimits.registry.BtlStatusEffects;
 import com.beyondthelimits.world.BtlWorldEvents;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,11 +71,12 @@ public class BeyondTheLimits implements ModInitializer {
 		BtlChunkGenerators.register();
 		BtlDimensions.register();
 
+		// These callbacks are common-side: payload types must exist before the first login, and the
+		// command tree must be registered before a server builds its dispatcher.
+		BtlNetworking.registerPayloadTypes();
+		BtlCommands.register();
+		// Owns the single server lifecycle/tick subscription as well as join, sleep, and world events.
 		BtlWorldEvents.register();
-
-		ServerLifecycleEvents.SERVER_STARTED.register(BtlEngine::onServerStarted);
-		ServerLifecycleEvents.SERVER_STOPPING.register(BtlEngine::onServerStopping);
-		ServerTickEvents.END_SERVER_TICK.register(BtlEngine::tick);
 
 		LOGGER.info("[Beyond the Limits] Chapter One online — reality is now a resource");
 	}

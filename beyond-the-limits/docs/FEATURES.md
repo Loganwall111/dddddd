@@ -44,9 +44,9 @@ document to read if you want to know whether something is real, where it is, and
 | Reachable via a **seamless portal** | `world/BtlPortal` — the crossing is a volume plus a lens, never a block frame |
 | Special grass | `CorruptedGrassBlock` (spreads, and can be broken through) |
 | Staying too long in dimensions → dementia → the Overworld corrupts on return | `DementiaEngine`, `BtlStatusEffects.DEMENTIA`, `BtlStatusEffects.DIMENSIONAL_GRAVITY` |
-| Falling through corrupted grass → drop into the Backrooms | `CorruptedGrassBlock` + `world/gen/BackroomsChunkGenerator` + `BackroomsEngine.enterViaNoclip` |
+| Falling through corrupted grass → drop into the Backrooms | `CorruptedGrassBlock` + `world/gen/BackroomsChunkGenerator` + `BackroomsEngine.enterViaCorruptedGrass` |
 | Procedural maze: strange stairs → pool rooms, hunting entities, endless stores, glitchy environments, enormous cities, nonsensical structures | `BackroomsChunkGenerator` (five room archetypes plus vertical stacking and the pool descent) |
-| **Exactly three entries**: the warehouse rift, the fall, and `/teleport backrooms` | `RiftEntity.createBackroomsGate`, `BackroomsEngine.enterViaNoclipDevice`, `mixin/TeleportCommandMixin` |
+| **Exactly three entries**: the warehouse rift, the fall, and `/teleport backrooms` | `CityGenerator` → `BackroomsEngine.registerGate`, `DementiaEngine` → `BackroomsEngine.enterViaCorruptedGrass`, `mixin/TeleportCommandMixin` |
 | A guidebook on first spawn, directing the player to the City and the warehouse | `LoreEngine.giveStartingGuide`, `world/BtlWorldEvents`, `client/screen/GuidebookScreen` |
 | The City at a seed-based location, with stories and buildings | `CityGenerator` — grid streets, blocks, warehouses, stories per district |
 
@@ -68,6 +68,5 @@ document to read if you want to know whether something is real, where it is, and
 - **A storm beacon** that calls a dimensional storm onto your own coordinates.
 - **The Void Lens**, which shows you things that are actually there but not rendered.
 - **The Reality Warhead**, which damages reality itself rather than the terrain.
-- **Noclip Device** — deliberate, controlled falling out of the world.
 - **Memory Shards** — carry a piece of a place with you and put it back later.
 - **The Dimensional Gauge** — real-time readout of which dimension is currently leaning on you.

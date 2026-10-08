@@ -50,8 +50,8 @@ import net.minecraft.world.World;
  *     of the Old City (found through the guidebook);</li>
  *     <li>{@linkplain #enterViaCorruptedGrass falling through corrupted ground} once dementia has
  *     taken hold;</li>
- *     <li>{@linkplain #enterViaNoclipDevice the noclip device}, which is the player doing it to
- *     themselves on purpose.</li>
+ *     <li>{@linkplain #enterViaTeleportCommand the {@code /teleport backrooms} command}, the sole
+ *     command-based route.</li>
  * </ol>
  */
 public final class BackroomsEngine {
@@ -148,7 +148,7 @@ public final class BackroomsEngine {
 
 			player.sendMessage(Text.translatable("message.beyondthelimits.backrooms.fall"), false);
 			BtlNetworking.sendScreenEffect(player, BtlNetworking.EFFECT_FLASH, 0.8F, 30);
-			BtlNetworking.broadcastScreenEffect(player.getServer(), BtlNetworking.EFFECT_NOCLIP, 0.6F, 40);
+			BtlNetworking.sendScreenEffect(player, BtlNetworking.EFFECT_NOCLIP, 0.6F, 40);
 			backrooms.playSound(null, BlockPos.ofFloored(player.getX(), FLOOR_Y, player.getZ()),
 					BtlSounds.NOCLIP_WHOOSH, SoundCategory.AMBIENT, 1.0F, 0.5F);
 			dropIn(backrooms, player);
@@ -156,18 +156,16 @@ public final class BackroomsEngine {
 		});
 	}
 
-	/** Entrance 3: the noclip device. Deliberate, and it hurts. */
-	public static void enterViaNoclipDevice(ServerPlayerEntity player) {
-		BtlSafe.guard("backrooms.enter_device", () -> {
+	/** Entrance 3: the single command-based route, {@code /teleport backrooms}. */
+	public static void enterViaTeleportCommand(ServerPlayerEntity player) {
+		BtlSafe.guard("backrooms.enter_command", () -> {
 			ServerWorld backrooms = player.getServer().getWorld(BtlDimensions.BACKROOMS);
 
 			if (backrooms == null) {
 				return;
 			}
 
-			BtlState.get().setDementia(player.getUuid(), BtlState.get().dementia(player.getUuid()) + 120);
-			BtlNetworking.sendScreenEffect(player, BtlNetworking.EFFECT_NOCLIP, 1.0F, 60);
-			player.sendMessage(Text.translatable("message.beyondthelimits.backrooms.noclip"), false);
+			BtlNetworking.sendScreenEffect(player, BtlNetworking.EFFECT_RIFT_WASH, 0.9F, 40);
 			dropIn(backrooms, player);
 		});
 	}

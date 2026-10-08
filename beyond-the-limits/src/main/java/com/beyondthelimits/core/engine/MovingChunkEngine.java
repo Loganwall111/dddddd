@@ -182,7 +182,7 @@ public final class MovingChunkEngine {
 
 		// Panicking: whatever is chasing it is briefly visible behind it.
 		if (panicked) {
-			RiftEngine.spawnRiftAt(world, centre.add(0, 3, 0), RiftEntity.VARIANT_BACKROOMS, true);
+			RiftEngine.spawnRiftAt(world, centre.add(0, 3, 0), RiftEntity.VARIANT_FOGLANDS, true);
 			BtlNetworking.broadcastScreenEffect(world.getServer(), BtlNetworking.EFFECT_RIFT_WASH, 0.4F, 40);
 		}
 	}

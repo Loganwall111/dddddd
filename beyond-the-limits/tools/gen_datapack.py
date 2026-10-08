@@ -28,7 +28,7 @@ BLOCKS = [
 ]
 
 ITEMS = [
-    "guidebook", "reality_scanner", "dimensional_gauge", "noclip_device", "memory_shard",
+    "guidebook", "reality_scanner", "dimensional_gauge", "memory_shard",
     "signal_receiver", "rift_stabilizer", "void_lens", "storm_beacon", "ancient_tablet",
     "reality_warhead", "reality_fragment", "black_sun_fragment", "code_key",
 ]
@@ -320,7 +320,6 @@ def main():
             {"id": "beyondthelimits:rift_stabilizer", "required": False},
             {"id": "beyondthelimits:void_lens", "required": False},
             {"id": "beyondthelimits:reality_scanner", "required": False},
-            {"id": "beyondthelimits:noclip_device", "required": False},
         ],
     })
 

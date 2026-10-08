@@ -18,8 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * replacing it: {@code /teleport 15 64 15} and {@code /teleport backrooms} coexist, and the new branch
  * inherits the vanilla command's permission checks.</p>
  *
- * <p>{@code require = 0}: the mod's own {@code /beyondthelimits backrooms} always exists, so this
- * convenience can fail softly on an unusual mapping without taking the game down with it.</p>
+ * <p>{@code require = 0}: the two in-world entrances remain available if this convenience cannot
+ * be grafted onto an unusual command mapping, so the mixin can fail softly without taking the game down.</p>
  */
 @Mixin(TeleportCommand.class)
 public class TeleportCommandMixin {
