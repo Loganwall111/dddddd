@@ -8,7 +8,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import java.util.HashMap;
 import java.util.List;
@@ -113,9 +115,23 @@ public final class Tunnels {
         Vec3d exit = session.exit;
         var landing = SafeLanding.find(destination, new Vec3d(exit.x, Math.min(exit.y, 160), exit.z),
             player.getWidth(), player.getHeight(), false, Blocks.BARRIER);
-        Vec3d target = landing.orElse(session.origin);
+        Vec3d target = landing.orElseGet(() -> corridorEnd(destination, player, exit));
         Umbrella.shift(player, destination, target);
         destination.playSound(null, target.x, target.y, target.z, SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, .6f, .6f);
+    }
+
+    /**
+     * Where the walker arrives when there is no floor within reach of the corridor's end — open
+     * water, a canopy gap, the void under a floating island. They are put at the corridor's own end,
+     * above whatever the column's surface is, and fall the last few blocks. Returning them to where
+     * they started is the one answer that is never right: it silently undoes the entire ride.
+     */
+    private static Vec3d corridorEnd(ServerWorld world, ServerPlayerEntity player, Vec3d exit) {
+        BlockPos column = BlockPos.ofFloored(exit.x, exit.y, exit.z);
+        world.getChunk(column);   // synchronous, exactly one column, never permanently force-loaded
+        int surface = world.getTopPosition(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, column).getY();
+        double feet = Math.min(Math.max(surface, world.getBottomY() + 2), world.getTopY() - Math.ceil(player.getHeight()) - 2);
+        return new Vec3d(column.getX() + .5, feet, column.getZ() + .5);
     }
 
     public static void disconnect(ServerPlayerEntity player) { end(player, false); }

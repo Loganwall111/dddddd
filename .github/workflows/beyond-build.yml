@@ -155,6 +155,14 @@ jobs:
             cp "$jar" releases/
             git add -f "releases/$(basename "$jar")"
           done
+          # Keep the checked-in checksum list describing the checked-in JARs: the archive is rebuilt
+          # every run, so its hash changes even when the sources do not.
+          {
+            echo '# Beyond Minecraft alpha snapshots. Regenerate with: sha256sum releases/*.jar'
+            echo '# The authoritative machine-readable record for the newest green run is docs/runtime/verification.json.'
+            (cd releases && sha256sum *.jar)
+          } > releases/SHA256SUMS.txt
+          git add -f releases/SHA256SUMS.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/runtime
