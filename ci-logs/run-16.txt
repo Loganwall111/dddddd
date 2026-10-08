@@ -1,0 +1,140 @@
+Fetching distribution.
+Downloading https://services.gradle.org/distributions/gradle-8.12-bin.zip
+.............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
+
+Welcome to Gradle 8.12!
+
+Here are the highlights of this release:
+ - Enhanced error and warning reporting with the Problems API
+ - File-system watching support on Alpine Linux
+ - Build and test Swift 6 libraries and apps
+
+For more details see https://docs.gradle.org/8.12/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.9.2
+:remapping 51 mods from modImplementation (java-api)
+
+duplicate input class net/fabricmc/fabric/mixin/tag/package-info, from /home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc.fabric-api/fabric-convention-tags-v2/2.12.0+c3656daa19/45cd5f071ec42e13b8b6ce15c8f83db322da2494/fabric-convention-tags-v2-2.12.0+c3656daa19.jar and /home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc.fabric-api/fabric-tag-api-v1/1.3.0+1eb36c0719/ba08d91572b12cd23a2d7a193ed45c26f8da62b0/fabric-tag-api-v1-1.3.0+1eb36c0719.jar
+
+> Task :compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: /home/runner/work/dddddd/dddddd/beyond-the-limits/src/main/java/com/beyondthelimits/core/engine/RiftEngine.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :processResources
+Build file '/home/runner/work/dddddd/dddddd/beyond-the-limits/build.gradle': line 46
+Invocation of Task.project at execution time has been deprecated. This will fail with an error in Gradle 10.0. This API is incompatible with the configuration cache, which will become the only mode supported by Gradle in a future release. Consult the upgrading guide for further information: https://docs.gradle.org/8.12/userguide/upgrading_version_7.html#task_project
+	at build_60h0brg7mrglxo2y6zn2pl8bu$_run_closure5$_closure12.doCall$original(/home/runner/work/dddddd/dddddd/beyond-the-limits/build.gradle:46)
+	(Run with --stacktrace to get the full stack trace of this deprecation warning.)
+
+> Task :classes
+
+> Task :jar
+Build file '/home/runner/work/dddddd/dddddd/beyond-the-limits/build.gradle': line 63
+Invocation of Task.project at execution time has been deprecated. This will fail with an error in Gradle 10.0. This API is incompatible with the configuration cache, which will become the only mode supported by Gradle in a future release. Consult the upgrading guide for further information: https://docs.gradle.org/8.12/userguide/upgrading_version_7.html#task_project
+	at build_60h0brg7mrglxo2y6zn2pl8bu$_run_closure8$_closure13$_closure14.doCall$original(/home/runner/work/dddddd/dddddd/beyond-the-limits/build.gradle:63)
+	(Run with --stacktrace to get the full stack trace of this deprecation warning.)
+
+> Task :compileTestJava NO-SOURCE
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener NO-SOURCE
+> Task :check UP-TO-DATE
+> Task :remapJar
+> Task :remapSourcesJar
+> Task :assemble
+> Task :build
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1791498336006.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/dddddd/dddddd/beyond-the-limits/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 59s
+7 actionable tasks: 7 executed
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for black_sun
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for reality_warhead
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for smiler
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for hound
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for skin_stealer
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for partygoer
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for faceling
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for fog_shade
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for fog_walker
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for code_wraith
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for giant_insect
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for evolved_zombie
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for hunter_skeleton
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for ambush_spider
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for hiding_creeper
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for mirror_double
+[22:26:44] [main/ERROR] (Minecraft) No data fixer registered for memory_echo
+[22:26:44] [main/INFO] (BeyondTheLimits) [Beyond the Limits] Chapter One online — reality is now a resource
+[22:26:44] [main/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[22:26:45] [main/INFO] (Minecraft) No existing world data, creating new world
+[22:26:46] [main/INFO] (Minecraft) Loaded 1290 recipes
+[22:26:46] [main/INFO] (Minecraft) Loaded 1399 advancements
+[22:26:46] [main/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 71 new biomes in 1.300 ms
+[22:26:46] [Server thread/INFO] (Minecraft) Starting minecraft server version 1.21.1
+[22:26:46] [Server thread/INFO] (Minecraft) Loading properties
+[22:26:46] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[22:26:46] [Server thread/INFO] (Minecraft) Generating keypair
+[22:26:46] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:0
+[22:26:47] [Server thread/INFO] (Minecraft) Using epoll channel type
+[22:26:47] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[22:26:47] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[22:26:47] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[22:26:47] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[22:26:47] [Server thread/INFO] (Minecraft) Preparing level "world"
+[22:26:51] [Server thread/INFO] (Minecraft) Preparing start region for dimension minecraft:overworld
+[22:26:51] [Worker-Main-3/INFO] (Minecraft) Preparing spawn area: 2%
+[22:26:52] [Worker-Main-1/INFO] (Minecraft) Preparing spawn area: 2%
+[22:26:52] [Worker-Main-2/INFO] (Minecraft) Preparing spawn area: 2%
+[22:26:53] [Worker-Main-3/INFO] (Minecraft) Preparing spawn area: 18%
+[22:26:53] [Worker-Main-2/INFO] (Minecraft) Preparing spawn area: 18%
+[22:26:54] [Worker-Main-3/INFO] (Minecraft) Preparing spawn area: 51%
+[22:26:54] [Worker-Main-3/INFO] (Minecraft) Preparing spawn area: 51%
+[22:26:54] [Server thread/INFO] (Minecraft) Time elapsed: 3457 ms
+[22:26:54] [Server thread/INFO] (Minecraft) Done (7.888s)! For help, type "help"
+[22:26:54] [Server thread/WARN] (TranslationConventionLogWarnings) 
+	Dev warning - Untranslated Item Tags detected. Please translate your item tags so other mods such as recipe viewers can properly display your tag's name.
+	The format desired is tag.item.<namespace>.<path> for the translation key with slashes in path turned into periods.
+	To disable this message, set this system property in your runs: `-Dfabric-tag-conventions-v2.missingTagTranslationWarning=SILENCED`.
+	To see individual untranslated item tags found, set the system property to `-Dfabric-tag-conventions-v2.missingTagTranslationWarning=VERBOSE`.
+	Default is `SHORT`.
+
+[22:26:56] [Server thread/INFO] (Minecraft) Stopping the server
+[22:26:56] [Server thread/INFO] (Minecraft) Stopping server
+[22:26:56] [Server thread/INFO] (Minecraft) Saving players
+[22:26:56] [Server thread/INFO] (Minecraft) Saving worlds
+[22:26:57] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyondthelimits:the_impossible
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyondthelimits:wrongworld
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyondthelimits:the_foglands
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyondthelimits:codescape
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyondthelimits:mirrorworld
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyondthelimits:backrooms
+[22:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/beyondthelimits:substrata
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (the_impossible): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (wrongworld): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (the_foglands): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (codescape): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (mirrorworld): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (backrooms): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (substrata): All chunks are saved
+[22:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_4-1791498390585.json
+
+BUILD SUCCESSFUL in 33s
+6 actionable tasks: 4 executed, 2 up-to-date
