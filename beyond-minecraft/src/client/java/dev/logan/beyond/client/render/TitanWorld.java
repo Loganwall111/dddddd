@@ -68,6 +68,7 @@ public final class TitanWorld {
     private static ShaderProgram program;
     private static VertexBuffer mesh;
     private static boolean failed, drawn;
+    private static long drawnFrames;
     private static RegistryKey<World> builtWorld, lastWorld;
     private static Vec3d anchor;
     private static int voxelCount, faceCount, attempts;
@@ -98,10 +99,18 @@ public final class TitanWorld {
     /** Where the colossus stands, or null while it is still looking for solid ground. */
     public static Vec3d standingPlace() { return anchor; }
 
+    /**
+     * How many frames the colossus has actually been drawn in. A per-tick flag cannot be read as
+     * evidence: the tick clears it before the frame it describes has rendered, so every reader sees
+     * false. This counter only ever goes up, which is what a runtime report should quote.
+     */
+    public static long drawnFrames() { return drawnFrames; }
+
     public static String status() {
         if (failed) return "Titan unavailable (shader)";
         if (anchor == null) return "Titan awaiting solid ground after " + attempts + " searches";
-        return "Titan standing at " + (int) anchor.x + ", " + (int) anchor.y + ", " + (int) anchor.z;
+        return "Titan standing at " + (int) anchor.x + ", " + (int) anchor.y + ", " + (int) anchor.z
+            + ", drawn over " + drawnFrames + " frames";
     }
 
     /** Look for standing ground again now: a new reality deserves a fresh search, not a spent budget. */
@@ -404,5 +413,6 @@ public final class TitanWorld {
         if (!cull) RenderSystem.disableCull();
         if (!depth) RenderSystem.disableDepthTest();
         drawn = true;
+        drawnFrames++;
     }
 }

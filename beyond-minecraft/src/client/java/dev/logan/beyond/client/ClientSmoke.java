@@ -495,8 +495,9 @@ public final class ClientSmoke {
                         }
                     }
                 }
-                case 31 -> { if (TitanWorld.drawn() || stageTicks > 420) {
-                    require(TitanWorld.drawn(), "the colossus is drawn as world geometry, not a painted shape: " + TitanWorld.status());
+                case 31 -> { if (TitanWorld.drawnFrames() > 0 || stageTicks > 420) {
+                    require(TitanWorld.drawnFrames() > 0, "the colossus is drawn as world geometry, not a painted shape: " + TitanWorld.status());
+                    BeyondMinecraft.LOGGER.info("BEYOND_TITAN_DRAWN frames={} {}", TitanWorld.drawnFrames(), TitanWorld.status());
                     capture(client, "16-titan");
                     BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
                         + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true "
