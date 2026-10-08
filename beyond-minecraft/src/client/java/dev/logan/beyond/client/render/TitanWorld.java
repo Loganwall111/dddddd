@@ -466,8 +466,12 @@ public final class TitanWorld {
         if (!depth) RenderSystem.disableDepthTest();
         drawn = true;
         drawnFrames++;
-        if (drawnFrames % 120 == 1) {
-            screenBox = project(context);
+        // Sixteen corners through three matrices: cheap enough to do every frame, and it has to be
+        // every frame. A cached box is read by whoever asks next tick, by which point the camera may
+        // have moved somewhere the body is behind it — which is exactly how a colossus standing in
+        // front of the viewer gets reported as being behind the camera.
+        screenBox = project(context);
+        if (drawnFrames % 240 == 1) {
             BeyondMinecraft.LOGGER.info("BEYOND_TITAN_PROJECT box={} vertices={} gl_error={}",
                 screenBox == null ? "behind the camera" : String.format("[%.2f, %.2f] to [%.2f, %.2f]",
                     screenBox[0], screenBox[1], screenBox[2], screenBox[3]),

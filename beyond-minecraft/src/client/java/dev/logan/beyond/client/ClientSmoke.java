@@ -56,6 +56,7 @@ public final class ClientSmoke {
     private static int[] colossusReference = new int[0];
     private static int colossusStatic, colossusAnimated;
     private static double[] colossusBox;
+    private static long titanFramesAtView;
     private static java.util.UUID spaghettiCritter;
     private static double critterX, critterY, critterZ;
     private static double tunnelPeak, wormholeBaseX, wormholeBaseZ, wormholeAltitude;
@@ -521,6 +522,9 @@ public final class ClientSmoke {
                             // angle to prove whether it missed, are two very different failures.
                             double eye = place.y + 24, torso = place.y + 45;
                             float pitch = (float) -Math.toDegrees(Math.atan2(torso - eye, distance));
+                            // The box is only meaningful once frames have been drawn from the new
+                            // viewpoint, so the count at the moment of the teleport is recorded here.
+                            titanFramesAtView = TitanWorld.drawnFrames();
                             onServer(client, p -> {
                                 p.teleport(p.getServerWorld(), x, eye, z, yaw, pitch);
                                 p.setVelocity(Vec3d.ZERO);
@@ -545,7 +549,10 @@ public final class ClientSmoke {
                         BeyondMinecraft.LOGGER.info("BEYOND_TITAN_DRAWN frames={} {}", TitanWorld.drawnFrames(), TitanWorld.status());
                         BeyondMinecraft.LOGGER.info("BEYOND_TITAN_FRAME {}", viewReport(client));
                         double[] box = TitanWorld.screenBox();
-                        require(box != null, "the colossus must be in front of the viewer: " + TitanWorld.status());
+                        require(TitanWorld.drawnFrames() > titanFramesAtView,
+                            "the colossus must actually be drawn from the viewer's position: " + TitanWorld.status());
+                        require(box != null, "the colossus must be in front of the viewer: " + TitanWorld.status()
+                            + " screen_box=behind the camera");
                         double spanX = box[2] - box[0], spanY = box[3] - box[1];
                         require(spanX > .25 && spanY > .6, "the colossus must stand across the view, not graze its edge: span="
                             + String.format("%.2f x %.2f", spanX, spanY) + " - " + TitanWorld.status());
