@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08090d">
+  <meta name="description" content="An interactive first-slice preview of Beyond the Limits: Chapter One — The Never Ending World.">
+  <title>Beyond the Limits — Chapter One</title>
+  <link rel="icon" type="image/png" href="../src/main/resources/assets/beyondthelimits/icon.png">
+  <link rel="stylesheet" href="preview.css">
+  <script src="preview.js" defer></script>
+</head>
+<body>
+  <canvas id="sky" class="sky-canvas" aria-hidden="true"></canvas>
+  <div class="sky-vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Beyond the Limits, beginning">
+      <img src="../src/main/resources/assets/beyondthelimits/icon.png" alt="">
+      <span class="brand-lockup"><b>BTL</b><small>CHAPTER ONE</small></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a href="#first-contact">First contact</a>
+      <a href="#systems">The systems</a>
+      <a href="#worlds">Other worlds</a>
+    </nav>
+    <div class="signal-status"><span class="status-dot"></span><span>WORLD LINK</span><b>UNSTABLE</b></div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-mark">//</span> SURVEY LOG 001 <span class="eyebrow-divider">·</span> OVERWORLD <span class="eyebrow-divider">·</span> DAY 01</p>
+        <h1 id="hero-title">BEYOND<br><span>THE LIMITS</span></h1>
+        <p class="chapter-name">CHAPTER ONE <i>—</i> THE NEVER ENDING WORLD</p>
+        <p class="hero-lede">The world is still here.<br><em>It just stopped agreeing with itself.</em></p>
+        <div class="hero-actions">
+          <button class="button-primary" id="open-tear" type="button"><span>OPEN THE FRACTURE</span><span class="button-arrow" aria-hidden="true">↗</span></button>
+          <a class="text-link" href="#first-contact">Read the first signal <span aria-hidden="true">↓</span></a>
+        </div>
+        <p class="hero-footnote"><span class="tiny-square"></span> INTERACTIVE VISUAL PREVIEW <span class="eyebrow-divider">/</span> NOT GAMEPLAY FOOTAGE</p>
+      </div>
+
+      <aside class="world-card" aria-label="Live world scan preview">
+        <div class="card-topline"><span>REALITY SCANNER</span><span class="scan-code">BTL—01</span></div>
+        <div class="scanner-display">
+          <div class="scanner-grid"></div>
+          <div class="scanner-orbit orbit-one"></div>
+          <div class="scanner-orbit orbit-two"></div>
+          <div class="scanner-crosshair"><i></i><i></i></div>
+          <div class="scanner-center"><span>!</span></div>
+          <div class="scanner-label label-top">RIFT SIGNATURE</div>
+          <div class="scanner-label label-bottom">UNCLASSIFIED / 0.087 AU</div>
+          <div class="scanner-sweep"></div>
+        </div>
+        <div class="reality-row"><span>REALITY INTEGRITY</span><strong id="reality-value">82<span>%</span></strong></div>
+        <input id="reality-slider" class="reality-slider" type="range" min="5" max="100" value="82" aria-label="Reality integrity">
+        <div class="reality-scale"><span>COLLAPSE</span><span>STABLE</span></div>
+        <div class="card-separator"></div>
+        <div class="card-readout"><span>ANOMALIES RECORDED</span><b>01 <small>/ 20</small></b></div>
+        <div class="card-readout"><span>SEED WHISPER</span><b class="monospace">??? 143 921</b></div>
+      </aside>
+
+      <div class="hero-bottomline">
+        <span><b>01</b> A HAIRLINE IN THE SKY</span>
+        <span class="bottom-center"><i></i> SIGNAL FOUND</span>
+        <span class="bottom-right">SCROLL TO DESCEND <span aria-hidden="true">↓</span></span>
+      </div>
+    </section>
+
+    <section class="first-contact section-shell" id="first-contact" aria-labelledby="first-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-mark">01 / 03</span> FIRST CONTACT</p>
+          <h2 id="first-title">A small thing<br><em>is never small.</em></h2>
+        </div>
+        <p class="section-intro">Nothing announces the end of the world. At first, there is only a mark where the sky should be—and the feeling that it noticed you noticing.</p>
+      </div>
+
+      <div class="sequence-panel">
+        <div class="sequence-visual" id="sequence-visual">
+          <div class="sequence-coordinate">X 143,921 <span>Y 118</span> Z −08,442</div>
+          <div class="sequence-crosshair" aria-hidden="true"><i></i><b></b></div>
+          <div class="sequence-horizon"></div>
+          <div class="sequence-caption"><span class="caption-dot"></span><span id="sequence-caption">A hairline. Less than one pixel wide.</span></div>
+          <div class="sequence-stamp">NOT<br>WEATHER</div>
+        </div>
+        <div class="sequence-copy">
+          <div class="sequence-label"><span>FIELD RECORD</span><span id="stage-index">01 — 03</span></div>
+          <h3 id="stage-title">THE HAIRLINE</h3>
+          <p id="stage-description">A thin, violet seam holds in the evening sky. It is too straight to be lightning and too still to be a cloud. The guidebook has no entry for it.</p>
+          <div class="stage-controls" role="group" aria-label="Choose a preview stage">
+            <button class="stage-button is-active" type="button" data-stage="1" aria-pressed="true"><span>01</span><small>THE MARK</small></button>
+            <button class="stage-button" type="button" data-stage="2" aria-pressed="false"><span>02</span><small>THE TEAR</small></button>
+            <button class="stage-button" type="button" data-stage="3" aria-pressed="false"><span>03</span><small>THE BLEED</small></button>
+          </div>
+          <div class="sequence-warning"><span>!</span><span id="stage-warning">Do not stare at the seam for too long.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="systems section-shell" id="systems" aria-labelledby="systems-title">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-mark">02 / 03</span> THE WORLD RESPONDS</p>
+          <h2 id="systems-title">Reality is<br><em>a resource.</em></h2>
+        </div>
+        <p class="section-intro">The anomalies are not encounters in a list. They are systems with memory. The world keeps what you change, and uses it to decide what comes next.</p>
+      </div>
+
+      <div class="system-grid">
+        <article class="system-card card-tear">
+          <div class="system-card-top"><span>ANOMALY 01</span><span class="system-number">01</span></div>
+          <div class="card-illustration tear-mark" aria-hidden="true"><i></i><b></b></div>
+          <h3>The Reality Tear</h3>
+          <p>It grows while you sleep. Something on the other side has already found the opening.</p>
+          <div class="card-meta"><span>GROWS OVER DAYS</span><span class="meta-dot"></span><span>ENTITY CROSSOVER</span></div>
+        </article>
+        <article class="system-card card-observer">
+          <div class="system-card-top"><span>ANOMALY 03</span><span class="system-number">03</span></div>
+          <div class="card-illustration distant-figure" aria-hidden="true"><i></i><b></b></div>
+          <h3>The Observer</h3>
+          <p>At the edge of view. Gone when you look directly. In your base when you come back.</p>
+          <div class="card-meta"><span>LOOK AWAY</span><span class="meta-dot"></span><span>IT MOVES</span></div>
+        </article>
+        <article class="system-card card-memory">
+          <div class="system-card-top"><span>ANOMALY 17</span><span class="system-number">17</span></div>
+          <div class="card-illustration memory-map" aria-hidden="true"><i></i><b></b><em></em></div>
+          <h3>Reality Difficulty</h3>
+          <p>At zero percent, the game does not end. The rules do. Something else starts.</p>
+          <div class="card-meta"><span>100 → 0</span><span class="meta-dot"></span><span>NO SAFE BAND</span></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="worlds section-shell" id="worlds" aria-labelledby="worlds-title">
+      <div class="worlds-copy">
+        <p class="eyebrow"><span class="eyebrow-mark">03 / 03</span> BEYOND THE MAP</p>
+        <h2 id="worlds-title">A place is<br><em>not a dimension.</em></h2>
+        <p>Seven worlds refuse the rules of the Overworld. One is a maze with no horizon. One is made from the language Minecraft is written in. One is only a sky, with nothing beneath it.</p>
+        <a class="text-link" href="../README.md">Read the field guide <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="world-list" aria-label="Other worlds">
+        <div class="world-row"><span class="world-index">01</span><span class="world-name">FOGLANDS</span><span class="world-detail">10–20 BLOCKS OF SIGHT</span><span class="world-arrow">↗</span></div>
+        <div class="world-row"><span class="world-index">02</span><span class="world-name">THE BACKROOMS</span><span class="world-detail">THREE WAYS IN. FIND ONE OUT.</span><span class="world-arrow">↗</span></div>
+        <div class="world-row"><span class="world-index">03</span><span class="world-name">CODESCAPE</span><span class="world-detail">YOU ARE INSIDE THE SOURCE</span><span class="world-arrow">↗</span></div>
+        <div class="world-row"><span class="world-index">04</span><span class="world-name">MIRROR WORLD</span><span class="world-detail">IT MOVED FIRST</span><span class="world-arrow">↗</span></div>
+        <div class="world-row"><span class="world-index">05</span><span class="world-name">SUBSTRATA</span><span class="world-detail">SIX LAYERS BELOW BEDROCK</span><span class="world-arrow">↗</span></div>
+        <div class="world-row"><span class="world-index">06</span><span class="world-name">THE IMPOSSIBLE</span><span class="world-detail">THE SKY IS THE WORLD</span><span class="world-arrow">↗</span></div>
+        <div class="world-row"><span class="world-index">07</span><span class="world-name">WRONGWORLD</span><span class="world-detail">A WORLD THAT ALMOST FITS</span><span class="world-arrow">↗</span></div>
+      </div>
+    </section>
+
+    <section class="closing section-shell" aria-label="Closing transmission">
+      <div class="closing-mark" aria-hidden="true"><span></span><i></i></div>
+      <p class="eyebrow">END OF EXCERPT <span class="eyebrow-divider">·</span> SIGNAL CONTINUES</p>
+      <p class="closing-line">If you can read this,<br><em>the world can read you.</em></p>
+      <a class="button-outline" href="#top">RETURN TO THE SURFACE <span aria-hidden="true">↑</span></a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>BEYOND THE LIMITS <i>·</i> CHAPTER ONE</span>
+    <span>FABRIC 1.21.1 <i>·</i> A MOD IN DEVELOPMENT</span>
+    <span class="footer-signal"><b></b> TRANSMISSION OPEN</span>
+  </footer>
+</body>
+</html>

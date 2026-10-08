@@ -12,6 +12,9 @@ dimension mod with a portal frame. There is no rift block. Rifts are *lenses* �
 geometry that bends the sky around itself — and the world's own integrity is a number that falls
 whether or not you are watching it.
 
+[Open the interactive first-slice visual preview](preview/) — a standalone WebGL2 scene for The Bleeding,
+not gameplay footage. The mod's actual GLSL and runtime are built separately from the preview page.
+
 ---
 
 ## What is in Chapter One
