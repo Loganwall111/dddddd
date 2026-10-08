@@ -4,7 +4,8 @@
 Two things are checked, both of which have cost a CI round before:
 
 1. every `com.beyondthelimits.*` import points at a class that actually exists in the source tree;
-2. every vanilla class used as `Foo.bar(...)` is imported, which is javac's "cannot find symbol".
+2. every vanilla class used as a type, constructor, or `Foo.bar(...)` owner is imported, which catches common
+   javac "cannot find symbol" errors before CI.
 
 Run it after adding a class or a call site; it takes a second and needs no JDK.
 """
@@ -79,31 +80,36 @@ def vanilla_simple_names():
 def check_vanilla_imports(vanilla, mod_types):
     problems = []
     string_literal = re.compile(r'"(?:[^"\\]|\\.)*"')
-    usage = re.compile(r'(?<![\w."])([A-Z][A-Za-z0-9_]*)(?=\.)')
+    # Type declarations/constructions plus qualified static references: catches both
+    # `Vec3d centre = ...` and `BlockPos.ofFloored(...)` when the import is absent.
+    class_use = re.compile(
+        r"(?<![\w.$])([A-Z][A-Za-z0-9_]*)\b"
+        r"(?=\s+[A-Za-z_$]|\s*<|\s*>|\s*\[|\s*\(|\s*\)|\s*\.|::|\s*\{)"
+    )
 
     for root, _, files in os.walk(SRC):
         for name in files:
             if not name.endswith(".java"):
                 continue
             path = os.path.join(root, name)
-            lines = open(path).readlines()
+            text = open(path).read()
             imported = set()
 
-            for line in lines:
-                match = re.match(r"\s*import\s+(?:static\s+)?[\w.]+?([A-Za-z]\w*)\s*;", line)
-                if match:
-                    imported.add(match.group(1))
+            for match in re.finditer(r"^\s*import\s+(?:static\s+)?[\w.]+?([A-Za-z]\w*)\s*;", text, re.M):
+                imported.add(match.group(1))
 
+            # Remove comments and string contents while preserving newlines for useful diagnostics.
+            code = string_literal.sub(" ", text)
+            code = re.sub(r"/\*.*?\*/", lambda match: "\n" * match.group(0).count("\n"), code, flags=re.S)
+            code = re.sub(r"//[^\n]*", " ", code)
             seen = set()
 
-            for number, line in enumerate(lines, 1):
+            for number, line in enumerate(code.splitlines(), 1):
                 stripped = line.lstrip()
-                if stripped.startswith(("import ", "package ", "//", "*", "/*")):
+                if stripped.startswith(("import ", "package ")):
                     continue
 
-                code = string_literal.sub('""', line)
-
-                for found in usage.finditer(code):
+                for found in class_use.finditer(line):
                     simple = found.group(1)
 
                     if simple in imported or simple in mod_types or simple in SKIP_SIMPLE:
@@ -115,6 +121,7 @@ def check_vanilla_imports(vanilla, mod_types):
                     problems.append((path, number, simple))
 
     return problems
+
 
 
 def main():
