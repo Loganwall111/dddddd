@@ -51,7 +51,7 @@ public final class ClientSmoke {
     private static int[] lensingReference;
     private static int[] heightsBefore;
     private static Vec3d tunnelStart;
-    private static int wormholePhase, wormholeEra, wormholeSettle, wormholeStep;
+    private static int wormholePhase, wormholeEra, wormholeSettle, wormholeStep, titanPhase;
     private static double tunnelPeak, wormholeBaseX, wormholeBaseZ, wormholeAltitude;
     /** Columns to try for a wormhole mouth, relative to where the walker arrived. */
     private static final int[][] WORMHOLE_CANDIDATES = {{0, 0}, {16, 0}, {0, 16}, {-16, 0}, {0, -16}, {24, 24}, {-24, -24}};
@@ -390,8 +390,12 @@ public final class ClientSmoke {
                         require(barriers == 0, "no barrier blocks may be left behind");
                     });
                 }
-                case 25 -> { if (stageTicks > 45 && client.world.getRegistryKey().equals(World.OVERWORLD)) server(client, p -> {
-                    // The Umbrella Effect: returning rewrites the branch around you.
+                case 25 -> { if (stageTicks > 45) server(client, p -> {
+                    // The Umbrella Effect: coming back through rewrites the branch around you. A corridor
+                    // ride ends in the reality it departed from, so this stage follows the walker there
+                    // instead of assuming the Overworld, and drops them to a clean altitude to measure.
+                    BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA world={} era={}",
+                        p.getServerWorld().getRegistryKey().getValue(), Journey.of(p).era);
                     p.teleport(p.getServerWorld(), .5, 120, .5, 180, 0);
                     p.setVelocity(Vec3d.ZERO);
                     heightsBefore = columnHeights(p, 6);
@@ -428,20 +432,47 @@ public final class ClientSmoke {
                     BeyondMinecraft.LOGGER.info("BEYOND_NATIVE_OCCLUSION_PASS max_channel_difference={}", difference);
                     stage++; stageTicks = 0;
                 } }
-                case 30 -> { if (stageTicks > 20) server(client, p -> {
-                    // The colossus portrait: stand off from it and look up. This is the shot that proves
-                    // the Titan is the world's own blocks standing in the world, not a painted shape.
-                    Vec3d place = TitanWorld.standingPlace();
-                    require(place != null, "the voxel colossus found standing ground in the Overworld");
-                    double angle = .74, distance = 150;
-                    double x = place.x + Math.cos(angle) * distance, z = place.z + Math.sin(angle) * distance;
-                    float yaw = (float) Math.toDegrees(Math.atan2(Math.cos(angle), -Math.sin(angle)));
-                    p.teleport(p.getServerWorld(), x, place.y + 26, z, yaw, -8f);
-                    p.setVelocity(Vec3d.ZERO);
-                    BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VIEW anchor={} viewer={}", place, p.getPos());
-                }); }
-                case 31 -> { if (stageTicks > 90) {
-                    require(TitanWorld.drawn(), "the colossus is drawn as world geometry, not a painted shape");
+                case 30 -> {
+                    // The colossus is cut from the root reality's own terrain, so the walker first has
+                    // to be home — and enough of home has to be streamed in for the search for standing
+                    // ground to see anything. CI runs at render distance two, which reaches 32 blocks of
+                    // a search that starts at 64, so the fixture widens the window before it looks.
+                    if (titanPhase == 0 && stageTicks > 20) {
+                        int window = 12;
+                        client.options.getViewDistance().setValue(window);
+                        client.options.getSimulationDistance().setValue(window);
+                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_SEARCH view_distance={} home_first=true", window);
+                        onServer(client, p -> {
+                            client.getServer().getPlayerManager().setViewDistance(window);
+                            client.getServer().getPlayerManager().setSimulationDistance(window);
+                            if (Journey.inRealm(p.getWorld().getRegistryKey()))
+                                require(RealityManager.returnHome(p), "return to the root reality for the colossus");
+                            titanPhase = 1;
+                        });
+                    }
+                    if (titanPhase == 1 && client.world.getRegistryKey().equals(World.OVERWORLD)) {
+                        Vec3d place = TitanWorld.standingPlace();
+                        if (place == null) {
+                            // The colossus looks for ground on its own schedule; give it a few attempts,
+                            // then say exactly what it saw rather than timing out facelessly.
+                            require(stageTicks < 400, "the colossus found no standing ground in the root reality: " + TitanWorld.status());
+                        } else {
+                            // The colossus portrait: stand off from it and look up. This is the shot that
+                            // proves the Titan is the world's own blocks standing in the world.
+                            double angle = .74, distance = 150;
+                            double x = place.x + Math.cos(angle) * distance, z = place.z + Math.sin(angle) * distance;
+                            float yaw = (float) Math.toDegrees(Math.atan2(Math.cos(angle), -Math.sin(angle)));
+                            onServer(client, p -> {
+                                p.teleport(p.getServerWorld(), x, place.y + 26, z, yaw, -8f);
+                                p.setVelocity(Vec3d.ZERO);
+                                BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VIEW anchor={} viewer={}", place, p.getPos());
+                            });
+                            titanPhase = 2; stage++; stageTicks = 0;
+                        }
+                    }
+                }
+                case 31 -> { if (TitanWorld.drawn() || stageTicks > 420) {
+                    require(TitanWorld.drawn(), "the colossus is drawn as world geometry, not a painted shape: " + TitanWorld.status());
                     capture(client, "16-titan");
                     BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
                         + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true "
