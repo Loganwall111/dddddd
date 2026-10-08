@@ -458,9 +458,12 @@ public final class ClientSmoke {
                     // ground to see anything. CI runs at render distance two, which reaches 32 blocks of
                     // a search that starts at 64, so the fixture widens the window before it looks.
                     if (titanPhase == 0 && stageTicks > 20) {
-                        int window = 12;
+                        int window = 10;
                         client.options.getViewDistance().setValue(window);
                         client.options.getSimulationDistance().setValue(window);
+                        // The server sends chunks only as far as the client says it can see, so the
+                        // widened window has to be reported, not just set locally.
+                        client.options.sendClientSettings();
                         BeyondMinecraft.LOGGER.info("BEYOND_TITAN_SEARCH view_distance={} home_first=true", window);
                         onServer(client, p -> {
                             p.setNoGravity(false);

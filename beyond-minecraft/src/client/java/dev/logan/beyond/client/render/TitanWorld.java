@@ -58,8 +58,8 @@ public final class TitanWorld {
     private static final float BODY_HEIGHT = 112f;
     private static final float BODY_SPAN = 40f;
     private static final int MAX_VERTICES = 240_000;
-    private static final double SEARCH_START = 64, SEARCH_STEP = 16;
-    private static final int SEARCH_STEPS = 96;
+    private static final double SEARCH_START = 40, SEARCH_STEP = 16;
+    private static final int SEARCH_RINGS = 4, SEARCH_STEPS = 96;
 
     private static final Vector4f[] bones = new Vector4f[BONES];
     private static final Vector3f[] axes = new Vector3f[BONES];
@@ -151,9 +151,12 @@ public final class TitanWorld {
     private static void build(MinecraftClient client, ClientWorld world) {
         if (builtWorld != null && !builtWorld.equals(world.getRegistryKey())) attempts = 0;
         builtWorld = world.getRegistryKey();
-        Vec3d ground = chooseAnchor(world, client.player.getPos());
+        int[] stats = new int[3];
+        Vec3d ground = chooseAnchor(world, client.player.getPos(), stats);
         if (ground == null) {
-            BeyondMinecraft.LOGGER.warn("Beyond titan found no solid ground nearby; the sky figure keeps the horizon");
+            BeyondMinecraft.LOGGER.warn("Beyond titan found no standing ground around {} in {}: "
+                + "chunks_not_loaded={} ground_rejected={} highest_top={}; the sky figure keeps the horizon",
+                client.player.getBlockPos(), world.getRegistryKey().getValue(), stats[0], stats[1], stats[2]);
             return;
         }
         List<Material> palette = palette(client, world, ground);
@@ -173,34 +176,36 @@ public final class TitanWorld {
     }
 
     /** A standing place that is real ground: loaded, dry, and above the waterline. */
-    private static Vec3d chooseAnchor(ClientWorld world, Vec3d origin) {
+    private static Vec3d chooseAnchor(ClientWorld world, Vec3d origin, int[] stats) {
         // The colossus rises out of the ground the walker is actually standing on, so the search starts
         // where they are rather than at the world spawn. Where a player stands is ground they can see:
         // the rings stay inside the streamed chunks instead of asking for terrain nobody has loaded,
         // and the figure stands in the world the walker is in rather than an ocean away from it.
         BlockPos centre = BlockPos.ofFloored(origin);
-        Vec3d dry = search(world, centre, true);
-        return dry != null ? dry : search(world, centre, false);
+        Vec3d dry = search(world, centre, true, stats);
+        return dry != null ? dry : search(world, centre, false, stats);
     }
 
     /**
      * Golden-angle rings outward from the centre. {@code dry} asks for open land above the waterline,
      * which makes the richest body; the second pass settles for any solid, unfrozen footing, so a
-     * shoreline or a sandbar world still gets its colossus.
+     * shoreline or a sandbar world still gets its colossus. The counters say what the search actually
+     * saw, so "no ground" can always be told apart from "no loaded ground".
      */
-    private static Vec3d search(ClientWorld world, BlockPos centre, boolean dry) {
+    private static Vec3d search(ClientWorld world, BlockPos centre, boolean dry, int[] stats) {
         for (int step = 0; step < SEARCH_STEPS; step++) {
             double angle = step * 2.399963229728653;
-            double radius = SEARCH_START + (step % 6) * SEARCH_STEP;
+            double radius = SEARCH_START + (step % SEARCH_RINGS) * SEARCH_STEP;
             int x = centre.getX() + (int) Math.round(Math.cos(angle) * radius);
             int z = centre.getZ() + (int) Math.round(Math.sin(angle) * radius);
-            if (!world.isChunkLoaded(new BlockPos(x, centre.getY(), z))) continue;
+            if (!world.isChunkLoaded(new BlockPos(x, centre.getY(), z))) { stats[0]++; continue; }
             int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
-            if (top <= world.getBottomY() + 2) continue;
-            if (dry && top <= world.getSeaLevel() + 2) continue;
+            stats[2] = Math.max(stats[2], top);
+            if (top <= world.getBottomY() + 2) { stats[1]++; continue; }
+            if (dry && top <= world.getSeaLevel() + 2) { stats[1]++; continue; }
             BlockPos ground = new BlockPos(x, top - 1, z);
             BlockState state = world.getBlockState(ground);
-            if (state.isAir() || !state.getFluidState().isEmpty() || state.isOf(Blocks.ICE)) continue;
+            if (state.isAir() || !state.getFluidState().isEmpty() || state.isOf(Blocks.ICE)) { stats[1]++; continue; }
             return new Vec3d(x + .5, top, z + .5);
         }
         return null;
