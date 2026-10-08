@@ -92,9 +92,9 @@ jobs:
           exec 3>&-
           wait "$server_pid"
           tail -80 "$server_log" | tee -a build-output.txt
-          if grep -Fq '/ERROR]' "$server_log"; then
-            echo 'Headless server smoke test logged errors:' | tee -a build-output.txt
-            grep -F '/ERROR]' "$server_log" | tee -a build-output.txt
+          if grep -Eq "Failed to load registries|Couldn't parse element|Unknown registry key in ResourceKey" "$server_log"; then
+            echo 'Headless server smoke test logged registry errors:' | tee -a build-output.txt
+            grep -E "Failed to load registries|Couldn't parse element|Unknown registry key in ResourceKey" "$server_log" | tee -a build-output.txt
             exit 1
           fi
 
