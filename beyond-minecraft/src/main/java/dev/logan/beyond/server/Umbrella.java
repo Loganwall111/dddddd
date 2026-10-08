@@ -16,7 +16,7 @@ import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 /**
@@ -44,10 +44,24 @@ public final class Umbrella {
         Job step() { return new Job(world, center, radius, era, seed, index + 1); }
         int columns() { return (radius * 2 + 1) * (radius * 2 + 1); }
     }
-    private static final Map<RegistryKey<World>, Deque<Job>> JOBS = new HashMap<>();
+    private static final Map<RegistryKey<World>, Deque<Job>> JOBS = new ConcurrentHashMap<>();
     private static final int COLUMNS_PER_TICK = 18;
     private Umbrella() {}
     public static void reset() { JOBS.clear(); }
+
+    /**
+     * Columns still waiting to be rewritten in this reality, zero when its branch has caught up.
+     * A rewrite is spread across ticks so a large radius never stalls a server tick, which means it
+     * also finishes a little after it is queued — this is how a caller waits for the world to settle
+     * (and how the runtime evidence proves the whole rewrite landed, not just its first slice).
+     */
+    public static int backlog(RegistryKey<World> key) {
+        Deque<Job> queue = JOBS.get(key);
+        if (queue == null) return 0;
+        int remaining = 0;
+        for (Job job : queue) remaining += job.columns() - job.index;
+        return Math.max(0, remaining);
+    }
 
     /** Records the branch shift and queues the rewrite. Called when a tunnel or wormhole completes. */
     public static void shift(ServerPlayerEntity player, ServerWorld world, Vec3d at) {

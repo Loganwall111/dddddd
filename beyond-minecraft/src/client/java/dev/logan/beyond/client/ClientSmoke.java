@@ -395,30 +395,38 @@ public final class ClientSmoke {
                         require(barriers == 0, "no barrier blocks may be left behind");
                     });
                 }
-                case 25 -> { if (stageTicks > 45) server(client, p -> {
+                case 25 -> {
                     // The Umbrella Effect: coming back through rewrites the branch around you. A corridor
                     // ride ends in the reality it departed from, so this stage follows the walker there
                     // instead of assuming the Overworld, and drops them to a clean altitude to measure.
-                    BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA world={} era={}",
-                        p.getServerWorld().getRegistryKey().getValue(), Journey.of(p).era);
-                    p.teleport(p.getServerWorld(), .5, 120, .5, 180, 0);
-                    p.setVelocity(Vec3d.ZERO);
-                    heightsBefore = columnHeights(p, 6);
-                    require(Journey.of(p).era >= 1, "the branch already shifted in the tunnel");
-                    Umbrella.queue(p.getServerWorld(), p.getBlockPos(), 6, Umbrella.Era.GIANT_WOOD, Journey.of(p).eraSeed);
-                    BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA queued era={} columns={}", Umbrella.Era.GIANT_WOOD, heightsBefore.length);
-                }); }
-                case 26 -> { if (stageTicks > 60) server(client, p -> {
-                    // The rewrite is a tick job: eighteen columns per tick across the whole disc, so it
-                    // finishes in about half a second for this radius. Measuring on the first tick after
-                    // queueing it would report the world unchanged however well the effect worked.
+                    // The ride queued a rewrite of its own on the way out, and a rewrite is spread across
+                    // ticks; the baseline is only honest once the branch has caught up with that one.
+                    if (stageTicks > 45 && Umbrella.backlog(client.world.getRegistryKey()) == 0) server(client, p -> {
+                        BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA world={} era={}",
+                            p.getServerWorld().getRegistryKey().getValue(), Journey.of(p).era);
+                        p.teleport(p.getServerWorld(), .5, 120, .5, 180, 0);
+                        p.setVelocity(Vec3d.ZERO);
+                        heightsBefore = columnHeights(p, 6);
+                        require(Journey.of(p).era >= 1, "the branch already shifted in the tunnel");
+                        Umbrella.queue(p.getServerWorld(), p.getBlockPos(), 6, Umbrella.Era.GIANT_WOOD, Journey.of(p).eraSeed);
+                        BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA queued era={} columns={} backlog={}",
+                            Umbrella.Era.GIANT_WOOD, heightsBefore.length,
+                            Umbrella.backlog(p.getServerWorld().getRegistryKey()));
+                    });
+                }
+                case 26 -> { if (Umbrella.backlog(client.world.getRegistryKey()) == 0) server(client, p -> {
+                    // The rewrite is a tick job: eighteen columns per tick across the whole disc, so a
+                    // hundred and sixty-nine columns take ten ticks. Measuring before the queue drains
+                    // would report the world unchanged however well the effect worked, so this stage
+                    // waits for the backlog to reach zero rather than guessing at a delay.
                     int[] after = columnHeights(p, 6);
                     int changed = 0;
                     for (int i = 0; i < after.length; i++) if (after[i] != heightsBefore[i]) changed++;
                     require(changed > 0, "the Umbrella Effect must actually rewrite the world");
                     require(Umbrella.Era.of(Journey.of(p).era) != Umbrella.Era.PRISTINE, "the era table advanced");
-                    BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA_PASS era={} era_name={} columns_changed={} of={}", Journey.of(p).era,
-                        Umbrella.Era.of(Journey.of(p).era).description, changed, after.length);
+                    BeyondMinecraft.LOGGER.info("BEYOND_UMBRELLA_PASS era={} era_name={} columns_changed={} of={} backlog={}", Journey.of(p).era,
+                        Umbrella.Era.of(Journey.of(p).era).description, changed, after.length,
+                        Umbrella.backlog(p.getServerWorld().getRegistryKey()));
                     // CI fixture only: a real opaque wall between player and singularity.
                     // The wall stands at the fixture mark, and the well is placed from where the walker is
                     // standing, so this teleport has to happen inline — before spawn reads the position.
