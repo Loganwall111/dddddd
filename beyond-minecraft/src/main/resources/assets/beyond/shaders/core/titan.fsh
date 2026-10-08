@@ -16,12 +16,15 @@ out vec4 fragColor;
 
 void main() {
     vec4 texel = texture(Sampler0, texCoord);
-    if (texel.a < .1) discard;
+    // A voxel carries the world's own texture. Where the atlas has nothing to give — an animated or
+    // missing sprite — the body still stands: it falls back to its baked face shade rather than
+    // vanishing, because an invisible colossus is a bug and a plain one is not.
+    vec3 base = texel.a < .1 ? vec3(.62) : texel.rgb;
     vec3 normal = normalize(cross(dFdx(worldPos), dFdy(worldPos)));
     vec3 sun = normalize(vec3(-.42, .78, .31));
     float lift = max(dot(normal, sun), 0.0);
     float sky = .40 + .32 * max(normal.y, 0.0);
-    vec3 stone = texel.rgb * skin.a * (sky + lift * .78);
+    vec3 stone = base * skin.a * (sky + lift * .78);
     // A body this big carries its own weather: a slow breath of light moves across the blocks.
     stone *= .95 + .05 * sin(Time * .6 + worldPos.y * .02);
     // The eyes are the one part of the world that the light does not touch.

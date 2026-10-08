@@ -70,6 +70,8 @@ public final class TitanWorld {
     private static boolean failed, drawn;
     private static long drawnFrames;
     private static String bodyMaterials = "no materials";
+    /** The body's extent on screen in normalised device coordinates, or null when it is not in view. */
+    private static volatile double[] screenBox;
     private static RegistryKey<World> builtWorld, lastWorld;
     private static Vec3d anchor;
     private static int voxelCount, faceCount, attempts;
@@ -89,6 +91,34 @@ public final class TitanWorld {
 
     private TitanWorld() {}
 
+    /**
+     * Projects the body's own bounds through the model, view and projection matrices the vertex
+     * shader is given, and returns the on-screen box. Null when every corner sits behind the camera.
+     */
+    private static double[] project(WorldRenderContext context) {
+        Matrix4f view = new Matrix4f(context.positionMatrix());
+        Matrix4f projection = new Matrix4f(context.projectionMatrix());
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+        boolean inFront = false;
+        for (float y = 0; y <= BODY_HEIGHT; y += BODY_HEIGHT) {
+            for (float x = -BODY_SPAN * .5f; x <= BODY_SPAN * .5f; x += BODY_SPAN) {
+                for (float z = -BODY_SPAN * .5f; z <= BODY_SPAN * .5f; z += BODY_SPAN) {
+                    Vector4f point = new Vector4f(x, y, z, 1f);
+                    model.transform(point);
+                    view.transform(point);
+                    projection.transform(point);
+                    if (point.w <= 0.001f) continue;
+                    inFront = true;
+                    double ndcX = point.x / point.w, ndcY = point.y / point.w;
+                    minX = Math.min(minX, ndcX); maxX = Math.max(maxX, ndcX);
+                    minY = Math.min(minY, ndcY); maxY = Math.max(maxY, ndcY);
+                }
+            }
+        }
+        if (!inFront) return null;
+        return new double[] {Math.max(-1, minX), Math.max(-1, minY), Math.min(1, maxX), Math.min(1, maxY)};
+    }
+
     private static void bone(int index, float px, float py, float pz, float ax, float ay, float az, float swing) {
         bones[index].set(px, py, pz, swing);
         axes[index].set(ax, ay, az);
@@ -99,6 +129,14 @@ public final class TitanWorld {
 
     /** Where the colossus stands, or null while it is still looking for solid ground. */
     public static Vec3d standingPlace() { return anchor; }
+
+    /**
+     * Where the body falls on screen, as {minX, minY, maxX, maxY} in normalised device coordinates,
+     * or null when it is behind the camera. A draw call is not a sighting: this is the number that
+     * says whether the colossus is in front of the viewer and how much of the frame it spans, and it
+     * is computed from the same matrices the vertex shader uses.
+     */
+    public static double[] screenBox() { return screenBox; }
 
     /**
      * How many frames the colossus has actually been drawn in. A per-tick flag cannot be read as
@@ -410,7 +448,9 @@ public final class TitanWorld {
         RenderSystem.enableDepthTest();
         RenderSystem.depthMask(true);
         RenderSystem.disableBlend();
-        RenderSystem.enableCull();
+        // The body is closed, but it is also 100k+ hand-wound triangles cut from arbitrary voxels: a
+        // single reversed winding must never be able to erase the colossus from the sky.
+        RenderSystem.disableCull();
         RenderSystem.setShaderTexture(0, SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
         program.getUniformOrDefault("TitanModel").set(model);
         for (int i = 0; i < BONES; i++) {
@@ -426,5 +466,12 @@ public final class TitanWorld {
         if (!depth) RenderSystem.disableDepthTest();
         drawn = true;
         drawnFrames++;
+        if (drawnFrames % 120 == 1) {
+            screenBox = project(context);
+            BeyondMinecraft.LOGGER.info("BEYOND_TITAN_PROJECT box={} vertices={} gl_error={}",
+                screenBox == null ? "behind the camera" : String.format("[%.2f, %.2f] to [%.2f, %.2f]",
+                    screenBox[0], screenBox[1], screenBox[2], screenBox[3]),
+                faceCount * 6, GL11.glGetError());
+        }
     }
 }

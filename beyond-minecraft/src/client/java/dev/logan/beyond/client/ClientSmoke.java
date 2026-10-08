@@ -54,6 +54,8 @@ public final class ClientSmoke {
     private static int wormholePhase, wormholeEra, wormholeSettle, wormholeStep, titanPhase;
     private static double occlusionX, occlusionY, occlusionZ;
     private static int[] colossusReference = new int[0];
+    private static int colossusStatic, colossusAnimated;
+    private static double[] colossusBox;
     private static java.util.UUID spaghettiCritter;
     private static double critterX, critterY, critterZ;
     private static double tunnelPeak, wormholeBaseX, wormholeBaseZ, wormholeAltitude;
@@ -542,27 +544,41 @@ public final class ClientSmoke {
                         require(TitanWorld.drawnFrames() > 0, "the colossus is drawn as world geometry, not a painted shape: " + TitanWorld.status());
                         BeyondMinecraft.LOGGER.info("BEYOND_TITAN_DRAWN frames={} {}", TitanWorld.drawnFrames(), TitanWorld.status());
                         BeyondMinecraft.LOGGER.info("BEYOND_TITAN_FRAME {}", viewReport(client));
+                        double[] box = TitanWorld.screenBox();
+                        require(box != null, "the colossus must be in front of the viewer: " + TitanWorld.status());
+                        double spanX = box[2] - box[0], spanY = box[3] - box[1];
+                        require(spanX > .25 && spanY > .6, "the colossus must stand across the view, not graze its edge: span="
+                            + String.format("%.2f x %.2f", spanX, spanY) + " - " + TitanWorld.status());
+                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_BOX span={}x{} centre=({}, {})",
+                            String.format("%.2f", spanX), String.format("%.2f", spanY),
+                            String.format("%.2f", (box[0] + box[2]) * .5), String.format("%.2f", (box[1] + box[3]) * .5));
                         capture(client, "16a-colossus-standing");
-                        colossusReference = sampleFrame(client);
-                        BeyondClient.CONFIG.titanBody = false;
+                        colossusBox = box;
+                        colossusReference = sampleBody(client, box);
                         titanPhase = 4; stageTicks = 0;
-                    } else if (titanPhase == 4 && stageTicks > 40) {
-                        int[] standing = sampleFrame(client);
-                        int difference = difference(colossusReference, standing);
-                        int moved = changedSamples(colossusReference, standing, 8);
-                        // A body this size, seen from this range, fills the view: a handful of changed
-                        // samples would mean it is grazing the edge of the frame, which is not a portrait.
-                        require(moved >= 8, "the colossus must stand across the view, not graze its edge: "
-                            + moved + "/" + standing.length + " samples moved, max difference " + difference
-                            + " - " + TitanWorld.status());
-                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VISIBLE samples_moved={}/{} max_channel_difference={} world_blocks_standing=true",
-                            moved, standing.length, difference);
+                    } else if (titanPhase == 4 && stageTicks > 6) {
+                        colossusStatic = difference(colossusReference, sampleBody(client, colossusBox));
+                        BeyondClient.CONFIG.titanBody = false;
+                        titanPhase = 5; stageTicks = 0;
+                    } else if (titanPhase == 5 && stageTicks > 6) {
+                        colossusReference = sampleBody(client, colossusBox);
+                        titanPhase = 6; stageTicks = 0;
+                    } else if (titanPhase == 6 && stageTicks > 6) {
+                        // The sky behind the body is always moving. An opaque body standing in front of
+                        // it stops that motion dead, so the same patch of view is far stiller with the
+                        // colossus standing than with it lying down: that is what a sighting means, and
+                        // it is not something a stray chat line or a wrong matrix can fake.
+                        colossusAnimated = difference(colossusReference, sampleBody(client, colossusBox));
+                        require(colossusAnimated > colossusStatic + 4, "the colossus must stand in front of the moving sky: "
+                            + "still=" + colossusStatic + " moving=" + colossusAnimated + " - " + TitanWorld.status());
+                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VISIBLE sky_changed_through_body={} sky_changed_without_body={} world_blocks_standing=true",
+                            colossusStatic, colossusAnimated);
                         capture(client, "16b-colossus-not-standing");
                         BeyondClient.CONFIG.titanBody = true;
                         BeyondClient.CONFIG.titanSky = true;
                         BeyondClient.CONFIG.save();
-                        titanPhase = 5; stageTicks = 0;
-                    } else if (titanPhase == 5 && stageTicks > 25) {
+                        titanPhase = 7; stageTicks = 0;
+                    } else if (titanPhase == 7 && stageTicks > 25) {
                         capture(client, "16-titan");
                         BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
                             + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true "
@@ -672,6 +688,26 @@ public final class ClientSmoke {
         return "anchor=" + place + " target_distance=" + String.format("%.1f", target.length())
             + " off_axis_degrees=" + String.format("%.1f", off) + " yaw=" + client.player.getYaw()
             + " pitch=" + client.player.getPitch();
+    }
+    /**
+     * Samples the inside of the body's own screen box — its middle column, across its upper half,
+     * kept clear of the chat line and the action bar. This is the patch of view the colossus occupies,
+     * so what happens here is what the colossus is doing.
+     */
+    private static int[] sampleBody(MinecraftClient client, double[] box) {
+        int[] samples = new int[36]; int i = 0;
+        double centreX = (box[0] + box[2]) * .5, width = (box[2] - box[0]) * .30;
+        double top = Math.min(box[3] - .05, .95), bottom = Math.max(box[1] + .05, -.05);
+        try (var image = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {
+            for (int row = 0; row < 6; row++) for (int col = 0; col < 6; col++) {
+                double ndcX = centreX - width * .5 + width * (col / 5.0);
+                double ndcY = bottom + (top - bottom) * (row / 5.0);
+                int x = Math.clamp((int) ((ndcX + 1) * .5 * image.getWidth()), 0, image.getWidth() - 1);
+                int y = Math.clamp((int) ((1 - ndcY) * .5 * image.getHeight()), 0, image.getHeight() - 1);
+                samples[i++] = image.getColor(x, y);
+            }
+        }
+        return samples;
     }
     /** How many samples moved by more than {@code threshold} in any channel between two frames. */
     private static int changedSamples(int[] first, int[] second, int threshold) {
