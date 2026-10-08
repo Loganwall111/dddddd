@@ -514,10 +514,15 @@ public final class ClientSmoke {
                             double angle = .74, distance = 120;
                             double x = place.x + Math.cos(angle) * distance, z = place.z + Math.sin(angle) * distance;
                             float yaw = (float) Math.toDegrees(Math.atan2(Math.cos(angle), -Math.sin(angle)));
+                            // Aim at the middle of the body rather than the horizon, and record where the
+                            // body actually falls in the view: a portrait that misses, and a sighting
+                            // angle to prove whether it missed, are two very different failures.
+                            double eye = place.y + 24, torso = place.y + 45;
+                            float pitch = (float) -Math.toDegrees(Math.atan2(torso - eye, distance));
                             onServer(client, p -> {
-                                p.teleport(p.getServerWorld(), x, place.y + 24, z, yaw, 4f);
+                                p.teleport(p.getServerWorld(), x, eye, z, yaw, pitch);
                                 p.setVelocity(Vec3d.ZERO);
-                                BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VIEW anchor={} viewer={}", place, p.getPos());
+                                BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VIEW anchor={} viewer={} pitch={}", place, p.getPos(), pitch);
                             });
                             titanPhase = 2; stage++; stageTicks = 0;
                         }
@@ -536,14 +541,23 @@ public final class ClientSmoke {
                     } else if (titanPhase == 3 && stageTicks > 40) {
                         require(TitanWorld.drawnFrames() > 0, "the colossus is drawn as world geometry, not a painted shape: " + TitanWorld.status());
                         BeyondMinecraft.LOGGER.info("BEYOND_TITAN_DRAWN frames={} {}", TitanWorld.drawnFrames(), TitanWorld.status());
+                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_FRAME {}", viewReport(client));
+                        capture(client, "16a-colossus-standing");
                         colossusReference = sampleFrame(client);
                         BeyondClient.CONFIG.titanBody = false;
                         titanPhase = 4; stageTicks = 0;
                     } else if (titanPhase == 4 && stageTicks > 40) {
-                        int difference = difference(colossusReference, sampleFrame(client));
-                        require(difference > 6, "the colossus must be visible in the world's own pixels, not merely submitted: "
-                            + difference + " - " + TitanWorld.status());
-                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VISIBLE max_channel_difference={} world_blocks_standing=true", difference);
+                        int[] standing = sampleFrame(client);
+                        int difference = difference(colossusReference, standing);
+                        int moved = changedSamples(colossusReference, standing, 8);
+                        // A body this size, seen from this range, fills the view: a handful of changed
+                        // samples would mean it is grazing the edge of the frame, which is not a portrait.
+                        require(moved >= 8, "the colossus must stand across the view, not graze its edge: "
+                            + moved + "/" + standing.length + " samples moved, max difference " + difference
+                            + " - " + TitanWorld.status());
+                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VISIBLE samples_moved={}/{} max_channel_difference={} world_blocks_standing=true",
+                            moved, standing.length, difference);
+                        capture(client, "16b-colossus-not-standing");
                         BeyondClient.CONFIG.titanBody = true;
                         BeyondClient.CONFIG.titanSky = true;
                         BeyondClient.CONFIG.save();
@@ -644,6 +658,32 @@ public final class ClientSmoke {
      * rather than about one region of it. The colossus fills the middle of the frame; the lensing and
      * occlusion stages look at the upper-left, where their own subjects are.
      */
+    /**
+     * Where the colossus falls in the current view: the angle between the camera's line of sight and
+     * the body's middle, in degrees, plus the distance. A portrait that misses its subject and a
+     * subject that never reaches the screen look identical in a screenshot, and are not the same bug.
+     */
+    private static String viewReport(MinecraftClient client) {
+        Vec3d place = TitanWorld.standingPlace();
+        if (place == null || client.player == null) return "no standing place";
+        Vec3d target = place.add(0, 45, 0).subtract(client.player.getEyePos());
+        Vec3d look = client.player.getRotationVec(1f);
+        double off = Math.toDegrees(Math.acos(Math.clamp(look.dotProduct(target.normalize()), -1, 1)));
+        return "anchor=" + place + " target_distance=" + String.format("%.1f", target.length())
+            + " off_axis_degrees=" + String.format("%.1f", off) + " yaw=" + client.player.getYaw()
+            + " pitch=" + client.player.getPitch();
+    }
+    /** How many samples moved by more than {@code threshold} in any channel between two frames. */
+    private static int changedSamples(int[] first, int[] second, int threshold) {
+        int changed = 0;
+        for (int i = 0; i < Math.min(first.length, second.length); i++) {
+            boolean moved = false;
+            for (int bit = 0; bit < 24; bit += 8)
+                moved |= Math.abs(((first[i] >> bit) & 255) - ((second[i] >> bit) & 255)) > threshold;
+            if (moved) changed++;
+        }
+        return changed;
+    }
     private static int[] sampleFrame(MinecraftClient client) {
         int[] samples = new int[48]; int i = 0;
         try (var image = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {

@@ -111,7 +111,8 @@ public final class TitanWorld {
         if (failed) return "Titan unavailable (shader)";
         if (anchor == null) return "Titan awaiting solid ground after " + attempts + " searches";
         return "Titan standing at " + (int) anchor.x + ", " + (int) anchor.y + ", " + (int) anchor.z
-            + ", cut from " + bodyMaterials + " world materials, drawn over " + drawnFrames + " frames";
+            + ", cut from " + bodyMaterials + " world materials, " + voxelCount + " voxels / " + faceCount
+            + " faces, drawn over " + drawnFrames + " frames";
     }
 
     /** Look for standing ground again now: a new reality deserves a fresh search, not a spent budget. */
