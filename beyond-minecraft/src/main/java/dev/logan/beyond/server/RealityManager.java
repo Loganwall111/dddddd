@@ -167,7 +167,16 @@ public final class RealityManager {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             Journey journey = Journey.of(player);
             if (journey.travelCooldown > 0) journey.travelCooldown--;
-            if (Tunnels.active(player)) { Tunnels.tick(player); PREVIOUS.remove(player.getUuid()); continue; }
+            if (Tunnels.active(player)) {
+                Tunnels.tick(player);
+                PREVIOUS.remove(player.getUuid());
+                // The corridor is painted by the client from the ride's own clock, so the clock has to
+                // reach the client while the ride runs — and one last packet has to tell it the corridor
+                // is over. Without this the screen treatment never appears at all: the only packets that
+                // carry it are sent on spawn, enter and travel, none of which happen mid-ride.
+                if (server.getTicks() % 4 == 0 || !Tunnels.active(player)) sync(player, false);
+                continue;
+            }
             scalePhysics(player);
             Sample before = PREVIOUS.get(player.getUuid());
             if (Journey.inRealm(player.getWorld().getRegistryKey()) && player.getY() < player.getWorld().getBottomY() + 12 && journey.travelCooldown == 0) {

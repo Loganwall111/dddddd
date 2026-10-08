@@ -323,7 +323,7 @@ public final class ClientSmoke {
                     // The mouth opens where the player actually stands. The arrival teleport lands a
                     // tick or two after it is issued, so the fixture waits for the canopy to be the
                     // client's world, opens, retries once aiming higher, and only then gates.
-                    if (wormholePhase == 0 && stageTicks > 40 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) server(client, p -> {
+                    if (wormholePhase == 0 && stageTicks > 40 && client.world.getRegistryKey().getValue().toString().equals("beyond:realm_00")) onServer(client, p -> {
                         RealityManager.clear(p);            // clear the field where the hole opens
                         Journey.of(p).travelCooldown = 0;   // the arrival teleport set it
                         if (RealityManager.spawn(p, Anomaly.Kind.WORMHOLE)) { armWormhole(p); wormholePhase = 2; }
@@ -333,7 +333,7 @@ public final class ClientSmoke {
                             wormholePhase = 1;
                         }
                     });
-                    if (wormholePhase == 1 && stageTicks > 70) server(client, p -> {
+                    if (wormholePhase == 1 && stageTicks > 70) onServer(client, p -> {
                         Journey.of(p).travelCooldown = 0;
                         require(RealityManager.spawn(p, Anomaly.Kind.WORMHOLE), "wormhole creation at " + p.getPos());
                         armWormhole(p);
@@ -343,7 +343,7 @@ public final class ClientSmoke {
                         // Sample the ride while it runs: the corridor is a flight, so the proof that it
                         // carries the walker is the farthest point it reaches, not where it happens to
                         // set them down afterwards.
-                        if (stageTicks % 5 == 0) server(client, p -> tunnelPeak = Math.max(tunnelPeak,
+                        if (stageTicks % 5 == 0) onServer(client, p -> tunnelPeak = Math.max(tunnelPeak,
                             tunnelStart == null ? 0 : p.getPos().distanceTo(tunnelStart)));
                         if (++wormholeSettle > 10) {
                             require(ClientReality.tunnelRemaining > 0, "the corridor walk reaches the client");
@@ -464,6 +464,24 @@ public final class ClientSmoke {
                 var player = server.getPlayerManager().getPlayer(uuid);
                 require(player != null, "integrated player missing"); action.accept(player); stage++;
                 BeyondMinecraft.LOGGER.info("BEYOND_INTEGRATION stage={}", stage);
+            } catch (Throwable error) { failure = error; }
+            finally { pending = false; }
+        });
+    }
+    /**
+     * Runs one task on the integrated server *without* moving the stage. {@link #server} is a
+     * one-shot: it advances to the next stage when the action returns. A fixture that needs several
+     * server steps inside one stage — open, retry, sample — has to use this one instead, or the
+     * stage slips out from under it before the second step ever runs.
+     */
+    private static void onServer(MinecraftClient client, Consumer<ServerPlayerEntity> action) {
+        pending = true;
+        var server = client.getServer(); var uuid = client.player.getUuid();
+        server.execute(() -> {
+            try {
+                var player = server.getPlayerManager().getPlayer(uuid);
+                require(player != null, "integrated player missing");
+                action.accept(player);
             } catch (Throwable error) { failure = error; }
             finally { pending = false; }
         });
