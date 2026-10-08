@@ -12,6 +12,7 @@ Layout written:
   assets/beyondthelimits/textures/particle/*.png  8x8 particle sprites
   assets/beyondthelimits/textures/entity/*.png    entity skins
 """
+import json
 import os
 import random
 import struct
@@ -792,9 +793,12 @@ def _(c):
 # ---------------------------------------------------------------------------------------
 
 PARTICLES = {}
+PARTICLE_TYPES = {}
 
 
 def particle(name, frames=1):
+    PARTICLE_TYPES[name] = frames
+
     def wrap(fn):
         for frame in range(frames):
             PARTICLES[f"{name}_{frame}"] = (fn, frame, frames)
@@ -1137,6 +1141,14 @@ def main():
         fn(canvas, frame, frames)
         canvas.save(os.path.join(ROOT, "particle", f"{name}.png"))
         counts["particle"] += 1
+    particle_definitions = os.path.join(os.path.dirname(ROOT), "particles")
+    for name, frames in sorted(PARTICLE_TYPES.items()):
+        path = os.path.join(particle_definitions, f"{name}.json")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump({"textures": [f"beyondthelimits:particle/{name}_{frame}" for frame in range(frames)]},
+                      handle, indent=2)
+            handle.write("\n")
     for name, (fn, size) in sorted(ENTITIES.items()):
         canvas = skin_canvas(size)
         fn(canvas)

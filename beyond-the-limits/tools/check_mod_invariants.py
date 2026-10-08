@@ -59,6 +59,34 @@ def check_core_shaders():
     return None
 
 
+def check_particle_resources():
+    """Ensure each registered particle has an atlas sprite list with real PNG frames."""
+    particle_source = read("src/main/java/com/beyondthelimits/registry/BtlParticles.java")
+    particle_ids = set(re.findall(r'BeyondTheLimits[.]id[(]"([a-z0-9_]+)"[)]', particle_source))
+    if len(particle_ids) != 10:
+        return f"expected 10 registered particle types, found {sorted(particle_ids)}"
+
+    descriptor_root = ROOT / "src/main/resources/assets/beyondthelimits/particles"
+    texture_root = ROOT / "src/main/resources/assets/beyondthelimits/textures/particle"
+    prefix = "beyondthelimits:particle/"
+    for name in sorted(particle_ids):
+        path = descriptor_root / f"{name}.json"
+        if not path.is_file():
+            return f"missing particle sprite definition {name}.json"
+        definition = json.loads(path.read_text())
+        textures = definition.get("textures")
+        if not isinstance(textures, list) or not textures:
+            return f"particle/{name}.json must list at least one texture"
+        for texture in textures:
+            if not isinstance(texture, str) or not texture.startswith(prefix):
+                return f"particle/{name}.json has invalid texture ID {texture!r}"
+            texture_path = texture_root / f"{texture[len(prefix):]}.png"
+            if not texture_path.is_file():
+                return f"particle/{name}.json references missing texture {texture}"
+
+    return None
+
+
 def check_block_item_resources():
     """Keep registered BlockItems, their models, and block loot tables in sync."""
     block_source = read("src/main/java/com/beyondthelimits/registry/BtlBlocks.java")
@@ -168,6 +196,10 @@ def main():
     if shader_error:
         return fail(shader_error)
 
+    particle_error = check_particle_resources()
+    if particle_error:
+        return fail(particle_error)
+
     block_item_error = check_block_item_resources()
     if block_item_error:
         return fail(block_item_error)
@@ -222,7 +254,7 @@ def main():
     if "VARIANT_BACKROOMS" in commands:
         return fail("a mod command exposes the Backrooms as a free-form dimension destination")
 
-    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes; 4 core shaders, 36 BlockItems/loot tables, and 7 dimensions resolve")
+    print("runtime invariants: bootstrap wired once; exactly 3 Backrooms entry routes; 4 core shaders, 10 particle sprites, 36 BlockItems/loot tables, and 7 dimensions resolve")
     return 0
 
 

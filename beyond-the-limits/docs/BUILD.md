@@ -114,6 +114,12 @@ Loom must match the Gradle version in the wrapper.
 A model references a texture that the generator did not write. Re-run `gen_textures.py` and
 `gen_models.py`; the two scripts must be run as a pair after any change.
 
+**A particle crashes in `SpriteProvider.getSprite` while being added.**
+Each registered particle needs `assets/beyondthelimits/particles/<id>.json` with a non-empty `textures`
+list whose sprite files exist under `textures/particle/`. Run `python3 tools/gen_textures.py` to regenerate
+the particle frames and their sprite definitions, then `python3 tools/check_mod_invariants.py` to verify
+all registered particle IDs.
+
 **Sounds are silent.**
 `sounds.json` names must match the `.ogg` filenames exactly, including case, and every entry needs a
 subtitle key present in `en_us.json`. `gen_sounds.py` writes both at once.
