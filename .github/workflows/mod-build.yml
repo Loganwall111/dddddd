@@ -46,7 +46,28 @@ jobs:
       - name: Validate metadata, JSON, models, textures, and shader resources
         run: python3 scripts/verify_mod.py
       - name: Compile Fabric mod and package optional GLSL shader pack
-        run: ./gradlew --no-daemon --console=plain build shaderpackZip
+        id: compile
+        shell: bash
+        run: |
+          set +e
+          ./gradlew --no-daemon --console=plain build shaderpackZip 2>&1 | tee gradle-ci.log
+          result=${PIPESTATUS[0]}
+          set -e
+          if [[ $result -ne 0 ]]; then
+            {
+              echo '### Gradle failure details'
+              echo '```text'
+              tail -n 100 gradle-ci.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            grep -E '^(FAILURE:|\* What went wrong:|\* Exception is:|> |Could not |Plugin \[|Execution failed)' gradle-ci.log | tail -n 40 | while IFS= read -r line; do
+              line=${line//'%'/'%25'}
+              line=${line//$'\r'/'%0D'}
+              line=${line//$'\n'/'%0A'}
+              echo "::error title=Gradle build::$line"
+            done
+            exit "$result"
+          fi
       - name: Upload installable mod and optional shader pack
         uses: actions/upload-artifact@v4
         with:
