@@ -1,4 +1,4 @@
 # Beyond Minecraft alpha snapshots. Regenerate with: sha256sum releases/*.jar
 # The authoritative machine-readable record for the newest green run is docs/runtime/verification.json.
 c211c1ec94f899e752d6174a3ac4c8eba6f043810c4666746ecf70749f6af554  beyond-minecraft-0.1.0-alpha.jar
-265cd25bb396ea3d1f083fc59b3b9110ab7f41e046eec195d92082458080ac5f  beyond-minecraft-0.2.0-alpha.jar
+ace060bc69fd071bd0f48549e1c92b8ff187d06e62bf966c7ed2eef58d910d7f  beyond-minecraft-0.2.0-alpha.jar
