@@ -1,7 +1,9 @@
 package com.beyondthelimits.client.render.entity;
 
+import com.beyondthelimits.client.model.BtlQuadrupedModel;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.minecraft.client.model.Dilation;
+import net.minecraft.client.model.TexturedModelData;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.MobEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
@@ -20,7 +22,7 @@ import net.minecraft.util.Identifier;
  * <p>The model layer is registered once from {@link BtlEntityRenderers#register()}, so the vanilla
  * entity model loader bakes it during the resource reload like any other layer.</p>
  */
-public class BtlQuadrupedRenderer<T extends MobEntity> extends MobEntityRenderer<T, QuadrupedEntityModel<T>> {
+public class BtlQuadrupedRenderer<T extends MobEntity> extends MobEntityRenderer<T, BtlQuadrupedModel<T>> {
 	/** The layer every quadruped in the mod shares: one baked model, many mobs, no per-mob cost. */
 	public static final EntityModelLayer LAYER = new EntityModelLayer(
 			Identifier.of("beyondthelimits", "quadruped"), "main");
@@ -28,16 +30,15 @@ public class BtlQuadrupedRenderer<T extends MobEntity> extends MobEntityRenderer
 	private final Identifier texture;
 
 	public BtlQuadrupedRenderer(EntityRendererFactory.Context context, Identifier texture, float scale) {
-		super(context, new QuadrupedEntityModel<>(context.getPart(LAYER), true, 8.0F, 7.0F, 2.0F, 2.0F, 24),
-				0.4F * scale);
+		super(context, new BtlQuadrupedModel<>(context.getPart(LAYER)), 0.4F * scale);
 		this.texture = texture;
 	}
 
 	/** Called during client init, before any renderer asks for the layer. */
 	public static void registerModelLayer() {
-		// Stance width 10 is the body plan the game's own four-legged animals use.
+		// Stance width 10 is the body plan the game's own four-legged animals use; quadrupeds are 64x32.
 		EntityModelLayerRegistry.registerModelLayer(LAYER,
-				() -> QuadrupedEntityModel.getModelData(10, Dilation.NONE));
+				() -> TexturedModelData.of(QuadrupedEntityModel.getModelData(10, Dilation.NONE), 64, 32));
 	}
 
 	@Override
