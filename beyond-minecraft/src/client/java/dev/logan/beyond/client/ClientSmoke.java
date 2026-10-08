@@ -54,6 +54,8 @@ public final class ClientSmoke {
     private static int wormholePhase, wormholeEra, wormholeSettle, wormholeStep, titanPhase;
     private static double occlusionX, occlusionY, occlusionZ;
     private static int[] colossusReference = new int[0];
+    private static java.util.UUID spaghettiCritter;
+    private static double critterX, critterY, critterZ;
     private static double tunnelPeak, wormholeBaseX, wormholeBaseZ, wormholeAltitude;
     /** Columns to try for a wormhole mouth, relative to where the walker arrived. */
     private static final int[][] WORMHOLE_CANDIDATES = {{0, 0}, {16, 0}, {0, 16}, {-16, 0}, {0, -16}, {24, 24}, {-24, -24}};
@@ -264,30 +266,55 @@ public final class ClientSmoke {
                     server(client, p -> {
                         RealityManager.clear(p);
                         Journey.of(p).travelCooldown = 0;
-                        // A real mob, placed in front of the camera inside the colossal well's tidal
-                        // reach, so the render-side stretch has something to act on.
+                        // A real mob, held in the colossal well's tidal reach so the render-side stretch
+                        // has something to act on. It hangs *outside* the event horizon on purpose: the
+                        // well is at eye + look * 6 and a body inside radius * 1.06 is swallowed whole,
+                        // which is the well working correctly and the fixture never being rendered — so
+                        // the mob is placed where the tide reaches it and the horizon does not.
                         Vec3d look = p.getRotationVec(1);
+                        critterX = p.getX() + look.x * 3.4;
+                        critterY = p.getY() + look.y * 3.4;
+                        critterZ = p.getZ() + look.z * 3.4;
                         RealmCritter critter = new RealmCritter(BeyondEntities.REALM_CRITTER, p.getServerWorld());
                         critter.setVariant(1);
-                        critter.refreshPositionAndAngles(p.getX() + look.x * 5, p.getY() + look.y * 5, p.getZ() + look.z * 5, 180, 0);
+                        critter.refreshPositionAndAngles(critterX, critterY, critterZ, 180, 0);
                         critter.setVelocity(Vec3d.ZERO);
+                        critter.setNoGravity(true);
                         require(p.getServerWorld().spawnEntity(critter), "tidal critter fixture");
+                        spaghettiCritter = critter.getUuid();
+                        var node = ClientReality.nodes.isEmpty() ? null : ClientReality.nodes.get(0);
+                        BeyondMinecraft.LOGGER.info("BEYOND_TIDAL_FIXTURE placed={} well_axis={} in_reach={}",
+                            critter.getPos(), node == null ? "none" : node.kind(),
+                            Spaghettification.forEntity(critter) != null);
                         require(Spaghettification.forEntity(critter) != null, "the well's tidal reach covers the fixture");
                     });
                 } }
-                case 18 -> { if (stageTicks > 240 || (stageTicks > 30 && Spaghettification.applied > 0)) {
-                    // The fixture is a real mob a few blocks in front of the camera, so the render hook
-                    // fires on the first frames that draw it; wait for that rather than assuming a delay.
-                    require(Spaghettification.applied > 0, "the tidal stretch must actually be applied to rendered entities");
-                    require(Spaghettification.lastStretch > 1.05f, "stretch factor must be above neutral");
-                    BeyondMinecraft.LOGGER.info("BEYOND_SPAGHETTIFICATION applied={} last_stretch={} noodle=true", Spaghettification.applied, Spaghettification.lastStretch);
-                    capture(client, "09-spaghettification");
-                    server(client, p -> {
-                        RealityManager.clear(p);
-                        Journey.of(p).travelCooldown = 0;
-                        require(RealityManager.spawn(p, Anomaly.Kind.TEAR), "tear creation");
+                case 18 -> {
+                    // The mob is held where the tide is, for as long as the stage runs, so the stretch is
+                    // demonstrated over many frames instead of for whichever frames it happened to fall
+                    // through the reach.
+                    if (spaghettiCritter != null) onServer(client, p -> {
+                        var critter = p.getServerWorld().getEntity(spaghettiCritter);
+                        if (critter == null) return;
+                        critter.setNoGravity(true);
+                        critter.setVelocity(Vec3d.ZERO);
+                        critter.refreshPositionAndAngles(critterX, critterY, critterZ, 180, 0);
                     });
-                } }
+                    if (stageTicks > 240 || (stageTicks > 30 && Spaghettification.applied > 0)) {
+                        // The fixture is a real mob held a couple of blocks off the well's horizon, so
+                        // the render hook fires on the first frames that draw it; wait for that rather
+                        // than assuming a delay.
+                        require(Spaghettification.applied > 0, "the tidal stretch must actually be applied to rendered entities");
+                        require(Spaghettification.lastStretch > 1.05f, "stretch factor must be above neutral");
+                        BeyondMinecraft.LOGGER.info("BEYOND_SPAGHETTIFICATION applied={} last_stretch={} noodle=true", Spaghettification.applied, Spaghettification.lastStretch);
+                        capture(client, "09-spaghettification");
+                        server(client, p -> {
+                            RealityManager.clear(p);
+                            Journey.of(p).travelCooldown = 0;
+                            require(RealityManager.spawn(p, Anomaly.Kind.TEAR), "tear creation");
+                        });
+                    }
+                }
                 case 19 -> { if (stageTicks > 40) {
                     capture(client, "10-tear");
                     server(client, p -> {
