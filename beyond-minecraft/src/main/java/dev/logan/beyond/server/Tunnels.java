@@ -103,6 +103,8 @@ public final class Tunnels {
         if (player.getWorld().getTime() % 3 == 0)
             player.getServerWorld().spawnParticles(ParticleTypes.END_ROD, at.x, at.y + 1.2, at.z, 3, .3, .3, .3, .02);
         if (advanced.remaining > 0) return false;
+        BeyondMinecraft.LOGGER.info("Beyond wormhole carried {} {} blocks along its corridor",
+            player.getName().getString(), String.format("%.1f", travelled));
         end(player, true);
         return true;
     }
