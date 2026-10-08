@@ -53,6 +53,7 @@ public final class ClientSmoke {
     private static Vec3d tunnelStart;
     private static int wormholePhase, wormholeEra, wormholeSettle, wormholeStep, titanPhase;
     private static double occlusionX, occlusionY, occlusionZ;
+    private static int[] colossusReference = new int[0];
     private static double tunnelPeak, wormholeBaseX, wormholeBaseZ, wormholeAltitude;
     /** Columns to try for a wormhole mouth, relative to where the walker arrived. */
     private static final int[][] WORMHOLE_CANDIDATES = {{0, 0}, {16, 0}, {0, 16}, {-16, 0}, {0, -16}, {24, 24}, {-24, -24}};
@@ -483,11 +484,11 @@ public final class ClientSmoke {
                         } else {
                             // The colossus portrait: stand off from it and look up. This is the shot that
                             // proves the Titan is the world's own blocks standing in the world.
-                            double angle = .74, distance = 150;
+                            double angle = .74, distance = 120;
                             double x = place.x + Math.cos(angle) * distance, z = place.z + Math.sin(angle) * distance;
                             float yaw = (float) Math.toDegrees(Math.atan2(Math.cos(angle), -Math.sin(angle)));
                             onServer(client, p -> {
-                                p.teleport(p.getServerWorld(), x, place.y + 26, z, yaw, 5f);
+                                p.teleport(p.getServerWorld(), x, place.y + 24, z, yaw, 4f);
                                 p.setVelocity(Vec3d.ZERO);
                                 BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VIEW anchor={} viewer={}", place, p.getPos());
                             });
@@ -495,16 +496,42 @@ public final class ClientSmoke {
                         }
                     }
                 }
-                case 31 -> { if (TitanWorld.drawnFrames() > 0 || stageTicks > 420) {
-                    require(TitanWorld.drawnFrames() > 0, "the colossus is drawn as world geometry, not a painted shape: " + TitanWorld.status());
-                    BeyondMinecraft.LOGGER.info("BEYOND_TITAN_DRAWN frames={} {}", TitanWorld.drawnFrames(), TitanWorld.status());
-                    capture(client, "16-titan");
-                    BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
-                        + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true "
-                        + "titan=true realities={} screenshots=true",
-                        CosmicRenderer.renderedFrames(), VisualConfig.REALITIES.length);
-                    complete = true; client.scheduleStop();
-                } }
+                case 31 -> {
+                    // A draw call is not a sighting. The same view is photographed twice with the sky
+                    // figure off in both: once with the world's blocks standing up as the colossus and
+                    // once with them lying where they were. The only thing that can move those pixels
+                    // is the colossus itself, so a difference is proof it is really on screen.
+                    if (titanPhase == 2) {
+                        BeyondClient.CONFIG.titanSky = false;
+                        BeyondClient.CONFIG.titanBody = true;
+                        BeyondClient.CONFIG.save();
+                        titanPhase = 3; stageTicks = 0;
+                    } else if (titanPhase == 3 && stageTicks > 40) {
+                        require(TitanWorld.drawnFrames() > 0, "the colossus is drawn as world geometry, not a painted shape: " + TitanWorld.status());
+                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_DRAWN frames={} {}", TitanWorld.drawnFrames(), TitanWorld.status());
+                        colossusReference = sampleFrame(client);
+                        BeyondClient.CONFIG.titanBody = false;
+                        titanPhase = 4; stageTicks = 0;
+                    } else if (titanPhase == 4 && stageTicks > 40) {
+                        int difference = difference(colossusReference, sampleFrame(client));
+                        require(difference > 6, "the colossus must be visible in the world's own pixels, not merely submitted: "
+                            + difference + " - " + TitanWorld.status());
+                        BeyondMinecraft.LOGGER.info("BEYOND_TITAN_VISIBLE max_channel_difference={} world_blocks_standing=true", difference);
+                        BeyondClient.CONFIG.titanBody = true;
+                        BeyondClient.CONFIG.titanSky = true;
+                        BeyondClient.CONFIG.save();
+                        titanPhase = 5; stageTicks = 0;
+                    } else if (titanPhase == 5 && stageTicks > 25) {
+                        capture(client, "16-titan");
+                        BeyondMinecraft.LOGGER.info("BEYOND_CLIENT_INTEGRATION_PASS frames={} world_travel=true inventory_round_trip=true player_nbt=true death_restore=true "
+                            + "scale_extremes=true sky_well=true lensing=true spaghettification=true tear=true fractal=true labyrinth=true wormhole_corridor=true umbrella=true "
+                            + "titan=true realities={} screenshots=true",
+                            CosmicRenderer.renderedFrames(), VisualConfig.REALITIES.length);
+                        complete = true; client.scheduleStop();
+                    } else if (titanPhase < 2 && stageTicks > 420) {
+                        require(false, "the colossus was never ready for its portrait: " + TitanWorld.status());
+                    }
+                }
                 default -> { }
             }
         } catch (Throwable error) { fail(client, error); }
@@ -584,6 +611,19 @@ public final class ClientSmoke {
             image.writeTo(directory.resolve("beyond-" + name + ".png"));
             BeyondMinecraft.LOGGER.info("BEYOND_SCREENSHOT {} colors={}", name, colors.size());
         }
+    }
+    /**
+     * A coarse signature of the whole frame, for comparisons that are about what is on screen at all
+     * rather than about one region of it. The colossus fills the middle of the frame; the lensing and
+     * occlusion stages look at the upper-left, where their own subjects are.
+     */
+    private static int[] sampleFrame(MinecraftClient client) {
+        int[] samples = new int[48]; int i = 0;
+        try (var image = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {
+            for (int row = 0; row < 6; row++) for (int col = 0; col < 8; col++)
+                samples[i++] = image.getColor((int) (image.getWidth() * (.09 + col * .117)), (int) (image.getHeight() * (.12 + row * .13)));
+        }
+        return samples;
     }
     private static int[] sampleWorldPixels(MinecraftClient client) {
         int[] samples = new int[20]; int i = 0;

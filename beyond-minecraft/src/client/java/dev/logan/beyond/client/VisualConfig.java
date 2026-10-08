@@ -17,6 +17,8 @@ public final class VisualConfig {
     public boolean nebula = true;
     /** The Overworld colossus: the sky figure is filled with the live world instead of a colour. */
     public boolean titanSky = true;
+    /** The world's own blocks standing up as the colossus, independent of the painted sky figure. */
+    public boolean titanBody = true;
     public float intensity = .88f;
     public int quality = 1;
     /** Index into {@link #REALITIES}: the whole screen is re-authored by the post-processor. */

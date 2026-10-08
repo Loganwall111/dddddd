@@ -69,6 +69,7 @@ public final class TitanWorld {
     private static VertexBuffer mesh;
     private static boolean failed, drawn;
     private static long drawnFrames;
+    private static String bodyMaterials = "no materials";
     private static RegistryKey<World> builtWorld, lastWorld;
     private static Vec3d anchor;
     private static int voxelCount, faceCount, attempts;
@@ -110,7 +111,7 @@ public final class TitanWorld {
         if (failed) return "Titan unavailable (shader)";
         if (anchor == null) return "Titan awaiting solid ground after " + attempts + " searches";
         return "Titan standing at " + (int) anchor.x + ", " + (int) anchor.y + ", " + (int) anchor.z
-            + ", drawn over " + drawnFrames + " frames";
+            + ", cut from " + bodyMaterials + " world materials, drawn over " + drawnFrames + " frames";
     }
 
     /** Look for standing ground again now: a new reality deserves a fresh search, not a spent budget. */
@@ -181,8 +182,9 @@ public final class TitanWorld {
         mesh.upload(buffer);
         VertexBuffer.unbind();
         anchor = ground;
-        BeyondMinecraft.LOGGER.info("Beyond titan stands at {} cut from {} world materials: {} voxels, {} faces",
-            ground, palette.size(), voxelCount, faceCount);
+        bodyMaterials = palette.stream().map(Material::name).limit(6).reduce((a, b) -> a + ", " + b).orElse("no materials");
+        BeyondMinecraft.LOGGER.info("Beyond titan stands at {} cut from {} world materials ({}): {} voxels, {} faces",
+            ground, palette.size(), bodyMaterials, voxelCount, faceCount);
     }
 
     /** A standing place that is real ground: loaded, dry, and above the waterline. */
@@ -194,6 +196,26 @@ public final class TitanWorld {
         BlockPos centre = BlockPos.ofFloored(origin);
         Vec3d dry = search(world, centre, true, stats);
         return dry != null ? dry : search(world, centre, false, stats);
+    }
+
+    /**
+     * The first solid, non-leaf, non-fluid block under this column, or null when the column has no
+     * footing at all (open water, void, ice). Only WORLD_SURFACE and MOTION_BLOCKING are ever sent to
+     * a client, so MOTION_BLOCKING is the only surface heightmap a client can read; it counts leaves
+     * and fluids, so a canopy is walked down to the ground and a waterline is refused.
+     */
+    private static BlockPos footing(ClientWorld world, int x, int z) {
+        int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING, x, z);
+        if (top <= world.getBottomY() + 2) return null;
+        BlockPos pos = new BlockPos(x, top - 1, z);
+        BlockState state = world.getBlockState(pos);
+        if (!state.getFluidState().isEmpty()) return null;
+        for (int step = 0; step < 24; step++) {
+            if (!state.isAir() && !(state.getBlock() instanceof LeavesBlock)) break;
+            pos = pos.down(); state = world.getBlockState(pos);
+        }
+        if (state.isAir() || !state.getFluidState().isEmpty() || state.isOf(Blocks.ICE)) return null;
+        return pos;
     }
 
     /**
@@ -209,27 +231,11 @@ public final class TitanWorld {
             int x = centre.getX() + (int) Math.round(Math.cos(angle) * radius);
             int z = centre.getZ() + (int) Math.round(Math.sin(angle) * radius);
             if (!world.isChunkLoaded(new BlockPos(x, centre.getY(), z))) { stats[0]++; continue; }
-            // Only WORLD_SURFACE and MOTION_BLOCKING are ever sent to a client, so those are the only
-            // heightmaps a client can read: the no-leaves one lives server-side and answers zero here,
-            // which is why the colossus used to search every column of the world and find none of them.
-            int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING, x, z);
-            stats[2] = Math.max(stats[2], top);
-            if (top <= world.getBottomY() + 2) { stats[1]++; continue; }
-            BlockPos surface = new BlockPos(x, top - 1, z);
-            BlockState state = world.getBlockState(surface);
-            // MOTION_BLOCKING counts leaves and fluids, so this may be a canopy or a waterline: a column
-            // whose surface is open water has no footing at all, and a canopy has one underneath it.
-            if (!state.getFluidState().isEmpty()) { stats[1]++; continue; }
-            if (state.isAir() || state.getBlock() instanceof LeavesBlock) {
-                for (int floor = 0; floor < 24; floor++) {
-                    surface = surface.down(); state = world.getBlockState(surface);
-                    if (!state.isAir() && !(state.getBlock() instanceof LeavesBlock)) break;
-                }
-            }
-            if (state.isAir() || !state.getFluidState().isEmpty() || state.isOf(Blocks.ICE)) { stats[1]++; continue; }
-            int footing = surface.getY() + 1;
-            if (dry && footing <= world.getSeaLevel() + 2) { stats[1]++; continue; }
-            return new Vec3d(x + .5, footing, z + .5);
+            BlockPos footing = footing(world, x, z);
+            if (footing == null) { stats[1]++; continue; }
+            stats[2] = Math.max(stats[2], footing.getY() + 1);
+            if (dry && footing.getY() + 1 <= world.getSeaLevel() + 2) { stats[1]++; continue; }
+            return new Vec3d(x + .5, footing.getY() + 1, z + .5);
         }
         return null;
     }
@@ -242,10 +248,14 @@ public final class TitanWorld {
         for (int sample = 0; sample < 320; sample++) {
             int x = base.getX() + random.nextInt(97) - 48;
             int z = base.getZ() + random.nextInt(97) - 48;
-            int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
-            for (int depth = 1; depth <= 4; depth++) {
-                BlockPos pos = new BlockPos(x, top - depth, z);
-                BlockState state = world.getBlockState(pos);
+            // The body has to be cut from the ground the walker can see. Reading a server-only
+            // heightmap here answered zero for every column, so the palette was quietly whatever sits
+            // at the bottom of the world — deepslate and bedrock — and a colossus of near-black stone
+            // stood invisible against the sky it was supposed to own.
+            BlockPos footing = footing(world, x, z);
+            if (footing == null) continue;
+            for (int depth = 0; depth < 4; depth++) {
+                BlockState state = world.getBlockState(footing.down(depth));
                 if (state.isAir() || !state.getFluidState().isEmpty()) continue;
                 counts.merge(state, 1, Integer::sum);
             }
@@ -384,7 +394,8 @@ public final class TitanWorld {
     private static void draw(WorldRenderContext context) {
         if (failed || mesh == null || program == null || anchor == null) return;
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || !BeyondClient.CONFIG.enabled || !BeyondClient.CONFIG.titanSky) return;
+        if (client.world == null || !BeyondClient.CONFIG.enabled || !BeyondClient.CONFIG.titanSky
+            || !BeyondClient.CONFIG.titanBody) return;
         if (!client.world.getRegistryKey().equals(World.OVERWORLD)) return;
         Vec3d camera = context.camera().getPos();
         // The giant is not a statue: it scans the horizon while the vertex shader walks it.
