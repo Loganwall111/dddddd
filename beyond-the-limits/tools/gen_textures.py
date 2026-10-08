@@ -1157,5 +1157,105 @@ def main():
     return total
 
 
+
+
+# ---------------------------------------------------------------------------------------
+# the mod icon (128x128), drawn at 4x and downsampled for clean edges
+# ---------------------------------------------------------------------------------------
+
+
+def icon():
+    size = 512
+    canvas = Canvas(size, (0, 0, 0, 255))
+    centre = size / 2.0
+
+    # A night sky behind everything, with stars placed on a stable hash.
+    import math
+    for y in range(size):
+        for x in range(size):
+            depth = 1.0 - min(1.0, ((x - centre) ** 2 + (y - centre) ** 2) ** 0.5 / centre)
+            canvas.px[y][x] = (int(6 + 18 * depth), int(4 + 10 * depth), int(14 + 42 * depth), 255)
+    star = random.Random(5150)
+    for _ in range(340):
+        x, y = star.randrange(size), star.randrange(size)
+        v = star.randint(150, 255)
+        canvas.set(x, y, (v, v, min(255, v + 20), 255))
+
+    # The tear: a vertical wound, torn at both ends, brighter at the core.
+    for y in range(size):
+        vertical = y / size
+        sway = math.sin(vertical * 7.0) * 22.0 + math.sin(vertical * 23.0) * 7.0
+        width = (26.0 + 34.0 * math.sin(vertical * math.pi)) * (0.55 + 0.45 * math.sin(vertical * 31.0) ** 2)
+        for offset in range(-int(width) - 12, int(width) + 13):
+            x = int(centre + sway + offset)
+            distance = abs(offset) / max(1.0, width)
+            if distance > 1.35:
+                continue
+            core = max(0.0, 1.0 - distance)
+            heat = core ** 2.2
+            r = int(min(255, 40 + 215 * heat + 120 * core * (1 - vertical)))
+            g = int(min(255, 10 + 90 * heat))
+            b = int(min(255, 90 + 165 * heat))
+            alpha = int(min(255, 40 + 235 * heat))
+            canvas.set(x, y, (r, g, b, alpha))
+
+    # Light spilling out of the tear onto the sky.
+    for y in range(0, size, 2):
+        for x in range(0, size, 2):
+            distance = ((x - centre) ** 2 + (y - centre) ** 2) ** 0.5
+            if distance < 1:
+                continue
+            spill = max(0.0, 1.0 - distance / (size * 0.62)) ** 3
+            if spill <= 0.002:
+                continue
+            r, g, b, a = canvas.get(x, y)
+            canvas.set(x, y, (min(255, int(r + spill * 70)), int(g + spill * 16), min(255, int(b + spill * 105)), a))
+
+    # Cracks radiating from the tear: the sky is not holding.
+    crack = random.Random(99)
+    for _ in range(11):
+        angle = crack.uniform(0, 6.283)
+        x, y = centre, centre
+        for step in range(28):
+            x += math.cos(angle) * crack.uniform(4, 16)
+            y += math.sin(angle) * crack.uniform(4, 16)
+            angle += crack.uniform(-0.22, 0.22)
+            for w in range(2):
+                canvas.set(int(x) + w, int(y), (222, 198, 255, 190))
+            if 0 <= x < size and 0 <= y < size and (x < 30 or y < 30 or x > size - 30 or y > size - 30):
+                break
+
+    # Downsample 4x4 with a box filter: the same art, without the aliasing.
+    scale = 4
+    final = Canvas(size // scale, (0, 0, 0, 0))
+    for y in range(final.size):
+        for x in range(final.size):
+            total = [0, 0, 0, 0]
+            for dy in range(scale):
+                for dx in range(scale):
+                    r, g, b, a = canvas.get(x * scale + dx, y * scale + dy)
+                    total[0] += r * a
+                    total[1] += g * a
+                    total[2] += b * a
+                    total[3] += a
+            if total[3] == 0:
+                final.px[y][x] = (0, 0, 0, 0)
+            else:
+                final.px[y][x] = (total[0] // total[3], total[1] // total[3], total[2] // total[3],
+                                  total[3] // (scale * scale))
+    target = os.path.join(ROOT, "..", "icon.png")
+    final.save(target)
+    return target
+
+
+_original_main = main
+
+
+def main_with_icon():
+    total = _original_main()
+    path = icon()
+    print(f"icon: {path} (128x128)")
+
+
 if __name__ == "__main__":
-    main()
+    main_with_icon()

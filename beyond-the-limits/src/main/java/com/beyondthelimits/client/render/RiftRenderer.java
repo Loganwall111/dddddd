@@ -204,7 +204,9 @@ public final class RiftRenderer {
 
 	/** Stable pseudo-random in [0,1) from three small integers, so the tear does not shimmer randomly. */
 	private static float hash(int a, int b, float seed) {
-		int h = a * 374761393 + b * 668265263 + (int) (seed * 100000.0F) * 2246822519;
+		// 0x85EBCA77 is the usual 32-bit avalanche constant; it is written in hex because the
+		// decimal form does not fit in a Java int literal.
+		int h = a * 374761393 + b * 668265263 + (int) (seed * 100000.0F) * 0x85EBCA77;
 		h = (h ^ (h >>> 13)) * 1274126177;
 		h = h ^ (h >>> 16);
 		return (h & 0xFFFF) / 65536.0F;

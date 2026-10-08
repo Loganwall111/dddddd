@@ -42,7 +42,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build
-        run: ./gradlew build --no-daemon --console=plain --warning-mode all 2>&1 | tee build-output.txt
+        # pipefail matters: without it, the exit status of the pipeline is `tee`'s, and a failing
+        # Gradle run would be reported as a successful build.
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew build --no-daemon --console=plain --warning-mode all 2>&1 | tee build-output.txt
 
       - name: Extract the errors
         if: failure()
