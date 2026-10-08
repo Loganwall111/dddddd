@@ -2,8 +2,8 @@ package dev.beyondlimits.entity;
 
 import dev.beyondlimits.ModItems;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ai.attributes.DefaultAttributeContainer;
-import net.minecraft.entity.ai.attributes.EntityAttributes;
+import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.ai.goal.LookAtEntityGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.mob.MobEntity;
