@@ -167,8 +167,8 @@ def main() -> int:
     if not (ROOT / "gradle/wrapper/gradle-wrapper.jar").exists():
         fail("Gradle wrapper JAR is missing")
     wrapper_props = (ROOT / "gradle/wrapper/gradle-wrapper.properties").read_text(encoding="utf-8")
-    if "gradle-8.7-bin.zip" not in wrapper_props:
-        fail("wrapper should be pinned to Gradle 8.7")
+    if "gradle-8.8-bin.zip" not in wrapper_props:
+        fail("wrapper should be pinned to Gradle 8.8 for Loom 1.7.4")
     gradle_properties = (ROOT / "gradle.properties").read_text(encoding="utf-8")
     if "loom_version=1.7.4" not in gradle_properties:
         fail("Loom should be pinned to the published 1.7.4 version")
