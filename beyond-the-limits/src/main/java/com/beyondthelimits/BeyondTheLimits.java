@@ -6,7 +6,6 @@ import com.beyondthelimits.registry.BtlBlocks;
 import com.beyondthelimits.registry.BtlChunkGenerators;
 import com.beyondthelimits.registry.BtlDimensions;
 import com.beyondthelimits.registry.BtlEntities;
-import com.beyondthelimits.registry.BtlFluids;
 import com.beyondthelimits.registry.BtlItemGroups;
 import com.beyondthelimits.registry.BtlItems;
 import com.beyondthelimits.registry.BtlParticles;
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * <p>System map (see docs/ARCHITECTURE.md for the full design document):</p>
  * <ul>
  *     <li>{@code com.beyondthelimits.registry} — every block, item, entity, particle, sound,
- *     fluid, status effect, chunk generator and dimension key.</li>
+ *     status effect, chunk generator and dimension key.</li>
  *     <li>{@code com.beyondthelimits.core} — the engines: reality decay, rifts, observers,
  *     evolution, temporal infection, storms, the black sun, collision, lost civilizations,
  *     the moving chunk, signals and the memory of the world.</li>
@@ -65,7 +64,6 @@ public class BeyondTheLimits implements ModInitializer {
 		BtlParticles.register();
 		BtlSounds.register();
 		BtlStatusEffects.register();
-		BtlFluids.register();
 		BtlBlocks.register();
 		BtlBlockEntities.register();
 		BtlItems.register();
