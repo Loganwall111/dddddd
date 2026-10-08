@@ -51,8 +51,10 @@ public final class ClientSmoke {
     private static int[] lensingReference;
     private static int[] heightsBefore;
     private static Vec3d tunnelStart;
-    private static int wormholePhase, wormholeEra, wormholeSettle;
-    private static double tunnelPeak;
+    private static int wormholePhase, wormholeEra, wormholeSettle, wormholeStep;
+    private static double tunnelPeak, wormholeBaseX, wormholeBaseZ, wormholeAltitude;
+    /** Columns to try for a wormhole mouth, relative to where the walker arrived. */
+    private static final int[][] WORMHOLE_CANDIDATES = {{0, 0}, {16, 0}, {0, 16}, {-16, 0}, {0, -16}, {24, 24}, {-24, -24}};
     // Software-GL CI is slow: building one of Beyond's Java-generated realms can take a minute or more on
     // the runner, so the budgets are wall-clock and generous rather than tick-counted. The stall detector
     // still fails fast when a stage genuinely never completes.
@@ -333,11 +335,34 @@ public final class ClientSmoke {
                             wormholePhase = 1;
                         }
                     });
-                    if (wormholePhase == 1 && stageTicks > 70) onServer(client, p -> {
-                        Journey.of(p).travelCooldown = 0;
-                        require(RealityManager.spawn(p, Anomaly.Kind.WORMHOLE), "wormhole creation at " + p.getPos());
-                        armWormhole(p);
-                        wormholePhase = 2;
+                    // A mouth needs three blocks of clear air in front of the eye, and an arrival pad, a
+                    // canopy or a wall can legitimately refuse one. So the retry climbs into open sky and
+                    // then walks a few candidate columns, one step at a time: a teleport only lands on a
+                    // later tick, so the reposition and the attempt never share a step.
+                    if (wormholePhase == 1 && stageTicks > 55 + wormholeStep * 12) onServer(client, p -> {
+                        var world = p.getServerWorld();
+                        if (wormholeStep == 0) {
+                            wormholeBaseX = p.getX(); wormholeBaseZ = p.getZ();
+                            wormholeAltitude = Math.min(world.getTopY() - 24, p.getY() + 96);
+                            wormholeStep = 1;
+                            return;
+                        }
+                        int candidate = Math.min((wormholeStep - 1) / 2, WORMHOLE_CANDIDATES.length - 1);
+                        if (wormholeStep % 2 == 1) {
+                            p.teleport(world, wormholeBaseX + WORMHOLE_CANDIDATES[candidate][0], wormholeAltitude,
+                                wormholeBaseZ + WORMHOLE_CANDIDATES[candidate][1], p.getYaw(), 0f);
+                            p.setVelocity(Vec3d.ZERO);
+                            Journey.of(p).travelCooldown = 0;
+                        } else {
+                            Journey.of(p).travelCooldown = 0;
+                            if (RealityManager.spawn(p, Anomaly.Kind.WORMHOLE)) {
+                                armWormhole(p);
+                                wormholePhase = 2;
+                            } else if (candidate >= WORMHOLE_CANDIDATES.length - 1) {
+                                require(false, "wormhole creation at " + p.getPos());
+                            }
+                        }
+                        wormholeStep++;
                     });
                     if (wormholePhase == 2) {
                         // Sample the ride while it runs: the corridor is a flight, so the proof that it
