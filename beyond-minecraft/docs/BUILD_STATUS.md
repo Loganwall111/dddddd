@@ -1,65 +1,49 @@
 # Beyond Minecraft — verified alpha record
 
-**Date:** 2026-10-06 · **Target:** Minecraft Java **1.21.1 exactly**, Fabric, Java 21.
+**Date:** 2026-10-08 · **Target:** Minecraft Java **1.21.1 exactly**, Fabric, Java 21 · **Version:** 0.2.0-alpha
+
+This page is the human summary of the newest completed CI run. The machine-readable record it
+describes is [runtime/verification.json](runtime/verification.json), which the publish job rewrites
+after every green run — if the two ever disagree, that file wins.
 
 ## Installable deliverable
 
-- `releases/beyond-minecraft-0.1.0-alpha.jar` — **213,619 bytes**.
-- Tested implementation commit: `5feb4ab977ff7fe8112ba86ef34f755a60cc8c39`.
-- Successful [build and in-world checks, run 37465039463](https://github.com/Loganwall111/dddddd/actions/runs/37465039463).
-- SHA-256:
-  `c211c1ec94f899e752d6174a3ac4c8eba6f043810c4666746ecf70749f6af554`.
-- Machine-readable provenance: [runtime/verification.json](runtime/verification.json).
-  Subsequent documentation/publication-policy edits do not change the tested Java, shaders or generated resources.
+- `releases/beyond-minecraft-0.2.0-alpha.jar` — **486,203 bytes**, sha256
+  `a3444415eb078cada38a1aa0bf45aae82f0329b12e9fee25825d12b72feefaf2`
+  ([`releases/SHA256SUMS.txt`](../releases/SHA256SUMS.txt) is kept in step with the checked-in JAR).
+- The JAR is published only when **compilation and the full dedicated-server gate pass**; the
+  in-client smoke stage is advisory and never blocks it.
+- Last full evidence set: [run 37702987490](https://github.com/Loganwall111/dddddd/actions/runs/37702987490)
+  — 30 JUnit tests / 0 failures, every realm loaded and generated on a real dedicated server, native
+  GLSL 150 compile + link, real screenshots in `docs/runtime/`.
+- Install with [INSTALL.md](../INSTALL.md). This is a bounded alpha, not production-certified: use a
+  disposable, backed-up world.
 
-## Checks that actually passed
+## What a green run proves
 
 | Layer | Evidence |
 |---|---|
-| Resources | 198 JSON/metadata documents; 8 realm definitions, 24 blocks, 37 item definitions; model/texture/recipe/uniform links |
-| Generation | 233 artifacts reproduced byte-for-byte from seed 84921603; 10 Python tests passed |
+| Resources | 451 JSON/metadata documents: 12 realms, 60 blocks, 78 items, model/texture/recipe/uniform, mixin and generator contracts |
+| Generation | 530 artifacts reproduced byte-for-byte from seed 84921603; 16 Python authoring tests passed |
 | Java | Common and client sources compiled for Java 21; 30 JUnit tests, zero failures |
-| Native GLSL | Both GLSL 150 programs compiled **and linked** using glslangValidator |
-| Offscreen GPU | 15 synthetic-buffer regression checks: passthrough, foreground rejection, horizon capture at 32/48/72 steps, nonempty membrane and all six lens families |
-| Real dedicated server | Actual Minecraft registry codecs loaded; all 8 realms generated chunks/safe landings; journey/root/realm NBT checks passed |
-| Real Minecraft client | Mesa/Xvfb, 960×540; native programs loaded; **681 post-process frames**; real screenshots captured |
-| Real-player travel | Root → A → B → root → A; first-copy inventory, independent realm mutation and root restoration passed |
-| Real-player persistence | Vanilla player NBT includes the journey; actual keepInventory-OFF death, root respawn and non-resurrection of dropped realm inventory passed |
-| Scale | Small scale and same-tick normal reset executed successfully with dimension recalculation |
-| Actual depth | A solid wall between camera and a local singularity remained unchanged across effects OFF/ON: **maximum RGB-channel difference 0 across 20 samples** |
-| Packaged archive | ZIP integrity, exact Minecraft/version metadata, Java class-file major 65, 8 dimensions, GLSL and production mixin refmap checked; JAR hash matches CI |
+| Native GLSL | All five core programs (`cosmos`, `blit`, `titan`, plus the fullscreen vertex stage) compile **and link** with glslangValidator |
+| Real dedicated server | Actual Minecraft registry codecs loaded; every realm generated chunks and a safe landing; the Between's abyss and plate, the sky well, journey/NBT, scale and era tables asserted in-world |
+| Real Minecraft client (advisory) | Mesa/Xvfb, 960×540: native programs loaded, real world travel, death/respawn, scale extremes, spaghettification, and screenshots of the tear, Between, fractal hollow and labyrinth; the newest stages stand the voxel colossus in the Overworld and photograph it |
 
-The screenshots in `docs/runtime/` are **actual, unedited Minecraft captures**, not concept
-art. The offscreen GPU tests are separately identified; their synthetic input is not passed
-off as Minecraft gameplay. The native test log is [here](runtime/latest-client-log.txt).
+The screenshots in `docs/runtime/` are **actual, unedited Minecraft captures**, not concept art.
 
-## Defects found and corrected before this snapshot
+## Recent CI history worth knowing
 
-- Reserved GLSL identifiers (`noise3`, `active`) and a worldgen IntProvider schema mismatch.
-- A near-camera lens-domain check that incorrectly painted over foreground geometry.
-- A render-tail hook after vanilla's hand depth clear, which incorrectly treated terrain as sky.
-  Compositing now runs in `WorldRenderEvents.LAST`, before hand and HUD rendering.
-- The sky lens obscuring most of the introductory eye.
-- Same-tick scale reset using stale entity dimensions.
-- Default screen blur blurring the guide's own text instead of only the world.
-- An integration-test kill attempted before vanilla teleport protection ended.
-- Client test simulation-distance settings outside Minecraft's permitted range.
-- Metadata that previously allowed untested later 1.21.x versions.
+- `37704743043` failed at compile: `TitanWorld.status()` called `Vec3d.x()/y()/z()` instead of reading
+  the fields. Fixed in the next commit; the JAR was not published from the failed run.
+- The advisory in-client stage used to stop at its wormhole fixture. The fixture now waits for the
+  arrival teleport to land, retries aiming higher, and `RealityManager.spawn` names the clause that
+  refused, so a refusal is diagnosable from the log instead of guesswork.
 
-## Limits of this verification
+## Known-open items
 
-Java and actual Minecraft execution ran in GitHub Actions, not in this workspace: this
-workspace has no JDK, and direct Fabric/Mojang/Maven downloads fail. Local resource tests,
-native GLSL and offscreen rendering also ran successfully. The real client used software
-OpenGL; **no target-GPU FPS claim is made**. Native runs used Loom's real development
-client/server, followed by inspection of the remapped installable JAR; a launcher-based
-customer installation is still part of manual acceptance.
-
-Still open: two-client/dedicated multiplayer, actual walking through every portal orientation,
-keepInventory ON and modified respawn rules, full restart/reconnect/component-heavy inventory
-matrices, cursor/crafting/modded containers, resize/FOV/third person/view bobbing, resource-pack
-failure/reload scenarios, unusual world borders, extended play, balance, accessibility review,
-Iris/Sodium/other renderer mods, macOS and real NVIDIA/AMD/Intel drivers. See [TEST_PLAN.md](TEST_PLAN.md).
-
-This is a bounded **0.1 alpha**, not an assertion of infinite live registries, seamless live
-portals, realistic fluids/ragdolls/nuclear simulation, a physical humanoid world, or AAA fidelity.
+- Interactive multiplayer acceptance from [TEST_PLAN.md](TEST_PLAN.md) is still open.
+- True stencil/FBO portals (as opposed to the current shader-side, server-driven ones), runtime
+  registry/asset injection, and unbounded dimensions are **not implemented**.
+- The Living World Titan is a real voxel body cut from the blocks the world is made of and posed by
+  `beyond:titan`; the terrain it stands on is not itself deformed by the chunk programs.

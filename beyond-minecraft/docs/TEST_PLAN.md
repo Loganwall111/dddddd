@@ -2,9 +2,9 @@
 
 ## Automated checkpoints that passed
 
-- [x] 198 resource/metadata documents; 233 byte-reproducible generated artifacts.
-- [x] 10 Python authoring tests and 30 JUnit simulation/vault tests.
-- [x] Native GLSL 150 compile/link; 15 separate offscreen shader regression checks.
+- [x] 451 resource/metadata documents; 530 byte-reproducible generated artifacts.
+- [x] 16 Python authoring tests and 30 JUnit simulation/vault tests.
+- [x] Native GLSL 150 compile/link for every core program, `beyond:titan` included.
 - [x] Dedicated-server registry load and chunk/safe-landing generation in every compiled realm.
 - [x] Actual Minecraft client shader load, first-person compositing and six equipped-glasses lenses.
 - [x] Root -> A -> B -> root -> A using a real integrated-server player; separate inventory snapshots.
@@ -13,6 +13,9 @@
 - [x] Shrink and normal-scale reset, including same-tick dimension recalculation.
 - [x] A native opaque wall occludes a singularity; twenty compared samples have zero RGB difference.
 - [x] Actual-client screenshots inspected; field-guide text is crisp after removing double background blur.
+- [x] Living World Titan: the voxel body is cut from the blocks the world is made of, uploaded once
+      and posed on the GPU by `beyond:titan`; the smoke test stands the player off from it, looks up,
+      and asserts it was really drawn in the world before reporting integration.
 
 These are automated checkpoints, **not** a claim that the following interactive/multiplayer matrix is signed off.
 
@@ -32,6 +35,8 @@ The automated workflow is useful evidence, not a substitute for these checks.
 - [ ] A wall and the player's hand occlude a local anomaly where they should.
 - [ ] F3+T reloads assets without stale shader references, leaked FBOs or a black screen.
 - [ ] Invalid override shader: log error, safe visual suspension, ordinary gameplay remains usable.
+- [ ] Walk up to the colossus on foot: the body is the countryside's own materials, limbs and head
+      move as it walks, the eyes read as unshaded `#FF0000`, and `titanSky` off removes it cleanly.
 - [ ] Nether/End remain visually unchanged without glasses or placed anomalies.
 - [ ] Low/Balanced/High at 1080p; measure GPU timings on actual NVIDIA/AMD/Intel hardware.
 - [ ] Iris pack ON suspends effects; OFF restores. Unknown Iris API suspends conservatively.

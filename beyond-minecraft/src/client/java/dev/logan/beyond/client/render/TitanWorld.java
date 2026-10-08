@@ -99,7 +99,7 @@ public final class TitanWorld {
     public static String status() {
         if (failed) return "Titan unavailable (shader)";
         if (anchor == null) return "Titan awaiting solid ground";
-        return "Titan standing at " + (int) anchor.x() + ", " + (int) anchor.y() + ", " + (int) anchor.z();
+        return "Titan standing at " + (int) anchor.x + ", " + (int) anchor.y + ", " + (int) anchor.z;
     }
 
     public static void initialize() {
