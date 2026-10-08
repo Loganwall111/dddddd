@@ -115,7 +115,8 @@ public final class Tunnels {
         Vec3d exit = session.exit;
         var landing = SafeLanding.find(destination, new Vec3d(exit.x, Math.min(exit.y, 160), exit.z),
             player.getWidth(), player.getHeight(), false, Blocks.BARRIER);
-        Vec3d target = landing.orElseGet(() -> corridorEnd(destination, player, exit));
+        ServerWorld arrival = destination;   // captured by the fallback below, so it must not be reassigned
+        Vec3d target = landing.orElseGet(() -> corridorEnd(arrival, player, exit));
         Umbrella.shift(player, destination, target);
         destination.playSound(null, target.x, target.y, target.z, SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, .6f, .6f);
     }
