@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.LeavesBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gl.VertexBuffer;
@@ -199,14 +200,27 @@ public final class TitanWorld {
             int x = centre.getX() + (int) Math.round(Math.cos(angle) * radius);
             int z = centre.getZ() + (int) Math.round(Math.sin(angle) * radius);
             if (!world.isChunkLoaded(new BlockPos(x, centre.getY(), z))) { stats[0]++; continue; }
-            int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, x, z);
+            // Only WORLD_SURFACE and MOTION_BLOCKING are ever sent to a client, so those are the only
+            // heightmaps a client can read: the no-leaves one lives server-side and answers zero here,
+            // which is why the colossus used to search every column of the world and find none of them.
+            int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING, x, z);
             stats[2] = Math.max(stats[2], top);
             if (top <= world.getBottomY() + 2) { stats[1]++; continue; }
-            if (dry && top <= world.getSeaLevel() + 2) { stats[1]++; continue; }
-            BlockPos ground = new BlockPos(x, top - 1, z);
-            BlockState state = world.getBlockState(ground);
+            BlockPos surface = new BlockPos(x, top - 1, z);
+            BlockState state = world.getBlockState(surface);
+            // MOTION_BLOCKING counts leaves and fluids, so this may be a canopy or a waterline: a column
+            // whose surface is open water has no footing at all, and a canopy has one underneath it.
+            if (!state.getFluidState().isEmpty()) { stats[1]++; continue; }
+            if (state.isAir() || state.getBlock() instanceof LeavesBlock) {
+                for (int floor = 0; floor < 24; floor++) {
+                    surface = surface.down(); state = world.getBlockState(surface);
+                    if (!state.isAir() && !(state.getBlock() instanceof LeavesBlock)) break;
+                }
+            }
             if (state.isAir() || !state.getFluidState().isEmpty() || state.isOf(Blocks.ICE)) { stats[1]++; continue; }
-            return new Vec3d(x + .5, top, z + .5);
+            int footing = surface.getY() + 1;
+            if (dry && footing <= world.getSeaLevel() + 2) { stats[1]++; continue; }
+            return new Vec3d(x + .5, footing, z + .5);
         }
         return null;
     }
