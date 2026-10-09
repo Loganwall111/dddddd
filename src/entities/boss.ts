@@ -122,7 +122,8 @@ export class DragonBoss {
     this.attackCooldown = Math.max(0, this.attackCooldown - dt);
     this.hitFlash = Math.max(0, this.hitFlash - dt);
     const flash = this.hitFlash > 0;
-    (this.body.material as StandardMaterial).emissiveColor = flash ? new Color3(0.9, 0.2, 0.2) : new Color3(0.08, 0.05, 0.12).scale(0.3);
+    const bodyMat = this.body.material as StandardMaterial | null;
+    if (bodyMat) bodyMat.emissiveColor = flash ? new Color3(0.9, 0.2, 0.2) : new Color3(0.08, 0.05, 0.12).scale(0.3);
 
     const radius = 24;
     const baseHeight = this.center.y + 26;

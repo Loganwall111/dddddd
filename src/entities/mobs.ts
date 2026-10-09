@@ -122,7 +122,9 @@ export class Mob {
 
     // flash red when hurt
     const flash = this.hurtFlash > 0;
-    (this.body.material as StandardMaterial).emissiveColor = flash ? new Color3(0.6,0,0) : Color3.Black();
+    // body may have no material (skinned/group parts); only flash when it has one
+    const bodyMat = this.body.material as StandardMaterial | null;
+    if (bodyMat) bodyMat.emissiveColor = flash ? new Color3(0.6,0,0) : Color3.Black();
 
     const toPlayer = playerPos.subtract(this.position);
     const distToPlayer = toPlayer.length();

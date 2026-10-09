@@ -4,9 +4,13 @@
 import {
   Scene, DirectionalLight, Vector3, Color3, Color4,
   MeshBuilder, StandardMaterial, DynamicTexture, HemisphericLight, GlowLayer,
-  ShadowGenerator, Matrix, VertexData, Mesh
+  ShadowGenerator, Matrix, VertexData, Mesh, Texture
 } from "@babylonjs/core";
 import { DIMENSIONS, DimensionDef } from "../dimensions/dimensions";
+
+// Served from /public. One full turn takes about 7 minutes.
+const PANORAMA_URL = "/panorama/panorama.png";
+const PANORAMA_TURN_SPEED = 0.015; // radians per second
 
 export interface SkyState {
   timeOfDay: number; // 0..1, 0.25=sunrise, 0.5=noon, 0.75=sunset, 0/1=midnight
@@ -24,6 +28,10 @@ export class SkySystem {
   moonMesh: any;
   skyMat: StandardMaterial;
   skyMesh: any;
+  // Minecraft-style 360° panorama that slowly turns around the player (overworld).
+  panoMesh: any;
+  panoMat: StandardMaterial;
+  panoAngle = 0;
   clouds: any[] = [];
   starsMat: StandardMaterial;
   starsMesh: any;
@@ -56,6 +64,23 @@ export class SkySystem {
     this.skyMesh.material = this.skyMat;
     // Flip normals by scaling
     this.skyMesh.scaling.set(-1,1,-1);
+
+    // Panorama dome: the generated 360° image, mapped inside a sphere that slowly turns.
+    this.panoMesh = MeshBuilder.CreateSphere("panorama", { diameter: 880, segments: 48, sideOrientation: Mesh.BACKSIDE }, scene);
+    this.panoMesh.isPickable = false;
+    this.panoMesh.infiniteDistance = true;
+    this.panoMesh.isVisible = false;
+    const panoTex = new Texture(PANORAMA_URL, scene);
+    panoTex.wrapU = Texture.WRAP_ADDRESSMODE;
+    panoTex.wrapV = Texture.CLAMP_ADDRESSMODE;
+    this.panoMat = new StandardMaterial("panoramaMat", scene);
+    this.panoMat.diffuseTexture = panoTex;
+    this.panoMat.emissiveTexture = panoTex;
+    this.panoMat.emissiveColor = new Color3(1, 1, 1);
+    this.panoMat.disableLighting = true;
+    this.panoMat.fogEnabled = false;
+    this.panoMat.backFaceCulling = true;
+    this.panoMesh.material = this.panoMat;
 
     // Sun and moon billboards
     this.sunMesh = MeshBuilder.CreateSphere("sun", { diameter: 30 }, scene);
@@ -240,6 +265,17 @@ export class SkySystem {
       }
     }
     this.skyMat.emissiveColor = topColor;
+
+    // Panorama: visible in the overworld, dimmed at night, slowly turning.
+    const panoOn = dim.id === "overworld";
+    this.panoMesh.isVisible = panoOn;
+    this.skyMesh.isVisible = !panoOn;
+    if (panoOn) {
+      this.panoAngle = (this.panoAngle + dt * PANORAMA_TURN_SPEED) % (Math.PI * 2);
+      this.panoMesh.rotation.y = this.panoAngle;
+      const light = 0.3 + 0.7 * dayFactor;
+      this.panoMat.emissiveColor = new Color3(light, light, light * 1.04);
+    }
     // Use scene fog
     this.scene.fogColor = bottomColor;
     this.scene.fogMode = 2; // EXP
@@ -253,8 +289,8 @@ export class SkySystem {
     (this.moonMesh.material as StandardMaterial).emissiveColor = dayFactor < 0.2 ? new Color3(0.85,0.9,1) : new Color3(0.1,0.1,0.15);
     this.sunMesh.isVisible = dim.hasSky;
     this.moonMesh.isVisible = dim.hasSky && dayFactor < 0.3;
-    this.starsMesh.isVisible = dim.hasSky && dayFactor < 0.2;
-    this.clouds.forEach(c => c.isVisible = dim.id === "overworld");
+    this.starsMesh.isVisible = dim.hasSky && dayFactor < 0.2 && !panoOn;
+    this.clouds.forEach(c => c.isVisible = dim.id === "overworld" && !panoOn);
     if (this.glow) this.glow.intensity = 0.3 + 0.2 * (1 - dayFactor);
 
     // Move clouds slowly
