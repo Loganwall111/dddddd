@@ -1,0 +1,23 @@
+{
+  "name": "mass-awakening",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "MASS AWAKENING — a cinematic voxel sandbox game built with Babylon.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "tsx tests/logic.test.ts"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^9.30.0",
+    "@babylonjs/loaders": "^9.30.0",
+    "@babylonjs/materials": "^9.30.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}
