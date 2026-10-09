@@ -18,7 +18,11 @@ how to extend without rewriting existing systems. Run `npm run dev` after any ch
 - ✅ Survival mode — health/hunger, tool-gated mining, damage.
 - ✅ Crafting + smelting — shapeless recipes; furnace uses fuel over time.
 - ✅ TNT — real terrain change, blast resistance, chain reactions, persisted.
-- ✅ Creatures — 6 mob types wander/chase/attack with drops.
+- ✅ Creatures — 7 mob types (incl. polar bear) with procedural pixel-art skins, wander/chase/attack with drops.
+- ✅ Third-person view — V/F5 cycles first/back/front; skinned player model + first-person arm.
+- ✅ Local multiplayer — host/join across browser tabs (BroadcastChannel): positions, block edits, chat.
+- ✅ Minecraft-style UI revamp — stone logo + splash, dirt screens, MC world select/create, pause "Game Menu", inventory portrait, creative tab icons, XP bar, hearts/hunger.
+- ✅ Black-screen-on-world-entry fixed — menu camera now torn down only after the player camera is active.
 - ✅ Dimensions — Overworld/Nether/End each generate distinctly.
 - ✅ Portals — standing in a portal transitions dimensions (return portals built).
 - ✅ Water — animated UVs + Fresnel/specular + underwater fog.
@@ -26,7 +30,7 @@ how to extend without rewriting existing systems. Run `npm run dev` after any ch
 - ✅ Settings — render distance, FOV, sensitivity, volume, graphics preset all wired.
 - ✅ Persistence — IndexedDB; survives reload; export/import to JSON file.
 - ⚠️ Console errors — none known; not verified in a live browser session in this environment.
-- ✅ Production build succeeds.
+- ✅ Production build succeeds (v0.2, ~2m40s).
 
 ## Remaining work (priority order)
 
@@ -38,8 +42,8 @@ how to extend without rewriting existing systems. Run `npm run dev` after any ch
    buffers. The `WorldManager.update` seam is already queue-based.
 4. **Shaped crafting recipes.** Extend `Recipe` with a pattern grid; keep `craftRecipe` for
    shapeless. Furnace and crafting UI need no changes.
-5. **Real multiplayer slice.** See `docs/MULTIPLAYER.md` — start with `WebSocketTransport`,
-   position streams, and edit broadcast through `WorldManager.setBlockWorld`.
+5. **Cross-device multiplayer.** Local tab transport shipped; add a `WebSocketTransport`
+   speaking the same protocol (`src/net/net.ts`) plus a tiny relay server for cross-device play.
 6. **More bosses/events.** Wither-like construct boss; meteor/rift world events can reuse the
    explosion + particle + weather systems.
 7. **Additional dimensions** (Crystal Caverns, Sky Islands, Abyss). Add a `DimensionId`,
