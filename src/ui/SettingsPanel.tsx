@@ -1,0 +1,39 @@
+import { useState } from 'react';
+import { Monitor, Volume2, MousePointer2, Accessibility, Check, RotateCcw } from 'lucide-react';
+import { DEFAULT_SETTINGS, type Settings } from '../core/types';
+import { Screen, Slider, Toggle } from './Common';
+
+export function SettingsPanel({ settings, onChange, onClose }: { settings: Settings; onChange: (settings: Settings) => void; onClose: () => void }) {
+  const [tab, setTab] = useState('Graphics');
+  const patch = (value: Partial<Settings>) => {if(value.npcVoice===false&&'speechSynthesis'in window)window.speechSynthesis.cancel();onChange({ ...settings, ...value });};
+  const preset = (quality: Settings['quality']) => patch({ quality, renderDistance: quality === 'performance' ? 3 : quality === 'cinematic' ? 6 : 4, shadows: quality !== 'performance', reflections: quality !== 'performance', bloom: quality !== 'performance',volumetricClouds:quality!=='performance',godRays:quality!=='performance',wetReflections:quality==='cinematic',softwareRayTracing:quality==='cinematic' });
+  return <Screen title="Options" eyebrow="AETHERFORGED: REINCARNATED" onClose={onClose}>
+    <nav className="modal-tabs">{[[Monitor, 'Graphics'], [Volume2, 'Audio'], [MousePointer2, 'Controls'], [Accessibility, 'Accessibility']].map(([Icon, name]) => { const I = Icon as typeof Monitor; return <button key={String(name)} className={tab === name ? 'active' : ''} onClick={() => setTab(String(name))}><I size={16}/>{String(name)}</button>; })}</nav>
+    <div className="settings-body">
+      {tab === 'Graphics' && <>
+        <div className="setting-label">Graphics preset <span>Changes take effect immediately</span></div>
+        <div className="segmented preset-selector">{(['performance', 'balanced', 'cinematic'] as const).map(q => <button key={q} className={settings.quality === q ? 'selected' : ''} onClick={() => preset(q)}>{q === settings.quality && <Check size={14}/>}<span>{q}</span></button>)}</div>
+        <div className="settings-grid"><Slider label="Render distance" value={settings.renderDistance} min={2} max={7} unit=" chunks" onChange={renderDistance => patch({ renderDistance })}/><Slider label="Field of view" value={settings.fov} min={55} max={105} unit=" deg" onChange={fov => patch({ fov })}/></div>
+        <Toggle label="Dynamic shadows" detail="Three cascaded directional shadow maps when supported; filtered single-map fallback" checked={settings.shadows} onChange={shadows => patch({ shadows })}/>
+        <Toggle label="Water reflections" detail="Babylon planar reflection and refraction targets" checked={settings.reflections} onChange={reflections => patch({ reflections })}/>
+        <Toggle label="Cinematic bloom" detail="Soft post-process glow around emissive materials" checked={settings.bloom} onChange={bloom => patch({ bloom })}/>
+        <Toggle label="Volumetric clouds" detail="Sky-dome shader ray-marches animated 3D noise with a self-shadow sample" checked={settings.volumetricClouds} onChange={volumetricClouds=>patch({volumetricClouds})}/>
+        <Toggle label="Sun shafts" detail="Translucent sun-aligned shaft meshes with animated alpha shading; not occlusion-aware volumetric scattering" checked={settings.godRays} onChange={godRays=>patch({godRays})}/>
+        <Toggle label="Rain reflections" detail="Optional screen-space reflections on wet PBR surfaces; off-screen content is not reflected" checked={settings.wetReflections} onChange={wetReflections=>patch({wetReflections})}/>
+        <Toggle label="Tone mapping (experimental)" detail="Filmic ACES curve. Off by default while the block look is being reworked; it can make stone and brick look harsher." checked={settings.toneMapping} onChange={toneMapping=>patch({toneMapping})}/>
+        <Toggle label="Software ray-traced reflections" detail="Screen-space GPU ray marching against visible scene depth when supported; software approximation, not hardware ray tracing or full-scene path tracing. Performance preset disables it." checked={settings.softwareRayTracing} onChange={softwareRayTracing=>patch({softwareRayTracing})}/>
+        <Toggle label="Colored lantern light" detail="Up to eight nearby emissive blocks and active furnaces drive animated point lights; no point-light shadows" checked={settings.coloredLights} onChange={coloredLights=>patch({coloredLights})}/>
+        <Toggle label="Rain puddles" detail="Reflective procedural discs appear on nearby dry ground during rain" checked={settings.puddles} onChange={puddles=>patch({puddles})}/>
+
+        <Toggle label="Mob nameplates" detail="Glowing name labels above nearby creatures" checked={settings.nameplates} onChange={nameplates=>patch({nameplates})}/>
+        <Toggle label="Block debris physics" detail="Mined and blasted blocks shatter into tumbling chunks" checked={settings.debris} onChange={debris=>patch({debris})}/>
+        <Toggle label="Tornadoes" detail="Storm funnels can lift players and damage exposed terrain" checked={settings.tornadoes} onChange={tornadoes=>patch({tornadoes})}/>
+        <p className="fine-print">WebGPU is attempted automatically; add ?renderer=webgpu to require it and diagnose initialization, or ?renderer=webgl to force the fallback. WebGPU needs a secure context (HTTPS or localhost) and may be limited by browser policy. The browser controls its graphics backend; this app does not select Vulkan or implement hardware ray tracing. Lower render distance and disable reflections for lighter GPU use.</p>
+      </>}
+      {tab === 'Audio' && <><Slider label="Sound effects" value={settings.volume} min={0} max={100} unit="%" onChange={volume => patch({ volume })} detail="Blocks, footsteps, wind, birds, and rain"/><Slider label="Ambient music" value={settings.music} min={0} max={100} unit="%" onChange={music => patch({ music })} detail="Procedural scene- and biome-responsive synth drones and chimes; no recorded score"/><Toggle label="Talking villagers" detail="Read NPC dialogue aloud using your device's speech synthesis" checked={settings.npcVoice} onChange={npcVoice=>patch({npcVoice})}/><p className="fine-print">Browser audio begins after your first interaction. Setting sound effects to zero mutes all audio. Spoken voices depend on your browser and installed voices.</p></>}
+      {tab === 'Controls' && <><Slider label="Mouse sensitivity" value={settings.sensitivity} min={.2} max={3} step={.1} unit="x" onChange={sensitivity => patch({ sensitivity })}/><Slider label="Creative flight speed" value={settings.flightSpeed} min={6} max={32} unit=" blocks/s" onChange={flightSpeed => patch({ flightSpeed })}/><Toggle label="Invert vertical look" checked={settings.invertY} onChange={invertY => patch({ invertY })}/><p className="fine-print">WASD to move. Mouse to look. Space to jump. Shift to sprint. E for inventory. V to fly in Creative. Escape to pause.</p></>}
+      {tab === 'Accessibility' && <><Toggle label="Reduce interface motion" detail="Disables panorama drift and interface entrance animations" checked={settings.reducedMotion} onChange={reducedMotion => patch({ reducedMotion })}/><Toggle label="High contrast interface" detail="Stronger backgrounds, borders, and text contrast" checked={settings.highContrast} onChange={highContrast => patch({ highContrast })}/><Toggle label="Camera shake" detail="Impact feedback from damage and explosions" checked={settings.cameraShake} onChange={cameraShake => patch({ cameraShake })}/><Toggle label="Show coordinates and performance" detail="Position, rendered chunks, and measured frame rate" checked={settings.showCoordinates} onChange={showCoordinates => patch({ showCoordinates })}/></>}
+    </div>
+    <footer className="modal-footer"><button className="text-button muted" onClick={() => onChange({ ...DEFAULT_SETTINGS })}><RotateCcw size={14}/>Restore defaults</button><button className="button primary compact" onClick={onClose}>Done<Check size={16}/></button></footer>
+  </Screen>;
+}
