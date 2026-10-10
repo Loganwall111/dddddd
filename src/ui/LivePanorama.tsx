@@ -5,12 +5,13 @@ import type { Panorama } from '../rendering/Panorama';
  * Live 3D title panorama. The WebGL engine is created once per app session and only paused
  * while menus are hidden, so it never recreates WebGL contexts (that churn caused black flashes).
  */
-export function LivePanorama({ reducedMotion, active }: { reducedMotion: boolean; active: boolean }) {
+export function LivePanorama({ reducedMotion, active, onReady }: { reducedMotion: boolean; active: boolean; onReady?: () => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const view = useRef<Panorama | null>(null);
   const [ready, setReady] = useState(false);
   const motion = useRef(reducedMotion); motion.current = reducedMotion;
   const activeRef = useRef(active); activeRef.current = active;
+  const readyRef = useRef(onReady); readyRef.current = onReady;
 
   useEffect(() => {
     let disposed = false;
@@ -18,7 +19,7 @@ export function LivePanorama({ reducedMotion, active }: { reducedMotion: boolean
     const timer = setTimeout(() => {
       void import('../rendering/Panorama').then(async ({ Panorama: Renderer }) => {
         if (disposed || !canvas.current) return;
-        instance = await Renderer.create(canvas.current, motion.current, () => { if (!disposed) setReady(true); });
+        instance = await Renderer.create(canvas.current, motion.current, () => { if (!disposed) { setReady(true); readyRef.current?.(); } });
         if (disposed) { instance.dispose(); return; }
         instance.reducedMotion = motion.current;
         instance.paused = !activeRef.current;

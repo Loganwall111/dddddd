@@ -106,11 +106,13 @@ export class Environment {
       this.pipeline.imageProcessing.colorCurvesEnabled=true;
       const curves = this.pipeline.imageProcessing.colorCurves; if(curves) curves.globalSaturation=42;
       this.pipeline.imageProcessing.vignetteEnabled=true;
-      this.pipeline.imageProcessing.vignetteWeight=.3;
+      this.pipeline.imageProcessing.vignetteWeight=.12;
       this.pipeline.imageProcessing.ditheringEnabled=false;
     } catch { /* Older Babylon builds ignore cinematic grading extras. */ }
-    // Film grain is the pipeline's real grain pass; switch it off explicitly.
-    { const grain = (this.pipeline as unknown as { grain?: { enabled: boolean } }).grain; if (grain) grain.enabled = false; }
+    // Film grain and chromatic aberration off: the look should be clean and bright.
+    this.pipeline.grainEnabled = false;
+    this.pipeline.chromaticAberrationEnabled = false;
+    this.pipeline.depthOfFieldEnabled = false;
     try { (this.pipeline as unknown as { sharpenEnabled: boolean }).sharpenEnabled = true; } catch { /* Sharpen unsupported. */ }
     this.depth=scene.enableDepthRenderer(camera,false,true);this.depth.enabled=false;
     this.nightSky=new NightSky(scene);this.water.addToRenderList(this.nightSky.mesh);this.probe.renderList?.push(this.nightSky.mesh);

@@ -48,6 +48,7 @@ function WorldOptions({ game, onClose }: { game: Game; onClose: () => void }) {
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home'), [returnScreen, setReturnScreen] = useState<Screen>('home');
+  const [livePanoramaReady, setLivePanoramaReady] = useState(false);
   const [settings, setSettings] = useState<Settings>({ ...DEFAULT_SETTINGS }), [settingsReady, setSettingsReady] = useState(false);
   const [worlds, setWorlds] = useState<WorldSave[]>([]), [activeWorld, setActiveWorld] = useState<WorldSave | null>(null);
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null), [loading, setLoading] = useState({ progress: 0, label: 'Preparing the first horizon' });
@@ -154,7 +155,7 @@ export default function App() {
   const menuVisible = !activeWorld || screen === 'loading';
   return <div className={`app-shell classic-ui ${settings.reducedMotion ? 'reduced-motion' : ''} ${settings.highContrast ? 'high-contrast' : ''}`}>
     <canvas ref={canvas} className={`world-canvas ${activeWorld && screen !== 'loading' ? 'visible' : ''}`} tabIndex={0} aria-label="Aetherforged: Reincarnated 3D game world"/>
-    <div className={`title-panorama ${menuVisible ? '' : 'panorama-hidden'}`} aria-hidden="true"><img className="panorama-image" src="/assets/awakening-panorama.jpg" alt=""/><LivePanorama reducedMotion={settings.reducedMotion} active={menuVisible && !activeWorld}/><div className="cinematic-shade"/>{Array.from({ length: 8 }, (_, i) => <i className="ambient-mote" key={i} style={{ left: `${14 + i * 11}%`, top: `${40 + (i * 13) % 55}%`, animationDelay: `${i * -2.7}s`, animationDuration: `${12 + i * 2}s` }}/>)}</div>
+    <div className={`title-panorama ${menuVisible ? '' : 'panorama-hidden'}`} aria-hidden="true">{!livePanoramaReady && <img className="panorama-image" src="/assets/awakening-panorama.jpg" alt=""/>}<LivePanorama onReady={() => setLivePanoramaReady(true)} reducedMotion={settings.reducedMotion} active={menuVisible && !activeWorld}/><div className="cinematic-shade"/>{Array.from({ length: 8 }, (_, i) => <i className="ambient-mote" key={i} style={{ left: `${14 + i * 11}%`, top: `${40 + (i * 13) % 55}%`, animationDelay: `${i * -2.7}s`, animationDuration: `${12 + i * 2}s` }}/>)}</div>
     {!activeWorld && <header className="title-header"><div className="studio-signature"><Mark size={25}/><span>THE WORLDS REBORN UPDATE</span></div><div className="early-access"><i/>EARLY ACCESS <span>0.2</span></div></header>}
     {screen === 'home' && <main className="title-menu">
       <div className="classic-logo-wrap"><h1 className="main-wordmark" aria-label="Aetherforged: Reincarnated"><span>AETHERFORGED</span><span>REINCARNATED</span></h1><span className="splash-text">A whole new world!</span></div>
