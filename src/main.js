@@ -62,7 +62,7 @@ const diag = {
     // Phase transitions and the loading step, so a stall is visible as a stall.
     let lastPhase = null;
     let lastStep = null;
-    setInterval(() => {
+    const timer = setInterval(() => {
       if (!game) return;
       if (game.phase !== lastPhase) {
         lastPhase = game.phase;
@@ -74,6 +74,8 @@ const diag = {
         diag.report('loading', { step });
       }
     }, 700);
+    window.__MV_DIAG_TIMER__ = timer;
+    window.clearMultiverseTelemetry = () => clearInterval(timer);
   },
 };
 
@@ -106,7 +108,9 @@ function escapeHtml(text) {
 
 async function main() {
   if (!canvas) {
-    fatal(new Error('No #game-canvas element found. The page is not assembled correctly.'));
+    const error = new Error('No #game-canvas element found. The page is not assembled correctly.');
+    diag.report('boot-failure', { message: error.message, stage: 'canvas' });
+    fatal(error);
     return;
   }
 
@@ -118,6 +122,11 @@ async function main() {
     const lose = gl.getExtension('WEBGL_lose_context');
     lose?.loseContext();
   } catch (error) {
+    diag.report('boot-failure', {
+      message: error?.message ?? String(error),
+      stage: 'webgl-probe',
+      userAgent: navigator.userAgent,
+    });
     fatal(error);
     return;
   }
@@ -127,6 +136,7 @@ async function main() {
   window.MULTIVERSE = game;
   diag.watch(game);
   diag.report('boot', {
+    build: window.__MV_BUILD__ ?? 'unknown',
     webgl: '2',
     userAgent: navigator.userAgent,
     cores: navigator.hardwareConcurrency ?? null,
@@ -135,7 +145,7 @@ async function main() {
   });
 
   // Quality can be forced from the URL: ?quality=ultra, ?quality=potato
-  const params = new URLSearchParams(location.search);
+  const params = new URLSearchParams(window.location?.search ?? '');
   const forcedQuality = params.get('quality');
   const forcedSeed = params.get('seed');
   if (forcedSeed) game.seedOverride = Number(forcedSeed) || undefined;

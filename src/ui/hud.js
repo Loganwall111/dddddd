@@ -355,7 +355,13 @@ export class Hud {
       setTimeout(() => node.remove(), 500);
     }, duration * 1000);
     this.toasts.push({ node, life });
-    while (this.toastStack.children.length > 5) this.toastStack.firstChild.remove();
+    // Reap old toasts. Bounded on purpose: if a node ever refuses to detach,
+    // a `while` here would spin forever and freeze the render loop.
+    for (let guard = 0; guard < 12 && this.toastStack.children.length > 5; guard++) {
+      const oldest = this.toastStack.firstChild;
+      if (!oldest) break;
+      oldest.remove();
+    }
     this.onToast?.({ title, body, kind });
     return node;
   }

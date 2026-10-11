@@ -249,12 +249,16 @@ export class Game {
     this.renderer.attach({ scene: this.renderer.scene, sky: this.sky, onStats: (stats) => this.onStats(stats) });
     steps();
 
+    // ---- camera rig ----
+    // Before the world, not after: placing the player sets the rig's yaw so
+    // the first frame already looks where the player is facing.
+    this.camera = new CameraRig({ fov: this.settings.get('fov'), near: 0.15, far: 26000 });
+    steps();
+
     await this.yieldFrame();
     this.buildWorld();
     steps();
 
-    // ---- camera rig + loop ----
-    this.camera = new CameraRig({ fov: this.settings.get('fov'), near: 0.15, far: 26000 });
     this.setupLoop();
 
     this.applySettings();
@@ -390,8 +394,10 @@ export class Game {
     this.player.reset({ x: this.spawnPoint.x, y: this.spawnPoint.y, z: this.spawnPoint.z });
     this.player.yaw = Math.atan2(-spawn.x, -spawn.z) + Math.PI;
     this.player.pitch = -0.05;
-    this.camera.yaw = this.player.yaw;
-    this.camera.pitch = this.player.pitch;
+    if (this.camera) {
+      this.camera.yaw = this.player.yaw;
+      this.camera.pitch = this.player.pitch;
+    }
     this.renderer.camera.position.set(spawn.x, spawn.height + PLAYER_TUNING.eyeHeight, spawn.z);
     return this.spawnPoint;
   }

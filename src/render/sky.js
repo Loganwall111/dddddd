@@ -44,6 +44,11 @@ const TWO_SUN_COLOR = 0xffb98a;
 
 export class SkySystem {
   constructor({ scene, renderer, textures, quality = {}, settings = null, seed = 1337, onLightning = null }) {
+    // The sky hangs lights, moons and weather off the world's scene graph, so
+    // a missing scene is a hard error rather than a silent `null.add`.
+    if (!scene) {
+      throw new Error('SkySystem needs a scene. Build the Renderer (which owns one) before the sky.');
+    }
     this.scene = scene;
     this.renderer = renderer;
     this.textures = textures;

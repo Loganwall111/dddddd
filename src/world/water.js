@@ -252,7 +252,9 @@ export class WaterSystem {
     points.position.copy(position);
     points.frustumCulled = false;
     this.scene.add(points);
-    return { points, geometry, material, positions, velocities, count, height, origin: position.clone() };
+    // `position` arrives as a plain {x, y, z} from the waterfall scanner, so
+    // copy it by hand rather than assuming a Vector3.
+    return { points, geometry, material, positions, velocities, count, height, origin: { x: position.x, y: position.y, z: position.z } };
   }
 
   /* ---------------------------------------------------------------- *

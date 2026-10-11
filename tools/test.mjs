@@ -50,6 +50,9 @@ for (const file of files) {
 console.log(`\n${'─'.repeat(64)}`);
 if (fail === 0) {
   console.log(`\x1b[32mALL GREEN\x1b[0m — ${pass} tests passed across ${files.length} files.`);
+  // Exit explicitly: the suite installs DOM shims, and a stray interval or
+  // animation frame from a stubbed page must not hold the process open.
+  process.exit(0);
 } else {
   console.log(`\x1b[31m${fail} FAILED\x1b[0m / ${pass + fail} tests across ${files.length} files`);
   for (const f of failures) {

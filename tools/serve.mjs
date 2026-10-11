@@ -74,6 +74,26 @@ function readBody(req, limit = 64 * 1024) {
   });
 }
 
+/**
+ * Rewrite asset URLs in HTML with a build stamp.
+ *
+ * The preview is proxied and browser-cached, and `bundle.js` keeps its name
+ * across rebuilds — which is how a player ends up running yesterday's code
+ * and reporting a bug that was fixed an hour ago. Stamping the query string
+ * makes every build a new URL, and the HTML itself is never cached.
+ */
+function stampHtml(html, file) {
+  const dir = path.dirname(file);
+  const stamp = (name) => {
+    const target = path.join(dir, name);
+    const stat = fs.existsSync(target) ? fs.statSync(target) : null;
+    return stat ? `${name}?v=${Math.floor(stat.mtimeMs).toString(36)}` : name;
+  };
+  return html
+    .replace(/("|\.\/)(bundle\.js)(")/g, (match, a, name, b) => `${a}${stamp(name)}${b}`)
+    .replace(/("|\.\/)(style\.css)(")/g, (match, a, name, b) => `${a}${stamp(name)}${b}`);
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = (req.url || '/').split('?')[0];
@@ -126,9 +146,12 @@ const server = http.createServer(async (req, res) => {
     const ext = path.extname(file).toLowerCase();
     const type = MIME[ext] || 'application/octet-stream';
     const etag = `W/"${stat.size}-${Number(stat.mtimeMs).toString(36)}"`;
+    // Scripts are rebuilt in place during development, and a cached copy of an
+    // old bundle looks exactly like a bug in new code. Never cache them.
+    const cacheControl = ext === '.js' || ext === '.mjs' || ext === '.css' ? 'no-store, must-revalidate' : 'no-cache';
     const headers = {
       'Content-Type': type,
-      'Cache-Control': 'no-cache',
+      'Cache-Control': cacheControl,
       ETag: etag,
       'Access-Control-Allow-Origin': '*',
       'Cross-Origin-Resource-Policy': 'cross-origin',
@@ -165,6 +188,19 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, headers);
       if (req.method === 'HEAD') return res.end();
       return fs.createReadStream(file).pipe(zlib.createGzip({ level: 6 })).pipe(res);
+    }
+
+    // HTML: never cached, and always stamped so a rebuild is picked up.
+    if (ext === '.html') {
+      const html = stampHtml(await fsp.readFile(file, 'utf8'), file);
+      const body = Buffer.from(html, 'utf8');
+      res.writeHead(200, {
+        ...headers,
+        'Cache-Control': 'no-store, must-revalidate',
+        'Content-Length': String(body.length),
+      });
+      if (req.method === 'HEAD') return res.end();
+      return res.end(body);
     }
 
     headers['Content-Length'] = String(stat.size);

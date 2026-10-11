@@ -19,7 +19,7 @@ import {
   Color,
   LinearSRGBColorSpace,
   NoToneMapping,
-  PCFSoftShadowMap,
+  PCFShadowMap,
   PMREMGenerator,
   PerspectiveCamera,
   Scene,
@@ -51,7 +51,7 @@ export class Renderer {
     });
     this.renderer.setClearColor(new Color(0x0b1220), 1);
     this.renderer.shadowMap.enabled = !!this.quality.shadows;
-    this.renderer.shadowMap.type = PCFSoftShadowMap;
+    this.renderer.shadowMap.type = PCFShadowMap;
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = SRGBColorSpace;
@@ -63,7 +63,10 @@ export class Renderer {
     this.camera = new PerspectiveCamera(settings?.get('fov') ?? 78, 1, 0.15, 26000);
     this.camera.position.set(0, 12, 24);
 
-    this.scene = null;
+    // The renderer owns the scene: everything built during boot (sky, valley,
+    // realities) hangs off it, so it must exist before any of them do.
+    this.scene = new Scene();
+    this.scene.name = 'multiverse';
     this.sky = null;
     this.post = null;
     this.postEnabled = true;
@@ -90,7 +93,7 @@ export class Renderer {
 
   /** Bind the scene, sky and post chain once they exist. */
   attach({ scene, sky, onStats }) {
-    this.scene = scene;
+    if (scene) this.scene = scene;
     this.sky = sky;
     this._onStats = onStats;
     if (this.quality.postAA !== 'none' && this.quality.bloom !== undefined) {
