@@ -1,0 +1,17 @@
+{
+  "name": "the-multiverse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "THE MULTIVERSE: SIMOLYSIS — an open-world, reality-hopping game built on three.js",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "watch": "node tools/build.mjs --watch",
+    "serve": "node tools/serve.mjs",
+    "test": "node tools/test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "three": "0.186.1"
+  }
+}
