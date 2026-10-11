@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#04060a" />
+    <title>THE MULTIVERSE — SIMOLYSIS</title>
+    <meta
+      name="description"
+      content="Earth is gone. LODEMUS keeps you alive as a whisper in a lattice of light. Enter the multiverse."
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <!-- The reality, rendered. -->
+    <canvas id="game-canvas" aria-label="the multiverse"></canvas>
+
+    <!-- Every piece of UI lives here: HUD, menus, codex, intro, captions. -->
+    <div id="ui-root"></div>
+
+    <noscript>
+      <div class="noscript">
+        <h1>THE MULTIVERSE</h1>
+        <p>This reality is assembled at runtime and requires JavaScript.</p>
+      </div>
+    </noscript>
+
+    <script type="module" src="./bundle.js"></script>
+  </body>
+</html>
