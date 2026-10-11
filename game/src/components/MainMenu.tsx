@@ -49,7 +49,6 @@ interface MainMenuProps {
   onSettingsChange: (settings: AppSettings) => void;
   onStart: (mode?: "journey" | "sandbox") => void;
   onContinue: () => void;
-  onReplayIntro: () => void;
 }
 
 type MenuView = "main" | "creatures" | "seed" | "multiverse" | "settings";
@@ -63,7 +62,7 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
         <ellipse cx="24" cy="24" rx="20" ry="7" fill="none" stroke="currentColor" strokeWidth="0.9" transform="rotate(60 24 24)" />
         <ellipse cx="24" cy="24" rx="20" ry="7" fill="none" stroke="currentColor" strokeWidth="0.9" transform="rotate(120 24 24)" />
       </svg>
-      <span>THE MULTIVERSE</span>
+      <span>LUMITAL</span>
     </div>
   );
 }
@@ -71,9 +70,9 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
 function CornerTelemetry({ seed }: { seed: string }) {
   return (
     <div className="menu-telemetry" aria-hidden="true">
-      <span><i /> LODEMUS LINK / LIVE</span>
+      <span><i /> REALITY ENGINE / LIVE</span>
       <span>SEED {seed}</span>
-      <span>SIMOLYSIS WATCHES / 60 HZ</span>
+      <span>TOPOLOGY STABLE / 60 HZ</span>
     </div>
   );
 }
@@ -82,20 +81,17 @@ function MainNavigation({
   save,
   onNavigate,
   onContinue,
-  onReplayIntro,
 }: {
   save: SaveState | null;
   onNavigate: (view: MenuView, journey?: boolean) => void;
   onContinue: () => void;
-  onReplayIntro: () => void;
 }) {
   const items = [
     ...(save ? [{ id: "continue", label: "Continue journey", detail: `Cycle ${save.cycle} / ${save.discoveries.length} discoveries`, icon: Play, onClick: onContinue }] : []),
-    { id: "start", label: "Enter the Multiverse", detail: "Plug into a fresh living reality", icon: CircleDot, onClick: () => onNavigate("creatures", true) },
-    { id: "creatures", label: "Traveler form", detail: "120 viable morphologies", icon: Dna, onClick: () => onNavigate("creatures") },
-    { id: "seed", label: "Reality seed", detail: "Define the laws of emergence", icon: Orbit, onClick: () => onNavigate("seed") },
-    { id: "multiverse", label: "Archives", detail: "Revisit persistent realities", icon: InfinityIcon, onClick: () => onNavigate("multiverse") },
-    { id: "genesis", label: "Genesis film", detail: "Replay the origin cinematic", icon: Sparkles, onClick: onReplayIntro },
+    { id: "start", label: "New journey", detail: "Awaken in a new living reality", icon: CircleDot, onClick: () => onNavigate("creatures", true) },
+    { id: "creatures", label: "Creature / form", detail: "120 viable morphologies", icon: Dna, onClick: () => onNavigate("creatures") },
+    { id: "seed", label: "World seed", detail: "Define the laws of emergence", icon: Orbit, onClick: () => onNavigate("seed") },
+    { id: "multiverse", label: "Multiverse", detail: "Revisit persistent realities", icon: InfinityIcon, onClick: () => onNavigate("multiverse") },
     { id: "sandbox", label: "Sandbox", detail: "Unbind physics and scale", icon: Atom, onClick: () => onNavigate("seed", true) },
     { id: "settings", label: "Settings", detail: "Rendering, simulation and access", icon: Settings2, onClick: () => onNavigate("settings") },
   ];
@@ -396,7 +392,7 @@ function SettingsPanel({ settings, onChange, onClose }: { settings: AppSettings;
             <>
               <div className="settings-section">
                 <span className="kicker">RENDERING PIPELINE</span>
-                <label className="select-setting"><span><b>Visual fidelity preset</b><small>Master profile controlling LOD, volumetrics, samples and draw distance.</small></span><select value={settings.quality} onChange={(event) => patch({ quality: event.target.value as AppSettings["quality"] })}><option value="low">Performance</option><option value="medium">High</option><option value="ultra">Multiverse Cinematic</option></select></label>
+                <label className="select-setting"><span><b>Visual fidelity preset</b><small>Master profile controlling LOD, volumetrics, samples and draw distance.</small></span><select value={settings.quality} onChange={(event) => patch({ quality: event.target.value as AppSettings["quality"] })}><option value="low">Performance</option><option value="medium">High</option><option value="ultra">Lumital Cinematic</option></select></label>
                 <label className="range-setting"><span><b>Render scale</b><small>{settings.renderScale}% / internal resolution multiplier</small></span><input type="range" min="50" max="150" step="10" value={settings.renderScale} onChange={(event) => patch({ renderScale: Number(event.target.value) })} /></label>
                 <label className="range-setting"><span><b>Field of view</b><small>{settings.fov}° / camera perspective</small></span><input type="range" min="55" max="90" step="1" value={settings.fov} onChange={(event) => patch({ fov: Number(event.target.value) })} /></label>
                 <label className="range-setting"><span><b>View distance</b><small>{settings.viewDistance}% / streaming horizon and terrain chunks</small></span><input type="range" min="50" max="150" step="5" value={settings.viewDistance} onChange={(event) => patch({ viewDistance: Number(event.target.value) })} /></label>
@@ -531,7 +527,7 @@ export function MainMenu(props: MainMenuProps) {
           <motion.div key="main" className="menu-home" exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
             <motion.header initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.1 }}>
               <BrandMark compact />
-              <span className="menu-version">LODEMUS LINK / INFINITE REALITIES</span>
+              <span className="menu-version">INFINITE REALITY SIMULATION</span>
               <div className="menu-system-status">
                 <span><Monitor size={13} /> {props.settings.quality.toUpperCase()}</span>
                 <span><Volume2 size={13} /> {props.settings.audio}%</span>
@@ -539,11 +535,11 @@ export function MainMenu(props: MainMenuProps) {
               </div>
             </motion.header>
             <div className="hero-brand">
-              <motion.i initial={{ opacity: 0, x: -25 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25, duration: 1 }}>SIMOLYSIS AWAITS / LODEMUS LINK STABLE</motion.i>
-              <motion.span initial={{ opacity: 0, letterSpacing: "1.5em", filter: "blur(14px)" }} animate={{ opacity: 1, letterSpacing: "0.14em", filter: "blur(0px)" }} transition={{ duration: 1.6, ease: "easeOut" }}>THE MULTIVERSE</motion.span>
+              <motion.i initial={{ opacity: 0, x: -25 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25, duration: 1 }}>THE LIVING REALITY ENGINE</motion.i>
+              <motion.span initial={{ opacity: 0, letterSpacing: "1.5em", filter: "blur(14px)" }} animate={{ opacity: 1, letterSpacing: "0.22em", filter: "blur(0px)" }} transition={{ duration: 1.6, ease: "easeOut" }}>LUMITAL</motion.span>
               <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8 }}>EVERY SCALE CONTAINS ANOTHER WORLD</motion.p>
             </div>
-            <MainNavigation save={props.save} onNavigate={navigate} onContinue={props.onContinue} onReplayIntro={props.onReplayIntro} />
+            <MainNavigation save={props.save} onNavigate={navigate} onContinue={props.onContinue} />
             <motion.div className="menu-reality-status" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.05, duration: 1 }}>
               <span className="menu-reality-status__eyebrow"><i /> GENESIS FORM READY</span>
               <strong>{props.selectedCreature.genus}</strong>

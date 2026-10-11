@@ -1,386 +1,225 @@
-import { useEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, Bloom, Noise, Vignette, ChromaticAberration } from "@react-three/postprocessing";
-import { Float } from "@react-three/drei";
+import { useMemo, useRef, useState } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { EffectComposer, Bloom, ChromaticAberration, GodRays, Noise } from "@react-three/postprocessing";
+import { Float, Sparkles } from "@react-three/drei";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
-import { seededRandom } from "../game/procedural";
+import { creatures, seededRandom } from "../game/procedural";
+import { CreatureModel } from "../components/CreatureModel";
 
-/* ------------------------------------------------------------------ */
-/* Holographic spiral galaxy                                            */
-/* ------------------------------------------------------------------ */
-
-function SpiralGalaxy({ seed, reducedMotion }: { seed: string; reducedMotion: boolean }) {
+function StarField({ seed, reducedMotion }: { seed: string; reducedMotion: boolean }) {
   const ref = useRef<THREE.Points>(null);
-  const material = useRef<THREE.ShaderMaterial>(null);
-  const data = useMemo(() => {
-    const random = seededRandom(seed, "holo-galaxy");
-    const count = reducedMotion ? 7000 : 15000;
-    const pos = new Float32Array(count * 3);
-    const col = new Float32Array(count * 3);
-    const phase = new Float32Array(count);
-    const size = new Float32Array(count);
+  const [positions, colors] = useMemo(() => {
+    const random = seededRandom(seed, "menu-stars");
+    const pos = new Float32Array(3200 * 3);
+    const cols = new Float32Array(3200 * 3);
     const color = new THREE.Color();
-    for (let i = 0; i < count; i += 1) {
-      const radius = Math.pow(random(), 0.62) * 17;
-      const arm = i % 4;
-      const angle = (arm * Math.PI) / 2 + radius * 0.42 + (random() - 0.5) * (0.85 - radius * 0.02);
-      const scatter = Math.pow(random(), 2) * 1.6;
-      pos[i * 3] = Math.cos(angle) * radius + (random() - 0.5) * scatter;
-      pos[i * 3 + 1] = (random() - 0.5) * (1.7 - radius * 0.055) + (random() - 0.5) * scatter * 0.4;
-      pos[i * 3 + 2] = Math.sin(angle) * radius + (random() - 0.5) * scatter;
-      const coreHeat = Math.max(0, 1 - radius / 8);
-      if (random() > 0.86) color.setHSL(0.09 + random() * 0.05, 0.85, 0.72);
-      else color.setHSL(0.55 + random() * 0.17 - coreHeat * 0.42, 0.6 + random() * 0.3, 0.6 + random() * 0.36);
-      col[i * 3] = color.r;
-      col[i * 3 + 1] = color.g;
-      col[i * 3 + 2] = color.b;
-      phase[i] = random() * Math.PI * 2;
-      size[i] = 0.5 + Math.pow(random(), 2.6) * 2.6;
+    for (let i = 0; i < 3200; i += 1) {
+      const radius = 18 + random() * 84;
+      const theta = random() * Math.PI * 2;
+      const phi = Math.acos(2 * random() - 1);
+      pos[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = radius * Math.cos(phi) * 0.58;
+      pos[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+      color.setHSL(0.53 + random() * 0.17, 0.25 + random() * 0.6, 0.58 + random() * 0.38);
+      cols[i * 3] = color.r;
+      cols[i * 3 + 1] = color.g;
+      cols[i * 3 + 2] = color.b;
     }
-    return { count, pos, col, phase, size };
-  }, [seed, reducedMotion]);
+    return [pos, cols];
+  }, [seed]);
 
-  useFrame(({ clock }) => {
-    if (ref.current && !reducedMotion) ref.current.rotation.y = clock.elapsedTime * 0.021;
-    if (material.current) material.current.uniforms.uTime.value = clock.elapsedTime;
+  useFrame((_, delta) => {
+    if (ref.current && !reducedMotion) ref.current.rotation.y += delta * 0.0025;
   });
 
   return (
-    <points ref={ref} rotation={[-0.52, 0, 0.16]}>
+    <points ref={ref}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[data.pos, 3]} />
-        <bufferAttribute attach="attributes-color" args={[data.col, 3]} />
-        <bufferAttribute attach="attributes-aPhase" args={[data.phase, 1]} />
-        <bufferAttribute attach="attributes-aSize" args={[data.size, 1]} />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <shaderMaterial
-        ref={material}
-        transparent
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        uniforms={{ uTime: { value: 0 } }}
-        vertexShader={/* glsl */ `
-          attribute float aPhase;
-          attribute float aSize;
-          varying vec3 vColor;
-          varying float vPhase;
-          uniform float uTime;
-          void main() {
-            vColor = color;
-            vPhase = aPhase;
-            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            float tw = 0.72 + 0.28 * sin(uTime * 1.7 + aPhase * 4.2);
-            gl_PointSize = aSize * tw * (240.0 / -mvPosition.z);
-            gl_Position = projectionMatrix * mvPosition;
-          }
-        `}
-        fragmentShader={/* glsl */ `
-          varying vec3 vColor;
-          varying float vPhase;
-          uniform float uTime;
-          void main() {
-            float d = length(gl_PointCoord - 0.5);
-            float star = smoothstep(0.5, 0.04, d);
-            float flare = 0.5 + 0.5 * sin(uTime * 2.2 + vPhase * 5.0);
-            gl_FragColor = vec4(vColor * (0.8 + flare * 0.5), star * 0.92);
-          }
-        `}
-        vertexColors
-      />
+      <pointsMaterial size={0.065} vertexColors transparent opacity={0.72} sizeAttenuation depthWrite={false} blending={THREE.AdditiveBlending} />
     </points>
   );
 }
 
-function CoreGlow() {
-  const texture = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-      gradient.addColorStop(0, "rgba(255,246,224,1)");
-      gradient.addColorStop(0.25, "rgba(255,208,150,0.55)");
-      gradient.addColorStop(0.6, "rgba(160,120,255,0.16)");
-      gradient.addColorStop(1, "rgba(120,90,255,0)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 256, 256);
+function Nebula({ seed }: { seed: string }) {
+  const positions = useMemo(() => {
+    const random = seededRandom(seed, "nebula");
+    const pos = new Float32Array(900 * 3);
+    for (let i = 0; i < 900; i += 1) {
+      const arm = (i % 3) * (Math.PI * 2 / 3);
+      const distance = random() * 13;
+      const angle = arm + distance * 0.36 + (random() - 0.5) * 0.7;
+      pos[i * 3] = 3.2 + Math.cos(angle) * distance;
+      pos[i * 3 + 1] = (random() - 0.5) * (1.2 + distance * 0.22);
+      pos[i * 3 + 2] = -7 + Math.sin(angle) * distance;
     }
-    return new THREE.CanvasTexture(canvas);
-  }, []);
-  const ref = useRef<THREE.Sprite>(null);
-  useFrame(({ clock }) => {
-    if (ref.current) {
-      const pulse = 1 + Math.sin(clock.elapsedTime * 0.7) * 0.05;
-      ref.current.scale.set(11 * pulse, 11 * pulse, 1);
-    }
-  });
-  return (
-    <sprite ref={ref} scale={[11, 11, 1]}>
-      <spriteMaterial map={texture} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-    </sprite>
-  );
-}
-
-function NebulaBanners({ seed }: { seed: string }) {
-  const group = useRef<THREE.Group>(null);
-  const texture = useMemo(() => {
-    const random = seededRandom(seed, "menu-nebula-tex");
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      for (let i = 0; i < 60; i += 1) {
-        const x = 128 + (random() - 0.5) * 150;
-        const y = 128 + (random() - 0.5) * 130;
-        const r = 24 + random() * 66;
-        const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
-        gradient.addColorStop(0, `rgba(255,255,255,${0.05 + random() * 0.06})`);
-        gradient.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    return new THREE.CanvasTexture(canvas);
+    return pos;
   }, [seed]);
-  const banners = useMemo(() => {
-    const random = seededRandom(seed, "menu-nebulas");
-    return Array.from({ length: 6 }, (_, index) => ({
-      id: index,
-      pos: [(random() - 0.5) * 42, (random() - 0.5) * 12 - 2, -6 - random() * 16] as [number, number, number],
-      scale: 14 + random() * 22,
-      color: ["#5a3cff", "#ff5a9e", "#2ad8ff", "#7a5aff", "#ff8a5a", "#4a8aff"][index],
-      speed: 0.1 + random() * 0.2,
-    }));
-  }, [seed]);
-  useFrame(({ clock }) => {
-    if (!group.current) return;
-    group.current.children.forEach((child, index) => {
-      child.rotation.z = Math.sin(clock.elapsedTime * banners[index].speed * 0.2) * 0.2;
-    });
-    group.current.rotation.y = Math.sin(clock.elapsedTime * 0.02) * 0.05;
-  });
   return (
-    <group ref={group}>
-      {banners.map((banner) => (
-        <sprite key={banner.id} position={banner.pos} scale={[banner.scale, banner.scale * 0.7, 1]}>
-          <spriteMaterial map={texture} color={banner.color} transparent opacity={0.3} depthWrite={false} blending={THREE.AdditiveBlending} />
-        </sprite>
-      ))}
-    </group>
+    <points rotation={[0.35, -0.1, -0.22]}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial color="#8271bd" size={0.28} transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} />
+    </points>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Distant planets + shooting stars                                     */
-/* ------------------------------------------------------------------ */
-
-function MenuPlanets() {
-  const ringed = useRef<THREE.Group>(null);
-  const simple = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (ringed.current) ringed.current.rotation.y = clock.elapsedTime * 0.05;
-    if (simple.current) simple.current.rotation.y = clock.elapsedTime * 0.03;
-  });
-  return (
-    <group>
-      <group ref={ringed} position={[16, 6.5, -26]}>
-        <mesh>
-          <sphereGeometry args={[1.9, 40, 28]} />
-          <shaderMaterial
-            uniforms={{ uTime: { value: 0 } }}
-            vertexShader={/* glsl */ `
-              varying vec3 vNormal;
-              varying vec3 vPos;
-              void main() {
-                vNormal = normalize(normalMatrix * normal);
-                vPos = position;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-              }
-            `}
-            fragmentShader={/* glsl */ `
-              varying vec3 vNormal;
-              varying vec3 vPos;
-              uniform float uTime;
-              void main() {
-                float lit = smoothstep(-0.4, 0.8, dot(normalize(vNormal), normalize(vec3(-0.5, 0.6, 0.6))));
-                float bands = 0.5 + 0.5 * sin(vPos.y * 7.0 + sin(vPos.x * 3.0));
-                vec3 base = mix(vec3(0.16, 0.1, 0.3), vec3(0.95, 0.72, 0.5), bands * 0.55 + lit * 0.45);
-                gl_FragColor = vec4(base * (0.22 + lit * 1.1), 1.0);
-              }
-            `}
-          />
-        </mesh>
-        <mesh rotation={[1.35, 0.3, 0.2]}>
-          <ringGeometry args={[2.6, 3.8, 72]} />
-          <meshBasicMaterial color="#d8b98a" transparent opacity={0.4} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-        <mesh rotation={[1.35, 0.3, 0.55]}>
-          <ringGeometry args={[4.1, 4.35, 72]} />
-          <meshBasicMaterial color="#8ab8ff" transparent opacity={0.22} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-      </group>
-      <mesh ref={simple} position={[-19, 8.5, -34]}>
-        <icosahedronGeometry args={[1.25, 2]} />
-        <meshStandardMaterial color="#1d2f4a" emissive="#2a4aff" emissiveIntensity={0.32} roughness={0.4} metalness={0.55} flatShading />
-      </mesh>
-      <pointLight position={[-19, 8.5, -30]} color="#4a6aff" intensity={14} distance={14} />
-    </group>
-  );
-}
-
-function ShootingStars({ seed }: { seed: string }) {
-  const group = useRef<THREE.Group>(null);
-  const stars = useMemo(() => {
-    const random = seededRandom(seed, "shooting");
-    return Array.from({ length: 3 }, (_, index) => ({
-      id: index,
-      offset: random() * 9,
-      x: (random() - 0.5) * 40,
-      y: 6 + random() * 10,
-      z: -8 - random() * 14,
-      speed: 14 + random() * 10,
-    }));
-  }, [seed]);
-  useFrame(({ clock }) => {
-    if (!group.current) return;
-    group.current.children.forEach((child, index) => {
-      const star = stars[index];
-      const cycle = ((clock.elapsedTime + star.offset) % 9) / 9;
-      const active = cycle < 0.12;
-      child.visible = active;
-      if (active) {
-        const t = cycle / 0.12;
-        child.position.set(star.x + t * star.speed, star.y - t * star.speed * 0.36, star.z);
-        const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
-        mat.opacity = Math.sin(t * Math.PI) * 0.9;
-      }
-    });
-  });
-  return (
-    <group ref={group}>
-      {stars.map((star) => (
-        <mesh key={star.id} rotation={[0, 0, -0.36]} visible={false}>
-          <planeGeometry args={[3.2, 0.05]} />
-          <meshBasicMaterial color="#cfe8ff" transparent opacity={0.8} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* The Lodemus holographic sigil                                        */
-/* ------------------------------------------------------------------ */
-
-function HoloSigil() {
-  const group = useRef<THREE.Group>(null);
-  const shell = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    if (group.current) {
-      group.current.rotation.y = t * 0.24;
-      group.current.position.y = 1.4 + Math.sin(t * 0.5) * 0.28;
+function ForegroundMotes({ seed, reducedMotion }: { seed: string; reducedMotion: boolean }) {
+  const ref = useRef<THREE.Points>(null);
+  const positions = useMemo(() => {
+    const random = seededRandom(seed, "foreground-motes");
+    const pos = new Float32Array(380 * 3);
+    for (let index = 0; index < 380; index += 1) {
+      pos[index * 3] = (random() - 0.5) * 25;
+      pos[index * 3 + 1] = (random() - 0.5) * 13;
+      pos[index * 3 + 2] = 1 + random() * 10;
     }
-    if (shell.current) {
-      const mat = shell.current.material as THREE.MeshBasicMaterial;
-      const glitch = Math.random() > 0.988 ? 0.22 : 0.5;
-      mat.opacity = glitch * (0.8 + Math.sin(t * 2.4) * 0.2);
-    }
-  });
-  return (
-    <Float speed={1.2} rotationIntensity={0.16} floatIntensity={0.4}>
-      <group ref={group} position={[10.4, 1.4, -3]}>
-        <mesh ref={shell}>
-          <icosahedronGeometry args={[1.7, 0]} />
-          <meshBasicMaterial color="#66e0ff" wireframe transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-        <mesh scale={0.62}>
-          <icosahedronGeometry args={[1.7, 1]} />
-          <meshBasicMaterial color="#c89fff" wireframe transparent opacity={0.34} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-        <mesh rotation={[Math.PI / 2.4, 0, 0.4]}>
-          <torusGeometry args={[2.5, 0.02, 8, 90]} />
-          <meshBasicMaterial color="#66e0ff" transparent opacity={0.7} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-        <mesh rotation={[Math.PI / 1.8, 0.6, -0.3]}>
-          <torusGeometry args={[3.05, 0.012, 8, 90]} />
-          <meshBasicMaterial color="#c89fff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
-        </mesh>
-        <mesh scale={0.14}>
-          <icosahedronGeometry args={[1.7, 2]} />
-          <meshBasicMaterial color="#eafcff" toneMapped={false} />
-        </mesh>
-        <pointLight color="#66e0ff" intensity={10} distance={12} />
-      </group>
-    </Float>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Camera rig with pointer parallax                                     */
-/* ------------------------------------------------------------------ */
-
-function CameraRig({ reducedMotion }: { reducedMotion: boolean }) {
-  const { camera } = useThree();
-  const pointer = useRef({ x: 0, y: 0 });
-  useEffect(() => {
-    const move = (event: PointerEvent) => {
-      pointer.current.x = (event.clientX / window.innerWidth) * 2 - 1;
-      pointer.current.y = (event.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener("pointermove", move);
-    return () => window.removeEventListener("pointermove", move);
-  }, []);
+    return pos;
+  }, [seed]);
   useFrame(({ clock }, delta) => {
-    const t = clock.elapsedTime;
-    const parallax = reducedMotion ? 0 : 1;
-    const targetX = pointer.current.x * 2.1 * parallax;
-    const targetY = -pointer.current.y * 1.15 * parallax;
-    const damp = 1 - Math.exp(-delta * 2.4);
-    camera.position.x += (targetX + Math.sin(t * 0.05) * 0.8 - camera.position.x) * damp;
-    camera.position.y += (targetY + 1.9 + Math.sin(t * 0.075) * 0.5 - camera.position.y) * damp;
-    camera.position.z += (21 + Math.sin(t * 0.045) * 1.6 - camera.position.z) * damp * 0.5;
-    camera.lookAt(2.4, 0.4, -4);
+    if (!ref.current || reducedMotion) return;
+    ref.current.rotation.z = Math.sin(clock.elapsedTime * 0.08) * 0.025;
+    ref.current.position.y += delta * 0.025;
+    if (ref.current.position.y > 1) ref.current.position.y = -1;
+  });
+  return (
+    <points ref={ref}>
+      <bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry>
+      <pointsMaterial color="#baffef" size={0.018} transparent opacity={0.45} depthWrite={false} blending={THREE.AdditiveBlending} />
+    </points>
+  );
+}
+
+function GravitationalArcs({ reducedMotion }: { reducedMotion: boolean }) {
+  const root = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!root.current || reducedMotion) return;
+    root.current.rotation.z = -0.34 + Math.sin(clock.elapsedTime * 0.17) * 0.012;
+  });
+  return (
+    <group ref={root} position={[5.2, 2.65, -3]} rotation={[1.18, 0.14, -0.34]}>
+      {[0, 1, 2].map((index) => (
+        <mesh key={index} scale={1 + index * 0.16}>
+          <torusGeometry args={[2.1, 0.012 + index * 0.006, 8, 180, Math.PI * 1.48]} />
+          <meshBasicMaterial color={index === 0 ? "#fff4d7" : "#af91ff"} transparent opacity={0.24 - index * 0.05} blending={THREE.AdditiveBlending} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Structures({ reducedMotion }: { reducedMotion: boolean }) {
+  const group = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!group.current || reducedMotion) return;
+    group.current.rotation.x = clock.elapsedTime * 0.035;
+    group.current.rotation.y = clock.elapsedTime * -0.06;
+  });
+  return (
+    <group ref={group} position={[-5.6, 2.8, -6]}>
+      {Array.from({ length: 5 }, (_, index) => (
+        <mesh key={index} scale={1 + index * 0.52} rotation={[index * 0.5, index * 0.24, 0]}>
+          <torusKnotGeometry args={[0.58, 0.012, 90, 5, 2 + index, 3]} />
+          <meshBasicMaterial color={index % 2 ? "#c6f4ff" : "#8d74ff"} transparent opacity={0.2} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function MenuCreatureProcession({ seed, reducedMotion }: { seed: string; reducedMotion: boolean }) {
+  const group = useRef<THREE.Group>(null);
+  const set = useMemo(() => {
+    const random = seededRandom(seed, "menu-procession");
+    return [2, 23, 41, 66, 89, 107].map((creatureIndex, slot) => ({
+      creature: creatures[creatureIndex % creatures.length],
+      base: [7.5 + slot * 2.1 + (random() - 0.5) * 1.4, -3.2 + (random() - 0.5) * 2.4, -8 - slot * 3.5] as [number, number, number],
+      scale: 0.35 + random() * 0.45,
+      speed: 0.08 + random() * 0.14,
+      phase: random() * Math.PI * 2,
+    }));
+  }, [seed]);
+  useFrame(({ clock }) => {
+    if (!group.current || reducedMotion) return;
+    const time = clock.elapsedTime;
+    group.current.children.forEach((child, slot) => {
+      const item = set[slot];
+      const drift = ((time * item.speed + item.phase) % (Math.PI * 2));
+      child.position.x = item.base[0] - drift * 2.2;
+      child.position.y = item.base[1] + Math.sin(time * 0.6 + item.phase) * 0.35;
+      child.position.z = item.base[2] + Math.cos(drift * 0.8) * 1.2;
+      if (child.position.x < -16) child.position.x = 16;
+    });
+  });
+  return (
+    <group ref={group}>
+      {set.map((item) => (
+        <Float key={item.creature.id} speed={reducedMotion ? 0 : 2.2} rotationIntensity={reducedMotion ? 0 : 0.6} floatIntensity={reducedMotion ? 0 : 0.9}>
+          <CreatureModel creature={item.creature} scale={item.scale} reducedMotion={reducedMotion} />
+        </Float>
+      ))}
+    </group>
+  );
+}
+
+function CameraDrift({ reducedMotion }: { reducedMotion: boolean }) {
+  useFrame(({ camera, pointer, clock }) => {
+    if (reducedMotion) return;
+    camera.position.x += (pointer.x * 0.32 - camera.position.x) * 0.007;
+    camera.position.y += (pointer.y * 0.2 - camera.position.y) * 0.007;
+    camera.rotation.z = Math.sin(clock.elapsedTime * 0.09) * 0.006;
   });
   return null;
 }
 
-/* ------------------------------------------------------------------ */
-/* Exported scene                                                       */
-/* ------------------------------------------------------------------ */
+interface UniverseSceneProps {
+  seed: string;
+  reducedMotion?: boolean;
+  quality?: "low" | "medium" | "ultra";
+}
 
-export function UniverseScene({ seed, reducedMotion }: { seed: string; reducedMotion: boolean; quality?: string }) {
+function MenuEffects({ quality }: Pick<UniverseSceneProps, "quality">) {
+  const [sun, setSun] = useState<THREE.Mesh | null>(null);
+  return (
+    <>
+      <mesh ref={setSun} position={[5.05, 2.35, -4.6]} scale={0.76}>
+        <sphereGeometry args={[1, 32, 24]} />
+        <meshBasicMaterial color="#fff5df" transparent opacity={0.68} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <EffectComposer multisampling={quality === "ultra" ? 4 : 0}>
+        {sun && <GodRays sun={sun} samples={quality === "ultra" ? 60 : 32} density={0.96} decay={0.93} weight={0.32} exposure={0.42} clampMax={1} blur />}
+        <Bloom intensity={1.05} luminanceThreshold={0.4} luminanceSmoothing={0.74} mipmapBlur />
+        <ChromaticAberration offset={new THREE.Vector2(0.00022, 0.00016)} radialModulation modulationOffset={0.65} />
+        <Noise opacity={0.018} blendFunction={BlendFunction.SOFT_LIGHT} />
+      </EffectComposer>
+    </>
+  );
+}
+
+export function UniverseScene({ seed, reducedMotion = false, quality = "ultra" }: UniverseSceneProps) {
   return (
     <Canvas
-      dpr={[1, 1.75]}
-      camera={{ position: [0, 1.9, 21], fov: 50, near: 0.1, far: 300 }}
-      gl={{ antialias: true, powerPreference: "high-performance", alpha: false }}
-      onCreated={({ gl }) => {
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.25;
-      }}
+      dpr={quality === "low" ? 1 : [1, quality === "ultra" ? 1.8 : 1.35]}
+      camera={{ position: [0, 0, 12], fov: 48, near: 0.1, far: 180 }}
+      gl={{ antialias: quality !== "low", powerPreference: "high-performance", alpha: true }}
+      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >
-      <color attach="background" args={["#01020a"]} />
-      <fog attach="fog" args={["#01020a", 30, 90]} />
-      <CameraRig reducedMotion={reducedMotion} />
-      <SpiralGalaxy seed={seed} reducedMotion={reducedMotion} />
-      <CoreGlow />
-      <NebulaBanners seed={seed} />
-      <MenuPlanets />
-      <ShootingStars seed={seed} />
-      <HoloSigil />
-      <ambientLight intensity={0.25} />
-      <EffectComposer>
-        <Bloom intensity={1.35} luminanceThreshold={0.28} luminanceSmoothing={0.72} mipmapBlur />
-        <ChromaticAberration offset={new THREE.Vector2(0.0006, 0.0003)} radialModulation modulationOffset={0.4} blendFunction={BlendFunction.NORMAL} />
-        <Noise opacity={0.05} blendFunction={BlendFunction.SOFT_LIGHT} />
-        <Vignette offset={0.16} darkness={0.74} />
-      </EffectComposer>
+      <fog attach="fog" args={["#090814", 18, 82]} />
+      <ambientLight intensity={0.12} />
+      <directionalLight position={[-4, 6, 8]} color="#d7e9ff" intensity={1.4} />
+      <StarField seed={seed} reducedMotion={reducedMotion} />
+      <Nebula seed={seed} />
+      <Structures reducedMotion={reducedMotion} />
+      <ForegroundMotes seed={seed} reducedMotion={reducedMotion} />
+      <GravitationalArcs reducedMotion={reducedMotion} />
+      <MenuCreatureProcession seed={seed} reducedMotion={reducedMotion} />
+      <Sparkles count={180} position={[8, -2, -12]} scale={[26, 14, 30]} size={1.8} speed={0.25} color="#b8d8ff" opacity={0.45} />
+      <CameraDrift reducedMotion={reducedMotion} />
+      {quality !== "low" && <MenuEffects quality={quality} />}
     </Canvas>
   );
 }

@@ -1,14 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, ChromaticAberration, GodRays, Noise, Vignette } from "@react-three/postprocessing";
-import { Environment, Lightformer, Sparkles } from "@react-three/drei";
+import { Environment, Lightformer, MeshReflectorMaterial, Sky, Sparkles } from "@react-three/drei";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
 import { districtsNear, getRealm, hashString, realmPhysics, seededRandom, worldParams, type CreatureDefinition, type District, type WorldLayer } from "../game/procedural";
-import { createEnvState, type EnvState } from "../game/bus";
-import { WorldSky } from "./world/SkySystems";
-import { Ocean } from "./world/Ocean";
-import { SkyWhales, WaterfallCliffs } from "./world/Landmarks";
 
 const diskVertex = `
   varying vec3 vPosition;
@@ -72,7 +68,7 @@ interface WorldProps {
   onPosition: (position: [number, number, number], speed: number) => void;
 }
 
-function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, onPosition, physics, cameraMode, attackSignal, env }: Pick<WorldProps, "layer" | "seed" | "paused" | "reducedMotion" | "onLockChange" | "onPosition"> & { physics?: { gravity: number; wind: [number, number, number] }; cameraMode?: string; attackSignal?: number; env?: EnvState }) {
+function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, onPosition, physics, cameraMode, attackSignal }: Pick<WorldProps, "layer" | "seed" | "paused" | "reducedMotion" | "onLockChange" | "onPosition"> & { physics?: { gravity: number; wind: [number, number, number] }; cameraMode?: string; attackSignal?: number }) {
   const { camera, gl } = useThree();
   const keys = useRef<Record<string, boolean>>({});
   const yaw = useRef(Math.PI);
@@ -117,69 +113,24 @@ function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, on
   useEffect(() => {
     const down = (event: KeyboardEvent) => { keys.current[event.code] = true; };
     const up = (event: KeyboardEvent) => { keys.current[event.code] = false; };
-    const el = gl.domElement;
-    // Virtual look: when pointer lock is unavailable (e.g. sandboxed iframe
-    // previews) we fall back to raw movement deltas so mouse-look still works.
-    const virtualLook = { active: false, lastX: 0, lastY: 0 };
-    const enableVirtual = () => {
-      if (virtualLook.active) return;
-      virtualLook.active = true;
-      onLockChange(true);
-    };
-    const requestLock = () => {
-      if (paused || document.pointerLockElement === el) return;
-      try {
-        const result = el.requestPointerLock() as unknown as Promise<void> | undefined;
-        if (result && typeof result.catch === "function") result.catch(() => enableVirtual());
-      } catch {
-        enableVirtual();
-      }
-      window.setTimeout(() => {
-        if (document.pointerLockElement !== el) enableVirtual();
-      }, 240);
-    };
     const mouse = (event: MouseEvent) => {
-      if (paused) return;
-      const locked = document.pointerLockElement === el;
-      if (locked) {
-        yaw.current -= event.movementX * 0.0016;
-        pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.00145, -1.5, 1.5);
-      } else if (virtualLook.active) {
-        const dx = event.movementX || (virtualLook.lastX ? event.clientX - virtualLook.lastX : 0);
-        const dy = event.movementY || (virtualLook.lastY ? event.clientY - virtualLook.lastY : 0);
-        virtualLook.lastX = event.clientX;
-        virtualLook.lastY = event.clientY;
-        yaw.current -= dx * 0.0016;
-        pitch.current = THREE.MathUtils.clamp(pitch.current - dy * 0.00145, -1.5, 1.5);
-      }
+      if (document.pointerLockElement !== gl.domElement || paused) return;
+      yaw.current -= event.movementX * 0.0016;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.00145, -1.5, 1.5);
     };
-    const lockChange = () => {
-      const active = document.pointerLockElement === el;
-      if (active) {
-        virtualLook.active = false;
-        onLockChange(true);
-      } else if (!virtualLook.active) {
-        onLockChange(false);
-      }
-    };
-    const lockError = () => enableVirtual();
-    const click = () => { if (!paused && document.pointerLockElement !== el) requestLock(); };
-    const bindRequest = () => requestLock();
+    const lock = () => onLockChange(document.pointerLockElement === gl.domElement);
+    const click = () => { if (!paused && document.pointerLockElement !== gl.domElement) gl.domElement.requestPointerLock(); };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("mousemove", mouse);
-    document.addEventListener("pointerlockchange", lockChange);
-    document.addEventListener("pointerlockerror", lockError);
-    el.addEventListener("click", click);
-    window.addEventListener("mv-bind-camera", bindRequest);
+    document.addEventListener("pointerlockchange", lock);
+    gl.domElement.addEventListener("click", click);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
       window.removeEventListener("mousemove", mouse);
-      document.removeEventListener("pointerlockchange", lockChange);
-      document.removeEventListener("pointerlockerror", lockError);
-      el.removeEventListener("click", click);
-      window.removeEventListener("mv-bind-camera", bindRequest);
+      document.removeEventListener("pointerlockchange", lock);
+      gl.domElement.removeEventListener("click", click);
     };
   }, [gl, paused, onLockChange]);
 
@@ -208,36 +159,24 @@ function PlayerController({ layer, seed, paused, reducedMotion, onLockChange, on
     } else {
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
       const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      const vertical = new THREE.Vector3(0, 1, 0);
       const direction = new THREE.Vector3();
       const raw = keys.current;
-      // Arrow keys provide a look fallback that works even without pointer lock.
-      if (raw.ArrowLeft) yaw.current += 2.1 * delta;
-      if (raw.ArrowRight) yaw.current -= 2.1 * delta;
-      if (raw.ArrowUp) pitch.current = THREE.MathUtils.clamp(pitch.current + 1.5 * delta, -1.5, 1.5);
-      if (raw.ArrowDown) pitch.current = THREE.MathUtils.clamp(pitch.current - 1.5 * delta, -1.5, 1.5);
       if (raw.KeyW) direction.add(forward);
       if (raw.KeyS) direction.sub(forward);
       if (raw.KeyD) direction.add(right);
       if (raw.KeyA) direction.sub(right);
+      if (raw.Space) direction.add(vertical.normalize().multiplyScalar(1.3 * Math.max(phys.gravity, 0.02)));
+      if (raw.KeyC || raw.ControlLeft) direction.sub(vertical.normalize().multiplyScalar(Math.max(phys.gravity, 0.02)));
       const scaleSys = layer === "cosmos" || layer === "galaxy" || layer === "void" ? 3.8 : layer === "atomic" ? 1.2 : 1;
-      const swimming = layer === "planet" && env ? camera.position.y < env.waterLevel - 0.14 : false;
-      const speedScale = swimming ? 0.5 : 1;
-      const targetSpeed = direction.lengthSq() > 0 ? (raw.ShiftLeft ? (layer === "cosmos" || layer === "galaxy" || layer === "void" ? 18 : 11) : 5.4) * scaleSys * speedScale : 0;
+      const targetSpeed = direction.lengthSq() > 0 ? (raw.ShiftLeft ? (layer === "cosmos" || layer === "galaxy" || layer === "void" ? 18 : 11) : 5.4) * scaleSys : 0;
       speed.current = THREE.MathUtils.lerp(speed.current, targetSpeed, 1 - Math.exp(-delta * 4.6));
       if (direction.lengthSq() > 0) camera.position.addScaledVector(direction.normalize(), speed.current * delta);
-      camera.position.addScaledVector(windVec, delta * (layer === "micro" ? 2.4 : 1) * speedScale);
+      camera.position.addScaledVector(windVec, delta * (layer === "micro" ? 2.4 : 1));
       camera.position.y += Math.sin(clock.elapsedTime * 1.35 + positions.current.x * 0.03) * 0.0011 * speed.current * (reducedMotion ? 0 : 1);
       if (layer === "planet") {
-        const ground = terrainHeightAt(seed, camera.position.x, camera.position.z) + (swimming ? 1.15 : 1.85);
-        if (swimming) {
-          // Weightless alien swimming: Space rises, C dives, idle gently sinks.
-          const swim = 2.3;
-          if (raw.Space) camera.position.y += swim * delta;
-          if (raw.KeyC || raw.ControlLeft) camera.position.y -= swim * delta;
-          if (!raw.Space && !raw.KeyC && !raw.KeyW && !raw.KeyS) camera.position.y -= 0.3 * delta;
-          camera.position.y += Math.sin(clock.elapsedTime * 1.1) * 0.14 * delta;
-          if (camera.position.y < ground) camera.position.y = ground;
-        } else if (camera.position.y < ground) {
+        const ground = terrainHeightAt(seed, camera.position.x, camera.position.z) + 1.85;
+        if (camera.position.y < ground) {
           camera.position.y = THREE.MathUtils.lerp(camera.position.y, ground, 1 - Math.exp(-delta * 9));
         } else if (!keys.current.Space) {
           const falling = camera.position.y - phys.gravity * delta * 2.4;
@@ -899,6 +838,55 @@ function DistrictMarker({ seed, district, quality }: { seed: string; district: D
   }
 }
 
+function ReflectiveOcean({ quality }: { quality: WorldProps["quality"] }) {
+  const distortion = useMemo(() => {
+    const size = 128;
+    const data = new Uint8Array(size * size * 4);
+    for (let y = 0; y < size; y += 1) {
+      for (let x = 0; x < size; x += 1) {
+        const index = (y * size + x) * 4;
+        const wave = Math.sin(x * 0.31 + Math.sin(y * 0.18) * 2.2) * 0.5 + 0.5;
+        const cross = Math.cos(y * 0.43 + Math.sin(x * 0.11) * 3.1) * 0.5 + 0.5;
+        const value = Math.round((wave * 0.6 + cross * 0.4) * 255);
+        data[index] = value;
+        data[index + 1] = value;
+        data[index + 2] = value;
+        data[index + 3] = 255;
+      }
+    }
+    const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(8, 8);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+  useFrame((_, delta) => {
+    distortion.offset.x = (distortion.offset.x + delta * 0.013) % 1;
+    distortion.offset.y = (distortion.offset.y + delta * 0.006) % 1;
+  });
+  return (
+    <mesh position={[0, -2.25, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={[220, 220, 1, 1]} />
+      <MeshReflectorMaterial
+        resolution={quality === "ultra" ? 1024 : 512}
+        mirror={0.82}
+        blur={quality === "ultra" ? [380, 120] : [220, 80]}
+        mixBlur={1.25}
+        mixStrength={2.2}
+        depthScale={1.1}
+        minDepthThreshold={0.2}
+        maxDepthThreshold={1.5}
+        distortion={0.58}
+        distortionMap={distortion}
+        color="#073943"
+        metalness={0.72}
+        roughness={0.19}
+      />
+    </mesh>
+  );
+}
+
 function AtmosphericShafts({ color = "#ffe3b5" }: { color?: string }) {
   const root = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
@@ -1096,6 +1084,43 @@ function Structures({ count }: { count: number }) {
         );
       })}
     </group>
+  );
+}
+
+function RainSystem({ seed, intensity = 1 }: { seed: string; intensity?: number }) {
+  const count = Math.floor(820 * intensity);
+  const ref = useRef<THREE.Points>(null);
+  const data = useMemo(() => {
+    const random = seededRandom(seed, "rain");
+    const pos = new Float32Array(count * 3);
+    const vel = new Float32Array(count);
+    for (let i = 0; i < count; i += 1) {
+      pos[i * 3] = (random() - 0.5) * 110;
+      pos[i * 3 + 1] = random() * 34;
+      pos[i * 3 + 2] = (random() - 0.5) * 110;
+      vel[i] = 14 + random() * 16;
+    }
+    return { pos, vel };
+  }, [seed, count]);
+  useFrame((_, delta) => {
+    if (!ref.current) return;
+    const attr = ref.current.geometry.attributes.position as THREE.BufferAttribute;
+    const arr = attr.array as Float32Array;
+    for (let i = 0; i < count; i += 1) {
+      arr[i * 3 + 1] -= data.vel[i] * delta;
+      arr[i * 3] -= delta * 2.4;
+      if (arr[i * 3 + 1] < -4) {
+        arr[i * 3 + 1] = 28 + Math.random() * 8;
+        arr[i * 3] = (Math.random() - 0.5) * 110;
+      }
+    }
+    attr.needsUpdate = true;
+  });
+  return (
+    <points ref={ref} renderOrder={2}>
+      <bufferGeometry><bufferAttribute attach="attributes-position" args={[data.pos, 3]} /></bufferGeometry>
+      <pointsMaterial color="#b8d8e8" size={0.09} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} />
+    </points>
   );
 }
 
@@ -1484,34 +1509,38 @@ function Portal({ position, color, targetRealm, onEnter }: { position: [number, 
   );
 }
 
-function PlanetWorld({ seed, density, structures, quality, ventCount = 5, tension = 20, attackSignal = 0, grabSignal = 0, onPrey, onRealmEnter, env }: { seed: string; density: number; structures: number; quality: WorldProps["quality"]; storm?: number; ventCount?: number; tension?: number; attackSignal?: number; grabSignal?: number; onPrey?: (count: number, kind: string) => void; onRealmEnter?: (realmId: string) => void; env: EnvState }) {
+function PlanetWorld({ seed, density, structures, quality, storm = 0.7, ventCount = 5, tension = 20, attackSignal = 0, grabSignal = 0, onPrey, onRealmEnter }: { seed: string; density: number; structures: number; quality: WorldProps["quality"]; storm?: number; ventCount?: number; tension?: number; attackSignal?: number; grabSignal?: number; onPrey?: (count: number, kind: string) => void; onRealmEnter?: (realmId: string) => void }) {
   const microGatePos = useMemo(() => {
     const random = seededRandom(seed, "micro-gate");
     return [(random() - 0.5) * 30, 1.8, -12 - random() * 20] as [number, number, number];
   }, [seed]);
   return (
     <>
-      <WorldSky env={env} seed={seed} quality={quality} dayStart={0.33} />
+      <color attach="background" args={["#0b1718"]} />
+      <fog attach="fog" args={["#243c39", 7, 120]} />
+      <Sky distance={450000} sunPosition={[-18, 14, -28]} inclination={0.51} azimuth={0.16} turbidity={10} rayleigh={2.7} mieCoefficient={0.016} mieDirectionalG={0.91} />
+      <hemisphereLight args={["#ffdca6", "#031517", 1.15]} />
+      <directionalLight position={[-18, 24, 8]} color="#ffe0a7" intensity={4.2} castShadow shadow-mapSize={[quality === "ultra" ? 2048 : 1024, quality === "ultra" ? 2048 : 1024]} shadow-bias={-0.0002} />
+      <pointLight position={[12, 3, -18]} color="#66e6ff" intensity={22} distance={45} />
       <InfiniteTerrain seed={seed} quality={quality} />
-      <Ocean env={env} seed={seed} quality={quality} />
+      <ReflectiveOcean quality={quality} />
       <CausticGlow />
-      <WaterfallCliffs seed={seed} env={env} />
-      <SkyWhales seed={seed} />
-      <SkyFlock seed={seed} count={quality === "low" ? 18 : 44} />
+      <SkyFlock seed={seed} count={quality === "low" ? 14 : 28} />
       {onRealmEnter && <Portal position={microGatePos} color="#9fe8ff" targetRealm="micro" onEnter={onRealmEnter} />}
       <AtmosphericShafts />
       <MonolithField seed={seed} />
       <DistrictLandmarks seed={seed} quality={quality} />
       <ThermalVents seed={seed} count={ventCount} />
+      {storm > 0.4 && <RainSystem seed={seed} intensity={storm} />}
+      {storm > 0.5 && <Lightning seed={seed} />}
       <AlienFlora seed={seed} density={density} />
       <MicroLifeSystem seed={seed} density={density} tension={tension} attackSignal={attackSignal} grabSignal={grabSignal} onPrey={onPrey} />
       <AttackWaveFX signal={attackSignal} />
       <GrabBeamFX signal={grabSignal} />
-      <SimulatedFauna seed={seed} density={Math.max(14, Math.floor(density / 4))} tension={tension} />
+      <SimulatedFauna seed={seed} density={Math.max(6, Math.floor(density / 7))} tension={tension} />
       <Structures count={structures} />
       <DriftParticles seed={seed} count={density * 5} color="#d9ffe5" radius={46} speed={0.004} />
       <Sparkles count={quality === "low" ? 180 : 420} position={[0, 1.5, -10]} scale={[110, 18, 110]} size={2.2} speed={0.35} color="#c8ffe0" opacity={0.5} />
-      <pointLight position={[12, 3, -18]} color="#66e6ff" intensity={22} distance={45} />
     </>
   );
 }
@@ -2170,14 +2199,8 @@ function PlayerAvatar({ creature, avatarRef, visible = true, attackSignal = 0, g
   );
 }
 
-function CinematicEffects({ realm, env, quality, bloom = true, godRays = true, vignette = true, chromaticAberration = true, filmGrain = true }: { realm: ReturnType<typeof getRealm>; env: EnvState; quality: WorldProps["quality"]; bloom?: boolean; godRays?: boolean; vignette?: boolean; chromaticAberration?: boolean; filmGrain?: boolean }) {
+function CinematicEffects({ realm, quality, bloom = true, godRays = true, vignette = true, chromaticAberration = true, filmGrain = true }: { realm: ReturnType<typeof getRealm>; quality: WorldProps["quality"]; bloom?: boolean; godRays?: boolean; vignette?: boolean; chromaticAberration?: boolean; filmGrain?: boolean }) {
   const [sun, setSun] = useState<THREE.Mesh | null>(null);
-  const layerKey = realm.key ?? realm.id;
-  const isPlanet = layerKey === "planet";
-  useFrame(() => {
-    // On the planet realm the god-ray source is the real travelling sun.
-    if (isPlanet && env.sunMesh && env.sunMesh !== sun) setSun(env.sunMesh);
-  });
   const config: Record<string, { position: [number, number, number]; scale: number; color: string }> = {
     void: { position: [0, 0, -70], scale: 7.5, color: "#f0d0ff" },
     galaxy: { position: [0, 0, -60], scale: 5.5, color: "#ffd8b8" },
@@ -2191,12 +2214,10 @@ function CinematicEffects({ realm, env, quality, bloom = true, godRays = true, v
   const intense = realm.archetype === "storm" || realm.archetype === "plasma-sea" || realm.id === "quantum";
   return (
     <>
-      {!isPlanet && (
-        <mesh ref={setSun} position={source.position} scale={source.scale} renderOrder={-1}>
-          <sphereGeometry args={[1, 32, 24]} />
-          <meshBasicMaterial color={source.color} transparent opacity={realm.id === "cosmos" ? 0.55 : 0.92} depthWrite={false} toneMapped={false} />
-        </mesh>
-      )}
+      <mesh ref={setSun} position={source.position} scale={source.scale} renderOrder={-1}>
+        <sphereGeometry args={[1, 32, 24]} />
+        <meshBasicMaterial color={source.color} transparent opacity={realm.id === "cosmos" ? 0.55 : 0.92} depthWrite={false} toneMapped={false} />
+      </mesh>
       <EffectComposer multisampling={quality === "ultra" ? 4 : 0}>
         {godRays && sun && (
           <GodRays
@@ -2226,12 +2247,11 @@ export function GameWorld(props: WorldProps) {
   const authoredKey = realm.key ?? props.layer;
   const physics = realmPhysics(props.seed, realm);
   const terrainParams = worldParams(props.seed);
-  const env = useMemo(() => createEnvState(), []);
   return (
     <Canvas
       shadows={props.shadows !== false && props.quality !== "low"}
       dpr={Math.max(0.5, Math.min(2, (props.quality === "low" ? 1 : props.quality === "ultra" ? 1.65 : 1.3) * (props.renderScale ?? 100) / 100))}
-      camera={{ position: [0, 2, 12], fov: props.fov ?? 65, near: 0.05, far: authoredKey === "planet" ? 3200 : 500 }}
+      camera={{ position: [0, 2, 12], fov: props.fov ?? 65, near: 0.05, far: 500 }}
       gl={{ antialias: props.antialiasing !== false && props.quality !== "low", powerPreference: "high-performance", logarithmicDepthBuffer: authoredKey === "cosmos" || authoredKey === "galaxy" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -2239,11 +2259,11 @@ export function GameWorld(props: WorldProps) {
         gl.shadowMap.type = THREE.PCFSoftShadowMap;
       }}
     >
-      <PlayerController layer={authoredKey} seed={props.seed} paused={props.paused} reducedMotion={props.reducedMotion} onLockChange={props.onLockChange} onPosition={props.onPosition} physics={physics} cameraMode={props.cameraMode} attackSignal={props.attackSignal} env={env} />
+      <PlayerController layer={authoredKey} seed={props.seed} paused={props.paused} reducedMotion={props.reducedMotion} onLockChange={props.onLockChange} onPosition={props.onPosition} physics={physics} cameraMode={props.cameraMode} attackSignal={props.attackSignal} />
       {authoredKey === "void" && <QuantumWorld seed={props.seed} density={density} />}
       {authoredKey === "galaxy" && <GalaxyWorld seed={props.seed} />}
       {authoredKey === "cosmos" && <CosmicWorld seed={props.seed} density={density} />}
-      {authoredKey === "planet" && <PlanetWorld seed={props.seed} density={density} structures={props.structures} quality={props.quality} storm={terrainParams.stormBias} ventCount={terrainParams.ventCount} tension={props.tension} attackSignal={props.attackSignal} grabSignal={props.grabSignal} onPrey={props.onPrey} onRealmEnter={props.onRealmEnter} env={env} />}
+      {authoredKey === "planet" && <PlanetWorld seed={props.seed} density={density} structures={props.structures} quality={props.quality} storm={terrainParams.stormBias} ventCount={terrainParams.ventCount} tension={props.tension} attackSignal={props.attackSignal} grabSignal={props.grabSignal} onPrey={props.onPrey} onRealmEnter={props.onRealmEnter} />}
       {authoredKey === "micro" && <MicroWorld seed={props.seed} density={density} onRealmEnter={props.onRealmEnter} />}
       {authoredKey === "atomic" && <AtomicWorld seed={props.seed} density={density} />}
       {authoredKey === "quantum" && <QuantumWorld seed={props.seed} density={density} />}
@@ -2253,7 +2273,7 @@ export function GameWorld(props: WorldProps) {
       {props.creature && props.cameraShake !== false && !props.reducedMotion && <CombatCameraShake attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} />}
       {props.creature && <CombatParticleBurstWithClock creatureHue={props.creature.hue} attackSignal={props.attackSignal ?? 0} grabSignal={props.grabSignal ?? 0} />}
       <ProceduralReflectionRig realm={realm} quality={props.quality} />
-      {props.quality !== "low" && <CinematicEffects realm={realm} env={env} quality={props.quality} bloom={props.bloom} godRays={props.godRays} vignette={props.vignette} chromaticAberration={props.chromaticAberration} filmGrain={props.filmGrain} />}
+      {props.quality !== "low" && <CinematicEffects realm={realm} quality={props.quality} bloom={props.bloom} godRays={props.godRays} vignette={props.vignette} chromaticAberration={props.chromaticAberration} filmGrain={props.filmGrain} />}
     </Canvas>
   );
 }

@@ -4,7 +4,6 @@ import { GameExperience } from "./components/GameExperience";
 import { MainMenu, defaultSettings, type AppSettings } from "./components/MainMenu";
 import { cinematicAudio } from "./audio/CinematicAudio";
 import { creatures, generateSeed, type SaveState } from "./game/procedural";
-import { IntroCinematic } from "./scenes/IntroCinematic";
 import { UniverseScene } from "./scenes/UniverseScene";
 
 const SAVE_KEY = "lumital.reality.v1";
@@ -38,11 +37,11 @@ function BootSequence({ onSkip }: { onSkip: () => void }) {
       <div className="boot-horizon" />
       <motion.div className="boot-identity" initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.1 }}>
         <LumitalSigil />
-        <motion.strong initial={{ letterSpacing: "1.4em", opacity: 0 }} animate={{ letterSpacing: ".42em", opacity: 1 }} transition={{ delay: 0.35, duration: 1.2 }}>THE MULTIVERSE</motion.strong>
-        <span>A LODEMUS REALITY ENGINE</span>
+        <motion.strong initial={{ letterSpacing: "1.4em", opacity: 0 }} animate={{ letterSpacing: ".42em", opacity: 1 }} transition={{ delay: 0.35, duration: 1.2 }}>LUMITAL</motion.strong>
+        <span>PROCEDURAL REALITY SYSTEMS</span>
       </motion.div>
-      <div className="boot-diagnostics"><span>QUANTUM TOPOLOGY</span><i /><span>CAUSAL ENGINE</span><i /><span>SIMOLYSIS ARCHIVE</span></div>
-      <small>CLICK TO BEGIN</small>
+      <div className="boot-diagnostics"><span>QUANTUM TOPOLOGY</span><i /><span>CAUSAL ENGINE</span><i /><span>GENESIS ARCHIVE</span></div>
+      <small>CLICK TO SKIP</small>
     </motion.div>
   );
 }
@@ -64,7 +63,7 @@ function LoadingSequence({ save, creatureName }: { save: SaveState; creatureName
 }
 
 export default function App() {
-  const [phase, setPhase] = useState<"boot" | "intro" | "menu" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
+  const [phase, setPhase] = useState<"boot" | "menu" | "loading" | "game">(() => sessionStorage.getItem("lumital.booted") ? "menu" : "boot");
   const [sandbox, setSandbox] = useState(false);
   const [seed, setSeed] = useState(() => readJson<SaveState>(SAVE_KEY)?.seed ?? generateSeed());
   const [selectedCreature, setSelectedCreature] = useState(() => {
@@ -107,7 +106,7 @@ export default function App() {
     if (phase !== "boot") return;
     const timer = window.setTimeout(() => {
       sessionStorage.setItem("lumital.booted", "1");
-      setPhase("intro");
+      setPhase("menu");
     }, settings.reducedMotion ? 500 : 2600);
     return () => window.clearTimeout(timer);
   }, [phase, settings.reducedMotion]);
@@ -165,9 +164,7 @@ export default function App() {
     <div className="app-shell">
       <AnimatePresence mode="wait">
         {phase === "boot" ? (
-          <BootSequence onSkip={() => { void cinematicAudio.unlock(); cinematicAudio.cinematicHit(0.8); sessionStorage.setItem("lumital.booted", "1"); setPhase("intro"); }} />
-        ) : phase === "intro" ? (
-          <IntroCinematic onDone={() => setPhase("menu")} />
+          <BootSequence onSkip={() => { void cinematicAudio.unlock(); cinematicAudio.cinematicHit(0.8); sessionStorage.setItem("lumital.booted", "1"); setPhase("menu"); }} />
         ) : phase === "menu" ? (
           <motion.div key="menu" className="menu-stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.03 }} transition={{ duration: 0.65 }}>
             <div className="menu-world"><UniverseScene seed={seed} reducedMotion={settings.reducedMotion} quality={settings.quality} /></div>
@@ -181,7 +178,6 @@ export default function App() {
               onSettingsChange={setSettings}
               onStart={start}
               onContinue={continueJourney}
-              onReplayIntro={() => setPhase("intro")}
             />
           </motion.div>
         ) : phase === "loading" && activeSave ? (

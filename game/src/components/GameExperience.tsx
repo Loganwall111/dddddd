@@ -16,7 +16,6 @@ import {
 } from "../game/procedural";
 import type { AppSettings } from "./MainMenu";
 import { cinematicAudio } from "../audio/CinematicAudio";
-import { worldBus } from "../game/bus";
 
 interface GameExperienceProps {
   initialSave: SaveState;
@@ -93,7 +92,7 @@ function GameBrand() {
   return (
     <div className="game-brand">
       <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="2.5" fill="currentColor" /><ellipse cx="16" cy="16" rx="13" ry="5" fill="none" stroke="currentColor" /><ellipse cx="16" cy="16" rx="13" ry="5" fill="none" stroke="currentColor" transform="rotate(60 16 16)" /></svg>
-      <strong>THE MULTIVERSE</strong><span>LODEMUS LINK ACTIVE</span>
+      <strong>LUMITAL</strong><span>LIVE REALITY</span>
     </div>
   );
 }
@@ -611,33 +610,8 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
     });
   };
 
-  const beginReality = useCallback((orbitCamera: boolean) => {
-    cinematicAudio.cinematicHit(0.55);
-    if (orbitCamera) setCameraMode("orbit");
-    setIntro(false);
-    // Bind the camera on the next tick, while the click gesture is still valid.
-    window.setTimeout(() => window.dispatchEvent(new Event("mv-bind-camera")), 140);
-  }, []);
-
   const paused = Boolean(panel || transition || intro);
   const coordinates = useMemo(() => position.map((value) => `${value >= 0 ? "+" : ""}${value.toFixed(1)}`).join(" / "), [position]);
-  const [weatherKind, setWeatherKind] = useState("clear");
-  const [clockLabel, setClockLabel] = useState("--:--");
-  const [underwater, setUnderwater] = useState(false);
-  useEffect(() => {
-    const off = worldBus.on((event) => {
-      if (event.type === "weather") {
-        setWeatherKind(event.kind);
-        cinematicAudio.setRain(event.rain);
-      } else if (event.type === "clock") setClockLabel(event.label);
-      else if (event.type === "underwater") setUnderwater(event.active);
-    });
-    return () => {
-      off();
-      cinematicAudio.setRain(0);
-      cinematicAudio.setUnderwater(false);
-    };
-  }, []);
 
   // Footsteps - trigger when moving
   useEffect(() => {
@@ -705,8 +679,6 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
         />
       </div>
       <div className="game-grade" />
-      {underwater && <div className="underwater-grade" />}
-      {underwater && <div className="underwater-badge"><Waves size={14} /> UNDERWATER — SPACE TO SURFACE</div>}
       <CombatImpactFlash signal={impactFlash} />
       <div className="game-hud">
         <header className="hud-top">
@@ -728,36 +700,29 @@ export function GameExperience({ initialSave, creature, settings, sandbox = fals
         <ScaleNavigator realmId={realmId} onChange={changeLayer} disabled={Boolean(transition)} />
         <div className={`reticle ${scanning ? "is-scanning" : ""}`}><i /><i /><Crosshair size={25} strokeWidth={0.8} /><span>{scanning ? "CLASSIFYING" : ""}</span></div>
         <div className="hud-bottom-rail">
-          <div className="movement-readout"><Compass size={15} /><span>{speed.toFixed(1)} m/s</span><i /><span>CYCLE {state.cycle}</span><i /><Video size={13} /><span>{cameraMode.toUpperCase()}</span><i /><span>{clockLabel} / {weatherKind.toUpperCase()}</span></div>
+          <div className="movement-readout"><Compass size={15} /><span>{speed.toFixed(1)} m/s</span><i /><span>CYCLE {state.cycle}</span><i /><Video size={13} /><span>{cameraMode.toUpperCase()}</span></div>
           <div className="control-hints">
-            <span><kbd>WASD</kbd> MOVE</span><span><kbd>T</kbd> CAM</span><span><kbd>Q</kbd> STRIKE</span><span><kbd>G</kbd> GRAB</span><span><kbd>E</kbd> OBSERVE</span><span><kbd>F</kbd> FEED</span><span><kbd>I</kbd> ITEMS</span><span><kbd>SPACE</kbd> RISE / SWIM</span>
+            <span><kbd>WASD</kbd> MOVE</span><span><kbd>T</kbd> CAM</span><span><kbd>Q</kbd> STRIKE</span><span><kbd>G</kbd> GRAB</span><span><kbd>E</kbd> OBSERVE</span><span><kbd>F</kbd> FEED</span><span><kbd>I</kbd> ITEMS</span>
           </div>
         </div>
-        {!locked && !paused && <div className="pointer-hint"><MousePointer2 size={16} /> CLICK ANYWHERE TO LOOK AROUND</div>}
+        {!locked && !paused && <div className="pointer-hint"><MousePointer2 size={16} /> Click reality to bind camera</div>}
       </div>
 
       <AnimatePresence>
         {intro && (
-          <motion.div
-            className="awakening"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.7 }}
-            onClick={() => beginReality(false)}
-          >
+          <motion.div className="awakening" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.8 }}>
-              <span className="awakening-eyebrow">LODEMUS LINK ESTABLISHED / CYCLE {state.cycle} / {state.seed}</span>
-              <h1>{sandbox ? "Physics is optional here." : "You are plugged into the Multiverse."}</h1>
-              <p>{sandbox ? "All scale boundaries and directed adaptations are available." : `This reality can be anything you want it to be. You awaken as ${creature.genus} inside ${realm.place} — and something in the water has noticed you.`}</p>
+              <span className="awakening-eyebrow">GENOME SYNCHRONIZED / CYCLE {state.cycle} / {state.seed}</span>
+              <h1>{sandbox ? "Physics is optional here." : "Something in the water has noticed you."}</h1>
+              <p>{sandbox ? "All scale boundaries and directed adaptations are available." : `You awaken as ${creature.genus} inside ${realm.place}. The ecosystem feels your presence.`}</p>
               <div className="awakening-actions">
-                <button className="awakening-cta" onClick={(event) => { event.stopPropagation(); beginReality(false); }}>
+                <button className="awakening-cta" onClick={() => { cinematicAudio.cinematicHit(0.55); setIntro(false); }}>
                   {sandbox ? "UNBIND REALITY" : "OPEN YOUR SENSES"}
                   <ChevronRight size={20} strokeWidth={2} />
                 </button>
-                {!sandbox && <button className="awakening-secondary" onClick={(event) => { event.stopPropagation(); beginReality(false); }}><Play size={14} /> Begin at organism scale</button>}
-                {sandbox && <button className="awakening-secondary" onClick={(event) => { event.stopPropagation(); setCameraMode("orbit"); beginReality(false); }}><Video size={14} /> Cinematic orbit</button>}
+                {!sandbox && <button className="awakening-secondary" onClick={() => setIntro(false)}><Play size={14} /> Begin at organism scale</button>}
+                {sandbox && <button className="awakening-secondary" onClick={() => { setCameraMode("orbit"); setIntro(false); }}><Video size={14} /> Cinematic orbit</button>}
               </div>
-              <span className="awakening-hint">CLICK ANYWHERE TO BEGIN</span>
             </motion.div>
           </motion.div>
         )}

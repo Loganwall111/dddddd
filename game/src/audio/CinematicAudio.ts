@@ -22,94 +22,6 @@ class CinematicAudioEngine {
   private unlocked = false;
   private lastHover = 0;
   private lastFootstep = 0;
-  private underwaterFilter: BiquadFilterNode | null = null;
-  private rainGain: GainNode | null = null;
-  private rainSource: AudioBufferSourceNode | null = null;
-
-  setUnderwater(active: boolean) {
-    if (!this.context || !this.underwaterFilter) return;
-    const now = this.context.currentTime;
-    this.underwaterFilter.frequency.cancelScheduledValues(now);
-    this.underwaterFilter.frequency.setTargetAtTime(active ? 540 : 18500, now, 0.25);
-  }
-
-  setRain(level: number) {
-    if (!this.context || !this.master) return;
-    if (!this.rainGain) {
-      this.rainGain = this.context.createGain();
-      this.rainGain.gain.value = 0;
-      const filter = this.context.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 2600;
-      this.rainSource = this.context.createBufferSource();
-      this.rainSource.buffer = this.createNoise(4);
-      this.rainSource.loop = true;
-      this.rainSource.connect(filter).connect(this.rainGain).connect(this.master);
-      this.rainSource.start();
-    }
-    const target = Math.max(0, Math.min(1, level)) * 0.085;
-    this.rainGain.gain.setTargetAtTime(target, this.context.currentTime, 0.8);
-  }
-
-  thunder() {
-    if (!this.unlocked || !this.context || !this.master) return;
-    const now = this.context.currentTime;
-    const noise = this.context.createBufferSource();
-    const filter = this.context.createBiquadFilter();
-    const gain = this.context.createGain();
-    noise.buffer = this.createNoise(2.4);
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(320, now);
-    filter.frequency.exponentialRampToValueAtTime(60, now + 2.1);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.24, now + 0.09);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.3);
-    noise.connect(filter).connect(gain).connect(this.master);
-    noise.start(now);
-    noise.stop(now + 2.4);
-    const sub = this.context.createOscillator();
-    const subGain = this.context.createGain();
-    sub.type = "sine";
-    sub.frequency.setValueAtTime(46, now);
-    sub.frequency.exponentialRampToValueAtTime(24, now + 1.8);
-    subGain.gain.setValueAtTime(0.0001, now);
-    subGain.gain.exponentialRampToValueAtTime(0.11, now + 0.12);
-    subGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.9);
-    sub.connect(subGain).connect(this.master);
-    sub.start(now);
-    sub.stop(now + 2);
-  }
-
-  splash() {
-    if (!this.unlocked || !this.context || !this.master) return;
-    const now = this.context.currentTime;
-    const noise = this.context.createBufferSource();
-    const filter = this.context.createBiquadFilter();
-    const gain = this.context.createGain();
-    noise.buffer = this.createNoise(0.7);
-    filter.type = "bandpass";
-    filter.frequency.setValueAtTime(1500, now);
-    filter.frequency.exponentialRampToValueAtTime(340, now + 0.5);
-    filter.Q.value = 1.1;
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.14, now + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.62);
-    noise.connect(filter).connect(gain).connect(this.master);
-    noise.start(now);
-    noise.stop(now + 0.7);
-    [880, 1180, 1560].forEach((frequency, index) => {
-      const blip = this.context!.createOscillator();
-      const blipGain = this.context!.createGain();
-      blip.type = "sine";
-      blip.frequency.setValueAtTime(frequency, now + 0.12 + index * 0.07);
-      blipGain.gain.setValueAtTime(0.0001, now + 0.12 + index * 0.07);
-      blipGain.gain.exponentialRampToValueAtTime(0.02, now + 0.14 + index * 0.07);
-      blipGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3 + index * 0.07);
-      blip.connect(blipGain).connect(this.master!);
-      blip.start(now + 0.12 + index * 0.07);
-      blip.stop(now + 0.36 + index * 0.07);
-    });
-  }
 
   setScene(scene: AudioScene, volume: number, profile?: RealmAudioProfile) {
     const changed = scene !== this.scene || (profile && JSON.stringify(profile) !== JSON.stringify(this.profile));
@@ -341,17 +253,13 @@ class CinematicAudioEngine {
     if (!AudioContextClass) return;
     this.context = new AudioContextClass();
     this.master = this.context.createGain();
-    this.underwaterFilter = this.context.createBiquadFilter();
-    this.underwaterFilter.type = "lowpass";
-    this.underwaterFilter.frequency.value = 18500;
     const compressor = this.context.createDynamicsCompressor();
     const convolver = this.context.createConvolver();
     convolver.buffer = this.createImpulse(2.8, 2.7);
     this.master.gain.value = this.volume * 0.62;
-    this.master.connect(this.underwaterFilter);
+    this.master.connect(compressor);
     this.master.connect(convolver);
-    convolver.connect(this.underwaterFilter);
-    this.underwaterFilter.connect(compressor);
+    convolver.connect(compressor);
     compressor.threshold.value = -18;
     compressor.knee.value = 18;
     compressor.ratio.value = 4;
@@ -367,7 +275,6 @@ class CinematicAudioEngine {
       boot: { frequencies: [32, 48, 96], filter: [310, 0.8], shimmer: [1480, 1.1], noiseLevel: 0.025, melodyBase: 146.83 },
       menu: { frequencies: [38, 57, 114], filter: [310, 0.8], shimmer: [1480, 1.1], noiseLevel: 0.025, melodyBase: 146.83 },
       loading: { frequencies: [27, 54, 162], filter: [310, 0.8], shimmer: [1480, 1.1], noiseLevel: 0.025, melodyBase: 146.83 },
-      intro: { frequencies: [26, 39, 78], filter: [240, 0.7], shimmer: [880, 0.7], noiseLevel: 0.012, melodyBase: 110 },
     };
     const defaultsByKey: Record<string, RealmAudioProfile> = {
       void: { frequencies: [19, 38, 76], filter: [280, 0.9], shimmer: [1480, 1.1], noiseLevel: 0.02, melodyBase: 146.83 },
@@ -421,7 +328,7 @@ class CinematicAudioEngine {
 
     // Generative ambient melody: pentatonic plucks drifting over the pad.
     let melodyInterval: number | null = null;
-    if (scene !== "loading" && scene !== "intro") {
+    if (scene !== "loading") {
       const scale = [0, 3, 5, 7, 10, 12, 15, 17];
       const baseFreq = melodyBase;
       let step = 0;
