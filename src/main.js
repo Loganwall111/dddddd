@@ -62,6 +62,7 @@ const diag = {
     // Phase transitions and the loading step, so a stall is visible as a stall.
     let lastPhase = null;
     let lastStep = null;
+    let perfTicks = 0;
     const timer = setInterval(() => {
       if (!game) return;
       if (game.phase !== lastPhase) {
@@ -72,6 +73,20 @@ const diag = {
       if (step && step !== lastStep) {
         lastStep = step;
         diag.report('loading', { step });
+      }
+      // The frame rate, once every ~5s while playing: the only way a slow
+      // machine can be diagnosed without sitting in front of it.
+      perfTicks++;
+      if (perfTicks % 7 === 0 && game.phase !== 'boot') {
+        const stats = game.renderer?.perf;
+        diag.report('perf', {
+          phase: game.phase,
+          quality: game.settings?.get('quality') ?? null,
+          tier: game.renderer?.adaptive?.tierName ?? null,
+          fps: stats ? Number(stats.fps?.toFixed?.(1) ?? 0) : null,
+          frameMs: stats ? Number(stats.frameMs?.toFixed?.(1) ?? 0) : null,
+          scale: game.renderer?.renderScale ?? null,
+        });
       }
     }, 700);
     window.__MV_DIAG_TIMER__ = timer;
@@ -119,6 +134,18 @@ async function main() {
     const probe = document.createElement('canvas');
     const gl = probe.getContext('webgl2') || probe.getContext('webgl');
     if (!gl) throw new Error('WebGL is unavailable in this browser or is blocked by the GPU blacklist.');
+
+    // Ask the GPU what it is, once, while we already have a context in hand.
+    // The settings layer uses this to decide how much reality to hand over;
+    // cores and RAM alone cannot tell a discrete card from integrated graphics.
+    try {
+      const debug = gl.getExtension('WEBGL_debug_renderer_info');
+      const raw = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : null;
+      window.__MV_GPU__ = raw ? String(raw).slice(0, 120) : null;
+    } catch {
+      window.__MV_GPU__ = null;
+    }
+
     const lose = gl.getExtension('WEBGL_lose_context');
     lose?.loseContext();
   } catch (error) {
@@ -138,6 +165,8 @@ async function main() {
   diag.report('boot', {
     build: window.__MV_BUILD__ ?? 'unknown',
     webgl: '2',
+    gpu: window.__MV_GPU__ ?? 'unknown',
+    quality: game?.settings?.get('quality') ?? null,
     userAgent: navigator.userAgent,
     cores: navigator.hardwareConcurrency ?? null,
     memory: navigator.deviceMemory ?? null,

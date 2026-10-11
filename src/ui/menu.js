@@ -308,8 +308,10 @@ export class Menu {
           detail: `The engine suggests ${this.settings?.detectQuality?.() ?? 'high'}.`,
           onSelect: () => {
             const preset = this.settings.detectQuality();
-            this.settings.patch({ quality: preset });
+            // Handing control back to the engine: apply the preset, then clear
+            // the "chosen by hand" mark so the hardware ceiling governs again.
             this.onAction?.('settings', { key: 'quality', value: preset });
+            this.settings.patch({ quality: preset, qualityChosen: false });
             this.show('settings');
           },
         });

@@ -150,6 +150,15 @@ export class Game {
     if (!hadSettings) {
       const detected = this.settings.detectQuality?.() ?? 'high';
       this.settings.patch({ quality: detected }, { persist: true });
+    } else {
+      // Settings outlive the machine that picked them, and the game guesses a
+      // preset for itself on first run. If that guess was too ambitious for
+      // the hardware in front of us now, take it back — quietly, and only for
+      // presets the player never chose by hand.
+      const pulled = this.settings.enforceHardwareCeiling?.();
+      if (pulled) {
+        console.info(`[multiverse] quality pulled from "${pulled.from}" to "${pulled.to}" to fit this GPU`);
+      }
     }
     this.saveSystem = createSaveSystem();
     this.seed = this.settings.get('seed') || 1337;
@@ -1825,7 +1834,9 @@ export class Game {
 
   applySettingChange(key, value) {
     if (key === 'quality') {
-      this.settings.patch({ quality: value });
+      // Choosing a preset by hand is a decision. Mark it, so the automatic
+      // hardware ceiling and the adaptive controller both leave it alone.
+      this.settings.patch({ quality: value, qualityChosen: true });
       this.applySettings();
       return;
     }

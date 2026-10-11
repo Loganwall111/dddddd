@@ -17,6 +17,7 @@ const { GameLoop, stepLoop, FIXED_STEP } = await import('../src/engine/loop.js')
 const { InteractionSystem, LandmarkRegistry } = await import('../src/engine/interact.js');
 const { InputSystem, DEFAULT_BINDINGS } = await import('../src/engine/input.js');
 const { placeName, minorName, COMMENTARY, INTRO, LOADING_TIPS, MENU } = await import('../src/engine/text.js');
+const settingsModule = await import('../src/settings.js');
 
 /* ------------------------------------------------------------------ *
  * Fakes
@@ -524,3 +525,73 @@ function bindingKey(action) {
   const map = { forward: 'KeyW', right: 'KeyD', back: 'KeyS', left: 'KeyA', jump: 'Space' };
   return map[action] ?? action;
 }
+
+/* ------------------------------------------------------------------ *
+ * Quality governance
+ * ------------------------------------------------------------------ *
+ * The sandbox has no GPU, so the rules that decide how much reality a
+ * machine is asked to draw are pure logic here — and they are worth pinning
+ * down, because getting them wrong is how a laptop is handed a raymarched
+ * cloud deck it cannot render and looks broken instead of slow.
+ */
+
+test('a hardware ceiling is never ambitious on a guess', async (h) => {
+  const { hardwareCeiling } = await import('../src/settings.js');
+  // No GPU string at all: cores and RAM are not evidence of a graphics card.
+  h.eq(hardwareCeiling({ cores: 12, memory: 16 }), 'high', '12 cores must not mean ultra');
+  h.eq(hardwareCeiling({ cores: 12, memory: 16, mobile: true }), 'low');
+  h.eq(hardwareCeiling({ cores: 2, memory: 4 }), 'medium');
+});
+
+test('integrated and software renderers are capped, discrete cards are not', async (h) => {
+  const { hardwareCeiling } = await import('../src/settings.js');
+  h.eq(hardwareCeiling({ gpu: 'ANGLE (Intel, Intel(R) UHD Graphics 620, OpenGL 4.5)' }), 'low');
+  h.eq(hardwareCeiling({ gpu: 'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics)' , cores: 12 }), 'medium');
+  h.eq(hardwareCeiling({ gpu: 'Google SwiftShader' }), 'low');
+  h.eq(hardwareCeiling({ gpu: 'Apple M2' }), 'high');
+  h.eq(hardwareCeiling({ gpu: 'Apple M3 Max' }), 'ultra');
+  h.eq(hardwareCeiling({ gpu: 'NVIDIA GeForce RTX 4070/PCIe/SSE2' }), 'ultra');
+  h.eq(hardwareCeiling({ gpu: 'NVIDIA GeForce GTX 1650' }), 'high');
+});
+
+test('a preset chosen by hand is never overruled by the ceiling', (h) => {
+  const { createSettings, memoryStorage } = settingsModule;
+  const store = memoryStorage();
+  const chosen = createSettings({ storage: store, preset: 'ultra' });
+  chosen.patch({ quality: 'ultra', qualityChosen: true });
+  h.eq(chosen.enforceHardwareCeiling(), null, 'a deliberate choice must survive');
+  h.eq(chosen.get('quality'), 'ultra');
+
+  const guessed = createSettings({ storage: memoryStorage(), preset: 'ultra' });
+  guessed.patch({ quality: 'ultra', qualityChosen: false });
+  const pulled = guessed.enforceHardwareCeiling();
+  h.ok(pulled, 'an automatic guess should be pulled back');
+  h.eq(guessed.get('quality'), pulled.to);
+  h.inRange(['potato', 'low', 'medium', 'high', 'ultra'].indexOf(pulled.to), 0, 3, `ceiling gave ${pulled.to}`);
+});
+
+test('the adaptive tiers degrade reversibly instead of collapsing', async (h) => {
+  const { createAdaptiveController, TIERS } = await import('../src/render/quality.js');
+  const controller = createAdaptiveController({});
+  const base = { renderScale: 1, pixelRatioCap: 1.5, ssao: true, ssr: true, bloom: true, dof: true, godrays: true, shadows: true, cloudSteps: 40 };
+  const once = controller.applyTo({ ...base });
+  const twice = controller.applyTo({ ...once });
+  // Applying the same tier repeatedly must be a no-op, not a spiral.
+  h.eq(twice.cloudSteps, once.cloudSteps, 'cloudSteps must not multiply on every call');
+  h.eq(twice.ssao, once.ssao);
+  h.gt(twice.cloudSteps, 0, 'the cloud deck must not collapse to zero steps');
+  h.eq(TIERS[0].effects.clouds <= 1, true, 'the top tier should not reduce cloud work');
+});
+
+test('an upshift can restore what a downshift took away', async (h) => {
+  const { createAdaptiveController } = await import('../src/render/quality.js');
+  const controller = createAdaptiveController({});
+  const base = { renderScale: 1, pixelRatioCap: 1.5, ssao: true, ssr: true, bloom: true, dof: true, godrays: true, shadows: true, cloudSteps: 40 };
+  const degraded = controller.applyTo({ ...base });
+  // Force the controller back to its best tier and re-apply from the same base.
+  controller.applyTo(degraded);
+  const restored = controller.applyTo({ ...base });
+  h.eq(restored.cloudSteps, 40, 'the base cloud budget should come back');
+  h.eq(restored.ssao, true);
+  h.eq(restored.shadows, true);
+});

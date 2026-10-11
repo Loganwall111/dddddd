@@ -239,6 +239,9 @@ const RULES = {
   viewDistance: { type: 'num', min: 0.5, max: 2, fallback: 1 },
   godMode: { type: 'bool', fallback: false },
   thirdPerson: { type: 'bool', fallback: false },
+  // True once the player picks a preset by hand. Automatic degradation and the
+  // hardware ceiling must never overrule a deliberate choice.
+  qualityChosen: { type: 'bool', fallback: false },
   seed: { type: 'num', min: 0, max: 4294967295, fallback: 1337, integer: true },
   endedEarth: { type: 'bool', fallback: false }, // set true once the intro is seen
   glitchIntensity: { type: 'num', min: 0, max: 1, fallback: 0.5 },
@@ -247,6 +250,37 @@ const RULES = {
   runToggle: { type: 'bool', fallback: false },
   crouchToggle: { type: 'bool', fallback: false },
 };
+
+/**
+ * How much reality this machine can actually draw.
+ *
+ * Counting CPU cores and RAM and then handing out `ultra` is how a laptop with
+ * integrated graphics gets shadow cascades, screen-space reflections and a
+ * raymarched cloud deck it cannot possibly render — and then looks broken
+ * rather than slow. Cores say nothing about the GPU, so the GPU is asked
+ * directly (the renderer string is read once during the WebGL probe) and the
+ * answer is capped by what it actually is.
+ *
+ * Only a preset the game picked for itself is capped. A preset the player
+ * chose from the menu is theirs and is left alone.
+ */
+export function hardwareCeiling({ gpu = null, cores = 4, memory = 4, mobile = false } = {}) {
+  const name = String(gpu ?? '').toLowerCase();
+  if (!name) {
+    // Nothing to go on. Be kind rather than ambitious: a wrong `ultra` costs
+    // the first impression, a wrong `high` costs nothing but a menu click.
+    if (mobile) return 'low';
+    return cores >= 8 && memory >= 8 ? 'high' : 'medium';
+  }
+  // Software rasterisers and integrated parts: assume they are honest about it.
+  if (/swiftshader|llvmpipe|software|basic render|microsoft basic/.test(name)) return 'low';
+  if (/intel|uhd|iris|hd graphics|mesa|gallium/.test(name)) return cores >= 8 ? 'medium' : 'low';
+  if (/apple m\d/.test(name)) return /max|ultra/.test(name) ? 'ultra' : /pro/.test(name) ? 'high' : 'high';
+  if (/rtx|radeon rx|rx \d{3,4}|arc a\d|apple m\d (max|ultra)/.test(name)) return 'ultra';
+  if (/gtx|radeon|nvidia|quadro|arc/.test(name)) return 'high';
+  if (/adreno|mali|powervr|apple gpu|gpu/.test(name)) return mobile ? 'low' : 'medium';
+  return cores >= 8 && memory >= 8 ? 'high' : 'medium';
+}
 
 function clampValue(key, value) {
   const rule = RULES[key];
@@ -380,16 +414,38 @@ export function createSettings({ storage = defaultStorage(), preset = 'high' } =
       return () => listeners.delete(fn);
     },
     /** Detect a sensible starting preset from the hardware. */
-    detectQuality() {
+    detectQuality({ gpu = null } = {}) {
       if (typeof navigator === 'undefined') return 'high';
       const mem = navigator.deviceMemory || 8;
       const cores = navigator.hardwareConcurrency || 4;
       const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
-      if (mobile) return cores >= 8 ? 'medium' : 'low';
-      if (cores <= 4 || mem <= 4) return 'medium';
-      if (cores >= 12 && mem >= 8) return 'ultra';
-      if (cores >= 8) return 'high';
-      return 'high';
+      const detectedGpu = gpu ?? (typeof window !== 'undefined' ? window.__MV_GPU__ : null) ?? null;
+      return hardwareCeiling({ gpu: detectedGpu, cores, memory: mem, mobile });
+    },
+
+    /** The most this machine should be asked to render by default. */
+    hardwareCeiling() {
+      if (typeof navigator === 'undefined') return 'high';
+      return hardwareCeiling({
+        gpu: (typeof window !== 'undefined' ? window.__MV_GPU__ : null) ?? null,
+        cores: navigator.hardwareConcurrency || 4,
+        memory: navigator.deviceMemory || 4,
+        mobile: /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || ''),
+      });
+    },
+
+    /**
+     * Pull an automatically-chosen preset back down to what the hardware can
+     * actually draw. Saved settings outlive the machine they were chosen on,
+     * and a preset the game guessed for itself should not become permanent.
+     */
+    enforceHardwareCeiling() {
+      if (state.qualityChosen) return null;
+      const ceiling = api.hardwareCeiling();
+      if (QUALITY_ORDER.indexOf(state.quality) <= QUALITY_ORDER.indexOf(ceiling)) return null;
+      const from = state.quality;
+      apply({ quality: ceiling }, { persist: true });
+      return { from, to: ceiling };
     },
     toJSON() {
       return { ...state, preset: undefined };

@@ -270,8 +270,14 @@ export class Renderer {
       const changed = this.adaptive.update(frameMs, dt);
       if (changed) {
         this.renderScale = this.adaptive.scale;
-        this.adaptive.applyTo(this.quality);
-        this.resize();
+        // Degrade a *copy* and hand it to applyQuality, which is the only
+        // thing that knows how to rebuild the post chain. Mutating
+        // `this.quality` in place would describe the change to nobody: the
+        // expensive passes are baked into the composer at construction, so
+        // turning them off in a plain object looks like it works and does not.
+        const next = { ...this.quality };
+        this.adaptive.applyTo(next);
+        this.applyQuality(next);
         this._onStats?.({ type: 'quality', tier: this.adaptive.tierName, scale: this.renderScale });
       }
     }

@@ -65,6 +65,8 @@ export function createAdaptiveController({
   let scale = maxScale;
   let tier = 0; // index into TIERS, 0 = best
   let cooldown = 0;
+  /** The quality the player chose, captured before any automatic degradation. */
+  let base = null;
   let changes = 0;
   let locked = false;
   const history = [];
@@ -150,19 +152,32 @@ export function createAdaptiveController({
         changes,
       };
     },
-    /** Apply the current tier's effect switches onto a quality object. */
+    /**
+     * Apply the current tier's effect switches onto a quality object.
+     *
+     * Everything is derived from the *base* quality — the settings the player
+     * actually chose — never from the previous result. Deriving from the
+     * previous result makes this destructive and one-way: switches read false
+     * forever after the first downshift, and a repeated multiply on
+     * `cloudSteps` collapses the volumetric cloud deck to zero steps within a
+     * couple of tier changes. It also makes an upshift unable to restore what
+     * it took away, which is the whole point of having tiers.
+     */
     applyTo(quality) {
+      if (!base) base = { ...quality };
       const t = TIERS[tier];
       quality.renderScale = scale;
-      quality.pixelRatioCap = Math.min(quality.pixelRatioCap ?? 1.5, t.pixelRatio);
-      quality.ssao = (quality.ssao ?? true) && t.effects.ssao;
-      quality.ssr = (quality.ssr ?? true) && t.effects.ssr;
-      quality.bloom = (quality.bloom ?? true) && t.effects.bloom;
-      quality.dof = (quality.dof ?? true) && t.effects.dof;
-      quality.motionBlur = (quality.motionBlur ?? true) && t.effects.motionBlur;
-      quality.godrays = (quality.godrays ?? true) && t.effects.godrays;
-      quality.shadows = (quality.shadows ?? true) && t.effects.shadows;
-      quality.cloudSteps = Math.round((quality.cloudSteps ?? 32) * t.effects.clouds);
+      quality.pixelRatioCap = Math.min(base.pixelRatioCap ?? 1.5, t.pixelRatio);
+      quality.ssao = (base.ssao ?? true) && t.effects.ssao;
+      quality.ssr = (base.ssr ?? true) && t.effects.ssr;
+      quality.bloom = (base.bloom ?? true) && t.effects.bloom;
+      quality.dof = (base.dof ?? true) && t.effects.dof;
+      quality.motionBlur = (base.motionBlur ?? true) && t.effects.motionBlur;
+      quality.godrays = (base.godrays ?? true) && t.effects.godrays;
+      quality.shadows = (base.shadows ?? true) && t.effects.shadows;
+      quality.cloudSteps = Math.round((base.cloudSteps ?? 32) * t.effects.clouds);
+      quality.foliageDensity = base.foliageDensity;
+      quality.creatureDensity = base.creatureDensity;
       return quality;
     },
   };
