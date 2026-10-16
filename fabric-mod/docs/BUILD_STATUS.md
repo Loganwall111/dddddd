@@ -6,10 +6,12 @@ Based on `ad86c34` (the user's 0.26 build), not the older starting checkout.
 - Offline data contracts: **63 passed**, including both 3D staff model/texture chains,
   translucent pipeline state, no radius selector and no legacy rift cutscene.
 - Regeneration: **7 live generators reproduce the shipped tree**, no drift.
-- Java compilation, core GLSL variants and JUnit tests: passed in the interim
-  [35911a2 build](https://github.com/Loganwall111/dddddd/actions/runs/38967852712).
-- Final code additionally tests rotated aperture crossings and safe/unsafe surface
-  fixtures in the dedicated server. Final CI result is recorded after completion.
+- **Final CI: PASS** — [99f0cbb build / run 38968148869](https://github.com/Loganwall111/dddddd/actions/runs/38968148869).
+  Includes Java/client compilation, JUnit (including rotated/parallel/recessed aperture
+  crossings), core GLSL variants, bundled shader verification, and a real 26.3
+  dedicated-server smoke test with valid-clearance, magma and obstructed-headroom fixtures.
+- Installable artifact: [Sift-Overhaul-0.27.0-alpha-26.3](https://github.com/Loganwall111/dddddd/actions/runs/38968148869/artifacts/12075342390).
+  Extract `sift-overhaul-0.27.0-alpha.jar`, not the `-sources.jar`.
 - Graphical Minecraft client: **not run** here. One-to-one reference matching,
   refraction appearance, third-person pixels and Iris behavior are not visually verified.
 
