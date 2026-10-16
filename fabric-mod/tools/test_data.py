@@ -1232,3 +1232,12 @@ class DungeonsAssetContracts(unittest.TestCase):
                             f"{r['id']}: neither tiles nor an anchor to build from")
             if any(st['dead_ends'] for st in r['stretches']):
                 self.assertTrue(any(st['tile_groups'] for st in r['stretches']),r['id'])
+
+class ReleaseTaggingContracts(unittest.TestCase):
+    def test_v040_artifact_name_follows_mod_version(self):
+        """The workflow names the artifact, so it can silently go stale after a version bump (it did in
+        0.40.0: the jar was 0.40.0 and the artifact still said 0.39.2)."""
+        props=(ROOT/'gradle.properties').read_text()
+        version=[l.split('=',1)[1].strip() for l in props.splitlines() if l.startswith('mod_version=')][0]
+        workflow=(ROOT/'.github/workflows/sift-build.yml').read_text()
+        self.assertIn(f'Sift-Overhaul-{version}-26.3',workflow)
