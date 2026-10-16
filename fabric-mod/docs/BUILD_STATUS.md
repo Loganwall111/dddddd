@@ -391,3 +391,17 @@ CI - interior coverage per type, the core at 1.0, the ends under 0.25 and exactl
 - `rim()`: the jittered hair-line is gone and `band()` no longer extends segments along their tangent, so
   nothing pokes past a corner any more.
 - Contract `test_v0392_no_stray_white_and_a_fade_that_reaches_the_tips` pins all three; `0.39.2-alpha`.
+
+## 0.40.0 — Minecraft Dungeons environment assets converted
+
+`tools/ue_tex.py` (cooked UE texture -> PNG) and `tools/dungeons_geo.py` (level data -> glTF + structure
+records) convert the exported Dungeons project into `assets/sift/` and `data/sift/`. 18 textures, 12 room
+records with Blockbench-openable glTF meshes, and 5 rift/level layout sheets ship in this version;
+`docs/DUNGEONS_ASSETS.md` records provenance, what was verified by eye versus structurally, and what did
+not convert. `test_data.py` gained four gates over the new tree (PNG size vs index, heightfield vs
+footprint, glTF self-consistency, rift sheet shape) and no rendering code changed.
+
+Local note: `tools/regen_check.py` reports drift on the generator-written creature textures after a
+`pip install Pillow` in this sandbox (Pillow 12.3.0 re-encodes a 1,533-byte PNG to 2,477 bytes with
+identical pixels). That is an encoder difference in the sandbox, not a change to shipped art; CI runs the
+same gate in its own pinned environment.

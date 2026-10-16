@@ -1,0 +1,22 @@
+{
+ "id": "Meadow_Boss",
+ "resource_packs": [
+  "Vanilla"
+ ],
+ "require_matching_doors": false,
+ "object_groups": [
+  "Meadow_Anchor_Boss/objectgroup"
+ ],
+ "objectives": [],
+ "stretches": [
+  {
+   "id": "Meadow_Anchor_Boss",
+   "length": null,
+   "length_range": null,
+   "tile_groups": [],
+   "dead_ends": [],
+   "tags": []
+  }
+ ],
+ "tile_groups": []
+}

@@ -1,0 +1,497 @@
+{
+ "namespace": "sift",
+ "note": "Converted from the Minecraft Dungeons environment share by tools/dungeons_geo.py. Terrain meshes come from the height-plane array (one height byte per ground column, verified len == sizeX*sizeZ for every object); block voxel ids use a packing that is not decoded yet, so they are not in the meshes.",
+ "textures": [
+  {
+   "asset": "sift:textures/block/overworld_atlas.png",
+   "file": "block/overworld_atlas.png",
+   "kind": "environment",
+   "source": "T_OverworldAtlas_D.png",
+   "from_format": "PNG (as shipped)",
+   "dims": [
+    2048,
+    2048
+   ],
+   "dims_source": "PNG IHDR",
+   "note": "copied byte-for-byte; already a PNG on the Drive, no decoding needed",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/pixel_noise_blurred.png",
+   "file": "block/pixel_noise_blurred.png",
+   "kind": "environment",
+   "source": "T_Pixel_Noise_Blurred.png",
+   "from_format": "PF_B8G8R8A8",
+   "dims": [
+    256,
+    256
+   ],
+   "dims_source": "header mip sizes",
+   "note": "BC8 (B8G8R8A8) 256x256, no lossy step",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_fd_face0.png",
+   "file": "block/sky_fd_face0.png",
+   "kind": "skybox",
+   "source": "T_FD_Cubemap_face0.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    512,
+    512
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 512x512 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_wellspring_plains_face0.png",
+   "file": "block/sky_wellspring_plains_face0.png",
+   "kind": "skybox",
+   "source": "T_WellspringPlains_Cubemap_01_face0.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    256,
+    256
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 256x256 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_fd_face1.png",
+   "file": "block/sky_fd_face1.png",
+   "kind": "skybox",
+   "source": "T_FD_Cubemap_face1.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    512,
+    512
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 512x512 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_wellspring_plains_face1.png",
+   "file": "block/sky_wellspring_plains_face1.png",
+   "kind": "skybox",
+   "source": "T_WellspringPlains_Cubemap_01_face1.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    256,
+    256
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 256x256 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_fd_face2.png",
+   "file": "block/sky_fd_face2.png",
+   "kind": "skybox",
+   "source": "T_FD_Cubemap_face2.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    512,
+    512
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 512x512 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_wellspring_plains_face2.png",
+   "file": "block/sky_wellspring_plains_face2.png",
+   "kind": "skybox",
+   "source": "T_WellspringPlains_Cubemap_01_face2.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    256,
+    256
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 256x256 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_fd_face3.png",
+   "file": "block/sky_fd_face3.png",
+   "kind": "skybox",
+   "source": "T_FD_Cubemap_face3.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    512,
+    512
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 512x512 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_wellspring_plains_face3.png",
+   "file": "block/sky_wellspring_plains_face3.png",
+   "kind": "skybox",
+   "source": "T_WellspringPlains_Cubemap_01_face3.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    256,
+    256
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 256x256 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_fd_face4.png",
+   "file": "block/sky_fd_face4.png",
+   "kind": "skybox",
+   "source": "T_FD_Cubemap_face4.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    512,
+    512
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 512x512 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_wellspring_plains_face4.png",
+   "file": "block/sky_wellspring_plains_face4.png",
+   "kind": "skybox",
+   "source": "T_WellspringPlains_Cubemap_01_face4.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    256,
+    256
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 256x256 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_fd_face5.png",
+   "file": "block/sky_fd_face5.png",
+   "kind": "skybox",
+   "source": "T_FD_Cubemap_face5.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    512,
+    512
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 512x512 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/block/sky_wellspring_plains_face5.png",
+   "file": "block/sky_wellspring_plains_face5.png",
+   "kind": "skybox",
+   "source": "T_WellspringPlains_Cubemap_01_face5.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    256,
+    256
+   ],
+   "dims_source": "header mip sizes (cubemap face)",
+   "note": "BC7 256x256 cubemap face",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/entity/rift_view_meadow_front.png",
+   "file": "entity/rift_view_meadow_front.png",
+   "kind": "rift window",
+   "source": "T_PortalView_Singer_Front.png",
+   "from_format": "PF_DXT5",
+   "dims": [
+    1024,
+    512
+   ],
+   "dims_source": "ue_dims.json (eye-verified)",
+   "note": "DXT5 1024x512, alpha is the terrain mask",
+   "verification": "decoded and inspected by eye"
+  },
+  {
+   "asset": "sift:textures/entity/rift_view_meadow_back.png",
+   "file": "entity/rift_view_meadow_back.png",
+   "kind": "rift window",
+   "source": "T_PortalView_Singer_Back.png",
+   "from_format": "PF_BC7",
+   "dims": [
+    1024,
+    512
+   ],
+   "dims_source": "header mip sizes",
+   "note": "BC7 1024x512",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/entity/rift_view_deepdark_front.png",
+   "file": "entity/rift_view_deepdark_front.png",
+   "kind": "rift window",
+   "source": "T_PortalView_DD_Front.png",
+   "from_format": "PF_DXT5",
+   "dims": [
+    512,
+    1024
+   ],
+   "dims_source": "header mip sizes",
+   "note": "DXT5 512x1024, alpha is the terrain mask",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  },
+  {
+   "asset": "sift:textures/entity/rift_light_ray.png",
+   "file": "entity/rift_light_ray.png",
+   "kind": "rift effect",
+   "source": "T_DDPortal_LightRay.png",
+   "from_format": "PF_DXT5",
+   "dims": [
+    512,
+    512
+   ],
+   "dims_source": "ue_dims.json (eye-verified)",
+   "note": "DXT5 512x512",
+   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+  }
+ ],
+ "structures": [
+  {
+   "id": "Meadow_Boss",
+   "kind": "rift_layout",
+   "size": null,
+   "columns": null,
+   "height_range": null,
+   "triangles": null,
+   "source": "Meadow_Boss.json"
+  },
+  {
+   "id": "Meadow_Rift_1",
+   "kind": "rift_layout",
+   "size": null,
+   "columns": null,
+   "height_range": null,
+   "triangles": null,
+   "source": "Meadow_Rift_1.json"
+  },
+  {
+   "id": "Meadow_Rift_2",
+   "kind": "rift_layout",
+   "size": null,
+   "columns": null,
+   "height_range": null,
+   "triangles": null,
+   "source": "Meadow_Rift_2.json"
+  },
+  {
+   "id": "Meadow_Rift_3",
+   "kind": "rift_layout",
+   "size": null,
+   "columns": null,
+   "height_range": null,
+   "triangles": null,
+   "source": "Meadow_Rift_3.json"
+  },
+  {
+   "id": "Ravines_Dungeon_1",
+   "kind": "rift_layout",
+   "size": null,
+   "columns": null,
+   "height_range": null,
+   "triangles": null,
+   "source": "Ravines_Dungeon_1.json"
+  },
+  {
+   "id": "DD_ANC_003",
+   "kind": "room",
+   "size": [
+    151,
+    91,
+    162
+   ],
+   "columns": 24462,
+   "height_range": [
+    2,
+    90
+   ],
+   "triangles": 16900,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_006",
+   "kind": "room",
+   "size": [
+    75,
+    70,
+    105
+   ],
+   "columns": 7875,
+   "height_range": [
+    6,
+    69
+   ],
+   "triangles": 5420,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_008",
+   "kind": "room",
+   "size": [
+    86,
+    46,
+    69
+   ],
+   "columns": 5934,
+   "height_range": [
+    27,
+    45
+   ],
+   "triangles": 4262,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_002",
+   "kind": "room",
+   "size": [
+    223,
+    90,
+    147
+   ],
+   "columns": 32781,
+   "height_range": [
+    7,
+    89
+   ],
+   "triangles": 22864,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_005",
+   "kind": "room",
+   "size": [
+    71,
+    38,
+    83
+   ],
+   "columns": 5893,
+   "height_range": [
+    9,
+    37
+   ],
+   "triangles": 4468,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_007",
+   "kind": "room",
+   "size": [
+    86,
+    60,
+    69
+   ],
+   "columns": 5934,
+   "height_range": [
+    1,
+    59
+   ],
+   "triangles": 4570,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_001",
+   "kind": "room",
+   "size": [
+    146,
+    75,
+    229
+   ],
+   "columns": 33434,
+   "height_range": [
+    1,
+    74
+   ],
+   "triangles": 23032,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_004",
+   "kind": "room",
+   "size": [
+    145,
+    92,
+    118
+   ],
+   "columns": 17110,
+   "height_range": [
+    33,
+    91
+   ],
+   "triangles": 14010,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_009",
+   "kind": "room",
+   "size": [
+    98,
+    52,
+    98
+   ],
+   "columns": 9604,
+   "height_range": [
+    19,
+    51
+   ],
+   "triangles": 7322,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_010",
+   "kind": "room",
+   "size": [
+    73,
+    32,
+    62
+   ],
+   "columns": 4526,
+   "height_range": [
+    24,
+    31
+   ],
+   "triangles": 2756,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_012",
+   "kind": "room",
+   "size": [
+    89,
+    38,
+    86
+   ],
+   "columns": 7654,
+   "height_range": [
+    22,
+    37
+   ],
+   "triangles": 5816,
+   "source": "objectgroup.json"
+  },
+  {
+   "id": "DD_ANC_011",
+   "kind": "room",
+   "size": [
+    72,
+    40,
+    95
+   ],
+   "columns": 6840,
+   "height_range": [
+    0,
+    39
+   ],
+   "triangles": 4986,
+   "source": "objectgroup.json"
+  }
+ ]
+}

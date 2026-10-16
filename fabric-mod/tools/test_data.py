@@ -939,7 +939,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.39.2-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.40.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -1080,7 +1080,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.39.2-alpha',props)
+        self.assertIn('mod_version=0.40.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
@@ -1152,3 +1152,83 @@ class DataContracts(unittest.TestCase):
             self.assertTrue((ROOT/path).exists(),path)
             self.assertGreater(len(reason),40,path)
 if __name__=='__main__': unittest.main(verbosity=2)
+
+class DungeonsAssetContracts(unittest.TestCase):
+    """The Minecraft Dungeons conversion (0.40). Everything here is checkable offline against the shipped
+    jar: the PNGs must really be PNGs of the recorded size, the heightfields must match the object
+    footprint, and the glTF models must be internally consistent enough for Blockbench to open them."""
+    S=R/'data/sift/structures'; T=R/'assets/sift/textures'
+    def _index(self): return json.loads((self.S/'index.json').read_text())
+    def test_v040_index_covers_every_shipped_file(self):
+        idx=self._index()
+        listed={t['file'] for t in idx['textures']}
+        onDisk={str(p.relative_to(self.T)).replace('\\','/') for p in self.T.rglob('*.png')}
+        self.assertEqual(listed,onDisk,'index.json and assets/sift/textures disagree')
+        rooms={p.stem for p in self.S.glob('*.json') if p.name!='index.json'}
+        models={p.stem for p in (self.S/'gltf').glob('*.gltf')}
+        rifts={p.stem for p in (self.S/'rift').glob('*.json')}
+        self.assertEqual(rooms,models,'every room record needs its Blockbench model')
+        self.assertTrue(rifts,'the rift layout sheets must ship')
+        self.assertEqual({s['id'] for s in idx['structures'] if s['kind']=='room'} | rifts, rooms | rifts)
+    def test_v040_textures_are_pngs_of_the_recorded_size_and_ui_free(self):
+        import struct as _s
+        for t in self._index()['textures']:
+            p=self.T/t['file']
+            self.assertTrue(p.exists(),t['file'])
+            raw=p.read_bytes()
+            self.assertEqual(raw[:8],b'\x89PNG\r\n\x1a\n',t['file'])
+            w,h=_s.unpack('>II',raw[16:24])
+            self.assertEqual([w,h],t['dims'],f"{t['file']}: index says {t['dims']}, file is {w}x{h}")
+            self.assertGreater(len(raw),1024,t['file'])
+            lower=t['file'].lower()
+            for banned in ('ui','minimap','menu','hud','button','icon','font'):
+                self.assertNotIn(banned,lower,t['file'])     # the user's filter: no UI, no menus
+    def test_v040_room_heightfields_match_their_footprint(self):
+        import base64
+        for p in sorted(self.S.glob('*.json')):
+            if p.name=='index.json': continue
+            r=json.loads(p.read_text()); w,hy,d=r['size']
+            plane=base64.b64decode(r['heightfield_b64'])
+            self.assertEqual(len(plane),w*d,f'{r["id"]}: height-plane must be sizeX*sizeZ bytes')
+            self.assertEqual(r['height']['columns'],w*d,r['id'])
+            self.assertEqual([min(plane),max(plane)],[r['height']['min'],r['height']['max']],r['id'])
+            self.assertGreaterEqual(r['height']['min'],0,r['id'])
+            self.assertLessEqual(r['height']['max'],hy,f'{r["id"]}: a surface cannot sit above the volume')
+            for door in r['doors']:
+                for i,axis in enumerate('xyz'):
+                    self.assertLessEqual(door['pos'][i],r['size'][i],f'{r["id"]} door {door["name"]} {axis}')
+    def test_v040_gltf_models_are_self_consistent(self):
+        import base64, struct as _s
+        for g in sorted((self.S/'gltf').glob('*.gltf')):
+            doc=json.loads(g.read_text())
+            self.assertEqual(doc['asset']['version'],'2.0',g.stem)
+            buf=base64.b64decode(doc['buffers'][0]['uri'].split(',',1)[1])
+            self.assertEqual(len(buf),doc['buffers'][0]['byteLength'],g.stem)
+            for bv in doc['bufferViews']:
+                self.assertLessEqual(bv['byteOffset']+bv['byteLength'],len(buf),g.stem)
+            pos,ind=doc['accessors'][0],doc['accessors'][1]
+            self.assertEqual(ind['count']%3,0,f'{g.stem}: indices must form triangles')
+            self.assertLessEqual(pos['count']*12,doc['bufferViews'][0]['byteLength'],g.stem)
+            top=max(_s.unpack_from('<%dI'%ind['count'],buf,doc['bufferViews'][1]['byteOffset']))
+            self.assertLess(top,pos['count'],f'{g.stem}: index {top} is out of range')
+            self.assertGreater(pos['count'],0,g.stem)
+    def test_v040_rift_sheets_describe_real_tile_stretches(self):
+        for p in sorted((self.S/'rift').glob('*.json')):
+            r=json.loads(p.read_text())
+            self.assertTrue(r['id'],p.name)
+            self.assertTrue(r['object_groups'],f"{r['id']}: a rift needs anchors or pools to build from")
+            self.assertTrue(r['stretches'],r['id'])
+            # Every stretch is either made of tiles or of one anchor/pool object group (Meadow_Boss is a
+            # single Meadow_Anchor_Boss stretch with no tiles at all - that is the real shape of the data).
+            for st in r['stretches']:
+                self.assertTrue(st['tile_groups'] or not st['dead_ends'],
+                                f"{r['id']}/{st['id']}: dead-ends need tile groups to attach to")
+                for t in st['tile_groups']:
+                    self.assertRegex(t,r'^[A-Za-z0-9_]+$',t)
+            # A sheet either strings tiles together, or is a single anchored encounter (Meadow_Boss is one
+            # Meadow_Anchor_Boss stretch with no tiles, which is the real shape of that level).
+            anchored=any(('Anchor' in g or 'Pool' in g) for g in r['object_groups'])
+            self.assertTrue(any(st['tile_groups'] for st in r['stretches']) or anchored,
+                            f"{r['id']}: neither tiles nor an anchor to build from")
+            if any(st['dead_ends'] for st in r['stretches']):
+                self.assertTrue(any(st['tile_groups'] for st in r['stretches']),r['id'])

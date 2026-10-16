@@ -16,3 +16,6 @@ __pycache__/
 
 # Encoded in CI from fabric-mod/art/audio/*.wav (tools: oggenc)
 fabric-mod/src/main/resources/assets/entersift/sounds/
+
+# Raw Drive exports are analysis input, never shipped (fetched by the Drive connector)
+google_drive/

@@ -1,0 +1,362 @@
+{
+ "id": "Meadow_Rift_1",
+ "resource_packs": [
+  "Vanilla"
+ ],
+ "require_matching_doors": false,
+ "object_groups": [
+  "Meadow_Anchor_001/objectgroup",
+  "Meadow_Anchor_002/objectgroup",
+  "Meadow_Pool_1/objectgroup",
+  "Meadow_Pool_2/objectgroup"
+ ],
+ "objectives": [],
+ "stretches": [
+  {
+   "id": "Start",
+   "length": null,
+   "length_range": null,
+   "tile_groups": [
+    "Start"
+   ],
+   "dead_ends": [],
+   "tags": []
+  },
+  {
+   "id": "Buffer1",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Buffer"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Stretch1",
+   "length": null,
+   "length_range": [
+    0,
+    2
+   ],
+   "tile_groups": [
+    "Stretch"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Breather 1",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Breather"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "XL",
+   "length": null,
+   "length_range": [
+    0,
+    1
+   ],
+   "tile_groups": [
+    "XL"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Branch",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Branch"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Mid-Anchors",
+   "length": null,
+   "length_range": [
+    0,
+    1
+   ],
+   "tile_groups": [
+    "Anchors"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Breather 2",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Breather"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Buffer2",
+   "length": null,
+   "length_range": [
+    0,
+    1
+   ],
+   "tile_groups": [
+    "Buffer"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Stretch3",
+   "length": null,
+   "length_range": [
+    0,
+    1
+   ],
+   "tile_groups": [
+    "Stretch"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Breather",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Breather"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Boss",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Fight"
+   ],
+   "dead_ends": [
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ],
+   "tags": []
+  },
+  {
+   "id": "End",
+   "length": null,
+   "length_range": null,
+   "tile_groups": [
+    "End"
+   ],
+   "dead_ends": [],
+   "tags": []
+  }
+ ],
+ "tile_groups": [
+  {
+   "#": "Stretch",
+   "id": "Stretch",
+   "tiles": [
+    "LG_R_FLAT_001_MW",
+    "LG_T_FLAT_001_MW",
+    "LG_C_FLAT_001_MW",
+    "LG_L_STAIR_001_MW",
+    "LG_C_STAIR_001_MW",
+    "MD_L_FLAT_001_MW",
+    "MD_R_STAIR_001_MW",
+    "SM2MD_FLAT_001_MW",
+    "MD2LG_STAIR_001_MW",
+    "MD_L_STAIR_001_MW",
+    "LG_QD_FLAT_002_MW",
+    "LG_R_FLAT_002_MW",
+    "LG_C_FLAT_002_MW",
+    "LG_QD_STAIR_002_MW",
+    "MD_T_FLAT_002_MW",
+    "SM_L_STAIR_001_MW"
+   ]
+  },
+  {
+   "#": "Deadends",
+   "id": "Deadends",
+   "tiles": [
+    "LG_DE_STAIR_001_MW",
+    "MD_DE_STAIR_001_MW",
+    "MD_DE_FLAT_001_MW",
+    "LG_DE_FLAT_001_MW",
+    "LG_DE_FLAT_002_MW",
+    "LG_DE_STAIR_002_MW",
+    "LG_CAP_002_MW"
+   ]
+  },
+  {
+   "#": "Breather",
+   "id": "Breather",
+   "tiles": [
+    "SM2MD_STAIR_001_MW",
+    "MC2SM_STAIR_002_MW",
+    "MD_C_STAIR_001_MW"
+   ]
+  },
+  {
+   "#": "Start",
+   "id": "Start",
+   "tiles": [
+    "MW_ANC_006",
+    "MW_ANC_008",
+    "MW_ANC_010"
+   ]
+  },
+  {
+   "#": "End",
+   "id": "End",
+   "tiles": [
+    "MW_END_001",
+    "MW_END_002",
+    "MW_END_003"
+   ]
+  },
+  {
+   "#": "Fight",
+   "id": "Fight",
+   "tiles": [
+    "MW_FIGHT_003",
+    "MW_ANC_009",
+    "MW_ANC_011",
+    "MW_FIGHT_001"
+   ]
+  },
+  {
+   "#": "Mid-Anchors",
+   "id": "Anchors",
+   "tiles": [
+    "OS_MW_ANC_001",
+    "OS_MW_ANC_002",
+    "OS_MW_ANC_003",
+    "OS_MW_ANC_005",
+    "OS_MW_ANC_013"
+   ]
+  },
+  {
+   "#": "XL",
+   "id": "XL",
+   "tiles": [
+    "XL_002_MW_P1",
+    "XL_003_MW_P1",
+    "XL_004_MW_P1",
+    "XL_005_MW_P1",
+    "XL_006_MW_P1",
+    "XL_007_MW_P1",
+    "XL_008_MW_P1",
+    "XL_009_MW_P1",
+    "XL_010_MW_P1",
+    "XL_011_MW_P1",
+    "XL_002_MW_P2"
+   ]
+  },
+  {
+   "#": "Buffer",
+   "id": "Buffer",
+   "tiles": [
+    "LG_C_FLAT_001_MW",
+    "LG_C_STAIR_001_MW",
+    "MD_C_STAIR_001_MW",
+    "SM2MD_FLAT_001_MW",
+    "MD2LG_STAIR_001_MW",
+    "LG_C_FLAT_002_MW"
+   ]
+  },
+  {
+   "#": "Branch",
+   "id": "Branch",
+   "tiles": [
+    "LG_T_FLAT_001_MW",
+    "LG_QD_FLAT_002_MW",
+    "LG_QD_STAIR_002_MW",
+    "MD_T_FLAT_002_MW"
+   ]
+  }
+ ]
+}

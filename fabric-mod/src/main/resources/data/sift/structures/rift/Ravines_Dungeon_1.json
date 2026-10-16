@@ -1,0 +1,289 @@
+{
+ "id": "Ravines_Dungeon_1",
+ "resource_packs": [
+  "Vanilla"
+ ],
+ "require_matching_doors": false,
+ "object_groups": [
+  "Ravines_Pool_1/objectgroup",
+  "Ravines_Pool_2/objectgroup",
+  "Ravines_Pool_3/objectgroup",
+  "Ravines_Anchor_001/objectgroup"
+ ],
+ "objectives": [],
+ "stretches": [
+  {
+   "id": "Start",
+   "length": null,
+   "length_range": null,
+   "tile_groups": [],
+   "dead_ends": [],
+   "tags": []
+  },
+  {
+   "id": "Buffer 1",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Buffer"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Stretch 1",
+   "length": null,
+   "length_range": [
+    0,
+    2
+   ],
+   "tile_groups": [
+    "Stretch"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "breather 1",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Breathers"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "XL",
+   "length": null,
+   "length_range": [
+    0,
+    1
+   ],
+   "tile_groups": [
+    "XL"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Branch",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Branch"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Mid",
+   "length": null,
+   "length_range": [
+    0,
+    1
+   ],
+   "tile_groups": [
+    "Anchors"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Buffer 2",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Buffer"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "Stretch 2",
+   "length": null,
+   "length_range": [
+    0,
+    1
+   ],
+   "tile_groups": [
+    "Stretch"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "breather 2",
+   "length": 1,
+   "length_range": null,
+   "tile_groups": [
+    "Breathers"
+   ],
+   "dead_ends": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ],
+   "tags": []
+  },
+  {
+   "id": "End",
+   "length": null,
+   "length_range": null,
+   "tile_groups": [],
+   "dead_ends": [],
+   "tags": []
+  },
+  {
+   "id": "End",
+   "length": null,
+   "length_range": null,
+   "tile_groups": [],
+   "dead_ends": [],
+   "tags": []
+  }
+ ],
+ "tile_groups": [
+  {
+   "#": "Stretch Tiles",
+   "id": "Stretch",
+   "tiles": [
+    "LG_R_STAIR_002_RA",
+    "LG_L_STAIR_002_RA",
+    "LG_R_FLAT_002_RA",
+    "LG_T_FLAT_002_RA",
+    "LG_L_FLAT_002_RA",
+    "LG_QD_FLAT_002_RA",
+    "MD2LG_FLAT_002_RA",
+    "MD2LG_FLAT_003_RA",
+    "LG_L_STAIR_003_RA",
+    "LG_C_STAIR_003_RA",
+    "MD2LG_STAIR_003_RA",
+    "LG_QD_STAIR_003_RA",
+    "LG_QD_FLAT_003_RA",
+    "LG_T_FLAT_003_RA",
+    "LG_C_FLAT_003_RA",
+    "LG_T_STAIR_003_RA"
+   ]
+  },
+  {
+   "#": "Dead End Tiles",
+   "id": "Deadends",
+   "tiles": [
+    "LG_DE_FLAT_002_RA",
+    "LG_DE_STAIR_002_RA",
+    "LG_DE_FLAT_003_RA",
+    "LG_DE_STAIR_003_RA",
+    "LG_CAP_002_RA"
+   ]
+  },
+  {
+   "#": "Breather Tiles",
+   "id": "Breathers",
+   "tiles": [
+    "SM_T_STAIR_003_RA",
+    "MC2SM_FLAT_003_RA",
+    "MC2SM_STAIR_002_RA",
+    "MD_C_STAIR_002_RA"
+   ]
+  },
+  {
+   "#": "Mid-Anchors",
+   "id": "Anchors",
+   "tiles": [
+    "OS_RA_ANC_006",
+    "OS_RA_ANC_012",
+    "XL_003_RA_P1",
+    "OS_RA_ANC_013",
+    "XL_006_RA_P1",
+    "XL_002_RA_P1",
+    "XL_005_RA_P1",
+    "XL_004_RA_P1"
+   ]
+  },
+  {
+   "#": "XL Tiles",
+   "id": "XL",
+   "tiles": [
+    "OS_RA_ANC_009",
+    "OS_RA_ANC_010",
+    "XL_001_RA_P1",
+    "XL_005_RA_P1",
+    "XL_006_RA_P1"
+   ]
+  },
+  {
+   "#": "Buffer",
+   "id": "Buffer",
+   "tiles": [
+    "MD2LG_FLAT_002_RA",
+    "MD2LG_FLAT_003_RA",
+    "LG_C_STAIR_003_RA",
+    "MD2LG_STAIR_003_RA",
+    "LG_C_FLAT_003_RA"
+   ]
+  },
+  {
+   "#": "Branch",
+   "id": "Branch",
+   "tiles": [
+    "LG_T_FLAT_002_RA",
+    "LG_QD_FLAT_002_RA",
+    "LG_QD_STAIR_003_RA",
+    "LG_QD_FLAT_003_RA",
+    "LG_T_FLAT_003_RA",
+    "LG_T_STAIR_003_RA"
+   ]
+  }
+ ]
+}
