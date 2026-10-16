@@ -13,21 +13,26 @@ import net.minecraft.resources.Identifier;
 public final class RiftSceneCopy extends AbstractTexture {
     public static final Identifier ID = SiftContent.id("rift_scene_copy");
     private static RiftSceneCopy instance;
+    private static boolean failed;
     private RiftSceneCopy() {}
 
     public static void register() {
         instance = new RiftSceneCopy();
         Minecraft.getInstance().getTextureManager().register(ID, instance);
         LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(context -> {
-            if (!SiftBudget.riftShader || SiftRenderTypes.irisShadowPass() || SiftRenderTypes.shaderPackInUseCached()) return;
+            if (failed || !SiftBudget.riftShader || SiftRenderTypes.irisShadowPass() || SiftRenderTypes.shaderPackInUseCached()) return;
             boolean visible = context.levelState().entityRenderStates.stream().anyMatch(s -> s instanceof RiftPortalRenderer.State);
             if (!visible) return;
-            instance.capture();
+            try { instance.capture(); }
+            catch (RuntimeException error) {
+                failed = true;
+                dev.logan.entersift.EnterTheSift.LOGGER.warn("Rift refraction unavailable; using translucent fallback", error);
+            }
         });
     }
 
     private void capture() {
-        var source = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
+        var source = Minecraft.getInstance().gameRenderer.mainRenderTarget().getColorTexture();
         if (source == null) return;
         int w = source.getWidth(0), h = source.getHeight(0);
         if (texture == null || texture.isClosed() || texture.getWidth(0) != w || texture.getHeight(0) != h || texture.getFormat() != source.getFormat()) {
@@ -43,7 +48,7 @@ public final class RiftSceneCopy extends AbstractTexture {
     }
 
     public static boolean available() {
-        return instance != null && instance.textureView != null && !instance.texture.isClosed()
+        return !failed && instance != null && instance.textureView != null && !instance.texture.isClosed()
             && !SiftRenderTypes.shaderPackInUseCached();
     }
 }
