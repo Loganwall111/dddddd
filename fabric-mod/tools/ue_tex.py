@@ -328,6 +328,24 @@ def header_dims(fmt, d, faces=1):
     return best[1:3] if best else None
 
 
+def dims_before_format(fmt, d, at):
+    """
+    Minimap-style cooked textures put the pixel dimensions in the two int32s immediately BEFORE the second
+    PF_ string, and they are not powers of two - they are the tile's real cell counts (a Meadow tile is
+    50x41, MW_FIGHT_001 is 64x37, XL_005 is 87x74). Accepted only when the arithmetic is exact: the
+    payload from the format string must account for the whole file bar a small tail.
+    """
+    bpp = BYTES_PER_PIXEL.get(fmt)
+    if not bpp or at < 16:
+        return None
+    w, h = struct.unpack_from('<ii', d, at - 16)
+    if not (4 <= w <= 8192 and 4 <= h <= 8192):
+        return None
+    need = int(w * h * bpp)
+    tail = len(d) - (at + 16) - need
+    return (w, h, need, tail) if 0 <= tail <= 128 else None
+
+
 def dim_candidates(fmt, avail, name=''):
     """
     (w, h, payload_bytes, tail) shapes whose payload fits in `avail` bytes. Exact eye-verified dimensions
@@ -382,16 +400,26 @@ def convert(src, outdir):
                 if start_o >= len(d):
                     continue
                 avail = len(d) - start_o
-                for kind, faces in (('image', 1), ('cubemap', 6)):
-                    hd = header_dims(fmt, d, faces)
-                    if hd:
-                        need = int(hd[0] * hd[1] * BYTES_PER_PIXEL[fmt])
-                        per_face = avail // faces
-                        cands = ([(hd[0], hd[1], need, per_face - need)]
-                                 if 0 <= per_face - need <= 560 else [])
-                        rec['dims_source'] = 'header mip sizes' if faces == 1 else 'header mip sizes (cubemap face)'
+                groups = [('image', 1)]
+                # A six-face guess once stole a real tile image, so cubemaps are opt-in by filename.
+                if 'cubemap' in src.stem.lower():
+                    groups.append(('cubemap', 6))
+                for kind, faces in groups:
+                    pair = dims_before_format(fmt, d, off) if faces == 1 else None
+                    if pair:
+                        cands = [pair]
+                        rec['dims_source'] = 'header pair before the format string (exact fit)'
                     else:
-                        cands = dim_candidates(fmt, avail // faces, src.stem)[:4]
+                        hd = header_dims(fmt, d, faces)
+                        if hd:
+                            need = int(hd[0] * hd[1] * BYTES_PER_PIXEL[fmt])
+                            per_face = avail // faces
+                            cands = ([(hd[0], hd[1], need, per_face - need)]
+                                     if 0 <= per_face - need <= 560 else [])
+                            rec['dims_source'] = ('header mip sizes' if faces == 1
+                                                  else 'header mip sizes (cubemap face)')
+                        else:
+                            cands = dim_candidates(fmt, avail // faces, src.stem)[:4]
                     for (w, h, need, tail) in cands:
                         payload = d[start_o:start_o + need * faces]
                         rgba = decode_reference(fmt, payload, w, h)

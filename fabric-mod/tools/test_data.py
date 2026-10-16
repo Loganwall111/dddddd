@@ -939,7 +939,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.41.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.42.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -1080,7 +1080,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.41.0-alpha',props)
+        self.assertIn('mod_version=0.42.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
@@ -1273,7 +1273,9 @@ class MeshProbeContracts(unittest.TestCase):
                 self.assertGreaterEqual(cy,0,f'{p.name} column {c} below the mesh floor')
     def test_v041_probe_ids_match_the_shipped_blobs(self):
         java=(ROOT/'src/main/java/dev/logan/entersift/MeshProbeData.java').read_text()
-        listed=set(re.findall(r'"(DD_ANC_\d+)"',java))
+        ids=re.search(r'IDS = \{(.*?)\};',java,re.S)
+        self.assertIsNotNone(ids,'MeshProbeData.IDS not found')
+        listed=set(re.findall(r'"([A-Za-z0-9_]+)"',ids.group(1)))
         shipped={p.stem for p in self.M.glob('*.bin')}
         self.assertEqual(listed,shipped,'MeshProbeData.IDS and assets/sift/meshes disagree')
         self.assertIn('public static final String DEFAULT = IDS[0];',java)
@@ -1308,3 +1310,48 @@ class MeshProbeContracts(unittest.TestCase):
         self.assertIn('SiftBudget.take(vc)',renderer)
         self.assertIn('SiftBudget.meshProbe',renderer)
         self.assertIn('SiftRenderTypes.SOLID',renderer)
+
+class SiftTileContracts(unittest.TestCase):
+    """0.42: the SiftMeadow/Ravines tile plans. These are per-tile DATA at the tile's real cell resolution
+    (the dimensions sit in the two int32s before the format string and account for the file size exactly),
+    not art - the R channel is a 4-class mask and the G channel a smooth scalar field."""
+    T=R/'data/sift/tiles'
+    def test_v042_tile_plans_match_their_cell_counts(self):
+        import base64
+        plans=sorted(p for p in self.T.glob('*.json') if p.name!='index.json')
+        self.assertTrue(plans,'no tile plans shipped')
+        for p in plans:
+            d=json.loads(p.read_text())
+            w,h=d['cells']
+            self.assertEqual(d['id'],p.stem)
+            self.assertEqual(sum(run[1] for run in d['mask_rle']),w*h,
+                             f'{d["id"]}: mask run lengths must cover every cell')
+            self.assertLessEqual(len(d['channels']['mask']['values']),4,
+                                 f'{d["id"]}: the mask is a 4-class field')
+            self.assertEqual(len(base64.b64decode(d['field_b64'])),w*h,
+                             f'{d["id"]}: field must be one byte per cell')
+            # B and A are constant bar a couple of pixels at the payload boundary, so assert dominance
+            # rather than exactness - and keep the threshold tight enough to catch a real channel change.
+            self.assertGreaterEqual(d['channels']['blue_dominant_frac'],0.995,f'{d["id"]}: B is constant')
+            self.assertGreaterEqual(d['channels']['alpha_dominant_frac'],0.995,f'{d["id"]}: A is constant')
+            f=base64.b64decode(d['field_b64'])
+            self.assertEqual([min(f),max(f)],[d['channels']['field']['min'],d['channels']['field']['max']])
+            self.assertLess(d['channels']['field']['distinct'],64,f'{d["id"]}: field is quantised, not noise')
+    def test_v042_tile_index_covers_every_plan(self):
+        idx=json.loads((self.T/'index.json').read_text())
+        self.assertEqual({e['id'] for e in idx['tiles']},
+                         {p.stem for p in self.T.glob('*.json') if p.name!='index.json'})
+        for e in idx['tiles']:
+            self.assertEqual(len(e['cells']),2)
+            self.assertTrue(e['mask_classes'])
+    def test_v042_portal_tile_ships_with_its_rle_lead_recorded(self):
+        r=json.loads((R/'data/sift/structures/PortalTile.json').read_text())
+        self.assertEqual(r['size'][:1],[159],'the portal tile is the wide one')
+        self.assertEqual(r['height']['columns'],159*144)
+        self.assertGreater(r['height']['max'],r['height']['min'])
+        # The voxels ship RLE-compressed with an integrity hash: record the lead, and never fake a decode.
+        self.assertEqual(r['blocks']['variant'],'blocks_RLE + blocks_MD5')
+        self.assertEqual(len(r['blocks']['md5']),32)
+        self.assertIn('oracle',r['blocks']['note'])
+        self.assertTrue((R/'assets/sift/meshes/PortalTile.bin').exists(),
+                        'the portal tile must ship a mesh for the probe')

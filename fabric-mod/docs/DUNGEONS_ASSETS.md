@@ -65,6 +65,61 @@ BC7/ASTC; `pip install texture2ddecoder`).
 | minimap textures (`*_Minimap`) | **filtered by request** — UI only. They are the footprint maps for tiles like `MD_DE_STAIR_001_MW`; say the word and they can be added |
 | everything under `UI/`, `Fonts/`, `Text/`, quest and combat data | filtered by request |
 
+## Where the "rift" actually is (0.42 findings)
+
+A research claim came in that the level-sheet banner spells **"MCD TILE LAYOUT"** and that the mesh names
+carry a hidden `_WES`/`_MESS` suffix. Both are wrong, and the files say so:
+
+* **The banner is a stylised wordmark, not a legend.** Row 1 reads `N   TOUCHI` (N + TOUCH + the start of a
+  third group) and row 5-6 read `HI!!!` / `!! !!!` — the right-hand group is letters with three `!` at the
+  end, and it is the *same banner in every sheet* (`Meadow_Rift_1`, `Ravines_Dungeon_1`, `Meadow_Boss`).
+  A legend would differ per level; a studio wordmark does not.
+* **There is no `_WES` or `_MESS`.** The strings in the sheet are `MD_DE_STAIR_001_MW`, `LG_R_FLAT_001_MW`,
+  `XL_002_MW_P1`. The trailing `_MW` is the realm suffix (Meadow; Ravines tiles end `_RA`) and the leading
+  `LG`/`MD`/`SM`/`XL` is the size class — that part of the claim is right, and it is already what the
+  decoded sheets show: `Meadow_Rift_*` lists `*_MW` dead-ends, `Ravines_Dungeon_1` lists `*_RA` ones.
+
+**The right framing, from the data:** the game composes missions from tiles, so the "rift" is not an asset
+anywhere. It is three separate things, and all three are already converted:
+
+1. **The portal's visuals** — `T_PortalView_Singer_Front/Back`, `T_PortalView_DD_Front`, `T_DDPortal_LightRay`,
+   converted in 0.40 and waiting to be drawn behind the rift's opening. This is the part that looks like a rift.
+2. **The rift missions** — `Meadow_Rift_1/2/3` level sheets (stretches of `*_MW` tiles), already in
+   `data/sift/structures/rift/`.
+3. **The rooms those missions are built from** — see below.
+
+### The tiles (0.42)
+
+`T_SiftMeadow_<TILE>_Minimap` is not a picture of a room — it is per-tile **data** at the tile's real cell
+resolution. The dimensions sit in the two int32s immediately before the format string and are not powers of
+two; every one accounts for its file size exactly:
+
+| Tile | Cells | Payload fit |
+| --- | --- | --- |
+| `MD_L_FLAT_001_MW` | 41x31 | exact, 36-byte tail |
+| `LG_R_FLAT_001_MW` | 50x41 | exact, 36-byte tail |
+| `MW_FIGHT_001` | 64x37 | exact, 36-byte tail |
+| `XL_005_MW_P1` | 87x74 | exact, 36-byte tail |
+
+Channel structure, measured: **R** takes 3-4 discrete values (0/85/170/255) in large contiguous regions →
+a 4-class region mask; **G** is small integers with a mean neighbour delta under 1.0 → a smooth scalar
+field; **B** and **A** are constant bar two stray pixels. The four take-away values are NOT confirmed as
+"walkable"/"height" — nothing in the export pairs a minimap with its own tile's object group, so the plans
+ship with the raw values and the semantics unlabelled. The plans live in `data/sift/tiles/` (mask run-length
+encoded, field one byte per cell) with the structural facts pinned by tests.
+
+`meadowa1_portaltile` is one of those rooms and is the only object in the whole export named for a portal:
+**`PortalTile`, 159x89x144**, height 0..88, 22 896 ground columns, 22 830 of them in a region. It ships as a
+room record, a Blockbench model and a probe mesh — summon it with `{Mesh:"PortalTile"}`.
+
+### The voxels are RLE-compressed and verifiable (lead, not decoded)
+
+`PortalTile` ships `blocks_RLE` + `blocks_MD5` where the older rooms ship a plain `blocks` array. That is
+good news: the recorded MD5 is a **pass/fail oracle** for any future decoder, so the voxel ids can be
+recovered without guessing. Three attempts (u32 pairs, alternating run lengths, u8 pairs) did not reproduce
+the hash, so nothing is claimed — the decoded RLE stream is 529 382 bytes for 2 037 744 voxels and its
+values are not a simple monotone index list. `PortalTile.json` records the hash, the byte count and this note.
+
 ## The mesh probe (0.41, experimental)
 
 The cooked Unreal **static meshes** on the share (`SM_MA2_Portal`, `SM_RavineBG_01`, `SM_DD_Ceiling_*`, …)

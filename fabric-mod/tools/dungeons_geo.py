@@ -53,6 +53,21 @@ def plane(obj, field):
 
 def decode_blocks(obj):
     """
+    Older rooms ship `blocks`; PortalTile ships `blocks_RLE` plus a `blocks_MD5` integrity hash instead, so
+    its voxels are RLE-compressed and (once the exact scheme is known) verifiable rather than guessed. The
+    hash is the useful part: any future decoder gets a pass/fail oracle. Recorded, not decoded.
+    """
+    if 'blocks' not in obj:
+        info = {'layout': 'not decoded',
+                'variant': 'blocks_RLE + blocks_MD5' if 'blocks_RLE' in obj else 'no block array'}
+        if 'blocks_RLE' in obj:
+            info['rle_bytes'] = len(zlib.decompress(base64.b64decode(obj['blocks_RLE'])))
+        if 'blocks_MD5' in obj:
+            info['md5'] = obj['blocks_MD5']
+            info['note'] = ('the recorded MD5 is a pass/fail oracle for any future RLE decoder: three '
+                            'attempts (u32 pairs, run lengths, u8 pairs) did not reproduce it')
+        return b'', info
+    """
     `blocks` is 2.5 bytes per voxel. Reading it as either 2 or 4 bytes leaves the tail short/long, so the
     layout is reported (not guessed) and used only when it divides exactly.
     """

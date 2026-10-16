@@ -1,6 +1,6 @@
 {
  "namespace": "sift",
- "note": "Converted from the Minecraft Dungeons environment share by tools/dungeons_geo.py. Terrain meshes come from the height-plane array (one height byte per ground column, verified len == sizeX*sizeZ for every object); block voxel ids use a packing that is not decoded yet, so they are not in the meshes.",
+ "note": "Converted from the Minecraft Dungeons environment share by tools/dungeons_geo.py. Terrain meshes come from the height-plane array (one height byte per ground column, verified len == sizeX*sizeZ for every object); block voxel ids use a packing that is not decoded yet, so they are not in the meshes. PortalTile (159x144, the meadow portal room) comes from the meadowa1_portaltile object group and ships with its blocks_RLE + blocks_MD5 lead recorded.",
  "textures": [
   {
    "asset": "sift:textures/block/overworld_atlas.png",
@@ -492,6 +492,22 @@
    ],
    "triangles": 4986,
    "source": "objectgroup.json"
+  },
+  {
+   "id": "PortalTile",
+   "kind": "room",
+   "size": [
+    159,
+    89,
+    144
+   ],
+   "columns": 22896,
+   "height_range": [
+    0,
+    88
+   ],
+   "triangles": null,
+   "source": "meadowa1_portaltile/objectgroup.json"
   }
  ]
 }

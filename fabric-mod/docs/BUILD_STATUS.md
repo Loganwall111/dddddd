@@ -415,3 +415,13 @@ in game, with a removable barrier floor at the mesh surface height (air-only, 38
 at 24 000 blocks, cleared on removal). Draws through `SiftRenderTypes.SOLID` and the shared vertex budget;
 `mesh_probe=false` disables it. New gates: blob format re-parsed the way the mod reads it, footprint agrees
 with the room record, vertex count inside the budget, and the wiring (summonable + reversible floor).
+
+## 0.42.0 — tile plans, the portal room, and where the rift actually is
+
+The SiftMeadow/Ravines tile minimaps are per-tile data at the tile's real cell resolution (41x31, 50x41,
+64x37, 87x74 - dimensions in the int32s before the format string, each accounting for its file size exactly).
+R is a 4-class region mask, G a smooth scalar field, B/A near-constant; the semantics are unconfirmed and the
+plans ship unlabelled in data/sift/tiles/. `meadowa1_portaltile` contributes PortalTile (159x89x144, height
+0..88), the only portal-named room in the export, shipped as a record + Blockbench model + probe mesh
+(`{Mesh:"PortalTile"}`). PortalTile ships its voxels as `blocks_RLE` + `blocks_MD5`, which makes a future
+voxel decoder verifiable by hash - three attempts did not reproduce it, so none is claimed.

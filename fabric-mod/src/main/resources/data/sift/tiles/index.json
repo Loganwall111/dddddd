@@ -1,0 +1,71 @@
+{
+ "tiles": [
+  {
+   "id": "LG_R_FLAT_001_MW",
+   "cells": [
+    50,
+    41
+   ],
+   "mask_classes": [
+    0,
+    170,
+    255
+   ],
+   "field_range": [
+    0,
+    19
+   ]
+  },
+  {
+   "id": "MD_L_FLAT_001_MW",
+   "cells": [
+    41,
+    31
+   ],
+   "mask_classes": [
+    0,
+    85,
+    170,
+    255
+   ],
+   "field_range": [
+    0,
+    14
+   ]
+  },
+  {
+   "id": "MW_FIGHT_001",
+   "cells": [
+    64,
+    37
+   ],
+   "mask_classes": [
+    0,
+    85,
+    170,
+    255
+   ],
+   "field_range": [
+    0,
+    10
+   ]
+  },
+  {
+   "id": "XL_005_MW_P1",
+   "cells": [
+    87,
+    74
+   ],
+   "mask_classes": [
+    0,
+    85,
+    170,
+    255
+   ],
+   "field_range": [
+    0,
+    39
+   ]
+  }
+ ]
+}
