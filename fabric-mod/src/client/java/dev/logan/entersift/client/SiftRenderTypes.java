@@ -85,15 +85,15 @@ public final class SiftRenderTypes {
             .withFragmentShader(SiftContent.id("core/rift"))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .withCull(false)
             .build());
 
     /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
     public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
             .build());
 
     /** 0.18 rim glow and sparks: RIFT_GLOW, additive, depth-tested, no depth write. */
@@ -125,6 +125,13 @@ public final class SiftRenderTypes {
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
             .withCull(false);
     }
+
+    public static final RenderPipeline RIFT_LENS_PIPELINE = RenderPipelines.register(riftVariant("rift_lens", "RIFT_LENS")
+        .withSampler("SceneSampler")
+        .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+        .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false)).build());
+    public static final RenderType RIFT_LENS = RenderType.create("entersift_rift_lens",
+        RenderSetup.builder(RIFT_LENS_PIPELINE).withTexture("SceneSampler", RiftSceneCopy.ID).createRenderSetup());
 
     public static final RenderType RIFT = RenderType.create("entersift_rift", RenderSetup.builder(RIFT_PIPELINE).createRenderSetup());
     public static final RenderType RIFT_WALL = RenderType.create("entersift_rift_wall", RenderSetup.builder(RIFT_WALL_PIPELINE).createRenderSetup());

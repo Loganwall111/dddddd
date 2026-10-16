@@ -26,6 +26,8 @@ import net.minecraft.world.level.storage.ValueOutput;
  * Travel and lifetime stay in the data pack (marker tagged sift.rift), which owns these entities.
  */
 public class RiftPortalEntity extends Entity {
+    private final java.util.Map<java.util.UUID, net.minecraft.world.phys.Vec3> previous = new java.util.HashMap<>();
+    private int lifeTicks = -1;
     public static final int GROWN = 100;
     private static final EntityDataAccessor<Integer> TYPE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(RiftPortalEntity.class, EntityDataSerializers.INT);
@@ -51,7 +53,37 @@ public class RiftPortalEntity extends Entity {
     public void tick() {
         super.tick();
         // Only the growth phase is synced; afterwards the value stays constant (no network traffic).
-        if (this.level() instanceof ServerLevel && age() <= GROWN + 20) this.entityData.set(AGE, age() + 1);
+        if (!(this.level() instanceof ServerLevel level)) return;
+        if (lifeTicks == 0) { discard(); return; }
+        if (lifeTicks > 0) lifeTicks--;
+        if (age() <= GROWN + 20) this.entityData.set(AGE, age() + 1);
+        if (age() < GROWN || riftType() == RiftType.PORTAL || getTags().contains("sift.arrival")) return;
+        java.util.Set<java.util.UUID> seen = new java.util.HashSet<>();
+        for (var player : level.players()) {
+            if (player.isSpectator() || distanceToSqr(player) > 24 * 24) continue;
+            seen.add(player.getUUID());
+            var now = player.position().add(0, player.getBbHeight() * 0.5, 0);
+            var before = previous.put(player.getUUID(), now);
+            // Loading beside a rift, standing still, and remote teleports are not crossings.
+            if (before == null || before.distanceToSqr(now) > 64) continue;
+            var a = local(before); var b = local(now);
+            if (RiftAperture.crossed(riftType().id, riftWidth(), riftHeight(), a.x, a.y, a.z, b.x, b.y, b.z)) {
+                String gate = "execute if score @s sift.cooldown matches 0 if score @s sift.transit matches 0 run ";
+                EnterTheSift.runAs(player, gate + "tag @s add sift.crossed");
+                if (player.getTags().contains("sift.crossed")) {
+                    RiftTravel.remember(player, this);
+                    EnterTheSift.runAs(player, "function entersift:travel/warp {dest:" + riftType().id + "}");
+                    player.removeTag("sift.crossed");
+                }
+            }
+        }
+        previous.keySet().retainAll(seen);
+    }
+
+    private net.minecraft.world.phys.Vec3 local(net.minecraft.world.phys.Vec3 p) {
+        double angle = Math.toRadians(getYRot() + 180), c = Math.cos(angle), s = Math.sin(angle);
+        double x = p.x - getX(), z = p.z - getZ();
+        return new net.minecraft.world.phys.Vec3(c * x + s * z, p.y - getY(), -s * x + c * z);
     }
 
     @Override public boolean isNoGravity() { return true; }
@@ -63,6 +95,7 @@ public class RiftPortalEntity extends Entity {
 
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
+        lifeTicks = input.getIntOr("LifeTicks", -1);
         this.entityData.set(TYPE, input.getIntOr("RiftType", RiftType.SIFT.id));
         this.entityData.set(WIDTH, Math.max(1.5f, Math.min(12f, input.getFloatOr("Width", 7.0f))));
         this.entityData.set(HEIGHT, Math.max(1.5f, Math.min(12f, input.getFloatOr("Height", 5.0f))));
@@ -71,6 +104,7 @@ public class RiftPortalEntity extends Entity {
 
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
+        output.putInt("LifeTicks", lifeTicks);
         output.putInt("RiftType", riftType().id);
         output.putFloat("Width", riftWidth());
         output.putFloat("Height", riftHeight());

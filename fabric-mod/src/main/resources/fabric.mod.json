@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "entersift",
   "version": "${version}",
-  "name": "Enter the Sift",
-  "description": "Salt, souls, and the song beneath the ancient city. Experimental dimension mod by Logan.",
+  "name": "Sift Overhaul",
+  "description": "Flow, Thrive and Endure: a Sift world of rifts, sparse rainbow Ichor, giant bones, Jelly Lands and portal crossings.",
   "authors": ["Logan"],
   "environment": "*",
   "entrypoints": {

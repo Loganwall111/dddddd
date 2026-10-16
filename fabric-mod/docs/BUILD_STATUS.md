@@ -1,23 +1,26 @@
-# Verification record — 2026-09-27
+# Verification record — 2026-10-01
 
-## Passed in this workspace — 0.2 visual pass
+## Sift Overhaul 0.25.0-alpha: passed locally
 
-- Parsed 99 JSON / animation metadata files.
-- Resolved references among 67 server functions.
-- Checked local model and texture links, animated PNG frame metadata and PNG headers.
-- Checked shader include paths, dimension routing declarations, day/night clock declarations, six-note glow mapping, rift visual cleanup contracts and a 27-display per-rift budget. These are static checks, not GLSL compilation.
-- Checked the Gradle wrapper JAR signature and three biome definitions.
-- Passed all 20 offline data-contract tests in `tools/test_data.py`.
-- Re-ran the deterministic asset generator and compared generated file hashes: no differences.
-- Preserved the existing browser application without editing its source or dependencies.
+- `python3 tools/validate.py` — passed: 603 JSON/metadata files, 149 functions, local model/texture references, animation metadata, wrapper integrity, and 12 Sift biome registrations.
+- `python3 tools/test_data.py` — all 53 data-contract tests passed.
+- `python3 -m py_compile tools/phase19.py tools/validate.py tools/test_data.py` — passed.
+- `git diff --check` — passed.
 
-## Blocked / not run
+## GitHub Actions build
 
-- `./gradlew --no-daemon build`: stopped before compilation because `JAVA_HOME` is unset and Java is not installed.
-- Tried fetching a Temurin 25 JDK via GitHub Releases: TLS connection to `release-assets.githubusercontent.com` failed.
-- Tried Mojang/Fabric metadata and Maven endpoints: TLS connection failed.
-- Tried installing a local JDK and GLSL validator from Debian packages: repository network connections failed; packages unavailable.
-- Therefore **no compiled mod JAR**, Java/JUnit result, Minecraft startup result, worldgen-codec validation, command-loader validation or GPU shader result exists for this build.
-- GitHub Actions is configured, but not executed or claimed successful.
+The 0.25.0-alpha source is being built with the repository's GitHub Actions workflow, which runs validation, data-contract tests, shader compilation, the Fabric/Gradle build, shader-pack bundling checks, and a 26.3 server smoke test. The result will be recorded here after the run completes. The CI artifact—not a locally compiled JAR—is the intended build output.
 
-The code follows the 26.3 Fabric example and uses current-version vanilla data templates. That reduces version drift; it does not establish compatibility. Treat this as an experimental source alpha, not a released mod.
+## Toolchain baseline (0.25)
+
+- `python3 tools/regen_check.py` — the six live generators (creatures, phase5, expansion, visual_pass,
+  phase24_textures, phase19) reproduce the shipped tree byte-for-byte, with no known drift left. Two
+  generator bugs were fixed to get there (creatures.py salted the Licker texture with the builtin
+  `hash()`; phase19.py re-scaled the crag overlays in place on every run), and the reviewed crag shapes
+  are pinned in `tools/overlays/`. The historical phase chain is marked dead in `tools/baseline.json`
+  because several of those scripts crash or revert 0.25 content.
+- The check now runs in CI after the offline tests, so a stale generator (or a stale note) fails the build.
+
+## Runtime limitations
+
+Even a successful server smoke test cannot establish client-side visual quality. Rift timing/opening animation, sky and fog blending, animated Ichor appearance, Blub appearance/spawning, portal return behavior, and biome terrain density still need an in-game client playtest. Worldgen codecs and command behavior are only runtime-verified to the extent covered by the Actions server smoke test.

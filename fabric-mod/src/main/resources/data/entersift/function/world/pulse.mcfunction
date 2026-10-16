@@ -2,6 +2,7 @@ scoreboard players set #time sift.clock 0
 execute if score #rifts sift.roll matches 1 as @a[gamemode=survival] at @s run function entersift:world/roll
 
 
+execute in entersift:the_sift as @a at @s if biome ~ ~ ~ entersift:jelly_lands unless entity @e[type=entersift:blub,distance=..24] positioned ~4 ~ ~4 if block ~ ~ ~ minecraft:air unless block ~ ~-1 ~ minecraft:air run function entersift:creature/blub/spawn
 execute in entersift:the_sift as @a at @s if biome ~ ~ ~ entersift:singer_meadow unless entity @e[type=entersift:blub,distance=..48] positioned ~4 ~ ~4 if block ~ ~ ~ minecraft:air unless block ~ ~-1 ~ minecraft:air run function entersift:creature/blub/spawn
 execute in entersift:the_sift as @a at @s if biome ~ ~ ~ entersift:singer_meadow unless entity @e[type=entersift:antlerling,distance=..48] positioned ~6 ~ ~ if block ~ ~ ~ minecraft:air unless block ~ ~-1 ~ minecraft:air run function entersift:creature/antlerling/spawn
 execute in entersift:the_sift as @a at @s if biome ~ ~ ~ entersift:singer_meadow unless entity @e[type=entersift:drift_jelly,distance=..48] positioned ~5 ~3 ~ if block ~ ~ ~ minecraft:air run function entersift:creature/drift_jelly/spawn

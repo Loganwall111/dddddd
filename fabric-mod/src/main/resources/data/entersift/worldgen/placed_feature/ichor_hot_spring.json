@@ -2,8 +2,8 @@
   "feature": "entersift:ichor_hot_spring",
   "placement": [
     {
-      "type": "minecraft:count",
-      "count": 2
+      "type": "minecraft:rarity_filter",
+      "chance": 96
     },
     {
       "type": "minecraft:in_square"

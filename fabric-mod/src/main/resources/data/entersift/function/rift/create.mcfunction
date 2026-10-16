@@ -1,3 +1,4 @@
+execute unless function entersift:rift/gate run return 0
 execute if entity @e[type=minecraft:marker,tag=sift.rift,distance=..5] run return 0
 summon minecraft:marker ~ ~ ~ {Tags:["sift.rift","sift.new_rift"]}
 scoreboard players set @e[type=minecraft:marker,tag=sift.new_rift,distance=..1] sift.age 0
