@@ -22,12 +22,26 @@ public final class RiftAperture {
     /** Segment/plane crossing, in the same local coordinates as the render mesh. No radius trigger. */
     public static boolean crossed(int type, double width, double height,
                                   double ax, double ay, double az, double bx, double by, double bz) {
-        if (!Double.isFinite(ax + ay + az + bx + by + bz)) return false;
-        if (az == bz || !((az < 0 && bz >= 0) || (az > 0 && bz <= 0))) return false;
-        double t = -az / (bz - az);
-        double x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
-        int i = (int) Math.floor((x / width + 0.5) * 11);
-        int j = (int) Math.floor((y - BASE) / height * 8);
-        return cell(type, i, j);
+        if (!Double.isFinite(ax + ay + az + bx + by + bz + width + height) || width <= 0 || height <= 0) return false;
+        if (az == bz) return false;
+        for (double plane : new double[]{0.4837, 0.2637, 0.3537}) {
+            double a = az + plane, b = bz + plane;
+            if (!((a < 0 && b >= 0) || (a > 0 && b <= 0))) continue;
+            double t = -a / (b - a);
+            double x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
+            int i = (int) Math.floor((x / width + 0.5) * 11);
+            int j = (int) Math.floor((y - BASE) / height * 8);
+            if (cell(type, i, j) && Math.abs(depth(type, i, j) - plane) < 0.00001) return true;
+        }
+        return false;
+    }
+
+    public static float depth(int type, int i, int j) {
+        if (type == 4) return 0.28f;
+        if (type == 0 || type == 3) {
+            if (i <= 1 && j >= 2 && j <= 3) return 0.2637f;
+            if (i <= 2 && j <= 1) return 0.3537f;
+        }
+        return 0.4837f;
     }
 }

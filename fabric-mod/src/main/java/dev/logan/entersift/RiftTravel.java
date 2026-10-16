@@ -34,7 +34,7 @@ public final class RiftTravel {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 for (int dest = 0; dest < 4; dest++) {
                     String tag = "sift.arrive_" + dest;
-                    if (!player.getTags().contains(tag)) continue;
+                    if (!player.entityTags().contains(tag)) continue;
                     var key = switch (dest) {
                         case 0 -> Level.OVERWORLD;
                         case 1 -> Level.NETHER;

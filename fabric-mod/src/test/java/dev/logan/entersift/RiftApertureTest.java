@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RiftApertureTest {
     private boolean cross(double ax, double ay, double az, double bx, double by, double bz) {
-        return RiftAperture.crossed(3, 7, 5, ax, ay, az, bx, by, bz);
+        return RiftAperture.crossed(3, 7, 5, ax, ay, az - 0.4837, bx, by, bz - 0.4837);
     }
     @Test void crossesBothDirections() {
         assertTrue(cross(0, 1, -.1, 0, 1, .1));

@@ -134,7 +134,7 @@ public final class SiftSky {
                     skyRays(p, vc, radius * 0.96f, pal, seconds, layer);
                 });
                 // World-space diagonal beams slice into other Sift biomes; the Jelly haze suppresses them.
-                if (!beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW,
+                if (!SiftTides.isEndure(tick) && !beams.isEmpty()) out.submitCustomGeometry(pose, SiftRenderTypes.GLOW,
                     (p, vc) -> worldBeams(p, vc, beams, cam, pal, seconds, beamRange, Math.max(0f, 1f - jellyAmount * 0.98f)));
             } finally {
                 pose.popPose();

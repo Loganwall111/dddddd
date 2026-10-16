@@ -109,15 +109,15 @@ final class RiftShape {
                 // Outer left attached boxes get distinct shallow step depths; main cross is one seamless window.
                 if ((type == RiftType.SIFT || type == RiftType.OVERWORLD) && i <= 1 && j >= 2 && j <= 3) {
                     box[i][j] = 1;
-                    depth[i][j] = 0.2637f;
+                    depth[i][j] = dev.logan.entersift.RiftAperture.depth(type.id, i, j);
                     tier[i][j] = 3;
                 } else if ((type == RiftType.SIFT || type == RiftType.OVERWORLD) && i <= 2 && j <= 1 && (i < 3)) {
                     box[i][j] = 2;
-                    depth[i][j] = 0.3537f;
+                    depth[i][j] = dev.logan.entersift.RiftAperture.depth(type.id, i, j);
                     tier[i][j] = 2;
                 } else {
                     box[i][j] = 0;
-                    depth[i][j] = mainDepth;
+                    depth[i][j] = dev.logan.entersift.RiftAperture.depth(type.id, i, j);
                 }
             }
         }

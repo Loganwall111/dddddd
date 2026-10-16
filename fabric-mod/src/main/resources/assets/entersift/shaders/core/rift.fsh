@@ -258,7 +258,7 @@ void main() {
 #elif defined(RIFT_WALL)
     packLight = vec4(1.0, 1.0, 0.0, 1.0);
     packNormal = vec4(0.5, 0.5, 1.0, 0.0);
-    fragColor = apply_fog(vec4(riftData.rgb, riftData.a * 0.32) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
+    fragColor = apply_fog(vec4(riftData.rgb, riftData.a) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
         FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 #else
     packLight = vec4(1.0, 1.0, 0.0, 1.0);

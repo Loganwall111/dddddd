@@ -198,7 +198,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             // Cube -> tumbling bar -> brief opening ring -> stepped cross. No initial oval portal.
             if (age < CLUSTER_START) {
                 out.submitCustomGeometry(pose, glowT, (p, vc) -> {
-                    seedBox(p, vc, still, sh, look, age);
+                    seedBox(p, vc, still, sh, look, cam, age);
                     seedGlow(p, vc, still, sh, s, cam, look, age);
                     if (age >= 52) ripple(p, vc, still, sh, look, (age - 52) * 3.3f);
                 });
@@ -350,7 +350,7 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     }
 
     /** PHASE 2: tall vertical seed box (Image 22: 194638), pulsing rapidly before snapping into the stepped cross. */
-    private static void seedBox(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, float age) {
+    private static void seedBox(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, Vector3f cam, float age) {
         float k = seedScale(age);
         if (k <= 0f) return;
         float stretch = clamp((age - 18f) / 24f, 0f, 1f);
@@ -365,7 +365,9 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         int[][] faces = {{0, 1, 3, 2}, {4, 6, 7, 5}, {0, 4, 5, 1}, {2, 3, 7, 6}, {0, 2, 6, 4}, {1, 5, 7, 3}};
         float[] hot = mix(look.core(), c(1f, 0.94f, 0.80f), 0.5f);
         float pulse = 0.55f + 0.45f * (0.5f + 0.5f * (float) Math.sin(age * 2.2f));
-        for (int[] f : faces) for (int idx : f) col(p, vc, wv, v[idx][0], v[idx][1], v[idx][2], hot, pulse);
+        for (int[] f : faces) for (int idx : f) col(p, vc, wv, v[idx][0], v[idx][1], v[idx][2], hot, pulse * 0.45f);
+        int[][] edges = {{0,1},{2,3},{4,5},{6,7},{0,2},{1,3},{4,6},{5,7},{0,4},{1,5},{2,6},{3,7}};
+        for (int[] edge : edges) band(p, vc, wv, cam, v[edge[0]], v[edge[1]], 0.025f, 0.10f, look.core(), look.halo(), 1f);
     }
 
     /** PHASE 1 spark: erratic lightning flashing over the ripple (re-aimed every 2 ticks). */
@@ -394,7 +396,6 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     private static void seedGlow(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, State s, Vector3f cam, Look look, float age) {
         float k = seedScale(age);
         if (k <= 0f) return;
-        hollowVoxelRect(p, vc, wv, 0f, sh.cy(), 0.2f, 0.75f * k, 1.15f * k, 0.14f * k, look.halo(), 0.42f * k);
         int burst = (int) (age / 3f);
         int n = 1 + (int) (RiftShape.hash(s.seed, burst, 81) * 2f);
         for (int b = 0; b < n; b++) {
@@ -499,8 +500,8 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
             float t0 = s / (float) SUB, t1 = (s + 1) / (float) SUB;
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
             float x1 = xa + (xb - xa) * t1, y1 = ya + (yb - ya) * t1;
-            col(p, vc, wv, x0, y0, zf, f, 1f); col(p, vc, wv, x1, y1, zf, f, 1f);
-            col(p, vc, wv, x1, y1, zb, b, 1f); col(p, vc, wv, x0, y0, zb, b, 1f);
+            col(p, vc, wv, x0, y0, zf, f, 0.32f); col(p, vc, wv, x1, y1, zf, f, 0.32f);
+            col(p, vc, wv, x1, y1, zb, b, 0.32f); col(p, vc, wv, x0, y0, zb, b, 0.32f);
         }
     }
 

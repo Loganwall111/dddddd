@@ -57,7 +57,7 @@ public class RiftPortalEntity extends Entity {
         if (lifeTicks == 0) { discard(); return; }
         if (lifeTicks > 0) lifeTicks--;
         if (age() <= GROWN + 20) this.entityData.set(AGE, age() + 1);
-        if (age() < GROWN || riftType() == RiftType.PORTAL || getTags().contains("sift.arrival")) return;
+        if (age() < GROWN || riftType() == RiftType.PORTAL || entityTags().contains("sift.arrival")) return;
         java.util.Set<java.util.UUID> seen = new java.util.HashSet<>();
         for (var player : level.players()) {
             if (player.isSpectator() || distanceToSqr(player) > 24 * 24) continue;
@@ -70,7 +70,7 @@ public class RiftPortalEntity extends Entity {
             if (RiftAperture.crossed(riftType().id, riftWidth(), riftHeight(), a.x, a.y, a.z, b.x, b.y, b.z)) {
                 String gate = "execute if score @s sift.cooldown matches 0 if score @s sift.transit matches 0 run ";
                 EnterTheSift.runAs(player, gate + "tag @s add sift.crossed");
-                if (player.getTags().contains("sift.crossed")) {
+                if (player.entityTags().contains("sift.crossed")) {
                     RiftTravel.remember(player, this);
                     EnterTheSift.runAs(player, "function entersift:travel/warp {dest:" + riftType().id + "}");
                     player.removeTag("sift.crossed");
