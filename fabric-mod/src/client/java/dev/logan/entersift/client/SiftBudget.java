@@ -52,6 +52,8 @@ public final class SiftBudget {
     // ------------------------------------------------------------------ config
 
     public static boolean overworldClouds = true, riftEffects = true, transitionHud = true, riftShader = true, auraGlow = true;
+    /** 0.41 experimental mesh probe ({@code /summon entersift:mesh_probe}); false hides it again. */
+    public static boolean meshProbe = true;
 
     /** {@code riftSpill} is retired: it gated the sideways wavy veils the user rejected in 0.39.2. */
     public static boolean riftRefraction = true, riftBloom = true, riftFlares = true, riftSpill = false, riftBackFade = true, riftBolts = true, riftShock = true, riftBoxFace = true, riftProximity = true, riftTipFade = true;
@@ -88,11 +90,13 @@ public final class SiftBudget {
         props.setProperty("rift_proximity", Boolean.toString(riftProximity));
         props.setProperty("rift_tip_fade", Boolean.toString(riftTipFade));
         auraGlow = flag(props, "aura_glow", true);       // 0.17 night aura columns + note-block columns
+        meshProbe = flag(props, "mesh_probe", true);     // 0.41 experimental Dungeons room probe
         props.setProperty("overworld_clouds", Boolean.toString(overworldClouds));
         props.setProperty("rift_effects", Boolean.toString(riftEffects));
         props.setProperty("transition_hud", Boolean.toString(transitionHud));
         props.setProperty("rift_shader", Boolean.toString(riftShader));
         props.setProperty("aura_glow", Boolean.toString(auraGlow));
+        props.setProperty("mesh_probe", Boolean.toString(meshProbe));
         try {
             Files.createDirectories(configDir);
             try (OutputStream out = Files.newOutputStream(file)) {
@@ -101,8 +105,8 @@ public final class SiftBudget {
         } catch (IOException error) {
             org.slf4j.LoggerFactory.getLogger("entersift").warn("[Sift] could not write {}", file, error);
         }
-        org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] render switches: overworld_clouds={} rift_effects={} transition_hud={} rift_shader={} aura_glow={}",
-            overworldClouds, riftEffects, transitionHud, riftShader, auraGlow);
+        org.slf4j.LoggerFactory.getLogger("entersift").info("[Sift] render switches: overworld_clouds={} rift_effects={} transition_hud={} rift_shader={} aura_glow={} mesh_probe={}",
+            overworldClouds, riftEffects, transitionHud, riftShader, auraGlow, meshProbe);
     }
 
     private static boolean flag(Properties props, String key, boolean fallback) {

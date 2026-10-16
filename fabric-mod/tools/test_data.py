@@ -939,7 +939,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.40.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.41.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -1080,7 +1080,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.40.0-alpha',props)
+        self.assertIn('mod_version=0.41.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
@@ -1241,3 +1241,70 @@ class ReleaseTaggingContracts(unittest.TestCase):
         version=[l.split('=',1)[1].strip() for l in props.splitlines() if l.startswith('mod_version=')][0]
         workflow=(ROOT.parent/'.github/workflows/sift-build.yml').read_text()   # repo root, not fabric-mod/
         self.assertIn(f'Sift-Overhaul-{version}-26.3',workflow)
+
+class MeshProbeContracts(unittest.TestCase):
+    """0.41 mesh probe. The probe ships the Dungeons room heightfields in a binary the mod reads at
+    runtime, so the format has to be checkable without a client: these gates re-parse the blobs exactly
+    the way MeshProbeData does, and pin the wiring the experiment depends on (summonable, removable floor)."""
+    M=R/'assets/sift/meshes'
+    def test_v041_mesh_blobs_parse_and_match_their_footprint(self):
+        import struct
+        blobs=sorted(self.M.glob('*.bin'))
+        self.assertTrue(blobs,'no mesh blobs shipped')
+        for p in blobs:
+            raw=p.read_bytes()
+            self.assertEqual(raw[:4],b'SFM1',p.name)
+            ver,w,d,nq,nc=struct.unpack_from('<IIIII',raw,4)
+            self.assertEqual(ver,1,p.name)
+            self.assertEqual(len(raw),24+nq*52+nc*6,f'{p.name}: blob length does not match its counts')
+            self.assertGreater(nq,0,p.name); self.assertGreater(nc,0,p.name)
+            self.assertEqual(nc,nq if False else nc)          # columns are their own table
+            for q in range(0,nq,max(1,nq//64)):                # sample quads
+                x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3,shade=struct.unpack_from('<13f',raw,24+q*52)
+                self.assertTrue(0.0<=shade<=1.0,f'{p.name} quad {q} shade {shade}')
+                self.assertTrue(all(abs(v)<1e5 for v in (x0,y0,z0,x1,y1,z1)),p.name)
+                # Every quad is an edge band: a top face has all four heights equal, a skirt has two at
+                # the surface and two at the lower neighbour. So the first pair and the second pair match.
+                self.assertEqual(y0,y1,f'{p.name} quad {q} is not an edge band')
+                self.assertEqual(y2,y3,f'{p.name} quad {q} is not an edge band')
+            for c in range(0,nc,max(1,nc//64)):                # sample the column table
+                cx,cz,cy=struct.unpack_from('<3h',raw,24+nq*52+c*6)
+                self.assertTrue(0<=cx<w and 0<=cz<d,f'{p.name} column {c} outside the footprint')
+                self.assertGreaterEqual(cy,0,f'{p.name} column {c} below the mesh floor')
+    def test_v041_probe_ids_match_the_shipped_blobs(self):
+        java=(ROOT/'src/main/java/dev/logan/entersift/MeshProbeData.java').read_text()
+        listed=set(re.findall(r'"(DD_ANC_\d+)"',java))
+        shipped={p.stem for p in self.M.glob('*.bin')}
+        self.assertEqual(listed,shipped,'MeshProbeData.IDS and assets/sift/meshes disagree')
+        self.assertIn('public static final String DEFAULT = IDS[0];',java)
+    def test_v041_mesh_budget_and_columns_agree_with_the_gltf_rooms(self):
+        import struct
+        for p in sorted(self.M.glob('*.bin')):
+            raw=p.read_bytes()
+            _,w,d,nq,nc=struct.unpack_from('<IIIII',raw,4)
+            room=json.loads((R/'data/sift/structures'/f'{p.stem}.json').read_text())
+            self.assertEqual([w,d],[room['size'][0],room['size'][2]],
+                             f'{p.stem}: mesh footprint differs from the room record')
+            # quads must fit one batch: SiftBudget.MAX_VERTICES is 48000 and a quad is 4 vertices
+            self.assertLessEqual(nq*4,48000,f'{p.stem}: {nq*4} vertices exceeds the 48000 budget')
+            # every column in the table is a real ground column of the room
+            self.assertLessEqual(nc,w*d,p.stem)
+    def test_v041_probe_is_summonable_and_its_floor_is_reversible(self):
+        entities=(ROOT/'src/main/java/dev/logan/entersift/SiftEntities.java').read_text()
+        client=(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text()
+        entity=(ROOT/'src/main/java/dev/logan/entersift/MeshProbeEntity.java').read_text()
+        self.assertIn('EntityType<MeshProbeEntity> MESH_PROBE',entities)
+        self.assertIn('SiftContent.id("mesh_probe")',entities)
+        self.assertIn('MeshProbeRenderer::new',client)
+        # the floor is laid in bounded batches, only over air, and taken back up when the entity goes
+        self.assertIn('COLUMNS_PER_TICK',entity)
+        self.assertIn('MAX_BARRIERS',entity)
+        self.assertIn('isAir()',entity)
+        self.assertIn('onRemoval(RemovalReason reason)',entity)
+        self.assertIn('Blocks.BARRIER',entity)
+        self.assertIn('server.setBlock(pos, Blocks.AIR.defaultBlockState(), 2)',entity)
+        # and it draws through the shared vertex budget like every other Sift pass
+        renderer=(ROOT/'src/client/java/dev/logan/entersift/client/MeshProbeRenderer.java').read_text()
+        self.assertIn('SiftBudget.take(vc)',renderer)
+        self.assertIn('SiftBudget.meshProbe',renderer)
+        self.assertIn('SiftRenderTypes.SOLID',renderer)

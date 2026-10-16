@@ -405,3 +405,13 @@ Local note: `tools/regen_check.py` reports drift on the generator-written creatu
 `pip install Pillow` in this sandbox (Pillow 12.3.0 re-encodes a 1,533-byte PNG to 2,477 bytes with
 identical pixels). That is an encoder difference in the sandbox, not a change to shipped art; CI runs the
 same gate in its own pinned environment.
+
+## 0.41.0 — mesh probe (experimental)
+
+The Dungeons static meshes on the share remain undecodable (packed normals are present, no float32 position
+buffer is), so the experiment draws the game's *level* data instead: `tools/export_mesh_bin.py` writes each
+room's heightfield as an `SFM1` blob and `/summon entersift:mesh_probe ~ ~ ~ {Mesh:"DD_ANC_010"}` shows it
+in game, with a removable barrier floor at the mesh surface height (air-only, 384 columns per tick, capped
+at 24 000 blocks, cleared on removal). Draws through `SiftRenderTypes.SOLID` and the shared vertex budget;
+`mesh_probe=false` disables it. New gates: blob format re-parsed the way the mod reads it, footprint agrees
+with the room record, vertex count inside the budget, and the wiring (summonable + reversible floor).

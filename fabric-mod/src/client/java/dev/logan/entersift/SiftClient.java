@@ -52,6 +52,8 @@ public final class SiftClient implements ClientModInitializer {
         // 0.10: rifts are RiftPortalEntity instances drawn by their own entity renderer.
         EntityRendererRegistry.register(SiftEntities.RIFT_PORTAL, RiftPortalRenderer::new);
         EntityRendererRegistry.register(SiftEntities.AURA_COLUMN, dev.logan.entersift.client.AuraColumnRenderer::new);
+        // 0.41 experimental mesh probe: draws a converted Dungeons room so the level layout can be judged.
+        EntityRendererRegistry.register(SiftEntities.MESH_PROBE, dev.logan.entersift.client.MeshProbeRenderer::new);
         dev.logan.entersift.client.RiftEnergyCubeParticle.register(); // 0.25 3D voxel motes (downward drift + reduced particle density)
         FluidRenderingRegistry.register(SiftContent.ICHOR, SiftContent.FLOWING_ICHOR,
             new FluidModel.Unbaked(

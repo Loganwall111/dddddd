@@ -65,6 +65,50 @@ BC7/ASTC; `pip install texture2ddecoder`).
 | minimap textures (`*_Minimap`) | **filtered by request** — UI only. They are the footprint maps for tiles like `MD_DE_STAIR_001_MW`; say the word and they can be added |
 | everything under `UI/`, `Fonts/`, `Text/`, quest and combat data | filtered by request |
 
+## The mesh probe (0.41, experimental)
+
+The cooked Unreal **static meshes** on the share (`SM_MA2_Portal`, `SM_RavineBG_01`, `SM_DD_Ceiling_*`, …)
+are **not** decodable yet, and this is why: the `.uasset` does contain packed per-vertex data (an 8-byte
+normal/tangent block, confirmed), but there is **no float32 position buffer anywhere in the file** —
+scanning every 4-byte offset for both 12- and 16-byte strides finds no window with real 3D spread, and the
+`.ubulk` has no zlib streams and no float vertex block either. Positions are quantised or live in a
+container this tool does not understand. Guessing strides would produce a mangled mesh presented as a real
+one, so nothing is claimed.
+
+What the probe *does* draw is the game's level data:
+
+```bash
+python3 tools/export_mesh_bin.py src/main/resources/data/sift/structures \
+        src/main/resources/assets/sift/meshes --step 2
+```
+
+That turns each room's `height-plane` into an `SFM1` blob (quads for drawing + a column table for the
+floor) and ships all twelve Deep Dark rooms in `assets/sift/meshes/` (3.0 MB, 1 275–11 248 quads each,
+every one inside the 48 000-vertex budget).
+
+In game:
+
+```
+/summon entersift:mesh_probe ~ ~ ~ {Mesh:"DD_ANC_010"}
+```
+
+* `/summon entersift:mesh_probe ~ ~ ~` uses `DD_ANC_010` (the smallest room, 73x62).
+* `Mesh` picks any id from `MeshProbeData.IDS`; `Floor:0b` shows the mesh without touching blocks.
+* Kill it (`/kill @e[type=entersift:mesh_probe]`) and the barrier floor comes back up.
+* `mesh_probe=false` in `config/entersift-client.properties` hides the drawing without touching the world.
+
+**The barrier floor.** The mesh has no collision of its own, so the entity lays a barrier at the surface
+height of every ground column, 384 per tick, **only where the block is already air**, and remembers how far
+it got. On removal it clears exactly those columns, and only where the block is still a barrier. Nothing in
+the world is overwritten, and the block count is capped at 24 000.
+
+**Known limits of the experiment.** The drawn surface is not walkable by itself — you stand on the barrier
+layer, which sits at the mesh's surface height per column, so steep steps behave like a staircase of
+full blocks rather than the smooth mesh. The mesh draws through `SiftBudget.take`, so a room larger than the
+shared 48 000-vertex budget would be drawn partially rather than wrongly. And this is a probe: it draws the
+room's layout, not the game's textured models, and it is not part of the rift (the rift is walk-through and
+needs none of this).
+
 ## Regenerating
 
 ```bash

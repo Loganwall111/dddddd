@@ -45,6 +45,17 @@ public final class SiftEntities {
             .clientTrackingRange(8).updateInterval(40)
             .build(ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("aura_column"))));
 
+    /**
+     * 0.41 experimental mesh probe (see {@link MeshProbeEntity}): draws one converted Dungeons room and
+     * lays a removable barrier floor under it. Summon with {@code /summon entersift:mesh_probe ~ ~ ~
+     * {Mesh:"DD_ANC_010"}}; kill it and the floor is taken back up.
+     */
+    public static final EntityType<MeshProbeEntity> MESH_PROBE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+        ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("mesh_probe")),
+        EntityType.Builder.<MeshProbeEntity>of(MeshProbeEntity::new, MobCategory.MISC).sized(1f, 1f).fireImmune()
+            .clientTrackingRange(16).updateInterval(20)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id("mesh_probe"))));
+
     public static void initialize() {
         for (SiftKind kind : SiftKind.values()) {
             var key = ResourceKey.create(Registries.ENTITY_TYPE, SiftContent.id(kind.id));
