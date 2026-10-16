@@ -97,6 +97,12 @@ In game:
 * Kill it (`/kill @e[type=entersift:mesh_probe]`) and the barrier floor comes back up.
 * `mesh_probe=false` in `config/entersift-client.properties` hides the drawing without touching the world.
 
+![DD_ANC_010 as the probe draws it](mesh_probe_dd_anc_010.png)
+
+*`DD_ANC_010` flat-shaded from above: a 73x62 floor with perimeter walls and four openings, which line up
+with the four dead-end doors the level data records at (32,26,61), (0,26,17), (32,26,0) and (72,26,17) —
+the geometry and the door table agree. The scattered blocks are interior pillars.*
+
 **The barrier floor.** The mesh has no collision of its own, so the entity lays a barrier at the surface
 height of every ground column, 384 per tick, **only where the block is already air**, and remembers how far
 it got. On removal it clears exactly those columns, and only where the block is still a barrier. Nothing in
