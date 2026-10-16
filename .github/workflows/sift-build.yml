@@ -44,7 +44,20 @@ jobs:
           print('missing sounds:', miss); assert not miss
           PY
       - run: python3 tools/validate.py
-      - run: python3 tools/test_data.py
+      - name: Contract tests (authored resources)
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! python3 tools/test_data.py 2>&1 | tee "$RUNNER_TEMP/sift-tests.log"; then
+            python3 - <<'PYLOG'
+          import os
+          from pathlib import Path
+          text = Path(os.environ['RUNNER_TEMP']) / 'sift-tests.log'
+          tail = '\n'.join(text.read_text().splitlines()[-60:])
+          print('::error title=Failing contract test::' + tail.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PYLOG
+            exit 1
+          fi
       - name: Regeneration baseline (live generators reproduce the shipped tree)
         run: python3 tools/regen_check.py
       - name: Compile-check shaderpack and core shaders (glslang)

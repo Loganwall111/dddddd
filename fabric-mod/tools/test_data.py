@@ -1151,7 +1151,6 @@ class DataContracts(unittest.TestCase):
         for path,reason in manifest['known_drift'].items():
             self.assertTrue((ROOT/path).exists(),path)
             self.assertGreater(len(reason),40,path)
-if __name__=='__main__': unittest.main(verbosity=2)
 
 class DungeonsAssetContracts(unittest.TestCase):
     """The Minecraft Dungeons conversion (0.40). Everything here is checkable offline against the shipped
@@ -1355,3 +1354,5 @@ class SiftTileContracts(unittest.TestCase):
         self.assertIn('oracle',r['blocks']['note'])
         self.assertTrue((R/'assets/sift/meshes/PortalTile.bin').exists(),
                         'the portal tile must ship a mesh for the probe')
+
+if __name__=='__main__': unittest.main(verbosity=2)
