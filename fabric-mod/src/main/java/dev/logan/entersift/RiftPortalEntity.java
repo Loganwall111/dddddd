@@ -15,15 +15,10 @@ import net.minecraft.world.level.storage.ValueOutput;
  * A reality rift or portal opening (entity id {@code entersift:rift_portal}).
  *
  * It is a hollow, collision-free, unpickable volume with no model of its own. All visuals come from
- * the client {@code RiftPortalRenderer}. The server only ticks its age, which is synced so every
- * client plays the same growth timeline:
- *   ticks 0-30   puddle ripple with erratic lightning (the structure is still invisible)
- *   ticks 31-60  incubation seed: one tiny pulsing box
- *   ticks 61-100 voxel cluster fracture, one ring of boxes every 10 ticks
- *   ticks 100+   stable: dissolving voxel energy cubes, floating hollow cubes, rim shimmer
- *
- * NBT (summon): RiftType (int, see {@link RiftType}), Width, Height (blocks), Rotation[0] = facing yaw.
- * Travel and lifetime stay in the data pack (marker tagged sift.rift), which owns these entities.
+ * the client {@code RiftPortalRenderer}. Server-synced age drives a cube (0-18), tumbling bar
+ * (18-52), opening ring (52-61), then tiered stepped aperture (61-100).
+ * Travel is server-owned swept crossing of the recessed aperture, never a radius selector.
+ * Data-pack markers own ordinary lifetimes; LifeTicks bounds temporary destination rifts.
  */
 public class RiftPortalEntity extends Entity {
     private final java.util.Map<java.util.UUID, net.minecraft.world.phys.Vec3> previous = new java.util.HashMap<>();
@@ -66,8 +61,8 @@ public class RiftPortalEntity extends Entity {
             var before = previous.put(player.getUUID(), now);
             // Loading beside a rift, standing still, and remote teleports are not crossings.
             if (before == null || before.distanceToSqr(now) > 64) continue;
-            var a = local(before); var b = local(now);
-            if (RiftAperture.crossed(riftType().id, riftWidth(), riftHeight(), a.x, a.y, a.z, b.x, b.y, b.z)) {
+            var a = before.subtract(position()); var b = now.subtract(position());
+            if (RiftAperture.crossedWorld(riftType().id, riftWidth(), riftHeight(), getYRot(), a.x, a.y, a.z, b.x, b.y, b.z)) {
                 String gate = "execute if score @s sift.cooldown matches 0 if score @s sift.transit matches 0 run ";
                 EnterTheSift.runAs(player, gate + "tag @s add sift.crossed");
                 if (player.entityTags().contains("sift.crossed")) {
@@ -78,12 +73,6 @@ public class RiftPortalEntity extends Entity {
             }
         }
         previous.keySet().retainAll(seen);
-    }
-
-    private net.minecraft.world.phys.Vec3 local(net.minecraft.world.phys.Vec3 p) {
-        double angle = Math.toRadians(getYRot() + 180), c = Math.cos(angle), s = Math.sin(angle);
-        double x = p.x - getX(), z = p.z - getZ();
-        return new net.minecraft.world.phys.Vec3(c * x + s * z, p.y - getY(), -s * x + c * z);
     }
 
     @Override public boolean isNoGravity() { return true; }

@@ -29,6 +29,20 @@ class RiftApertureTest {
         assertTrue(cross(-6, 1, -1, 6, 1, 1));
         assertFalse(cross(-8, 1, -1, 0, 1, 1)); // intersection outside, endpoint inside
     }
+    @Test void rotatedRiftsUseTheSamePlaneAsTheRenderer() {
+        for (double yaw : new double[]{0, 45, 90, 135, 180, 270, -35}) {
+            double angle = Math.toRadians(180 - yaw), sn = Math.sin(angle), cs = Math.cos(angle);
+            double front = -0.4837 + 0.1, back = -0.4837 - 0.1;
+            assertTrue(RiftAperture.crossedWorld(3, 7, 5, yaw,
+                sn * front, 1, cs * front, sn * back, 1, cs * back), "yaw=" + yaw);
+            assertFalse(RiftAperture.crossedWorld(3, 7, 5, yaw,
+                sn * front, 1, cs * front, cs + sn * front, 1, -sn + cs * front));
+        }
+    }
+    @Test void crossingTheLipIsNotYetCrossingTheWindow() {
+        assertFalse(RiftAperture.crossed(3, 7, 5, 0, 1, .1, 0, 1, -.1));
+        assertFalse(RiftAperture.crossed(3, 0, 5, 0, 1, -1, 0, 1, 1));
+    }
     @Test void boundariesAreHalfOpenAndDetachedBoxesExcluded() {
         assertTrue(RiftAperture.cell(3, 5, 7));
         assertFalse(RiftAperture.cell(3, 10, 7));

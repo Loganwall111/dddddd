@@ -7,6 +7,37 @@ D=R/'data/entersift'
 def fn(name): return (D/f'function/{name}.mcfunction').read_text()
 def read(path): return json.loads((D/path).read_text())
 class DataContracts(unittest.TestCase):
+    def test_staff_models_resolve_and_are_three_dimensional(self):
+        assets=R/'assets/entersift'
+        for name in ('rift_staff', 'rift_staff_blue'):
+            definition=json.loads((assets/f'items/{name}.json').read_text())
+            self.assertEqual(definition['model']['model'],f'entersift:item/{name}')
+            model=json.loads((assets/f'models/item/{name}.json').read_text())
+            self.assertGreater(len(model['elements']),5)
+            self.assertIn('firstperson_righthand',model['display'])
+            self.assertIn('thirdperson_righthand',model['display'])
+            for element in model['elements']:
+                self.assertGreater(element['to'][2],element['from'][2])
+                for face in element['faces'].values():
+                    texture=model['textures'][face['texture'][1:]].split(':')[1]
+                    self.assertTrue((assets/f'textures/{texture}.png').is_file())
+    def test_crossing_has_no_radius_or_flare(self):
+        self.assertNotRegex(fn('rift/transport'),r'@a\[')
+        self.assertIn('matches 108..',fn('travel/transit_tick'))
+        self.assertNotIn('legacy_begin',fn('travel/begin'))
+        client=ROOT/'src/client/java/dev/logan/entersift/client'
+        self.assertNotIn('FLASH',(client/'SiftTransition.java').read_text())
+        self.assertIn('isFirstPerson()',(client/'RiftCrossingPixels.java').read_text())
+    def test_translucency_and_safe_scene_copy(self):
+        client=ROOT/'src/client/java/dev/logan/entersift/client'
+        types=(client/'SiftRenderTypes.java').read_text()
+        for name in ('RIFT_PIPELINE','RIFT_WALL_PIPELINE','RIFT_LENS_PIPELINE'):
+            block=types.split('public static final RenderPipeline '+name+' =')[1].split('.build()')[0]
+            self.assertIn('BlendFunction.TRANSLUCENT',block)
+            self.assertIn('CompareOp.GREATER_THAN_OR_EQUAL, false',block)
+        copy=(client/'RiftSceneCopy.java').read_text()
+        for check in ('copyTextureToTexture', 'getWidth(0)', 'getHeight(0)', 'releaseTextures', 'shaderPackInUseCached', 'catch (RuntimeException'):
+            self.assertIn(check,copy)
     def test_load_does_not_reset_existing_souls(self):
         self.assertNotIn('scoreboard players set @a sift.souls',fn('load'))
     def test_four_destinations_are_guarded(self):
@@ -259,9 +290,7 @@ class DataContracts(unittest.TestCase):
         gate=fn('rift/gate')
         self.assertIn('run time of minecraft:overworld query minecraft:day',gate)
         self.assertIn('run time of entersift:sift query entersift:sift_cycle',gate)
-        self.assertIn('matches 13000..23999 run return 0',gate)
-        self.assertIn('matches ..12999 run return 0',gate)
-        self.assertIn('matches 23000.. run return 0',gate)
+        self.assertNotIn('run return 0',gate)
         self.assertIn('return 1',gate)
         for path in ('rift/natural','rift/create','rift/tick','rift/punch','rift/punch_at'):
             self.assertIn('function entersift:rift/gate',fn(path),path)
@@ -271,7 +300,7 @@ class DataContracts(unittest.TestCase):
         renderer=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertNotIn('if (!s.night && s.type != RiftType.PORTAL) return;',renderer)
         self.assertNotIn('getOverworldClockTime()',renderer)
-        self.assertIn('openingWindow(',renderer); self.assertIn('apertureShape(',renderer)
+        self.assertNotIn('openingWindow(',renderer); self.assertIn('seedBox(',renderer)
         self.assertIn('int k = 0; k < 9; k++',renderer)
         self.assertIn('int count = 9;',renderer)
         self.assertIn('bolt(p, vc',renderer)  # lightning remains visible at night
@@ -459,7 +488,6 @@ class DataContracts(unittest.TestCase):
         self.assertIn('if (age >= 52) ripple(',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
         # 3. Wide soft additive night curtains replace laser poles.
         self.assertNotIn('private static void curtains(',rift)
-        for c in ('0x2F6BFF','0x9FF6FF','0xD13CFF','0x7A3CFF'): self.assertIn(c,rift)
         self.assertIn('if (!s.night) return;',rift)
         # Slow crack-free wave strongest at the bottom; the geometry avoids T-junctions.
         self.assertIn('0.035f + 0.11f * low * low',rift); self.assertIn('t * 0.42f',rift)
@@ -479,7 +507,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('RIPPLE_END = 30, SEED_START = 0, CLUSTER_START = 61, GROWN = 100',rift)
         self.assertIn('CLUSTER_START + Math.min(tier, RiftShape.TIERS - 1) * 10f',rift)
         self.assertIn('TIERS = 4',(C/'RiftShape.java').read_text())
-        self.assertIn('private static void spark(',rift); self.assertIn('Math.sin(age * 2.2f)',rift)
+        self.assertIn('Math.sin(age * 2.2f)',rift)
         self.assertIn('half, half, half',rift)        # 0.25-0.5 block cubes
         self.assertIn('Math.sin(f * Math.PI)',rift); self.assertIn('rgb(0xA8F5C8), rgb(0x3FF3FF), rgb(0xFFB8E0)',rift)
         self.assertIn('rgb(0xC0142A), rgb(0xFF6A1A), rgb(0xE0B040)',rift)
@@ -487,7 +515,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('matches 100..5990',fn('rift/tick'))
         # Directive 3: direction window kept, safe rim shimmer, recessed alcove frame, warp overlay then tunnel.
         self.assertIn('float[] jit',rift); self.assertIn('private static void frame(',rift); self.assertIn('COLLAR = 0.3f',rift)
-        self.assertIn('RiftAperture.crossed(', (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
+        self.assertIn('RiftAperture.crossedWorld(', (ROOT/'src/main/java/dev/logan/entersift/RiftPortalEntity.java').read_text())
         self.assertIn('effect give @s entersift:rift_transit 1 0 true',fn('travel/warp'))
         self.assertIn('matches 108.. run function entersift:travel/warp_go',fn('travel/transit_tick'))
         self.assertIn('matches 61..99 run function entersift:travel/transit_go',fn('travel/transit_tick'))
@@ -498,8 +526,8 @@ class DataContracts(unittest.TestCase):
         part=(C/'RiftEnergyCubeParticle.java').read_text(); hud=(C/'SiftTransition.java').read_text()
         tun=(C/'SiftTunnel.java').read_text(); fsh=(S/'rift.fsh').read_text(); tfsh=(S/'tunnel.fsh').read_text()
         # Part 1: Pure voxel geometry over spheres + 100-tick timeline + reduced downward motes
-        self.assertNotIn('private static void ring(',rift); self.assertIn('hollowVoxelRect(',rift)
-        self.assertIn('openingWindow(',rift); self.assertIn('apertureShape(',rift)
+        self.assertNotIn('private static void ring(',rift); self.assertIn('seedBox(',rift)
+        self.assertNotIn('openingWindow(',rift); self.assertIn('rippleRing(',rift)
         self.assertNotIn('Math.cos(a)',shape); self.assertIn('rimCells',shape)
         self.assertIn('RiftEnergyCubeParticle.register()',(ROOT/'src/client/java/dev/logan/entersift/SiftClient.java').read_text())
         self.assertIn('velocity.y -= 0.04f',part); self.assertIn('currentAge >= 0.75f * totalMaxAge',part)
@@ -507,7 +535,7 @@ class DataContracts(unittest.TestCase):
         # Part 2: Immersive Viewport Multi-Dimension Engine (secondary FBO pass + multi-pass box-blur + emissive overlay)
         self.assertIn('RiftSceneCopy.available()',rift); self.assertIn('texture(Sampler0',fsh)
         self.assertIn('getYaw(',rift); self.assertIn('getPitch(',rift)
-        self.assertIn('VIBRANT_PINK_DAY',rift); self.assertIn('DEEP_AMBER_NIGHT',rift)
+        self.assertIn('Warp wv = Warp.STILL',rift)
         self.assertIn('boxBlurViewport(',fsh); self.assertIn('vibrantPinkDay',fsh); self.assertIn('deepAmberNight',fsh)
         # Part 3: Seamless Transition (Ticks 0-40 RGB split, 41-60 orange flare, Tick 60 tunnel) & Voxel Corridor
         self.assertIn('isFirstPerson()',hud)
@@ -552,7 +580,7 @@ class DataContracts(unittest.TestCase):
         fsh=(S/'rift.fsh').read_text(); sky=(C/'SiftSky.java').read_text()
         aura=(C/'AuraColumns.java').read_text(); clouds=(C/'SiftClouds.java').read_text()
         # Unified stepped-cross cavity + wavy side walls & wavy interior vistas
-        self.assertIn('box[i][j] = 0;',shape); self.assertIn('rectSub(',rift); self.assertIn('wavySideVeils(',rift)
+        self.assertIn('box[i][j] = 0;',shape); self.assertIn('rectSub(',rift); self.assertNotIn('wavySideVeils(',rift)
         self.assertIn('wavyCoords(',fsh); self.assertIn('canopyTreesAndMesas(',fsh)
         # Sift aurora panels + floating musical note glyphs inside rainbow columns
         self.assertIn('0x68FFD0',sky); self.assertIn('noteGlyphs(',aura)
@@ -566,7 +594,7 @@ class DataContracts(unittest.TestCase):
         for v in ('viewOverworld','viewNether','viewEnd','viewSift','viewGold','destination('): self.assertIn(v,fsh)
         self.assertIn('static int viewCode(RiftType type, boolean inSift)',rift)
         self.assertIn('clock >= 13_000L && clock < 23_000L',rift)                         # strict local night; Endure in the Sift
-        self.assertIn('rgb(0x2F6BFF)',rift); self.assertIn('rgb(0xD13CFF)',rift)            # blue / magenta curtains
+        self.assertNotIn('curtains(',rift)
     def test_v018_shader_rifts_real_lens_warp_tunnel_frostbloom(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         rift=(C/'RiftPortalRenderer.java').read_text(); types=(C/'SiftRenderTypes.java').read_text()
@@ -674,7 +702,7 @@ class DataContracts(unittest.TestCase):
         # Rifts are gated to local night/Endure; the opening is circular, twisted, and less particle-heavy.
         rift=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
         self.assertIn('SiftTides.isEndure(clock)',rift)
-        self.assertIn('openingWindow(',rift); self.assertIn('rippleRing(',rift)
+        self.assertNotIn('openingWindow(',rift); self.assertIn('rippleRing(',rift)
         self.assertNotIn('if (!s.night && s.type != RiftType.PORTAL) return;',rift)
         self.assertIn('int k = 0; k < 9; k++',rift)
         self.assertIn('int count = 9;',rift)

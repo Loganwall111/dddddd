@@ -1,3 +1,22 @@
+# 0.27 verification — 2026-10-16
+
+Based on `ad86c34` (the user's 0.26 build), not the older starting checkout.
+
+- Resource validation: **passed** (607 JSON/metadata files, 152 functions).
+- Offline data contracts: **63 passed**, including both 3D staff model/texture chains,
+  translucent pipeline state, no radius selector and no legacy rift cutscene.
+- Regeneration: **7 live generators reproduce the shipped tree**, no drift.
+- Java compilation, core GLSL variants and JUnit tests: passed in the interim
+  [35911a2 build](https://github.com/Loganwall111/dddddd/actions/runs/38967852712).
+- Final code additionally tests rotated aperture crossings and safe/unsafe surface
+  fixtures in the dedicated server. Final CI result is recorded after completion.
+- Graphical Minecraft client: **not run** here. One-to-one reference matching,
+  refraction appearance, third-person pixels and Iris behavior are not visually verified.
+
+See [RIFT_027.md](RIFT_027.md) for the exact compatibility limits and acceptance steps.
+
+---
+
 # Verification record — 2026-10-01
 
 ## Sift Overhaul 0.25.0-alpha: passed locally

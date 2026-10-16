@@ -1,4 +1,4 @@
-# Tick 60: the screen is fully covered by the orange flare; teleport silently.
+# 0.27: Route the tunnel exit; rift destinations resolve a safe surface server-side.
 scoreboard players set @s sift.transit 0
 scoreboard players set @s sift.cooldown 60
 execute if score @s sift.dest matches 0 run return run function entersift:travel/destination_0

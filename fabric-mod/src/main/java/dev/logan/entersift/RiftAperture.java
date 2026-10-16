@@ -36,6 +36,14 @@ public final class RiftAperture {
         return false;
     }
 
+    public static boolean crossedWorld(int type, double width, double height, double yaw,
+            double ax, double ay, double az, double bx, double by, double bz) {
+        double angle = Math.toRadians(yaw + 180), c = Math.cos(angle), s = Math.sin(angle);
+        return crossed(type, width, height,
+            c * ax + s * az, ay, -s * ax + c * az,
+            c * bx + s * bz, by, -s * bx + c * bz);
+    }
+
     public static float depth(int type, int i, int j) {
         if (type == 4) return 0.28f;
         if (type == 0 || type == 3) {

@@ -35,6 +35,10 @@ public final class RiftTravel {
                 for (int dest = 0; dest < 4; dest++) {
                     String tag = "sift.arrive_" + dest;
                     if (!player.entityTags().contains(tag)) continue;
+                    if (!player.level().dimension().identifier().equals(SiftContent.id("rift_tunnel"))) {
+                        player.removeTag(tag); looks.remove(player.getUUID()); search.remove(player.getUUID());
+                        continue;
+                    }
                     var key = switch (dest) {
                         case 0 -> Level.OVERWORLD;
                         case 1 -> Level.NETHER;
@@ -80,7 +84,7 @@ public final class RiftTravel {
         });
     }
 
-    private static BlockPos surface(ServerLevel level, int x, int z, boolean nether) {
+    static BlockPos surface(ServerLevel level, int x, int z, boolean nether) {
         int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         // Nether has no outdoor surface: find an open dry shelf below bedrock, never land on its roof.
         int bottom = nether ? 32 : top;

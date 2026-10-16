@@ -27,7 +27,7 @@ final class SiftSmokeTest {
             ticks++;
             if (ticks == 20) stageOne(server);
             if (ticks == 120) stageTwo(server);
-            if (ticks == 140) checkAnchors(server);
+            if (ticks == 140) { checkAnchors(server); checkSurfaceArrival(server); }
             // 0.16: the arena chunks are force-loaded first and built 80 ticks later (a slow runner may not
             // have generated them in the same tick), and the portal gets ~200 ticks of slack after opening.
             if (ticks == 30) forceRitualChunks(server);
@@ -115,6 +115,24 @@ final class SiftSmokeTest {
         EnterTheSift.LOGGER.info("SIFT-SMOKE anchors: rifts={} portals={} wrongType={}", rifts, portals, wrong);
         if (rifts == 0 || portals == 0 || wrong > 0)
             EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL rift_portal entities: rifts={} portals={} wrongType={}", rifts, portals, wrong);
+    }
+
+    /** CI-only surface fixture: valid clearing, unsafe floor, and obstructed headroom. */
+    private static void checkSurfaceArrival(MinecraftServer server) {
+        var level = server.overworld();
+        // This fixture is in the disposable smoke world, never in a normal player world.
+        String prefix = "execute in minecraft:overworld run ";
+        run(server, prefix + "fill -5 301 -1 5 319 3 minecraft:air");
+        run(server, prefix + "fill -5 300 -1 5 300 3 minecraft:grass_block");
+        var clear = RiftTravel.surface(level, 0, 0, false);
+        if (clear == null || clear.getY() != 301) EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL clear surface arrival: {}", clear);
+        run(server, prefix + "setblock 0 300 2 minecraft:magma_block");
+        if (RiftTravel.surface(level, 0, 0, false) != null) EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL magma arrival accepted");
+        run(server, prefix + "setblock 0 300 2 minecraft:grass_block");
+        run(server, prefix + "setblock 0 302 2 minecraft:stone");
+        if (RiftTravel.surface(level, 0, 0, false) != null) EnterTheSift.LOGGER.error("SIFT-SMOKE FAIL obstructed arrival accepted");
+        run(server, prefix + "setblock 0 302 2 minecraft:air");
+        EnterTheSift.LOGGER.info("SIFT-SMOKE surface arrival checks completed");
     }
 
     // ------------------------------------------------------------------ ritual (0.14.1)
