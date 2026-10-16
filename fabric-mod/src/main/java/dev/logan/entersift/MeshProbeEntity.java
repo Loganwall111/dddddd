@@ -5,6 +5,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -104,8 +105,13 @@ public class MeshProbeEntity extends Entity {
         }
     }
 
+    // A probe is scenery: no hitbox, nothing to hit, and it cannot be hurt. Entity declares hurtServer
+    // abstract in 26.3, so a plain Entity must implement it (learned from AuraColumnEntity).
+    @Override public boolean isNoGravity() { return true; }
     @Override public boolean isPickable() { return false; }
+    @Override public boolean canBeCollidedWith(Entity other) { return false; }
     @Override public boolean isAttackable() { return false; }
+    @Override public boolean hurtServer(ServerLevel level, DamageSource source, float amount) { return false; }
     @Override public boolean shouldRenderAtSqrDistance(double distance) { return distance < 512 * 512; }
 
     @Override
