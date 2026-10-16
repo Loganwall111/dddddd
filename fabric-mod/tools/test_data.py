@@ -1239,5 +1239,5 @@ class ReleaseTaggingContracts(unittest.TestCase):
         0.40.0: the jar was 0.40.0 and the artifact still said 0.39.2)."""
         props=(ROOT/'gradle.properties').read_text()
         version=[l.split('=',1)[1].strip() for l in props.splitlines() if l.startswith('mod_version=')][0]
-        workflow=(ROOT/'.github/workflows/sift-build.yml').read_text()
+        workflow=(ROOT.parent/'.github/workflows/sift-build.yml').read_text()   # repo root, not fabric-mod/
         self.assertIn(f'Sift-Overhaul-{version}-26.3',workflow)
