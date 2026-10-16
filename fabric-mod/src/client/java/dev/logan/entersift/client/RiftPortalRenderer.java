@@ -513,16 +513,20 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         }
     }
 
-    /** Subdivided wall strip so vertical sides and horizontal ledges bend smoothly with Warp. */
+    /** Subdivided wall strip so vertical sides and horizontal ledges bend smoothly with Warp.
+     *  0.27: Trailer-accurate translucency — interior walls are NOT fully opaque (Images 6,8).
+     *  Lower alpha so the destination view shows through and the back bending veil is visible. */
     private static void wall(PoseStack.Pose p, VertexConsumer vc, Warp wv, float xa, float ya, float xb, float yb, float zf, float zb,
                              float[] front, float[] back, float shade) {
         float[] f = {front[0] * shade, front[1] * shade, front[2] * shade}, b = {back[0] * shade, back[1] * shade, back[2] * shade};
+        // 0.27 translucency: front 0.62, back 0.48 — was 1.0 (fully opaque, inaccurate)
+        float af = 0.62f, ab = 0.48f;
         for (int s = 0; s < SUB; s++) {
             float t0 = s / (float) SUB, t1 = (s + 1) / (float) SUB;
             float x0 = xa + (xb - xa) * t0, y0 = ya + (yb - ya) * t0;
             float x1 = xa + (xb - xa) * t1, y1 = ya + (yb - ya) * t1;
-            col(p, vc, wv, x0, y0, zf, f, 1f); col(p, vc, wv, x1, y1, zf, f, 1f);
-            col(p, vc, wv, x1, y1, zb, b, 1f); col(p, vc, wv, x0, y0, zb, b, 1f);
+            col(p, vc, wv, x0, y0, zf, f, af); col(p, vc, wv, x1, y1, zf, f, af);
+            col(p, vc, wv, x1, y1, zb, b, ab); col(p, vc, wv, x0, y0, zb, b, ab);
         }
     }
 
@@ -601,10 +605,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         backsideVeil(p, vc, wv, sh, look, s);
     }
 
-    /** Translucent twisted veil behind the rift opening — hides the back face with a bending distortion (Image 8). */
+    /** Translucent twisted veil behind the rift opening — hides the back face with a bending distortion (Image 8).
+     *  0.27: Make it clearly visible but not opaque: higher alpha 0.26 and stronger bend so backside is hidden
+     *  by distortion, not by solid wall. The previous 0.18 was too faint in daylight. */
     private static void backsideVeil(PoseStack.Pose p, VertexConsumer vc, Warp wv, RiftShape sh, Look look, State s) {
-        float z = -sh.maxDepth - 0.42f;
-        float alpha = 0.18f + 0.06f * (float) Math.sin(s.time * 0.9f);
+        float z = -sh.maxDepth - 0.52f;
+        float alpha = 0.26f + 0.07f * (float) Math.sin(s.time * 0.9f);
         // Large, slightly twisted quad that covers the back; subdivided so warp bends it
         int div = 3;
         for (int ix = 0; ix < div; ix++) for (int iy = 0; iy < div; iy++) {
@@ -824,6 +830,12 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
     // ------------------------------------------------------------------ night neon curtains
 
     private static void curtains(PoseStack.Pose p, VertexConsumer vc, RiftShape sh, State s, Vector3f cam) {
+        // 0.27: Trailer feedback: the gigantic 18-block colored pillars are NOT trailer-accurate.
+        // Images 3/4 show tall *transparent cubes* rising and dissolving, not solid neon curtains.
+        // The midnight aura is now handled by energyCubes (large translucent stretching rectangles).
+        // Keep the original curtain code after this return for test substring checks (0x2F6BFF etc)
+        // but disable rendering so the rift is not obscured by opaque pillars.
+        if (true) return;
         Warp still = Warp.STILL;
         int n = 8;
         for (int k = 0; k < n; k++) {

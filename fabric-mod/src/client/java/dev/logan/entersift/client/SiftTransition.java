@@ -149,6 +149,26 @@ public final class SiftTransition {
         float a = t < 60f ? Math.min(1f, 0.72f + (t - 40f) / 12f * 0.28f) : 1f - smoothK((t - 60f) / 20f);
         if (a <= 0f) return;
 
+        // 0.27: Trailer white pixel-dissolve (Image 2) for t>=52: tiny white rectangles scatter/drift
+        // while the orange burst remains underneath, matching the "white pixelation dissolve" note.
+        // No cutscene — pure overlay so the 3rd-person teleport feels like dissolving into pixels.
+        if (t >= 52f) {
+            float pa = Math.min(1f, (t - 52f) / 8f) * a;
+            long base = mixBits((long) (t * 9001) ^ w * 31L ^ h * 17L);
+            int count = 140;
+            for (int i = 0; i < count; i++) {
+                long r = mixBits(base ^ i * 6364136223846793005L + 1442695040888963407L);
+                int px = (int) ((r >>> 12 & 0xFFFF) / 65535f * w);
+                int py = (int) ((r >>> 28 & 0xFFFF) / 65535f * h);
+                int ps = 2 + (int) ((r >>> 44 & 7) + 2);
+                // Drift outward slightly as dissolve progresses
+                float drift = (t - 52f) / 8f * 3f;
+                int dx = (int) ((r >>> 2 & 1) == 0 ? drift : -drift);
+                int dy = (int) ((r >>> 5 & 1) == 0 ? drift : -drift);
+                g.fill(px + dx, py + dy, px + dx + ps, py + dy + ps, argb(pa * (0.55f + 0.35f * ((r >>> 50 & 255) / 255f)), 1f, 1f, 1f));
+            }
+        }
+
         // Solid blinding orange-and-red base covering the entire viewport
         g.fill(0, 0, w, h, argb(a, 1.0f, 0.42f, 0.08f));
         // Deep crimson-red outer lens-flare bands (top, bottom, left, right)
