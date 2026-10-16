@@ -3,7 +3,7 @@
 
 **Fabric mod · version 0.25.0-alpha · Minecraft Java 26.3 · Java 25**
 
-> **Build status:** Offline JSON/resource validation and the data-contract tests pass. The GitHub Actions workflow is the authoritative compiler and artifact build; see [BUILD_STATUS.md](docs/BUILD_STATUS.md) for its current result. In-game rendering and generation still need a client playtest; use a disposable world first.
+> **Build status:** GitHub Actions run [#251](https://github.com/Loganwall111/dddddd/actions/runs/38967318760) compiled `sift-overhaul-0.25.0-alpha.jar` for Minecraft 26.3/JDK 25. Validation, 60 data tests, shader compilation, JAR packaging, generator reproducibility, and the dedicated-server smoke test all passed. Download the `Sift-Overhaul-0.25.0-alpha-26.3` artifact from the [run](https://github.com/Loganwall111/dddddd/actions/runs/38967318760/artifacts/12075181903). Client/GPU visuals still need playtesting; use a disposable world first.
 
 ## 0.25.0-alpha — Sift Overhaul
 
@@ -46,7 +46,7 @@ This is a separate Minecraft project. The existing Lumital React/Three.js app at
 - Return coordinates are persistent, per-player and block-precision. Nested rifts preserve the first origin until returning. Death clears the saved return. If the original location is altered while away, return safety is not guaranteed—keep an operator rescue command available.
 - Rift and ritual timers pause in unloaded chunks; no permanent force-loading of ancient cities or encounters.
 - The built-in assets work without Iris; **the optional post-process shader requires a compatible Iris installation and manual selection**. Its sky is procedural, not a literal cubemap. It is not a renderer replacement, shadow mapper, ray tracer or true volumetric renderer. Full-bright note displays do not cast coloured light onto terrain. It has not been GPU-tested.
-- Fluid rendering, worldgen codecs, current-version command syntax, multiplayer behavior and the Java bindings still need an actual Minecraft 26.3 build/runtime pass. Static validation cannot establish those.
+- The Minecraft 26.3 Gradle build and dedicated-server world/data smoke test passed in CI. Client-side fluid rendering, sky/rift appearance, multiplayer behavior, and GPU output still need an actual in-game client test.
 
 ## Build
 
@@ -67,7 +67,7 @@ The Gradle wrapper is included. It downloads Gradle 9.7.1 and the dependencies. 
 
 After a successful build, install `build/libs/sift-overhaul-0.25.0-alpha.jar` in a **Fabric 26.3** instance's `mods` folder alongside Fabric API. **Do not install the `-sources.jar` or the source ZIP.** Both client and server need the mod because it registers blocks, items and fluids. Restart Minecraft when changing dimensions/worldgen data.
 
-A GitHub Actions workflow is included at `.github/workflows/sift-build.yml`. On a push/PR containing this project, it runs validation and the Gradle build, then uploads the JAR and shader ZIP **only if the build succeeds**. The workflow has not been run from this session.
+The GitHub Actions workflow at `.github/workflows/sift-build.yml` passed on session branch `arena/01a0f72f-dddddd` in [run #251](https://github.com/Loganwall111/dddddd/actions/runs/38967318760). Its `Sift-Overhaul-0.25.0-alpha-26.3` artifact contains the compiled JAR and can be downloaded from the [artifact page](https://github.com/Loganwall111/dddddd/actions/runs/38967318760/artifacts/12075181903). Future source pushes run the same checks.
 
 ### Optional Overworld shader
 

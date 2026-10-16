@@ -2,7 +2,7 @@
 
 The Minecraft mod project is in **[`fabric-mod/`](fabric-mod/README.md)**. The new **0.25.0-alpha Sift Overhaul** targets **Minecraft Java 26.3 / Fabric / JDK 25**, preserving the newest 0.24 client/rendering code while adding the independent Sift tides, night-only rifts, small rainbow Ichor features, giant Canopy fossils, Jelly Lands and a cyan return portal.
 
-**Build status:** Python data/resource validation passes. GitHub Actions is the authoritative compiler and artifact build; see the [verification record](fabric-mod/docs/BUILD_STATUS.md) for the current result. In-game visuals still require a client playtest. Read the [mod guide](fabric-mod/README.md) before installing into a world.
+**Build status:** `Sift Overhaul` **0.25.0-alpha** compiled successfully on GitHub Actions for Minecraft 26.3/JDK 25. The Gradle build, 60 data tests, shader checks, JAR packaging check, and dedicated-server smoke test passed. [Download the mod artifact](https://github.com/Loganwall111/dddddd/actions/runs/38967318760/artifacts/12075181903). Interactive client/GPU visual testing is still outstanding. See the [verification record](fabric-mod/docs/BUILD_STATUS.md) and [mod guide](fabric-mod/README.md).
 
 The **0.2 visual pass** follows the newly supplied screenshots: [comparison and remaining gaps](fabric-mod/docs/VISUAL_STATUS.md).
 

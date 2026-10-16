@@ -1,26 +1,23 @@
-# Verification record — 2026-10-01
+# Build and verification record — 2026-10-16
 
-## Sift Overhaul 0.25.0-alpha: passed locally
+## Sift Overhaul 0.25.0-alpha: GitHub Actions passed
 
-- `python3 tools/validate.py` — passed: 603 JSON/metadata files, 149 functions, local model/texture references, animation metadata, wrapper integrity, and 12 Sift biome registrations.
-- `python3 tools/test_data.py` — all 53 data-contract tests passed.
-- `python3 -m py_compile tools/phase19.py tools/validate.py tools/test_data.py` — passed.
+- Source commit: `e8cbf9d2b6bce5842d0444bf7dc2a46299674b3c` on the assigned branch `arena/01a0f72f-dddddd`.
+- [GitHub Actions run #251](https://github.com/Loganwall111/dddddd/actions/runs/38967318760) — all steps passed on the Temurin JDK 25 runner for Minecraft 26.3.
+- `./gradlew --no-daemon build` passed and produced `sift-overhaul-0.25.0-alpha.jar`.
+- Resource/data validation and all 60 data-contract tests passed; the live generator reproducibility check passed.
+- The shader pack passed `glslangValidator`, and CI confirmed the bundled shader ZIP is inside the mod JAR.
+- The real Minecraft 26.3 dedicated-server smoke test passed.
+- CI uploaded the **`Sift-Overhaul-0.25.0-alpha-26.3`** artifact. [Download the artifact](https://github.com/Loganwall111/dddddd/actions/runs/38967318760/artifacts/12075181903).
+
+## Local checks
+
+- `python3 tools/validate.py` — passed: 603 JSON/metadata files, 152 functions, local model/texture links, animation metadata, wrapper integrity, and 12 Sift biomes.
+- `python3 tools/test_data.py` — all 60 data-contract tests passed.
 - `git diff --check` — passed.
 
-## GitHub Actions build
+The sandbox itself has no Java runtime, so the Gradle compilation was performed by GitHub Actions rather than locally.
 
-The 0.25.0-alpha source is being built with the repository's GitHub Actions workflow, which runs validation, data-contract tests, shader compilation, the Fabric/Gradle build, shader-pack bundling checks, and a 26.3 server smoke test. The result will be recorded here after the run completes. The CI artifact—not a locally compiled JAR—is the intended build output.
+## Remaining verification limits
 
-## Toolchain baseline (0.25)
-
-- `python3 tools/regen_check.py` — the six live generators (creatures, phase5, expansion, visual_pass,
-  phase24_textures, phase19) reproduce the shipped tree byte-for-byte, with no known drift left. Two
-  generator bugs were fixed to get there (creatures.py salted the Licker texture with the builtin
-  `hash()`; phase19.py re-scaled the crag overlays in place on every run), and the reviewed crag shapes
-  are pinned in `tools/overlays/`. The historical phase chain is marked dead in `tools/baseline.json`
-  because several of those scripts crash or revert 0.25 content.
-- The check now runs in CI after the offline tests, so a stale generator (or a stale note) fails the build.
-
-## Runtime limitations
-
-Even a successful server smoke test cannot establish client-side visual quality. Rift timing/opening animation, sky and fog blending, animated Ichor appearance, Blub appearance/spawning, portal return behavior, and biome terrain density still need an in-game client playtest. Worldgen codecs and command behavior are only runtime-verified to the extent covered by the Actions server smoke test.
+The server smoke test checks the mod's data, registries, functions, and world startup, but it cannot judge the rendered visuals. There has been no interactive Minecraft client/GPU playtest yet; rift animation, sky/fog, Ichor appearance, Blub visuals/spawning, and biome aesthetics still need in-game review. Treat this as an experimental alpha and test in a disposable world first.
