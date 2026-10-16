@@ -454,7 +454,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('worldRay = Position;',vsh)
         self.assertIn('vec3 dir = normalize(worldRay);',fsh)
         self.assertIn('float clouds(vec3 dir',fsh); self.assertIn('float ridge(float yaw',fsh)
-        self.assertNotIn('Sampler0',fsh)
+        self.assertIn('uniform sampler2D Sampler0',fsh)
         # 2. Lifecycle (0.21: 0-100): ripple hard-stopped, tiered snap.
         self.assertIn('if (age >= 52) ripple(',rift); self.assertIn('appearAt(',rift); self.assertIn('seedGlow(',rift)
         # 3. Wide soft additive night curtains replace laser poles.
@@ -505,7 +505,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('velocity.y -= 0.04f',part); self.assertIn('currentAge >= 0.75f * totalMaxAge',part)
         self.assertIn('SIFT_PALETTE',part); self.assertIn('f * (sh.h + 4f)',rift)
         # Part 2: Immersive Viewport Multi-Dimension Engine (secondary FBO pass + multi-pass box-blur + emissive overlay)
-        self.assertIn('RiftSceneCopy.available()',rift); self.assertIn('texture(SceneSampler',fsh)
+        self.assertIn('RiftSceneCopy.available()',rift); self.assertIn('texture(Sampler0',fsh)
         self.assertIn('getYaw(',rift); self.assertIn('getPitch(',rift)
         self.assertIn('VIBRANT_PINK_DAY',rift); self.assertIn('DEEP_AMBER_NIGHT',rift)
         self.assertIn('boxBlurViewport(',fsh); self.assertIn('vibrantPinkDay',fsh); self.assertIn('deepAmberNight',fsh)

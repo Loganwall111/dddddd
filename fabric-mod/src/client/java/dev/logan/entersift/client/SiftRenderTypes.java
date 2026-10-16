@@ -127,11 +127,11 @@ public final class SiftRenderTypes {
     }
 
     public static final RenderPipeline RIFT_LENS_PIPELINE = RenderPipelines.register(riftVariant("rift_lens", "RIFT_LENS")
-        .withSampler("SceneSampler")
+        .withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.SAMPLER0)
         .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
         .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false)).build());
     public static final RenderType RIFT_LENS = RenderType.create("entersift_rift_lens",
-        RenderSetup.builder(RIFT_LENS_PIPELINE).withTexture("SceneSampler", RiftSceneCopy.ID).createRenderSetup());
+        RenderSetup.builder(RIFT_LENS_PIPELINE).withTexture("Sampler0", RiftSceneCopy.ID).createRenderSetup());
 
     public static final RenderType RIFT = RenderType.create("entersift_rift", RenderSetup.builder(RIFT_PIPELINE).createRenderSetup());
     public static final RenderType RIFT_WALL = RenderType.create("entersift_rift_wall", RenderSetup.builder(RIFT_WALL_PIPELINE).createRenderSetup());

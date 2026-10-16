@@ -24,7 +24,7 @@ float fogFade() {
 }
 
 #if defined(RIFT_LENS)
-uniform sampler2D SceneSampler;
+uniform sampler2D Sampler0;
 #endif
 
 #if !defined(RIFT_WALL) && !defined(RIFT_GLOW) && !defined(RIFT_LENS)
@@ -242,13 +242,13 @@ vec3 boxBlurViewport(int view, vec3 dir, float t, bool night, vec2 faceUv) {
 
 void main() {
 #if defined(RIFT_LENS)
-    vec2 uv = gl_FragCoord.xy / vec2(textureSize(SceneSampler, 0));
+    vec2 uv = gl_FragCoord.xy / vec2(textureSize(Sampler0, 0));
     vec2 p = (riftData.rg - 0.5) * 2.0;
     float r = length(p);
     float envelope = smoothstep(0.18, 0.45, r) * (1.0 - smoothstep(0.60, 1.0, r));
     float wave = sin(r * 34.0 - GameTime * 4200.0);
     vec2 shift = normalize(p + vec2(0.0001)) * wave * envelope * 0.008;
-    vec3 scene = texture(SceneSampler, clamp(uv + shift, vec2(0.001), vec2(0.999))).rgb;
+    vec3 scene = texture(Sampler0, clamp(uv + shift, vec2(0.001), vec2(0.999))).rgb;
     fragColor = vec4(scene, envelope * 0.78 * fogFade());
     packLight = vec4(0.0); packNormal = vec4(0.0);
 #elif defined(RIFT_GLOW)
