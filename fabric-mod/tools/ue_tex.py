@@ -279,6 +279,28 @@ def decode_bc7(data, w, h):
     return out, (decoded / total if total else 0.0)
 
 
+def bc7_mode_profile(data, off, blocks=256):
+    """Block-mode histogram of a candidate BC7 payload.
+
+    A BC7 block starts with its mode as a run of leading zero bits, so real BC7 art concentrates in one or
+    two modes (6 or 5 for photographs, a couple of modes for a matte). A uniform spread means the bytes at
+    this offset are not a BC7 block stream at all - which is what the 13 quarantined files show, and why
+    they must not be written out as if they were art.
+    """
+    seen = {}
+    for i in range(blocks):
+        o = off + i * 16
+        if o + 16 > len(data): break
+        b = data[o]; mode = 0
+        while mode < 8 and not (b >> mode) & 1: mode += 1
+        seen[mode] = seen.get(mode, 0) + 1
+    total = sum(seen.values()) or 1
+    top = sorted(seen.values(), reverse=True)
+    return {'total': total, 'mode6': seen.get(6, 0) / total,
+            'top2': sum(top[:2]) / total, 'modes': len(seen),
+            'plausible': sum(top[:2]) / total >= 0.80 and len(seen) <= 5}
+
+
 DECODERS = {'PF_DXT5': decode_bc3, 'PF_DXT3': decode_bc3, 'PF_BC5': decode_bc3,
             'PF_DXT1': decode_bc1, 'PF_BC4': decode_bc1,
             'PF_B8G8R8A8': decode_bgra8, 'PF_R8G8B8A8': decode_bgra8,
@@ -466,6 +488,17 @@ def convert(src, outdir):
             rec['dims_source'] = ('ue_dims.json (eye-verified)' if src.stem in verified_dims()
                                   else 'shape prior (not verified)')
         rec['decoded_fraction'] = round(frac, 4)
+        if fmt == 'PF_BC7':
+            prof = bc7_mode_profile(payload, 0)
+            rec['bc7_modes'] = {k: (round(v, 4) if isinstance(v, float) else v) for k, v in prof.items()}
+            if not prof['plausible']:
+                # Do not write a payload that is not a BC7 block stream: a noisy PNG shipped as art is the
+                # failure this check exists to prevent (13 files hit it, see art/undecoded/README.md).
+                rec['shipped'] = False
+                rec['quarantined'] = (f"payload is not a BC7 block stream: top-two mode share {prof['top2']:.2f} "
+                                      f"over {prof['modes']} modes (real BC7 concentrates in 1-2); likely Oodle-wrapped")
+                rec['note'] = f'REFUSED to write: {rec["quarantined"]}'
+                return rec
         if faces == 6:
             face_len = len(payload) // 6
             for f in range(6):

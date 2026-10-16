@@ -425,3 +425,31 @@ plans ship unlabelled in data/sift/tiles/. `meadowa1_portaltile` contributes Por
 0..88), the only portal-named room in the export, shipped as a record + Blockbench model + probe mesh
 (`{Mesh:"PortalTile"}`). PortalTile ships its voxels as `blocks_RLE` + `blocks_MD5`, which makes a future
 voxel decoder verifiable by hash - three attempts did not reproduce it, so none is claimed.
+
+## 0.43.0 — the rift window draws a Dungeons matte, and 13 noise textures are quarantined
+
+The window pass now samples the converted portal-view sheets. Measured on the PNGs, those sheets are
+**mattes**: the meadow one is pure grey detail (mean saturation 0.055) with the alpha as the destination's
+terrain coverage (0 across the top half, bottom band mean 139 of 255, stippled), the deepdark one is
+coloured (0.276) with the same layered alpha (0 top, 200 bottom). The shader (`#ifdef RIFT_VIEW`) keeps its
+own sky, cover-fits the sheet to the opening by `textureSize` so the portrait deepdark sheet is not
+stretched, slides it by the view ray for parallax, and thresholds the stipple with `smoothstep(0.15,0.55)`
+so the dither reads as solid land; the land keeps 40 per cent of its own colour and takes the rest from the
+rift's palette times the sheet's luminance. Temperate styles use the meadow matte, the dark ones the
+deepdark matte, and `rift_art=false` returns the 0.36-0.39 painted destination. New pipelines
+`pipeline/rift_view` (all three samplers, refraction kept in the rim) and `pipeline/rift_view_plain`.
+
+The other 13 converted textures (`sky_fd_face0-5`, `sky_wellspring_plains_face0-5`,
+`rift_view_meadow_back`) turned out to be undecodable: scoring the BC7 mode histogram (mode = leading zero
+count of the first block byte) over 256 blocks at every 4-byte offset gives a uniform spread - best mode-6
+share 0.12, top-two 0.58 - so the payload at that offset is not a BC7 block stream (the same
+high-entropy, zlib-free signature the UE meshes show; Oodle is the usual cause). Their decoded output is
+per-pixel noise (mean neighbour delta 48 of 255), so they are **out of the jar**, kept under
+`art/undecoded/` with the write-up, and `SiftWindowArtContracts` forbids any reference to them. The Sift sky
+was never wired to them, so nothing in game changed by removing them.
+
+Two CI defects of mine were fixed in the same push as this build: `gradle.properties` had never been committed
+with the 0.42 version bump, and `tools/test_data.py` ended with `if __name__=='__main__'` *above* the gates
+added since 0.40, so running the file - exactly what CI does - silently skipped 13 of them. The runner is
+last, CI's test step annotates the tail of its own log (job logs are not reachable from every network), and
+`tools/test_data.py` now runs 93 gates.

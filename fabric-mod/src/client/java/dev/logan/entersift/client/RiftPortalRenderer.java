@@ -303,7 +303,10 @@ public final class RiftPortalRenderer extends EntityRenderer<RiftPortalEntity, R
         boolean gpu = SiftBudget.riftShader;
         RenderType wallT = gpu ? SiftRenderTypes.RIFT_WALL : SiftRenderTypes.GLASS;
         RenderType glowT = gpu ? SiftRenderTypes.RIFT_GLOW : SiftRenderTypes.GLOW;
-        RenderType winT = gpu ? (RiftScene.request() ? SiftRenderTypes.RIFT_REFRACT : SiftRenderTypes.RIFT) : SiftRenderTypes.GLASS;
+        // 0.43: RiftScene.request() must be called exactly once per frame (it arms the capture), so the
+        // result picks BOTH the scene-copy pipeline and the Dungeons matte variant.
+        boolean refract = RiftScene.request();
+        RenderType winT = gpu ? SiftRenderTypes.riftWindow(s.view, refract, SiftBudget.riftArt) : SiftRenderTypes.GLASS;
         float age = s.age;
         // 0.29r: the rift snaps in white and dissolves into its colours a few ticks later.
         float fl = whiteFlash(age);

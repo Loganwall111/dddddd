@@ -19,6 +19,16 @@ uniform sampler2D Sampler0; // copied scene depth, nearest, reverse-Z
 uniform sampler2D Sampler1; // copied scene colour, linear, clamp-to-edge
 #endif
 
+#ifdef RIFT_VIEW
+// 0.43: the rift window's LAND layer, converted from the Dungeons portal-view sheets
+// (T_PortalView_Singer_Front -> meadow, T_PortalView_DD_Front -> deepdark). Those sheets are not
+// paintings: measured on the converted PNGs, their RGB is grey (mean saturation 0.05 on the meadow
+// one) and their ALPHA is the coverage of the destination's terrain - 0 across the whole sky, rising
+// through the land (bottom band mean alpha 139 of 255). So the sheet fills in the ground and the
+// shader's own sky stays above it, which is how the layered source is meant to be used.
+uniform sampler2D Sampler2;
+#endif
+
 // 0.31: eight rift styles. 0-5 are the destinations, 6 is the white reference rift (17345525) and 7 is
 // the steep olive wall (The_Nether). TINT is the inner glow colour, FROST the frosted layer over the
 // opening; the frost tones come from the measured reference crops.
@@ -147,6 +157,46 @@ void main() {
     col = mix(col, destination(normalize(dir + vec3(0.0, blur, 0.0)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.5);
     col = mix(col, destination(normalize(dir + vec3(blur * 1.4, 0.0, 0.0)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.35);
     col = mix(col, destination(normalize(dir + vec3(0.0, 0.0, blur * 1.4)), tint, frost, uv, crack, strength, t, view, hasTerrain), 0.35);
+#ifdef RIFT_VIEW
+    // ---------------------------------------------------------------------------------------------
+    // 0.43: THE WINDOW'S LAND COMES FROM THE DUNGEONS SHEET.
+    // The sheet is a matte, so it is mapped like a backdrop hung behind the opening: cover-fitted to
+    // the opening's aspect (so a portrait sheet is never squashed into a landscape one), then slid by
+    // the view ray, which is what makes the picture parallax as the player walks past the rift.
+    // ---------------------------------------------------------------------------------------------
+    vec2 tsz = vec2(textureSize(Sampler2, 0));
+    float tAsp = tsz.x / max(tsz.y, 1.0);
+    const float wAsp = 1.60;                      // the opening is wider than it is tall
+    vec2 q = uv - 0.5;
+    if (tAsp > wAsp) q.x *= wAsp / tAsp; else q.y *= tAsp / wAsp;
+    vec2 slide = dir.xy * 0.05;
+    vec2 matteUv = clamp(0.5 + q / 1.18 + slide, vec2(0.0), vec2(1.0));
+    vec4 matte = texture(Sampler2, matteUv);
+    // The sheet is a STIPPLE (the meadow matte is 32 per cent solid and 18 per cent empty pixels across
+    // its land band), so the coverage is averaged over a small box before it is thresholded: that is what
+    // the artists' dither means once the rift is seen from a few blocks away, and it is what turns the
+    // stipple into a silhouette instead of a glassy haze. The RGB keeps the detailed sample.
+    vec2 step1 = 0.75 / tsz;
+    float a4 = 0.25 * (matte.a
+        + texture(Sampler2, clamp(matteUv + vec2(step1.x, 0.0), vec2(0.0), vec2(1.0))).a
+        + texture(Sampler2, clamp(matteUv + vec2(0.0, step1.y), vec2(0.0), vec2(1.0))).a
+        + texture(Sampler2, clamp(matteUv + step1, vec2(0.0), vec2(1.0))).a);
+    float cov = smoothstep(0.22, 0.52, a4);
+    float lum = dot(matte.rgb, vec3(0.299, 0.587, 0.114));
+    // Grey detail drives the rift's own light; the sheet's colours (the deepdark braid is coloured)
+    // keep 40% of themselves so real scenery still shows through.
+    vec3 land = mix(matte.rgb, mix(frost, tint, 0.30) * (0.30 + 1.20 * lum), 0.60);
+    float artAmt = mix(0.78, 1.0, openWindow);
+    // The frosted glass blurs the land silhouette too, still centred on the same pixel.
+    vec2 mSoft = vec2(blur * 1.5, 0.0);
+    float aSoft = 0.25 * (texture(Sampler2, clamp(matteUv + mSoft, vec2(0.0), vec2(1.0))).a
+        + texture(Sampler2, clamp(matteUv + mSoft + vec2(step1.x, 0.0), vec2(0.0), vec2(1.0))).a
+        + texture(Sampler2, clamp(matteUv + mSoft + vec2(0.0, step1.y), vec2(0.0), vec2(1.0))).a
+        + texture(Sampler2, clamp(matteUv + mSoft + step1, vec2(0.0), vec2(1.0))).a);
+    cov = mix(cov, smoothstep(0.22, 0.52, aSoft), frostAmt);
+    col = mix(col, mix(col, land, 0.90), clamp(cov * artAmt, 0.0, 1.0));
+#endif
+
     // The frosted sheet sits OVER the destination (the reference's hazy pane), never over the world.
     // 0.39: a giant window is barely veiled - the frost is a gloss on the glass, not a curtain over it.
     col = mix(col, frost, frostAmt * mix(0.62, 0.26, openWindow));

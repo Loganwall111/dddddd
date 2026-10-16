@@ -42,7 +42,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 512x512 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_wellspring_plains_face0.png",
@@ -56,7 +58,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 256x256 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_fd_face1.png",
@@ -70,7 +74,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 512x512 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_wellspring_plains_face1.png",
@@ -84,7 +90,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 256x256 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_fd_face2.png",
@@ -98,7 +106,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 512x512 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_wellspring_plains_face2.png",
@@ -112,7 +122,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 256x256 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_fd_face3.png",
@@ -126,7 +138,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 512x512 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_wellspring_plains_face3.png",
@@ -140,7 +154,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 256x256 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_fd_face4.png",
@@ -154,7 +170,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 512x512 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_wellspring_plains_face4.png",
@@ -168,7 +186,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 256x256 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_fd_face5.png",
@@ -182,7 +202,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 512x512 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/block/sky_wellspring_plains_face5.png",
@@ -196,7 +218,9 @@
    ],
    "dims_source": "header mip sizes (cubemap face)",
    "note": "BC7 256x256 cubemap face",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/entity/rift_view_meadow_front.png",
@@ -210,7 +234,9 @@
    ],
    "dims_source": "ue_dims.json (eye-verified)",
    "note": "DXT5 1024x512, alpha is the terrain mask",
-   "verification": "decoded and inspected by eye"
+   "verification": "DXT5, one mip of 524288 B in the .uasset. Measured on the converted PNG: RGB is grey (mean saturation 0.055, p90 0.000) and alpha is coverage - 0 across the top half, bottom band mean 139 of 255, stippled. Used as a matte, never as a painting.",
+   "shipped": true,
+   "role": "RIFT_VIEW land matte (temperate rift styles)"
   },
   {
    "asset": "sift:textures/entity/rift_view_meadow_back.png",
@@ -224,7 +250,9 @@
    ],
    "dims_source": "header mip sizes",
    "note": "BC7 1024x512",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "REJECTED 0.43: decoded output was per-pixel noise (see quarantined). Kept under art/undecoded/ for reference and deliberately absent from the jar.",
+   "shipped": false,
+   "quarantined": "payload is not plain BC7: the block-mode histogram at the payload offset is a uniform spread (mode 6 share 0.00-0.12 over every candidate offset) instead of the single dominant mode real BC7 art shows, i.e. the bytes are not a BC7 block stream - consistent with Oodle bulk compression, the same reason the UE static meshes stay undecoded. Recorded as an undecoded source, not drawn by the mod."
   },
   {
    "asset": "sift:textures/entity/rift_view_deepdark_front.png",
@@ -238,7 +266,9 @@
    ],
    "dims_source": "header mip sizes",
    "note": "DXT5 512x1024, alpha is the terrain mask",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "DXT5, one mip of 524288 B. Measured on the converted PNG: coloured in the mid region (mean saturation 0.276), alpha coverage 0 top / 200 bottom band. Portrait 512x1024, so the shader cover-fits by textureSize instead of stretching it.",
+   "shipped": true,
+   "role": "RIFT_VIEW land matte (dark rift styles)"
   },
   {
    "asset": "sift:textures/entity/rift_light_ray.png",
@@ -252,7 +282,8 @@
    ],
    "dims_source": "ue_dims.json (eye-verified)",
    "note": "DXT5 512x512",
-   "verification": "decoded and structurally validated (dimensions/format from the file header)"
+   "verification": "decoded and structurally validated (dimensions/format from the file header)",
+   "shipped": true
   }
  ],
  "structures": [

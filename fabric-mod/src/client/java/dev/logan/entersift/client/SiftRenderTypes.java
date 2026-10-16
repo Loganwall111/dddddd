@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 
 /**
  * 0.11: private render types for the Sift sky and rifts (position + colour, no fog, no texture).
@@ -100,6 +101,53 @@ public final class SiftRenderTypes {
     public static final RenderType RIFT_REFRACT = RenderType.create("entersift_rift_refract",
         RenderSetup.builder(RIFT_REFRACT_PIPELINE)
             .withTexture("Sampler0", RiftScene.DEPTH).withTexture("Sampler1", RiftScene.COLOR).createRenderSetup());
+
+    /**
+     * 0.43 rift window art. Same rift shader with RIFT_VIEW, which additionally samples Sampler2: the
+     * converted Dungeons portal-view matte for this destination. Sampler0/1 stay bound for the rim, so
+     * the refracted variant needs all three samplers in one layout; the plain variant (no captured
+     * scene yet, or refraction off) binds only the matte. Texture ids follow this mod's convention for
+     * file textures (see {@link SiftCreatureRenderer}): "textures/.../name.png".
+     */
+    public static final Identifier RIFT_MATTE_MEADOW = SiftContent.id("textures/entity/rift_view_meadow_front.png");
+    public static final Identifier RIFT_MATTE_DEEPDARK = SiftContent.id("textures/entity/rift_view_deepdark_front.png");
+
+    public static final RenderPipeline RIFT_VIEW_PIPELINE = RenderPipelines.register(riftVariant("rift_view", "RIFT_VIEW")
+            .withShaderDefine("RIFT_REFRACT")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0_SAMPLER1_SAMPLER2)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build());
+
+    public static final RenderPipeline RIFT_VIEW_PLAIN_PIPELINE = RenderPipelines.register(riftVariant("rift_view_plain", "RIFT_VIEW")
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER2)
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build());
+
+    private static RenderType matte(RenderPipeline pipeline, Identifier texture, boolean refract) {
+        RenderSetup.RenderSetupBuilder setup = RenderSetup.builder(pipeline);
+        if (refract) setup.withTexture("Sampler0", RiftScene.DEPTH).withTexture("Sampler1", RiftScene.COLOR);
+        return RenderType.create("entersift_rift_view_" + texture.getPath().replace('/', '_') + (refract ? "_refract" : "_plain"),
+            setup.withTexture("Sampler2", texture).createRenderSetup());
+    }
+
+    public static final RenderType RIFT_VIEW_MEADOW = matte(RIFT_VIEW_PIPELINE, RIFT_MATTE_MEADOW, true);
+    public static final RenderType RIFT_VIEW_MEADOW_PLAIN = matte(RIFT_VIEW_PLAIN_PIPELINE, RIFT_MATTE_MEADOW, false);
+    public static final RenderType RIFT_VIEW_DEEPDARK = matte(RIFT_VIEW_PIPELINE, RIFT_MATTE_DEEPDARK, true);
+    public static final RenderType RIFT_VIEW_DEEPDARK_PLAIN = matte(RIFT_VIEW_PLAIN_PIPELINE, RIFT_MATTE_DEEPDARK, false);
+
+    /**
+     * 0.43: the window render type for one rift. The Dungeons mattes exist for two of the eight rift
+     * styles (the temperate meadow and the dark under-realm), so the dark styles take the deepdark
+     * sheet and the rest take the meadow one; with art switched off the 0.36-0.39 path is used instead.
+     */
+    public static RenderType riftWindow(int view, boolean refract, boolean art) {
+        if (!art) return refract ? RIFT_REFRACT : RIFT;
+        boolean dark = view == 1 || view == 2 || view == 4 || view == 7;
+        if (dark) return refract ? RIFT_VIEW_DEEPDARK : RIFT_VIEW_DEEPDARK_PLAIN;
+        return refract ? RIFT_VIEW_MEADOW : RIFT_VIEW_MEADOW_PLAIN;
+    }
 
     /** 0.18 rift walls, rims and floating cubes: the rift shader with RIFT_WALL (vertex colour + pulse), opaque. */
     public static final RenderPipeline RIFT_WALL_PIPELINE = RenderPipelines.register(riftVariant("rift_wall", "RIFT_WALL")

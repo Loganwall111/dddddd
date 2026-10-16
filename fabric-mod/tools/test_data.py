@@ -939,7 +939,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('StandardCopyOption.REPLACE_EXISTING',client)
         g=(ROOT/'build.gradle').read_text()
         self.assertIn('preserveFileTimestamps = false',g); self.assertIn('reproducibleFileOrder = true',g)
-        self.assertIn('mod_version=0.42.0-alpha',(ROOT/'gradle.properties').read_text())
+        self.assertIn('mod_version=0.43.0-alpha',(ROOT/'gradle.properties').read_text())
     def test_v024_trailer_accuracy_overhaul(self):
         C=ROOT/'src/client/java/dev/logan/entersift/client'; S=R/'assets/entersift/shaders/core'
         shape=(ROOT/'src/main/java/dev/logan/entersift/RiftShape.java').read_text(); rift=(C/'RiftPortalRenderer.java').read_text()
@@ -1080,7 +1080,7 @@ class DataContracts(unittest.TestCase):
         self.assertIn('function entersift:rift/gate',fn('rift/tick'))
         self.assertIn('RiftType:$(style)',fn('travel/exit_rift'))
         props=(ROOT/'gradle.properties').read_text()
-        self.assertIn('mod_version=0.42.0-alpha',props)
+        self.assertIn('mod_version=0.43.0-alpha',props)
         self.assertIn('archives_base_name=sift-overhaul',props)
     def test_no_removed_time_query_keywords(self):
         # 26.x replaced "time query daytime|day" with "time query <timeline>"; only gametime survives.
@@ -1152,6 +1152,54 @@ class DataContracts(unittest.TestCase):
             self.assertTrue((ROOT/path).exists(),path)
             self.assertGreater(len(reason),40,path)
 
+def _png_alpha(path):
+    """Decode a PNG's ALPHA plane with the standard library only (CI has no Pillow).
+
+    Every PNG filter (None/Sub/Up/Average/Paeth) reconstructs a byte from bytes of the SAME channel, so
+    the alpha channel can be decoded on its own: four times less work than a full RGBA decode and all a
+    matte needs. Returns (width, height, alpha bytes). Raises on anything but 8-bit non-interlaced RGBA.
+    """
+    import struct as _s, zlib
+    raw = path.read_bytes()
+    assert raw[:8] == b'\x89PNG\r\n\x1a\n', path
+    i, idat, ihdr = 8, [], None
+    while i < len(raw):
+        ln = _s.unpack('>I', raw[i:i + 4])[0]; typ = raw[i + 4:i + 8]
+        if typ == b'IHDR': ihdr = _s.unpack('>IIBBBBB', raw[i + 8:i + 8 + ln])
+        elif typ == b'IDAT': idat.append(raw[i + 8:i + 8 + ln])
+        i += 12 + ln
+        if typ == b'IEND': break
+    w, h, bd, ct, _, _, interlace = ihdr
+    assert (bd, ct, interlace) == (8, 6, 0), f'{path}: expected 8-bit non-interlaced RGBA, got {(bd, ct, interlace)}'
+    buf = zlib.decompress(b''.join(idat))
+    stride, offs = w * 4, list(range(3, w * 4, 4))
+    out = bytearray(h * w)
+    pos = 0
+    for y in range(h):
+        ft = buf[pos]; pos += 1
+        line = bytearray(buf[pos:pos + stride]); pos += stride
+        base, up = y * w, (y - 1) * w
+        if ft == 1:
+            for x in offs: line[x] = (line[x] + line[x - 4]) & 0xff
+        elif ft == 2:
+            for x in offs: line[x] = (line[x] + out[up + (x >> 2)]) & 0xff
+        elif ft == 3:
+            for x in offs:
+                a = line[x - 4] if x >= 4 else 0
+                line[x] = (line[x] + ((a + out[up + (x >> 2)]) >> 1)) & 0xff
+        elif ft == 4:
+            for x in offs:
+                a = line[x - 4] if x >= 4 else 0
+                b = out[up + (x >> 2)]
+                c = out[up + (x >> 2) - 1] if x >= 4 else 0
+                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
+                line[x] = (line[x] + (a if (pa <= pb and pa <= pc) else (b if pb <= pc else c))) & 0xff
+        elif ft != 0:
+            raise AssertionError(f'{path}: unknown PNG filter {ft} on row {y}')
+        for n, x in enumerate(offs): out[base + n] = line[x]
+    return w, h, bytes(out)
+
+
 class DungeonsAssetContracts(unittest.TestCase):
     """The Minecraft Dungeons conversion (0.40). Everything here is checkable offline against the shipped
     jar: the PNGs must really be PNGs of the recorded size, the heightfields must match the object
@@ -1160,7 +1208,9 @@ class DungeonsAssetContracts(unittest.TestCase):
     def _index(self): return json.loads((self.S/'index.json').read_text())
     def test_v040_index_covers_every_shipped_file(self):
         idx=self._index()
-        listed={t['file'] for t in idx['textures']}
+        # 0.43: an entry may be recorded but NOT shipped (the BC7 payloads that are not a block stream);
+        # those live under art/undecoded and are covered by SiftWindowArtContracts.
+        listed={t['file'] for t in idx['textures'] if t.get('shipped',True)}
         onDisk={str(p.relative_to(self.T)).replace('\\','/') for p in self.T.rglob('*.png')}
         self.assertEqual(listed,onDisk,'index.json and assets/sift/textures disagree')
         rooms={p.stem for p in self.S.glob('*.json') if p.name!='index.json'}
@@ -1172,6 +1222,7 @@ class DungeonsAssetContracts(unittest.TestCase):
     def test_v040_textures_are_pngs_of_the_recorded_size_and_ui_free(self):
         import struct as _s
         for t in self._index()['textures']:
+            if not t.get('shipped',True): continue      # quarantined: see SiftWindowArtContracts
             p=self.T/t['file']
             self.assertTrue(p.exists(),t['file'])
             raw=p.read_bytes()
@@ -1354,5 +1405,88 @@ class SiftTileContracts(unittest.TestCase):
         self.assertIn('oracle',r['blocks']['note'])
         self.assertTrue((R/'assets/sift/meshes/PortalTile.bin').exists(),
                         'the portal tile must ship a mesh for the probe')
+
+class SiftWindowArtContracts(unittest.TestCase):
+    """0.43: what is drawn behind the rift opening, and what is not.
+
+    The window shows the destination through a matte converted from the Minecraft Dungeons portal-view
+    sheets. Those sheets are mattes, not paintings - the alpha channel is the destination's terrain
+    coverage and the RGB is (for the meadow sheet) pure grey detail - so these gates check the property
+    the shader relies on, and then check that no asset which failed to decode can reach the game.
+    """
+    T=R/'assets/sift/textures'; D=ROOT/'art/undecoded'
+    # name -> (minimum solid fraction, minimum empty fraction) of the land band, see the assertion below
+    MATTES={'entity/rift_view_meadow_front.png':(0.25,0.12),'entity/rift_view_deepdark_front.png':(0.45,0.05)}
+
+    def test_v043_mattes_really_are_layered_coverage(self):
+        idx=json.loads((R/'data/sift/structures/index.json').read_text())
+        dims={t['file']:t['dims'] for t in idx['textures']}
+        sh=(R/'assets/entersift/shaders/core/rift.fsh').read_text()
+        for name in self.MATTES:
+            w,h,alpha=_png_alpha(self.T/name)
+            self.assertEqual([w,h],dims[name],name)
+            top=sum(alpha[0:(h//8)*w])/max(1,(h//8)*w)
+            band=alpha[(h*7//8)*w:]
+            bot=sum(band)/max(1,len(band))
+            hi=sum(1 for v in band if v>200)/max(1,len(band))
+            lo=sum(1 for v in band if v<40)/max(1,len(band))
+            self.assertLess(top,12,f'{name}: the sky region of a matte must be empty (alpha {top:.1f})')
+            self.assertGreater(bot,60,f'{name}: the land must be covered (bottom-band alpha {bot:.1f})')
+            # Measured 0.43 over the bottom band: the meadow matte is 32 per cent solid / 18 per cent empty
+            # (detail stipple inside dense land), the deepdark one 57 per cent solid / 7 per cent empty.
+            # Both are stippled enough that a raw-alpha mix would read as haze, hence the threshold.
+            solid,empty=self.MATTES[name]
+            self.assertGreater(hi,solid,f'{name}: only {hi:.3f} of the bottom band is solid (want >{solid})')
+            self.assertGreater(lo,empty,f'{name}: only {lo:.3f} of the bottom band is empty (want >{empty})')
+        # The stipple is why the shader thresholds the coverage instead of mixing the raw alpha in.
+        self.assertIn('smoothstep(0.22, 0.52, a4)',sh)
+        self.assertIn('float cov = smoothstep(0.22, 0.52, a4);',sh)
+
+    def test_v043_shader_and_render_types_bind_the_matte(self):
+        sh=(ROOT/'src/main/resources/assets/entersift/shaders/core/rift.fsh').read_text()
+        self.assertIn('#ifdef RIFT_VIEW',sh)
+        self.assertIn('uniform sampler2D Sampler2;',sh)
+        self.assertIn('texture(Sampler2',sh)
+        # The matte must be mapped by textureSize, or the portrait deepdark sheet would be stretched.
+        self.assertIn('textureSize(Sampler2, 0)',sh)
+        rt=(ROOT/'src/client/java/dev/logan/entersift/client/SiftRenderTypes.java').read_text()
+        self.assertIn('riftVariant("rift_view", "RIFT_VIEW")',rt)
+        self.assertIn('withBindGroupLayout(BindGroupLayouts.SAMPLER0_SAMPLER1_SAMPLER2)',rt)
+        self.assertIn('BindGroupLayouts.SAMPLER2',rt)
+        for tex in ('textures/entity/rift_view_meadow_front.png','textures/entity/rift_view_deepdark_front.png'):
+            self.assertIn(tex,rt,f'{tex} must be bound to Sampler2')
+        self.assertIn('public static RenderType riftWindow(int view, boolean refract, boolean art)',rt)
+        ren=(ROOT/'src/client/java/dev/logan/entersift/client/RiftPortalRenderer.java').read_text()
+        self.assertIn('SiftRenderTypes.riftWindow(s.view, refract, SiftBudget.riftArt)',ren)
+        # RiftScene.request() arms the capture, so it may only be called once per frame.
+        self.assertEqual(ren.count('RiftScene.request();'),1,'the capture is armed once per frame')
+        bud=(ROOT/'src/client/java/dev/logan/entersift/client/SiftBudget.java').read_text()
+        self.assertIn('public static boolean riftArt = true;',bud)
+        self.assertIn('flag(props, "rift_art", true)',bud)
+        self.assertIn('rift_art={}',bud)
+
+    def test_v043_nothing_undecoded_can_reach_the_game(self):
+        idx=json.loads((R/'data/sift/structures/index.json').read_text())
+        quarantined=[t for t in idx['textures'] if not t.get('shipped',True)]
+        self.assertTrue(quarantined,'the BC7 payloads failed to decode; they must be recorded as quarantined')
+        code=[]
+        for ext in ('*.java','*.fsh','*.vsh','*.json','*.mcfunction'):
+            code += [p for p in (ROOT/'src').rglob(ext) if p.name!='index.json']
+        blobs={p:(p.read_text(errors='ignore')) for p in code}
+        for t in quarantined:
+            self.assertFalse((self.T/t['file']).exists(),f"{t['file']} is quarantined and must not ship")
+            self.assertTrue((self.D/Path(t['file']).name).exists(),t['file'])
+            stem=Path(t['file']).stem
+            for p,text in blobs.items():
+                self.assertNotIn(stem,text,f'{t["file"]} is undecoded but referenced from {p.relative_to(ROOT)}')
+            self.assertIn('quarantined',t.keys())
+            self.assertRegex(t['quarantined'],r'BC7')
+        self.assertTrue((self.D/'README.md').exists(),'art/undecoded needs to say why the files are there')
+
+    def test_v043_window_switch_and_docs_are_in_step(self):
+        doc=(ROOT/'docs/DUNGEONS_ASSETS.md').read_text()
+        self.assertIn('RIFT_VIEW',doc)
+        self.assertIn('art/undecoded',doc)
+
 
 if __name__=='__main__': unittest.main(verbosity=2)

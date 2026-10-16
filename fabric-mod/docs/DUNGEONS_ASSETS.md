@@ -183,3 +183,32 @@ records and no texture path mentions UI/menu/HUD/icon/font; every room's heightf
 `sizeX × sizeZ` bytes with min/max inside the volume and doors inside the footprint; every glTF's buffer
 length, buffer views, triangle count and index range are self-consistent; every rift sheet has an id,
 object groups, and stretches that are either tiles or a single anchor encounter.
+
+## The rift window now draws a Dungeons matte (0.43)
+
+The two DXT5 portal-view sheets are wired into the rift's window pass, and the BC7 ones are quarantined.
+What the data actually is, measured on the converted PNGs:
+
+| sheet | RGB | alpha | use |
+| --- | --- | --- | --- |
+| `rift_view_meadow_front.png` (from `T_PortalView_Singer_Front`) | grey, mean saturation 0.055 | coverage: 0 across the top half, bottom band mean 139 of 255, stippled | the temperate rift styles (0, 3, 5, 6) |
+| `rift_view_deepdark_front.png` (from `T_PortalView_DD_Front`) | coloured, mean saturation 0.276 in the mid region | coverage: 0 top, bottom band mean 200 | the dark rift styles (1, 2, 4, 7) |
+
+So they are **mattes, not paintings**: the alpha is the destination's terrain coverage and the RGB is
+detail inside it. The shader (`core/rift.fsh`, `#ifdef RIFT_VIEW`) therefore keeps its own sky, cover-fits
+the sheet to the opening by `textureSize` (the deepdark one is portrait 512x1024), slides it by the view
+ray so the picture parallaxes as you walk past, and thresholds the stippled alpha with
+`smoothstep(0.15, 0.55, ...)` so the dither reads as solid land instead of a haze. The land's own colour
+survives at 40 per cent and the rest is the rift's palette times the sheet's luminance, which is what the
+grey meadow sheet is for. `rift_art=false` in `config/entersift-client.properties` returns the 0.36-0.39
+procedurally painted destination.
+
+### Quarantined: 13 payloads that are not BC7 block streams
+
+`sky_fd_face0-5`, `sky_wellspring_plains_face0-5` and `rift_view_meadow_back` decoded to per-pixel noise.
+The reason is in the bytes, not in the decoder: scoring the BC7 mode histogram (the mode is the count of
+leading zero bits of the first block byte) over 256 blocks at every 4-byte offset gives a *uniform* spread
+- best mode-6 share 0.12, top-two share 0.58 - where real BC7 art concentrates in one or two modes. The
+payloads are wrapped (Oodle is the usual suspect in this asset set, the same signature the UE meshes
+show), so they are **not shipped**, live under `art/undecoded/` with the full write-up, and a contract test
+forbids any reference to them. The Sift sky keeps using its own procedural shader.
